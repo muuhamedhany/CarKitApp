@@ -1,50 +1,109 @@
-# Welcome to your Expo app 👋
+# CarKit — React Native Mobile App 🚗
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+CarKit is a cross-platform mobile application built with **React Native** and **Expo**. It uses file-based routing via [Expo Router](https://docs.expo.dev/router/introduction) and is written in **TypeScript**.
 
-## Get started
+---
 
-1. Install dependencies
+## Prerequisites
 
-   ```bash
-   npm install
-   ```
+Before you begin, make sure the following are installed on your machine:
 
-2. Start the app
+| Tool | Version | Download |
+|------|---------|----------|
+| **Node.js** | 18 or later | [nodejs.org](https://nodejs.org/) |
+| **npm** | comes with Node.js | — |
+| **Expo CLI** | latest | installed automatically via `npx` |
+| **Expo Go** (mobile) | latest | [App Store](https://apps.apple.com/app/expo-go/id982107779) / [Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent) |
 
-   ```bash
-   npx expo start
-   ```
+> **Optional:** To run on an emulator/simulator, install [Android Studio](https://docs.expo.dev/workflow/android-studio-emulator/) or [Xcode](https://docs.expo.dev/workflow/ios-simulator/) (macOS only).
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Getting Started
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Clone the repository
 
 ```bash
-npm run reset-project
+git clone <repository-url>
+cd CarKit/CarKitApp
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install dependencies
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Start the development server
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start
+```
 
-## Join the community
+This will open the **Expo DevTools** in your terminal. From there you can:
 
-Join our community of developers creating universal apps.
+- Press **`a`** — open on a connected Android device / emulator
+- Press **`i`** — open on the iOS Simulator (macOS only)
+- Press **`w`** — open in a web browser
+- **Scan the QR code** with the **Expo Go** app on your phone
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Platform-Specific Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the Expo development server |
+| `npm run android` | Start and open on Android |
+| `npm run ios` | Start and open on iOS |
+| `npm run web` | Start and open in a web browser |
+| `npm run lint` | Run ESLint |
+| `npm run reset-project` | Reset to a blank project |
+
+---
+
+## Project Structure
+
+```
+CarKitApp/
+├── app/              # Screens & routes (file-based routing)
+├── assets/           # Images, fonts, and static files
+├── components/       # Reusable UI components
+├── constants/        # Theme, colors, and config values
+├── contexts/         # React Context providers (Auth, Cart, etc.)
+├── hooks/            # Custom React hooks
+├── scripts/          # Utility scripts
+├── app.json          # Expo configuration
+├── package.json      # Dependencies & scripts
+└── tsconfig.json     # TypeScript configuration
+```
+
+---
+
+## Tech Stack
+
+- **React Native** 0.81 + **Expo** SDK 54
+- **TypeScript**
+- **Expo Router** (file-based routing)
+- **React Navigation** (bottom tabs)
+- **Expo Image**, **Linear Gradient**, **Haptics**, and more
+- **Poppins** font via `@expo-google-fonts/poppins`
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Metro bundler not starting | Run `npx expo start --clear` to clear the cache |
+| Dependencies out of sync | Delete `node_modules` and run `npm install` again |
+| Expo Go can't connect | Ensure your phone and PC are on the **same Wi-Fi network** |
+| TypeScript errors | Run `npx tsc --noEmit` to check for type issues |
+
+---
+
+## Learn More
+
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [Expo Router Guide](https://docs.expo.dev/router/introduction/)
