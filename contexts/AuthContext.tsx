@@ -9,15 +9,19 @@ type User = {
   phone?: string;
   picture?: string;
   provider?: 'local' | 'google';
+  role?: string;
+  verification_status?: string;
+  vendor_id?: number;
+  provider_id?: number;
 };
 
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; message: string }>;
-  loginWithGoogle: (googleUser: { email: string; name: string; picture?: string; id: string }) => Promise<{ success: boolean; message: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
+  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; message: string; user?: User }>;
+  loginWithGoogle: (googleUser: { email: string; name: string; picture?: string; id: string }) => Promise<{ success: boolean; message: string; user?: User }>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   verifyOtp: (email: string, otp: string) => Promise<{ success: boolean; message: string }>;
@@ -70,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
         setToken(data.data.token);
         setUser(data.data.user);
-        return { success: true, message: 'Login successful.' };
+        return { success: true, message: 'Login successful.', user: data.data.user };
       }
       return { success: false, message: data.message || 'Invalid credentials.' };
     } catch {
