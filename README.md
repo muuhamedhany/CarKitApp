@@ -25,7 +25,7 @@ Before you begin, make sure the following are installed on your machine:
 
 ```bash
 git clone https://github.com/muuhamedhany/CarKitApp
-cd CarKit/CarKitApp
+cd CarKitApp
 ```
 
 ### 2. Install dependencies
