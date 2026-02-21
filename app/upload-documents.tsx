@@ -15,6 +15,7 @@ import GradientButton from '@/components/GradientButton';
 import axios from 'axios';
 import { supabase } from '@/src/utils/supabase';
 import { useLocalSearchParams } from 'expo-router';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type DocStatus = {
@@ -61,21 +62,32 @@ export default function UploadDocumentsScreen() {
 
   const uploadToSupabase = async (uri: string, fileName: string) => {
     try {
-      // Fetch the file as a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      
-      const fileExt = fileName.split('.').pop();
+      const fileExt = fileName.split('.').pop() || 'tmp';
       const newFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `vendor_docs/${newFileName}`; // Inside the 'documents' bucket
+      const filePath = `vendor_docs/${newFileName}`;
+      const contentType = fileExt.toLowerCase() === 'pdf' ? 'application/pdf' : 'image/jpeg';
 
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .upload(filePath, blob, { contentType: blob.type });
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !anonKey) {
+        throw new Error('Supabase Config Missing');
+      }
+      
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/documents/${filePath}`;
 
-      if (error) {
-         console.error('Supabase upload error:', error);
-         throw error;
+      const response = await FileSystem.uploadAsync(uploadUrl, uri, {
+        httpMethod: 'POST',
+        headers: {
+          Authorization: `Bearer ${anonKey}`,
+          apikey: anonKey,
+          'Content-Type': contentType,
+        },
+      });
+
+      if (response.status < 200 || response.status >= 300) {
+        console.error('Supabase raw upload error:', response.body);
+        throw new Error(`Upload failed: ${response.status}`);
       }
 
       const { data: publicUrlData } = supabase.storage
@@ -97,9 +109,9 @@ export default function UploadDocumentsScreen() {
 
     setLoading(true);
     try {
-      
+
       showToast('info', 'Uploading', 'Uploading documents securely...');
-      
+
       // Upload 1
       const doc1Url = await uploadToSupabase(docs.businessLicense.uri, docs.businessLicense.name || 'doc1.pdf');
       if (!doc1Url) throw new Error('Failed to upload Business License');
