@@ -12,6 +12,9 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useToast } from '@/contexts/ToastContext';
 import BackButton from '@/components/BackButton';
 import GradientButton from '@/components/GradientButton';
+import axios from 'axios';
+import { supabase } from '@/src/utils/supabase';
+import { useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type DocStatus = {
@@ -28,6 +31,7 @@ type DocsState = {
 export default function UploadDocumentsScreen() {
   const router = useRouter();
   const { showToast, showAlert } = useToast();
+  const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [docs, setDocs] = useState<DocsState>({
     businessLicense: { name: null, uri: null },
@@ -55,6 +59,36 @@ export default function UploadDocumentsScreen() {
     }
   };
 
+  const uploadToSupabase = async (uri: string, fileName: string) => {
+    try {
+      // Fetch the file as a blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      
+      const fileExt = fileName.split('.').pop();
+      const newFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `vendor_docs/${newFileName}`; // Inside the 'documents' bucket
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(filePath, blob, { contentType: blob.type });
+
+      if (error) {
+         console.error('Supabase upload error:', error);
+         throw error;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (e) {
+      console.error('Upload Error', e);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!docs.businessLicense.uri || !docs.taxId.uri) {
       showToast('warning', 'Missing Documents', 'Please upload all required documents.');
@@ -63,8 +97,43 @@ export default function UploadDocumentsScreen() {
 
     setLoading(true);
     try {
-      // Simulate submission — in production, upload to server
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      showToast('info', 'Uploading', 'Uploading documents securely...');
+      
+      // Upload 1
+      const doc1Url = await uploadToSupabase(docs.businessLicense.uri, docs.businessLicense.name || 'doc1.pdf');
+      if (!doc1Url) throw new Error('Failed to upload Business License');
+
+      // Upload 2
+      const doc2Url = await uploadToSupabase(docs.taxId.uri, docs.taxId.name || 'doc2.pdf');
+      if (!doc2Url) throw new Error('Failed to upload Tax ID');
+
+      // Upload 3 (optional)
+      let doc3Url = null;
+      if (docs.insurance.uri) {
+        doc3Url = await uploadToSupabase(docs.insurance.uri, docs.insurance.name || 'doc3.pdf');
+      }
+
+      showToast('info', 'Registering', 'Creating your account...');
+
+      // API Call to register vendor/provider
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+      const endpoint = params.role === 'vendor' ? '/api/vendors' : '/api/service-providers';
+
+      const payload = {
+        name: params.name,
+        email: params.email,
+        phone: params.phone,
+        contact_info: params.address,
+        password: params.password,
+        document_1_url: doc1Url,
+        document_2_url: doc2Url,
+        document_3_url: doc3Url,
+      };
+
+      // Depending on if auth registration is combined, we call the endpoint directly for now
+      // Note: Ideally, standard 'users' auth table creation happens here or in the backend controller.
+      await axios.post(`${API_URL}${endpoint}`, payload);
 
       showAlert({
         title: 'Submitted Successfully!',
@@ -73,6 +142,7 @@ export default function UploadDocumentsScreen() {
         buttons: [{ text: 'OK', onPress: () => router.replace('/login') }],
       });
     } catch (error) {
+      console.error(error);
       showToast('error', 'Submission Failed', 'Could not submit documents. Please try again.');
     } finally {
       setLoading(false);
