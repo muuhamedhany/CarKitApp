@@ -21,7 +21,7 @@ export default function ProfileScreen() {
   };
 
   const personalItems: MenuItem[] = [
-    { icon: 'car', label: 'My Vehicles', onPress: () => {} },
+    { icon: 'car', label: 'My Vehicles', onPress: () => router.push('/my-vehicles' as any) },
     { icon: 'package-variant-closed', label: 'My Orders', onPress: () => router.push('/my-orders' as any) },
     { icon: 'calendar-check', label: 'My Bookings', onPress: () => router.push('/my-bookings' as any) },
     { icon: 'map-marker-outline', label: 'Shipping Addresses', onPress: () => {} },
