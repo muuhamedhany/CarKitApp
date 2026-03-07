@@ -56,7 +56,7 @@ export default function SignUpCustomerScreen() {
 
     if (result.success) {
       showToast('success', 'Account Created!', 'Welcome to CarKit.');
-      router.replace('/(tabs)');
+      router.replace('/vehicle-route-selection' as any);
     } else {
       showToast('error', 'Sign Up Failed', result.message);
     }
