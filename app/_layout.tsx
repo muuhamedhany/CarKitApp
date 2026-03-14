@@ -14,6 +14,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { CartProvider } from '@/contexts/CartContext';
 import 'react-native-reanimated';
 
 // Prevent the splash screen from auto-hiding
@@ -42,19 +43,23 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="select-account" />
-          <Stack.Screen name="signup-customer" />
-          <Stack.Screen name="signup-vendor" />
-          <Stack.Screen name="upload-documents" />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="light" />
-      </ToastProvider>
+      <CartProvider>
+        <ToastProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="select-account" />
+            <Stack.Screen name="signup-customer" />
+            <Stack.Screen name="signup-vendor" />
+            <Stack.Screen name="upload-documents" />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="my-orders" options={{ headerShown: false }} />
+            <Stack.Screen name="my-bookings" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="light" />
+        </ToastProvider>
+      </CartProvider>
     </AuthProvider>
   );
 }
