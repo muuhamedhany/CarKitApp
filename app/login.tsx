@@ -41,8 +41,13 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (result.success) {
-      showToast('success', 'Welcome Back!', 'Login successful.');
-      router.replace('/(tabs)');
+      if ((result.user?.role === 'vendor' || result.user?.role === 'provider') && result.user?.verification_status === 'pending') {
+        showToast('info', 'Under Review', 'Your account is pending admin approval.');
+        router.replace('/pending');
+      } else {
+        showToast('success', 'Welcome Back!', 'Login successful.');
+        router.replace('/(tabs)');
+      }
     } else {
       showToast('error', 'Login Failed', result.message);
     }
