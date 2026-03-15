@@ -99,11 +99,3 @@ CarKitApp/
 | Dependencies out of sync | Delete `node_modules` and run `npm install` again |
 | Expo Go can't connect | Ensure your phone and PC are on the **same Wi-Fi network** |
 | TypeScript errors | Run `npx tsc --noEmit` to check for type issues |
-
----
-
-## Learn More
-
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Native Documentation](https://reactnative.dev/)
-- [Expo Router Guide](https://docs.expo.dev/router/introduction/)
