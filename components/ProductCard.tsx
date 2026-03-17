@@ -1,140 +1,136 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Image } from 'expo-image';
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
-type Props = {
+type ProductCardProps = {
   name: string;
   price: string | number;
-  imageUrl?: string;
   rating?: number;
   reviewCount?: number;
+  vendorName?: string;
   onPress?: () => void;
   onAddToCart?: () => void;
-  fullWidth?: boolean;
 };
 
 export default function ProductCard({
-  name, price, imageUrl, rating, reviewCount, onPress, onAddToCart, fullWidth,
-}: Props) {
-  const renderStars = (r: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <MaterialCommunityIcons
-          key={i}
-          name={i <= Math.round(r) ? 'star' : 'star-outline'}
-          size={12}
-          color={i <= Math.round(r) ? '#FFD700' : Colors.textMuted}
-        />
-      );
-    }
-    return stars;
-  };
-
+  name,
+  price,
+  rating,
+  reviewCount,
+  vendorName,
+  onPress,
+  onAddToCart,
+}: ProductCardProps) {
   return (
-    <Pressable style={[styles.card, fullWidth && { width: '100%' }]} onPress={onPress}>
+    <Pressable style={styles.card} onPress={onPress}>
+      {/* Placeholder image area */}
       <View style={styles.imageContainer}>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <MaterialCommunityIcons name="car-brake-parking" size={40} color={Colors.textMuted} />
-          </View>
-        )}
+        <MaterialCommunityIcons name="car-wrench" size={40} color={Colors.textMuted} />
       </View>
+
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={2}>{name}</Text>
+        {vendorName && (
+          <Text style={styles.vendor} numberOfLines={1}>{vendorName}</Text>
+        )}
         <Text style={styles.price}>{price} EGP</Text>
+
         {rating !== undefined && (
           <View style={styles.ratingRow}>
-            {renderStars(rating)}
+            {[1, 2, 3, 4, 5].map((star) => (
+              <MaterialCommunityIcons
+                key={star}
+                name={star <= Math.round(rating) ? 'star' : 'star-outline'}
+                size={14}
+                color={star <= Math.round(rating) ? '#FFD700' : Colors.textMuted}
+              />
+            ))}
             {reviewCount !== undefined && (
               <Text style={styles.reviewCount}>({reviewCount})</Text>
             )}
           </View>
         )}
+
+        {onAddToCart && (
+          <Pressable onPress={onAddToCart} style={styles.addButton}>
+            <LinearGradient
+              colors={[Colors.gradientStart, Colors.gradientEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.addButtonGradient}
+            >
+              <Text style={styles.addButtonText}>Add to Cart</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
       </View>
-      {onAddToCart && (
-        <Pressable onPress={onAddToCart} style={styles.addBtn}>
-          <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.addBtnGradient}
-          >
-            <Text style={styles.addBtnText}>Add to Cart</Text>
-          </LinearGradient>
-        </Pressable>
-      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
+    flex: 1,
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.cardBorder,
     overflow: 'hidden',
-    marginRight: Spacing.md,
+    margin: 4,
   },
   imageContainer: {
-    width: '100%',
     height: 120,
-    backgroundColor: Colors.surface,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
+    backgroundColor: 'rgba(30, 20, 50, 0.5)',
     justifyContent: 'center',
-    backgroundColor: Colors.surface,
+    alignItems: 'center',
   },
   info: {
     padding: Spacing.sm,
   },
   name: {
     color: Colors.textPrimary,
-    fontSize: FontSizes.xs,
     fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
+    marginBottom: 2,
+  },
+  vendor: {
+    color: Colors.textMuted,
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
     marginBottom: 4,
   },
   price: {
     color: Colors.pink,
-    fontSize: FontSizes.sm,
     fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
     marginBottom: 4,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
   reviewCount: {
     color: Colors.textMuted,
-    fontSize: 10,
     fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
     marginLeft: 4,
   },
-  addBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingBottom: Spacing.sm,
-  },
-  addBtnGradient: {
+  addButton: {
     borderRadius: BorderRadius.sm,
-    paddingVertical: 6,
-    alignItems: 'center',
+    overflow: 'hidden',
   },
-  addBtnText: {
+  addButtonGradient: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    borderRadius: BorderRadius.sm,
+  },
+  addButtonText: {
     color: Colors.white,
-    fontSize: FontSizes.xs,
     fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.xs,
   },
 });

@@ -13,8 +13,8 @@ import {
   Poppins_800ExtraBold_Italic,
 } from '@expo-google-fonts/poppins';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { ToastProvider } from '@/contexts/ToastContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import 'react-native-reanimated';
 
 // Prevent the splash screen from auto-hiding
