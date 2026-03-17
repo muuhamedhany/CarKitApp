@@ -4,6 +4,7 @@ import { API_URL } from '@/constants/config';
 
 type CartItem = {
   cart_item_id: number;
+  cart_id_fk: number;
   product_id_fk: number;
   quantity: number;
   name: string;
@@ -12,20 +13,15 @@ type CartItem = {
   item_total: string;
 };
 
-type CartData = {
-  cart_id: number;
+type CartContextType = {
   items: CartItem[];
   total: string;
-};
-
-type CartContextType = {
-  cart: CartData | null;
-  isLoading: boolean;
   cartCount: number;
+  loading: boolean;
   fetchCart: () => Promise<void>;
   addToCart: (productId: number, quantity?: number) => Promise<{ success: boolean; message: string }>;
-  updateQuantity: (cartItemId: number, quantity: number) => Promise<{ success: boolean; message: string }>;
-  removeItem: (cartItemId: number) => Promise<{ success: boolean; message: string }>;
+  updateQuantity: (cartItemId: number, quantity: number) => Promise<void>;
+  removeItem: (cartItemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
 };
 
@@ -39,36 +35,38 @@ export function useCart() {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
-  const [cart, setCart] = useState<CartData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [total, setTotal] = useState('0.00');
+  const [loading, setLoading] = useState(false);
 
-  const headers = useCallback(() => ({
+  const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    Authorization: `Bearer ${token}`,
   }), [token]);
 
   const fetchCart = useCallback(async () => {
     if (!token) return;
-    setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/cart`, { headers: headers() });
+      setLoading(true);
+      const res = await fetch(`${API_URL}/cart`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) {
-        setCart(data.data);
+        setItems(data.data.items || []);
+        setTotal(data.data.total || '0.00');
       }
     } catch {
       // silently fail
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [token, headers]);
+  }, [token, authHeaders]);
 
-  const addToCart = useCallback(async (productId: number, quantity: number = 1) => {
+  const addToCart = useCallback(async (productId: number, quantity = 1) => {
     if (!token) return { success: false, message: 'Not logged in.' };
     try {
-      const res = await fetch(`${API_URL}/cart/items`, {
+      const res = await fetch(`${API_URL}/cart`, {
         method: 'POST',
-        headers: headers(),
+        headers: authHeaders(),
         body: JSON.stringify({ product_id: productId, quantity }),
       });
       const data = await res.json();
@@ -78,67 +76,55 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: data.message || 'Failed to add.' };
     } catch {
-      return { success: false, message: 'Network error.' };
+      return { success: false, message: 'Could not connect to server.' };
     }
-  }, [token, headers, fetchCart]);
+  }, [token, authHeaders, fetchCart]);
 
   const updateQuantity = useCallback(async (cartItemId: number, quantity: number) => {
-    if (!token) return { success: false, message: 'Not logged in.' };
+    if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/cart/items/${cartItemId}`, {
+      await fetch(`${API_URL}/cart/${cartItemId}`, {
         method: 'PUT',
-        headers: headers(),
+        headers: authHeaders(),
         body: JSON.stringify({ quantity }),
       });
-      const data = await res.json();
-      if (data.success) {
-        await fetchCart();
-        return { success: true, message: 'Cart updated.' };
-      }
-      return { success: false, message: data.message || 'Failed to update.' };
+      await fetchCart();
     } catch {
-      return { success: false, message: 'Network error.' };
+      // silently fail
     }
-  }, [token, headers, fetchCart]);
+  }, [token, authHeaders, fetchCart]);
 
   const removeItem = useCallback(async (cartItemId: number) => {
-    if (!token) return { success: false, message: 'Not logged in.' };
+    if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/cart/items/${cartItemId}`, {
+      await fetch(`${API_URL}/cart/${cartItemId}`, {
         method: 'DELETE',
-        headers: headers(),
+        headers: authHeaders(),
       });
-      const data = await res.json();
-      if (data.success) {
-        await fetchCart();
-        return { success: true, message: 'Item removed.' };
-      }
-      return { success: false, message: data.message || 'Failed to remove.' };
+      await fetchCart();
     } catch {
-      return { success: false, message: 'Network error.' };
+      // silently fail
     }
-  }, [token, headers, fetchCart]);
+  }, [token, authHeaders, fetchCart]);
 
   const clearCart = useCallback(async () => {
     if (!token) return;
     try {
       await fetch(`${API_URL}/cart/clear`, {
         method: 'DELETE',
-        headers: headers(),
+        headers: authHeaders(),
       });
-      setCart(null);
+      setItems([]);
+      setTotal('0.00');
     } catch {
       // silently fail
     }
-  }, [token, headers]);
+  }, [token, authHeaders]);
 
-  const cartCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{
-      cart, isLoading, cartCount,
-      fetchCart, addToCart, updateQuantity, removeItem, clearCart,
-    }}>
+    <CartContext.Provider value={{ items, total, cartCount, loading, fetchCart, addToCart, updateQuantity, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );

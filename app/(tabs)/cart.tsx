@@ -1,45 +1,73 @@
 import { useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 export default function CartScreen() {
-  const { cart, isLoading, fetchCart, updateQuantity, removeItem } = useCart();
+  const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
 
   useEffect(() => { fetchCart(); }, []);
 
-  const handleUpdateQty = async (cartItemId: number, currentQty: number, delta: number) => {
-    const newQty = currentQty + delta;
-    if (newQty <= 0) {
-      const res = await removeItem(cartItemId);
-      if (res.success) showToast('info', 'Removed', 'Item removed from cart.');
-    } else {
-      await updateQuantity(cartItemId, newQty);
+  const handleCheckout = () => {
+    if (items.length === 0) {
+      showToast('warning', 'Empty Cart', 'Add some products first!');
+      return;
     }
+    showToast('info', 'Coming Soon', 'Checkout flow is being built.');
   };
 
-  const handleRemove = async (cartItemId: number) => {
-    const res = await removeItem(cartItemId);
-    if (res.success) showToast('info', 'Removed', 'Item removed from cart.');
-  };
-
-  if (isLoading && !cart) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.pink} />
+  const renderItem = ({ item }: { item: typeof items[0] }) => (
+    <View style={styles.cartItem}>
+      {/* Product image placeholder */}
+      <View style={styles.itemImage}>
+        <MaterialCommunityIcons name="car-wrench" size={28} color={Colors.textMuted} />
       </View>
-    );
-  }
 
-  const items = cart?.items || [];
-  const total = cart?.total || '0.00';
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.itemPrice}>{item.price} EGP</Text>
+
+        {/* Quantity controls */}
+        <View style={styles.qtyRow}>
+          <Pressable
+            style={styles.qtyBtn}
+            onPress={() => updateQuantity(item.cart_item_id, item.quantity + 1)}
+          >
+            <MaterialCommunityIcons name="plus" size={16} color={Colors.purpleLight} />
+          </Pressable>
+          <Text style={styles.qtyText}>{item.quantity}</Text>
+          <Pressable
+            style={styles.qtyBtn}
+            onPress={() => {
+              if (item.quantity <= 1) {
+                removeItem(item.cart_item_id);
+              } else {
+                updateQuantity(item.cart_item_id, item.quantity - 1);
+              }
+            }}
+          >
+            <MaterialCommunityIcons name="minus" size={16} color={Colors.purpleLight} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Remove button */}
+      <Pressable style={styles.removeBtn} onPress={() => removeItem(item.cart_item_id)}>
+        <MaterialCommunityIcons name="close-circle-outline" size={22} color={Colors.pink} />
+      </Pressable>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -48,210 +76,107 @@ export default function CartScreen() {
         <Text style={styles.headerTitle}>My Cart</Text>
       </View>
 
-      {items.length === 0 ? (
-        <View style={styles.centered}>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={Colors.pink} />
+        </View>
+      ) : items.length === 0 ? (
+        <View style={styles.center}>
           <MaterialCommunityIcons name="cart-off" size={64} color={Colors.textMuted} />
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptySubtitle}>Browse products and add items to your cart</Text>
         </View>
       ) : (
-        <>
-          <FlatList
-            data={items}
-            keyExtractor={item => String(item.cart_item_id)}
-            contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: 180 }}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={styles.cartItem}>
-                {/* Thumbnail */}
-                <View style={styles.thumbnail}>
-                  <MaterialCommunityIcons name="car-brake-parking" size={32} color={Colors.textMuted} />
-                </View>
-
-                {/* Info */}
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>{item.price} EGP</Text>
-                  {/* Qty controls */}
-                  <View style={styles.qtyRow}>
-                    <Pressable
-                      style={styles.qtyBtn}
-                      onPress={() => handleUpdateQty(item.cart_item_id, item.quantity, 1)}
-                    >
-                      <Text style={styles.qtyBtnText}>+</Text>
-                    </Pressable>
-                    <Text style={styles.qtyValue}>{item.quantity}</Text>
-                    <Pressable
-                      style={styles.qtyBtn}
-                      onPress={() => handleUpdateQty(item.cart_item_id, item.quantity, -1)}
-                    >
-                      <Text style={styles.qtyBtnText}>−</Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* Remove */}
-                <Pressable style={styles.removeBtn} onPress={() => handleRemove(item.cart_item_id)}>
-                  <MaterialCommunityIcons name="close-circle-outline" size={24} color={Colors.pink} />
-                </Pressable>
-              </View>
-            )}
-          />
-
-          {/* Bottom bar */}
-          <View style={styles.bottomBar}>
-            <View>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalAmount}>{total} EGP</Text>
-            </View>
-            <Pressable style={styles.checkoutBtn}>
-              <LinearGradient
-                colors={[Colors.gradientStart, Colors.gradientEnd]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.checkoutGradient}
-              >
-                <Text style={styles.checkoutText}>Checkout</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </>
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.cart_item_id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
       )}
+
+      {/* Bottom bar */}
+      <View style={styles.bottomBar}>
+        <View>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>{total} EGP</Text>
+        </View>
+        <Pressable onPress={handleCheckout} style={styles.checkoutBtn}>
+          <LinearGradient
+            colors={[Colors.gradientStart, Colors.gradientEnd]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.checkoutGradient}
+          >
+            <Text style={styles.checkoutText}>Checkout</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingTop: 56,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  list: { paddingHorizontal: Spacing.lg, paddingBottom: 120 },
+
+  // Header
   header: {
+    paddingTop: 60, paddingBottom: Spacing.md,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
     alignItems: 'center',
   },
   headerTitle: {
-    color: Colors.white,
-    fontSize: FontSizes.lg,
-    fontFamily: Fonts.bold,
+    color: Colors.textPrimary, fontFamily: Fonts.bold,
+    fontSize: FontSizes.xl,
   },
-  emptyTitle: {
-    color: Colors.white,
-    fontSize: FontSizes.lg,
-    fontFamily: Fonts.bold,
-    marginTop: Spacing.md,
-  },
-  emptySubtitle: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.regular,
-    marginTop: Spacing.xs,
-  },
+
+  // Cart item
   cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder,
+    padding: Spacing.md, marginBottom: Spacing.sm,
   },
-  thumbnail: {
-    width: 70,
-    height: 70,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  itemImage: {
+    width: 70, height: 70, borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(30,20,50,0.5)',
+    justifyContent: 'center', alignItems: 'center',
     marginRight: Spacing.md,
   },
-  itemInfo: {
-    flex: 1,
-  },
-  itemName: {
-    color: Colors.white,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.semiBold,
-  },
-  itemPrice: {
-    color: Colors.pink,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.bold,
-    marginTop: 2,
-  },
-  qtyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
+  itemInfo: { flex: 1 },
+  itemName: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
+  itemPrice: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: 'rgba(156,39,176,0.15)',
+    justifyContent: 'center', alignItems: 'center',
   },
-  qtyBtnText: {
-    color: Colors.white,
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
-  },
-  qtyValue: {
-    color: Colors.white,
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
-    marginHorizontal: Spacing.md,
-  },
-  removeBtn: {
-    padding: Spacing.xs,
-  },
+  qtyText: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md, minWidth: 20, textAlign: 'center' },
+  removeBtn: { marginLeft: Spacing.sm },
+
+  // Bottom bar
   bottomBar: {
-    position: 'absolute',
-    bottom: 70,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: Colors.backgroundSecondary,
+    borderTopWidth: 1, borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
+    paddingBottom: 30,
   },
-  totalLabel: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.xs,
-    fontFamily: Fonts.regular,
-  },
-  totalAmount: {
-    color: Colors.pink,
-    fontSize: FontSizes.xl,
-    fontFamily: Fonts.extraBold,
-  },
-  checkoutBtn: {
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-  },
+  totalLabel: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+  totalValue: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
+  checkoutBtn: { borderRadius: BorderRadius.lg, overflow: 'hidden' },
   checkoutGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: BorderRadius.xl,
+    paddingVertical: 14, paddingHorizontal: 36,
+    borderRadius: BorderRadius.lg, alignItems: 'center',
   },
-  checkoutText: {
-    color: Colors.white,
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
-  },
+  checkoutText: { color: Colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+
+  // Empty
+  emptyTitle: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
+  emptySubtitle: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
 });

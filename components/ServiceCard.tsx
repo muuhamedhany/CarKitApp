@@ -1,207 +1,161 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Image } from 'expo-image';
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
-type Props = {
+type ServiceCardProps = {
   name: string;
   providerName?: string;
-  price?: string | number;
-  duration?: number; // minutes
-  imageUrl?: string;
-  onPress?: () => void;
+  price: string | number;
+  duration?: number; // in minutes
+  rating?: number;
+  reviewCount?: number;
   onBookNow?: () => void;
-  /** compact = horizontal card for home; full = vertical for search list */
-  variant?: 'compact' | 'full';
+  onView?: () => void;
 };
 
 export default function ServiceCard({
-  name, providerName, price, duration, imageUrl,
-  onPress, onBookNow, variant = 'compact',
-}: Props) {
-  if (variant === 'full') {
-    return (
-      <Pressable style={styles.fullCard} onPress={onPress}>
-        <View style={styles.fullInfo}>
-          <Text style={styles.fullName} numberOfLines={1}>{name}</Text>
-          {providerName && <Text style={styles.fullProvider}>{providerName}</Text>}
-          <View style={styles.fullMeta}>
-            {duration !== undefined && (
-              <View style={styles.metaItem}>
-                <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.metaText}>{duration} mins</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        <View style={styles.fullRight}>
-          {price !== undefined && <Text style={styles.fullPrice}>{price} EGP</Text>}
-          <View style={styles.fullButtons}>
-            {onBookNow && (
-              <Pressable onPress={onBookNow}>
-                <LinearGradient
-                  colors={[Colors.gradientStart, Colors.gradientEnd]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.bookBtn}
-                >
-                  <Text style={styles.bookBtnText}>Book Now</Text>
-                </LinearGradient>
-              </Pressable>
-            )}
-            {onPress && (
-              <Pressable style={styles.viewBtn} onPress={onPress}>
-                <Text style={styles.viewBtnText}>View</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-      </Pressable>
-    );
-  }
-
-  // Compact variant — horizontal card for home screen
+  name,
+  providerName,
+  price,
+  duration,
+  rating,
+  reviewCount,
+  onBookNow,
+  onView,
+}: ServiceCardProps) {
   return (
-    <Pressable style={styles.compactCard} onPress={onPress}>
-      <View style={styles.compactImageContainer}>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.compactImage} contentFit="cover" />
-        ) : (
-          <LinearGradient
-            colors={['rgba(156,39,176,0.5)', 'rgba(233,30,140,0.5)']}
-            style={styles.compactImage}
-          >
-            <MaterialCommunityIcons name="wrench" size={40} color={Colors.white} />
-          </LinearGradient>
-        )}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)']}
-          style={styles.compactOverlay}
-        >
-          <Text style={styles.compactName} numberOfLines={2}>{name}</Text>
-          {price !== undefined && (
-            <Text style={styles.compactPrice}>Starting at {price} EGP</Text>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          {providerName && (
+            <Text style={styles.provider} numberOfLines={1}>{providerName}</Text>
           )}
-          <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.pink} />
-        </LinearGradient>
+        </View>
+        <Text style={styles.price}>{price} EGP</Text>
       </View>
-    </Pressable>
+
+      <View style={styles.metaRow}>
+        {rating !== undefined && (
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="star" size={14} color="#FFD700" />
+            <Text style={styles.metaText}>{rating.toFixed(1)}</Text>
+          </View>
+        )}
+        {duration !== undefined && (
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.textMuted} />
+            <Text style={styles.metaText}>{duration}mins</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.actions}>
+        {onBookNow && (
+          <Pressable onPress={onBookNow} style={styles.bookButton}>
+            <LinearGradient
+              colors={[Colors.gradientStart, Colors.gradientEnd]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.bookButtonGradient}
+            >
+              <Text style={styles.bookButtonText}>Book Now</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
+        {onView && (
+          <Pressable onPress={onView} style={styles.viewButton}>
+            <Text style={styles.viewButtonText}>View</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // Compact variant (Home)
-  compactCard: {
-    width: 200,
-    height: 160,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    marginRight: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  compactImageContainer: {
-    flex: 1,
-  },
-  compactImage: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compactOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: Spacing.sm,
-  },
-  compactName: {
-    color: Colors.white,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.bold,
-  },
-  compactPrice: {
-    color: Colors.textSecondary,
-    fontSize: FontSizes.xs,
-    fontFamily: Fonts.regular,
-    marginTop: 2,
-  },
-
-  // Full variant (Search)
-  fullCard: {
-    flexDirection: 'row',
+  card: {
     backgroundColor: Colors.backgroundSecondary,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.cardBorder,
     padding: Spacing.md,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
-  fullInfo: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  headerLeft: {
     flex: 1,
+    marginRight: Spacing.sm,
   },
-  fullName: {
+  name: {
     color: Colors.textPrimary,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
   },
-  fullProvider: {
-    color: Colors.textSecondary,
-    fontSize: FontSizes.xs,
+  provider: {
+    color: Colors.textMuted,
     fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
     marginTop: 2,
   },
-  fullMeta: {
+  price: {
+    color: Colors.pink,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+  },
+  metaRow: {
     flexDirection: 'row',
-    marginTop: Spacing.xs,
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: Spacing.sm,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: Spacing.md,
+    gap: 4,
   },
   metaText: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.xs,
+    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
-    marginLeft: 4,
+    fontSize: FontSizes.xs,
   },
-  fullRight: {
-    alignItems: 'flex-end',
-  },
-  fullPrice: {
-    color: Colors.pink,
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
-    marginBottom: Spacing.xs,
-  },
-  fullButtons: {
+  actions: {
     flexDirection: 'row',
     gap: 8,
   },
-  bookBtn: {
+  bookButton: {
     borderRadius: BorderRadius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    overflow: 'hidden',
+    flex: 1,
   },
-  bookBtnText: {
+  bookButtonGradient: {
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: BorderRadius.sm,
+  },
+  bookButtonText: {
     color: Colors.white,
-    fontSize: FontSizes.xs,
     fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
   },
-  viewBtn: {
+  viewButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
     borderRadius: BorderRadius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: Colors.pink,
+    borderColor: Colors.cardBorder,
   },
-  viewBtnText: {
-    color: Colors.pink,
-    fontSize: FontSizes.xs,
+  viewButtonText: {
+    color: Colors.purpleLight,
     fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
   },
 });
