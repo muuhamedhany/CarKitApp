@@ -8,16 +8,20 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import CategoryPill from '@/components/CategoryPill';
+
+const TAB_BAR_HEIGHT = 65;
 
 type Category = { category_id: number; name: string; description?: string };
 type Product = {
@@ -51,6 +55,8 @@ export default function HomeScreen() {
   const { user, token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -204,7 +210,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: androidTabOffset + Spacing.lg }} />
     </ScrollView>
   );
 }

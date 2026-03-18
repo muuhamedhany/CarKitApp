@@ -8,9 +8,11 @@ import {
   FlatList,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -19,6 +21,8 @@ import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/the
 import ProductCard from '@/components/ProductCard';
 import ServiceCard from '@/components/ServiceCard';
 import CategoryPill from '@/components/CategoryPill';
+
+const TAB_BAR_HEIGHT = 65;
 
 type Product = {
   product_id: number; name: string; price: string; description?: string;
@@ -35,6 +39,8 @@ export default function SearchScreen() {
   const { token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
@@ -182,7 +188,7 @@ export default function SearchScreen() {
             </View>
           )}
 
-          <View style={{ height: 40 }} />
+          <View style={{ height: androidTabOffset + Spacing.lg }} />
         </ScrollView>
       )}
     </View>
