@@ -1,25 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, FlatList, Pressable,
-  ActivityIndicator, ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  FlatList,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
-import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import ProductCard from '@/components/ProductCard';
 import ServiceCard from '@/components/ServiceCard';
 import CategoryPill from '@/components/CategoryPill';
 
+const TAB_BAR_HEIGHT = 65;
+
 type Product = {
-  product_id: number; name: string; description?: string;
-  price: string; stock: number; category_name?: string; vendor_name?: string;
+  product_id: number; name: string; price: string; description?: string;
+  category_name?: string; vendor_name?: string; stock?: number;
 };
 type Service = {
-  service_id: number; name: string; description?: string;
-  price: string; duration?: number; category_name?: string; provider_name?: string;
+  service_id: number; name: string; price: string; duration?: number;
+  category_name?: string; provider_name?: string;
 };
 
 type ViewMode = 'all' | 'products' | 'services';
@@ -28,52 +39,56 @@ export default function SearchScreen() {
   const { token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [searched, setSearched] = useState(false);
 
-  const search = useCallback(async (q: string) => {
+  const search = useCallback(async () => {
     setLoading(true);
-    setHasSearched(true);
+    setSearched(true);
     try {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products${q ? `?search=${encodeURIComponent(q)}` : ''}`),
-        fetch(`${API_URL}/services`),
+        fetch(`${API_URL}/products${query ? `?search=${encodeURIComponent(query)}` : ''}`, { headers }),
+        fetch(`${API_URL}/services`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
-      if (prodData.success) setProducts(prodData.data);
+      if (prodData.success) setProducts(prodData.data || []);
       if (servData.success) {
-        // client-side filter for services
-        if (q) {
-          setServices(servData.data.filter((s: Service) =>
-            s.name.toLowerCase().includes(q.toLowerCase())
-          ));
-        } else {
-          setServices(servData.data);
+        let filtered = servData.data || [];
+        if (query) {
+          const q = query.toLowerCase();
+          filtered = filtered.filter((s: Service) =>
+            s.name.toLowerCase().includes(q) ||
+            s.provider_name?.toLowerCase().includes(q)
+          );
         }
+        setServices(filtered);
       }
     } catch {
-      showToast('error', 'Error', 'Could not load results.');
+      showToast('error', 'Error', 'Could not fetch results.');
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [query, token]);
 
-  // Load all on first render
-  useEffect(() => { search(''); }, []);
-
-  const handleSearch = () => { search(query.trim()); };
+  // Load all on mount
+  useEffect(() => { search(); }, []);
 
   const handleAddToCart = async (productId: number) => {
-    const res = await addToCart(productId);
-    if (res.success) {
-      showToast('success', 'Added!', 'Product added to cart.');
+    const result = await addToCart(productId);
+    if (result.success) {
+      showToast('success', 'Added!', 'Product added to your cart.');
     } else {
-      showToast('error', 'Error', res.message);
+      showToast('error', 'Error', result.message);
     }
   };
 
@@ -82,107 +97,98 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Search Header */}
-      <View style={styles.searchHeader}>
+      {/* Search Input */}
+      <View style={styles.searchRow}>
         <View style={styles.searchInputContainer}>
           <MaterialCommunityIcons name="magnify" size={20} color={Colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for parts, services..."
+            placeholder="Search products, services..."
             placeholderTextColor={Colors.textMuted}
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={handleSearch}
+            onSubmitEditing={search}
             returnKeyType="search"
-            autoCapitalize="none"
           />
           {query.length > 0 && (
-            <Pressable onPress={() => { setQuery(''); search(''); }}>
+            <Pressable onPress={() => { setQuery(''); }}>
               <MaterialCommunityIcons name="close-circle" size={18} color={Colors.textMuted} />
             </Pressable>
           )}
         </View>
       </View>
 
-      {/* View Mode Toggle */}
+      {/* Mode toggle */}
       <View style={styles.toggleRow}>
-        {(['products', 'services', 'all'] as ViewMode[]).map(mode => (
+        {(['products', 'services', 'all'] as ViewMode[]).map((mode) => (
           <Pressable
             key={mode}
             style={[styles.togglePill, viewMode === mode && styles.togglePillActive]}
             onPress={() => setViewMode(mode)}
           >
             <Text style={[styles.toggleText, viewMode === mode && styles.toggleTextActive]}>
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              {mode === 'all' ? 'All' : mode === 'products' ? 'Products' : 'Services'}
             </Text>
           </Pressable>
         ))}
       </View>
 
       {loading ? (
-        <View style={styles.centered}>
+        <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.pink} />
         </View>
       ) : (
         <ScrollView
-          style={styles.results}
-          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.results}
         >
-          {/* Products Section */}
-          {showProducts && (
+          {/* Products */}
+          {showProducts && products.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Products:</Text>
-              {products.length > 0 ? (
-                <>
-                  <Text style={styles.resultCount}>
-                    Showing {products.length} result{products.length !== 1 ? 's' : ''}
-                  </Text>
-                  <View style={styles.productGrid}>
-                    {products.map(item => (
-                      <View key={item.product_id} style={styles.gridItem}>
-                        <ProductCard
-                          name={item.name}
-                          price={item.price}
-                          onAddToCart={() => handleAddToCart(item.product_id)}
-                          fullWidth
-                        />
-                      </View>
-                    ))}
+              <Text style={styles.resultCount}>Showing {products.length} results</Text>
+              <View style={styles.productGrid}>
+                {products.map((p) => (
+                  <View key={p.product_id} style={styles.productGridItem}>
+                    <ProductCard
+                      name={p.name}
+                      price={p.price}
+                      vendorName={p.vendor_name}
+                      onAddToCart={() => handleAddToCart(p.product_id)}
+                    />
                   </View>
-                </>
-              ) : (
-                <Text style={styles.noResults}>No products found</Text>
-              )}
+                ))}
+              </View>
             </>
           )}
 
-          {/* Services Section */}
-          {showServices && (
+          {/* Services */}
+          {showServices && services.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Services:</Text>
-              {services.length > 0 ? (
-                <>
-                  <Text style={styles.resultCount}>
-                    Showing {services.length} result{services.length !== 1 ? 's' : ''}
-                  </Text>
-                  {services.map(item => (
-                    <View key={item.service_id} style={{ paddingHorizontal: Spacing.lg }}>
-                      <ServiceCard
-                        name={item.name}
-                        providerName={item.provider_name}
-                        price={item.price}
-                        duration={item.duration}
-                        variant="full"
-                      />
-                    </View>
-                  ))}
-                </>
-              ) : (
-                <Text style={styles.noResults}>No services found</Text>
-              )}
+              <Text style={styles.resultCount}>Showing {services.length} results</Text>
+              {services.map((s) => (
+                <ServiceCard
+                  key={s.service_id}
+                  name={s.name}
+                  providerName={s.provider_name}
+                  price={s.price}
+                  duration={s.duration || undefined}
+                />
+              ))}
             </>
           )}
+
+          {/* Empty state */}
+          {searched && products.length === 0 && services.length === 0 && (
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons name="magnify-close" size={48} color={Colors.textMuted} />
+              <Text style={styles.emptyTitle}>No results found</Text>
+              <Text style={styles.emptySubtitle}>Try a different search term</Text>
+            </View>
+          )}
+
+          <View style={{ height: androidTabOffset + Spacing.lg }} />
         </ScrollView>
       )}
     </View>
@@ -190,96 +196,48 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingTop: 56,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchHeader: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
+  container: { flex: 1, backgroundColor: Colors.background, paddingTop: 60 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  results: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
+
+  // Search
+  searchRow: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm },
   searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    height: 48,
+    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: Spacing.md, paddingVertical: 10,
   },
   searchInput: {
-    flex: 1,
-    color: Colors.white,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.regular,
-    marginLeft: Spacing.sm,
+    flex: 1, color: Colors.textPrimary, fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm, marginLeft: Spacing.sm, paddingVertical: 0,
   },
+
+  // Toggle
   toggleRow: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    gap: 8,
+    flexDirection: 'row', paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md, gap: Spacing.sm,
   },
   togglePill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md, paddingVertical: 6,
+    borderRadius: BorderRadius.full, borderWidth: 1,
+    borderColor: Colors.cardBorder, backgroundColor: 'transparent',
   },
-  togglePillActive: {
-    backgroundColor: Colors.pink,
-    borderColor: Colors.pink,
-  },
-  toggleText: {
-    color: Colors.textSecondary,
-    fontSize: FontSizes.xs,
-    fontFamily: Fonts.semiBold,
-  },
-  toggleTextActive: {
-    color: Colors.white,
-  },
-  results: {
-    flex: 1,
-  },
+  togglePillActive: { backgroundColor: Colors.pink, borderColor: Colors.pink },
+  toggleText: { color: Colors.textSecondary, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+  toggleTextActive: { color: Colors.white },
+
+  // Products
   sectionTitle: {
-    color: Colors.white,
-    fontSize: FontSizes.xl,
-    fontFamily: Fonts.bold,
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
+    color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl,
+    marginBottom: 4, marginTop: Spacing.sm,
   },
-  resultCount: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.xs,
-    fontFamily: Fonts.regular,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  productGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.md,
-  },
-  gridItem: {
-    width: '50%',
-    paddingHorizontal: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  noResults: {
-    color: Colors.textMuted,
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.regular,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-  },
+  resultCount: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginBottom: Spacing.sm },
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  productGridItem: { width: '50%' },
+
+  // Empty
+  emptyState: { alignItems: 'center', marginTop: 80 },
+  emptyTitle: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
+  emptySubtitle: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
 });
