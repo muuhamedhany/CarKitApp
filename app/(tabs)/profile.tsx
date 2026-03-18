@@ -4,13 +4,17 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+
+const TAB_BAR_HEIGHT = 65;
 
 type MenuItem = {
   icon: string;
@@ -23,6 +27,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   const handleLogout = async () => {
     await logout();
@@ -101,7 +107,7 @@ export default function ProfileScreen() {
         </LinearGradient>
       </Pressable>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: androidTabOffset + Spacing.xl }} />
     </ScrollView>
   );
 }

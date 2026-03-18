@@ -6,16 +6,22 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
+const TAB_BAR_HEIGHT = 65;
+
 export default function CartScreen() {
   const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   useEffect(() => { fetchCart(); }, []);
 
@@ -91,13 +97,13 @@ export default function CartScreen() {
           data={items}
           keyExtractor={(item) => item.cart_item_id.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: androidTabOffset + 130 }]}
           showsVerticalScrollIndicator={false}
         />
       )}
 
       {/* Bottom bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + (Platform.OS === 'android' ? 25 : 0) }]}>
         <View>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>{total} EGP</Text>
@@ -120,7 +126,7 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 120 },
+  list: { paddingHorizontal: Spacing.lg },
 
   // Header
   header: {
@@ -162,10 +168,9 @@ const styles = StyleSheet.create({
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.backgroundSecondary,
-    borderTopWidth: 1, borderTopColor: Colors.border,
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    paddingBottom: 30,
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1.5, borderTopColor: Colors.cardBorder,
+    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md,
   },
   totalLabel: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
   totalValue: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
