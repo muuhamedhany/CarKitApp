@@ -1,28 +1,19 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React from 'react';
+import { Text, Pressable, StyleSheet } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
-type Props = {
+type CategoryPillProps = {
   label: string;
-  icon?: string;
   isActive?: boolean;
   onPress?: () => void;
 };
 
-export default function CategoryPill({ label, icon, isActive = false, onPress }: Props) {
+export default function CategoryPill({ label, isActive, onPress }: CategoryPillProps) {
   return (
     <Pressable
-      style={[styles.pill, isActive && styles.pillActive]}
       onPress={onPress}
+      style={[styles.pill, isActive && styles.pillActive]}
     >
-      {icon && (
-        <MaterialCommunityIcons
-          name={icon as any}
-          size={18}
-          color={isActive ? Colors.pink : Colors.textSecondary}
-          style={{ marginRight: 4 }}
-        />
-      )}
       <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
     </Pressable>
   );
@@ -30,26 +21,24 @@ export default function CategoryPill({ label, icon, isActive = false, onPress }:
 
 const styles = StyleSheet.create({
   pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: Colors.border,
-    marginRight: Spacing.sm,
+    borderColor: Colors.cardBorder,
     backgroundColor: 'transparent',
+    marginRight: Spacing.sm,
   },
   pillActive: {
+    backgroundColor: Colors.pink,
     borderColor: Colors.pink,
-    backgroundColor: 'rgba(233, 30, 140, 0.1)',
   },
   label: {
     color: Colors.textSecondary,
-    fontSize: FontSizes.xs,
     fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
   },
   labelActive: {
-    color: Colors.pink,
+    color: Colors.white,
   },
 });
