@@ -56,6 +56,11 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="my-orders" options={{ headerShown: false }} />
             <Stack.Screen name="my-bookings" options={{ headerShown: false }} />
+            <Stack.Screen name="add-vehicle-prompt" options={{ headerShown: false }} />
+            <Stack.Screen name="add-vehicle-signup" options={{ headerShown: false }} />
+            <Stack.Screen name="my-vehicles" options={{ headerShown: false }} />
+            <Stack.Screen name="add-vehicle" options={{ headerShown: false }} />
+            <Stack.Screen name="vehicle-detail" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="light" />
         </ToastProvider>
