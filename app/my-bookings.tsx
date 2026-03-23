@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
+import BackButton from '@/components/BackButton';
+
 type Booking = {
   booking_id: number;
   service_name: string;
@@ -122,9 +124,9 @@ export default function MyBookingsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color={Colors.textPrimary} />
-        </Pressable>
+        <View style={styles.backBtn}>
+          <BackButton noSpacer />
+        </View>
         <Text style={styles.headerTitle}>My Bookings</Text>
         <View style={styles.backBtn} />
       </View>
