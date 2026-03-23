@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   };
 
   const personalItems: MenuItem[] = [
-    { icon: 'car-sports', label: 'My Vehicles', onPress: () => showToast('info', 'Coming Soon', 'My Vehicles is being built.') },
+    { icon: 'car-sports', label: 'My Vehicles', route: '/my-vehicles' },
     { icon: 'package-variant', label: 'My Orders', route: '/my-orders' },
     { icon: 'calendar-check', label: 'My Bookings', route: '/my-bookings' },
     { icon: 'map-marker-outline', label: 'Shipping Addresses', onPress: () => showToast('info', 'Coming Soon', 'Addresses is being built.') },
