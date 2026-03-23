@@ -1,9 +1,13 @@
+import { Platform } from 'react-native';
+import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/theme';
+import CustomTabBar from '@/components/CustomTabBar';
 
-export default function TabLayout() {
+// iOS: Keep the NativeTabs exactly as before
+function IOSTabLayout() {
   return (
     <NativeTabs
       backgroundColor={Colors.backgroundSecondary}
@@ -58,4 +62,28 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
     </NativeTabs>
   );
+}
+
+// Android: Custom floating tab bar matching the design
+function AndroidTabLayout() {
+  return (
+    <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="search" options={{ title: 'Search' }} />
+      <Tabs.Screen name="cart" options={{ title: 'Cart' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  if (Platform.OS === 'ios') {
+    return <IOSTabLayout />;
+  }
+  return <AndroidTabLayout />;
 }
