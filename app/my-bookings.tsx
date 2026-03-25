@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
-import BackButton from '@/components/BackButton';
+import { BackButton } from '@/components';
 
 type Booking = {
   booking_id: number;

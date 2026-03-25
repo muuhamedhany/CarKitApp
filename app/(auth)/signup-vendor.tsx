@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useToast } from '@/contexts/ToastContext';
-import FormInput from '@/components/FormInput';
-import GradientButton from '@/components/GradientButton';
-import AuthFooter from '@/components/AuthFooter';
-import BackButton from '@/components/BackButton';
+import { FormInput } from '@/components';
+import { GradientButton } from '@/components';
+import { AuthFooter } from '@/components';
+import { BackButton } from '@/components';
 import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 export default function SignUpVendorScreen() {

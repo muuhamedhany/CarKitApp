@@ -19,7 +19,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import CategoryPill from '@/components/CategoryPill';
+import { CategoryPill } from '@/components';
 
 const TAB_BAR_HEIGHT = 65;
 
