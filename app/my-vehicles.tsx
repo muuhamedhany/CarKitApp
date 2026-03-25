@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import BackButton from '@/components/BackButton';
+import { BackButton } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 

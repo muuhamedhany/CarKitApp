@@ -1,19 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '@/constants/config';
-
-type User = {
-  user_id?: number;
-  name: string;
-  email: string;
-  phone?: string;
-  picture?: string;
-  provider?: 'local' | 'google';
-  role?: string;
-  verification_status?: string;
-  vendor_id?: number;
-  provider_id?: number;
-};
+import { authService } from '@/services/api/auth.service';
+import { User } from '@/types';
 
 type AuthContextType = {
   user: User | null;
@@ -62,12 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
+      const data = await authService.login(email, password);
 
       if (data.success) {
         await AsyncStorage.setItem('token', data.data.token);
@@ -84,12 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (regData: { name: string; email: string; phone: string; password: string }) => {
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(regData),
-      });
-      const data = await response.json();
+      const data = await authService.register(regData);
 
       if (data.success) {
         await AsyncStorage.setItem('token', data.data.token);
@@ -107,17 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle = async (googleUser: { email: string; name: string; picture?: string; id: string }) => {
     try {
       // Try server-side Google auth first
-      const response = await fetch(`${API_URL}/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: googleUser.email,
-          name: googleUser.name,
-          googleId: googleUser.id,
-          picture: googleUser.picture,
-        }),
+      const data = await authService.loginWithGoogle({
+        email: googleUser.email,
+        name: googleUser.name,
+        googleId: googleUser.id,
+        picture: googleUser.picture,
       });
-      const data = await response.json();
 
       if (data.success) {
         await AsyncStorage.setItem('token', data.data.token);
@@ -151,12 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const forgotPassword = async (email: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
+      const data = await authService.forgotPassword(email);
       return { success: data.success, message: data.message };
     } catch {
       return { success: false, message: 'Could not connect to server.' };
@@ -165,12 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyOtp = async (email: string, otp: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await response.json();
+      const data = await authService.verifyOtp(email, otp);
       return { success: data.success, message: data.message };
     } catch {
       return { success: false, message: 'Could not connect to server.' };
@@ -179,12 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string, otp: string, newPassword: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
-      const data = await response.json();
+      const data = await authService.resetPassword(email, otp, newPassword);
       return { success: data.success, message: data.message };
     } catch {
       return { success: false, message: 'Could not connect to server.' };

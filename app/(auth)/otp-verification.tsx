@@ -12,8 +12,8 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import GradientButton from '@/components/GradientButton';
-import BackButton from '@/components/BackButton';
+import { GradientButton } from '@/components';
+import { BackButton } from '@/components';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 export default function OtpVerificationScreen() {
