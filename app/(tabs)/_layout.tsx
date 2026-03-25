@@ -4,7 +4,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Colors } from '@/constants/theme';
-import CustomTabBar from '@/components/CustomTabBar';
+import { CustomTabBar } from '@/components';
 
 // iOS: Keep the NativeTabs exactly as before
 function IOSTabLayout() {

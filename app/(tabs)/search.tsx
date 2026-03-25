@@ -18,9 +18,9 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import ProductCard from '@/components/ProductCard';
-import ServiceCard from '@/components/ServiceCard';
-import CategoryPill from '@/components/CategoryPill';
+import { ProductCard } from '@/components';
+import { ServiceCard } from '@/components';
+import { CategoryPill } from '@/components';
 
 const TAB_BAR_HEIGHT = 65;
 

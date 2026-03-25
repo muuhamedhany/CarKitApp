@@ -16,12 +16,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { supabase } from '@/src/utils/supabase';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import BackButton from '@/components/BackButton';
-import FormInput from '@/components/FormInput';
-import PickerModal from '@/components/PickerModal';
+import { BackButton } from '@/components';
+import { FormInput } from '@/components';
+import { PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 

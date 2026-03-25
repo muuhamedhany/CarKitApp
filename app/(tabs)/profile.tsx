@@ -88,12 +88,6 @@ export default function ProfileScreen() {
         {personalItems.map(renderMenuItem)}
       </View>
 
-      {/* Support & Legal */}
-      <Text style={styles.sectionLabel}>SUPPORT & LEGAL</Text>
-      <View style={styles.menuSection}>
-        {supportItems.map(renderMenuItem)}
-      </View>
-
       {/* Logout */}
       <Pressable onPress={handleLogout} style={styles.logoutBtn}>
         <LinearGradient

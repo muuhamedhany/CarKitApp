@@ -10,12 +10,12 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import FormInput from '@/components/FormInput';
-import GradientButton from '@/components/GradientButton';
-import AuthFooter from '@/components/AuthFooter';
-import SocialButton from '@/components/SocialButton';
-import Divider from '@/components/Divider';
-import BackButton from '@/components/BackButton';
+import { FormInput } from '@/components';
+import { GradientButton } from '@/components';
+import { AuthFooter } from '@/components';
+import { SocialButton } from '@/components';
+import { Divider } from '@/components';
+import { BackButton } from '@/components';
 import { Colors, Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function SignUpCustomerScreen() {

@@ -45,22 +45,22 @@ export default function RootLayout() {
     <AuthProvider>
       <CartProvider>
         <ToastProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="select-account" />
-            <Stack.Screen name="signup-customer" />
-            <Stack.Screen name="signup-vendor" />
-            <Stack.Screen name="upload-documents" />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="my-orders" options={{ headerShown: false }} />
-            <Stack.Screen name="my-bookings" options={{ headerShown: false }} />
-            <Stack.Screen name="add-vehicle-prompt" options={{ headerShown: false }} />
-            <Stack.Screen name="add-vehicle-signup" options={{ headerShown: false }} />
-            <Stack.Screen name="my-vehicles" options={{ headerShown: false }} />
-            <Stack.Screen name="add-vehicle" options={{ headerShown: false }} />
-            <Stack.Screen name="vehicle-detail" options={{ headerShown: false }} />
+          <Stack 
+            screenOptions={{ 
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="index" options={{ title: '' }} />
+            <Stack.Screen name="onboarding" options={{ title: '' }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="add-vehicle-prompt" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="add-vehicle-signup" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="my-vehicles" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="add-vehicle" options={{ headerShown: false, title: '' }} />
+            <Stack.Screen name="vehicle-detail" options={{ headerShown: false, title: '' }} />
           </Stack>
           <StatusBar style="light" />
         </ToastProvider>

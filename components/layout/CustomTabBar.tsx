@@ -146,12 +146,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: Spacing.sm,
     width: '100%',
-    // Dark shadow instead of pink glow
-    elevation: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
   },
   tab: {
     flex: 1,
