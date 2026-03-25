@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import GradientButton from '@/components/GradientButton';
+import { GradientButton } from '@/components';
 import { Colors, Spacing, FontSizes, Fonts } from '@/constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

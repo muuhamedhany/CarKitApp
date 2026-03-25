@@ -52,11 +52,7 @@ export default function RootLayout() {
           >
             <Stack.Screen name="index" options={{ title: '' }} />
             <Stack.Screen name="onboarding" options={{ title: '' }} />
-            <Stack.Screen name="login" options={{ title: '' }} />
-            <Stack.Screen name="select-account" options={{ title: '' }} />
-            <Stack.Screen name="signup-customer" options={{ title: '' }} />
-            <Stack.Screen name="signup-vendor" options={{ title: '' }} />
-            <Stack.Screen name="upload-documents" options={{ title: '' }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false, title: '' }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
             <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
             <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
