@@ -16,6 +16,7 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
@@ -102,17 +103,17 @@ type ToastData = {
 
 function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: number) => void }) {
   const config = TOAST_CONFIGS[toast.type];
-  const translateY = useSharedValue(-120);
+  const translateY = useSharedValue(-150);
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    translateY.value = withSpring(0, { damping: 20, stiffness: 200 }); // Faster spring
-    opacity.value = withTiming(1, { duration: 200 }); // Faster fade
+    translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
+    opacity.value = withTiming(1, { duration: 300 });
   }, []);
 
   const dismiss = useCallback(() => {
-    translateY.value = withTiming(-120, { duration: 200 });
-    opacity.value = withTiming(0, { duration: 200 }, () => {
+    translateY.value = withTiming(-150, { duration: 300, easing: Easing.in(Easing.ease) });
+    opacity.value = withTiming(0, { duration: 300 }, () => {
       runOnJS(onDismiss)(toast.id);
     });
   }, [toast.id, onDismiss]);
@@ -124,23 +125,25 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
 
   return (
     <Animated.View style={[styles.toastContainer, animatedStyle]}>
-      <Pressable onPress={dismiss} style={styles.toastInner}>
-        {/* Accent bar on left */}
-        <View style={[styles.toastAccent, { backgroundColor: config.accentColor }]} />
+      <Pressable onPress={dismiss}>
+        <BlurView intensity={50} tint="dark" style={styles.toastInner}>
+          {/* Accent bar on left */}
+          <View style={[styles.toastAccent, { backgroundColor: config.accentColor }]} />
 
-        <MaterialCommunityIcons
-          name={config.icon as any}
-          size={24}
-          color={config.accentColor}
-          style={styles.toastIcon}
-        />
-        <View style={styles.toastTextContainer}>
-          <Text style={styles.toastTitle}>{toast.title}</Text>
-          {toast.message ? (
-            <Text style={styles.toastMessage}>{toast.message}</Text>
-          ) : null}
-        </View>
-        <MaterialCommunityIcons name="close" size={18} color={Colors.textMuted} />
+          <MaterialCommunityIcons
+            name={config.icon as any}
+            size={24}
+            color={config.accentColor}
+            style={styles.toastIcon}
+          />
+          <View style={styles.toastTextContainer}>
+            <Text style={styles.toastTitle}>{toast.title}</Text>
+            {toast.message ? (
+              <Text style={styles.toastMessage}>{toast.message}</Text>
+            ) : null}
+          </View>
+          <MaterialCommunityIcons name="close" size={18} color={Colors.textMuted} />
+        </BlurView>
       </Pressable>
     </Animated.View>
   );
@@ -180,13 +183,19 @@ function AlertDialog({
   const buttons = options.buttons || [{ text: 'OK', onPress: undefined }];
 
   const handlePress = (button: AlertButton) => {
+    // Trigger exit animation
     scale.value = withTiming(0.85, { duration: 150 });
-    dialogOpacity.value = withTiming(0, { duration: 150 }, () => {
-      runOnJS(() => {
-        button.onPress?.();
-        onClose();
-      })();
-    });
+    dialogOpacity.value = withTiming(0, { duration: 150 });
+
+    // Execute the navigation or custom action immediately on JS thread
+    if (button.onPress) {
+      button.onPress();
+    }
+
+    // Delay unmounting the dialog until the animation completes
+    setTimeout(() => {
+      onClose();
+    }, 150);
   };
 
   return (
@@ -335,16 +344,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: Colors.surface, // Solid background
     borderWidth: 1,
-    borderColor: 'rgba(156, 39, 176, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     overflow: 'hidden',
-    // slight shadow for depth since we removed transparency
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
   toastAccent: {
     position: 'absolute',

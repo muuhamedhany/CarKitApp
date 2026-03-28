@@ -69,11 +69,11 @@ export default function UploadDocumentsScreen() {
 
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-      
+
       if (!supabaseUrl || !anonKey) {
         throw new Error('Supabase Config Missing');
       }
-      
+
       const uploadUrl = `${supabaseUrl}/storage/v1/object/documents/${filePath}`;
 
       const response = await FileSystem.uploadAsync(uploadUrl, uri, {
@@ -129,8 +129,8 @@ export default function UploadDocumentsScreen() {
       showToast('info', 'Registering', 'Creating your account...');
 
       // API Call to register vendor/provider
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-      const endpoint = params.role === 'vendor' ? '/api/vendors' : '/api/service-providers';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
+      const endpoint = params.role === 'vendor' ? '/vendors' : '/service-providers';
 
       const payload = {
         name: params.name,

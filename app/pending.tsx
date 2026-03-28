@@ -8,24 +8,41 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 export default function PendingScreen() {
   const router = useRouter();
   const { logout, user } = useAuth();
+  const isRejected = user?.verification_status === 'rejected';
 
   const handleLogout = async () => {
     await logout();
     router.replace('/login');
   };
 
+  const roleName = user?.role === 'vendor' ? 'Vendor' : 'Service Provider';
+
   return (
     <View style={styles.container}>
-      <MaterialCommunityIcons name="clock-outline" size={80} color={Colors.pink} style={styles.icon} />
-      <Text style={styles.title}>Account Pending</Text>
+      <MaterialCommunityIcons 
+        name={isRejected ? "alert-circle-outline" : "clock-outline"} 
+        size={80} 
+        color={isRejected ? Colors.error : Colors.pink} 
+        style={styles.icon} 
+      />
+      
+      <Text style={styles.title}>
+        {isRejected ? 'Account Rejected' : 'Account Pending'}
+      </Text>
+
       <Text style={styles.subtitle}>
-        Hi {user?.name}, your {user?.role === 'vendor' ? 'Vendor' : 'Service Provider'} account is currently under review by our team.
+        Hi {user?.name}, your {roleName} account {isRejected ? 'was not approved' : 'is currently under review'}.
       </Text>
+
       <Text style={styles.message}>
-        We will notify you once your documents have been approved. This usually takes 24-48 hours.
+        {isRejected 
+          ? 'Unfortunately, your application did not meet our requirements at this time. Please contact our support team at support@carkit.com for more details or to appeal the decision.'
+          : 'We will notify you once your documents have been approved. This usually takes 24-48 hours.'
+        }
       </Text>
+
       <GradientButton
-        title="Check Again Later (Logout)"
+        title={isRejected ? "Back to Login" : "Check Again Later (Logout)"}
         onPress={handleLogout}
         style={styles.button}
       />
