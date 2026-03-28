@@ -41,8 +41,17 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (result.success) {
-      if ((result.user?.role === 'vendor' || result.user?.role === 'provider') && result.user?.verification_status === 'pending') {
-        showToast('info', 'Under Review', 'Your account is pending admin approval.');
+      const user = result.user;
+      const isVendorOrProvider = user?.role === 'vendor' || user?.role === 'provider';
+      const status = user?.verification_status;
+
+      if (isVendorOrProvider && (status === 'pending' || status === 'rejected')) {
+        const title = status === 'pending' ? 'Under Review' : 'Account Rejected';
+        const msg = status === 'pending' 
+          ? 'Your account is pending admin approval.' 
+          : 'Your application was not approved. Please contact support.';
+        
+        showToast(status === 'pending' ? 'info' : 'error', title, msg);
         router.replace('/pending');
       } else {
         showToast('success', 'Welcome Back!', 'Login successful.');

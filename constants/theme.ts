@@ -33,14 +33,21 @@ export const Colors = {
   textSecondary: '#9E9E9E',
   textMuted: '#6B6B80',
 
+  border: '#2A2A3A',
+  primary: '#E91E8C',
+
   // Utility
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
   overlay: 'rgba(0,0,0,0.7)',
   surface: '#1E1E2C',
-  border: '#2A2A3A',
-  primary: '#E91E8C',
+
+  // Status
+  success: '#4CAF50',
+  error: '#FF4757',
+  warning: '#FFA502',
+  info: '#2196F3',
 };
 
 export const Spacing = {
