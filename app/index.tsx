@@ -3,30 +3,26 @@ import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '@/hooks/useTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
-  withDelay,
-  runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import { Colors } from '@/constants/theme';
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function SplashScreenView() {
   const router = useRouter();
+  const { colors } = useTheme();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
   useEffect(() => {
-    // Fade in logo over ~1.5s, hold, then navigate
     opacity.value = withTiming(1, { duration: 1500, easing: Easing.out(Easing.ease) });
     scale.value = withTiming(1, { duration: 1500, easing: Easing.out(Easing.back(1.2)) });
 
-    // After 3 seconds total, navigate
     const timer = setTimeout(async () => {
       try {
         const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
@@ -49,7 +45,7 @@ export default function SplashScreenView() {
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.logoContainer, animatedStyle]}>
         <Image
           source={require('@/assets/images/splash-icon.png')}
@@ -62,18 +58,7 @@ export default function SplashScreenView() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logo: {
-    width: 220,
-    height: 220,
-  },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  logoContainer: { alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 220, height: 220 },
 });
