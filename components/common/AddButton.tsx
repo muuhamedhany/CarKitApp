@@ -1,6 +1,7 @@
 import { Pressable, View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type AddButtonProps = {
   title: string;
@@ -15,16 +16,18 @@ export default function AddButton({
   disabled = false,
   style,
 }: AddButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.button, disabled && styles.disabled, style]}
+      style={[styles.button, { borderColor: colors.purple, backgroundColor: colors.transparent }, disabled && styles.disabled, style]}
     >
-      <View style={styles.iconCircle}>
-        <MaterialCommunityIcons name="plus" size={16} color={Colors.white} />
+      <View style={[styles.iconCircle, { backgroundColor: colors.purple }]}>
+        <MaterialCommunityIcons name="plus" size={16} color="#FFFFFF" />
       </View>
-      <Text style={styles.text}>{title}</Text>
+      <Text style={[styles.text, { color: colors.purple }]}>{title}</Text>
     </Pressable>
   );
 }
@@ -39,8 +42,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: Colors.purple,
-    backgroundColor: Colors.transparent,
   },
   disabled: {
     opacity: 0.6,
@@ -49,13 +50,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.purple,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
   },
   text: {
-    color: Colors.purple,
     fontSize: FontSizes.lg,
     fontFamily: Fonts.bold,
   },

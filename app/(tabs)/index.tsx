@@ -17,8 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { CategoryPill } from '@/components';
 
 const TAB_BAR_HEIGHT = 65;
@@ -33,28 +34,12 @@ type Service = {
   category_name?: string; provider_name?: string;
 };
 
-// Service category icons
-const SERVICE_ICONS: Record<string, string> = {
-  Brakes: 'car-brake-alert',
-  'Oil Change': 'oil',
-  Tires: 'tire',
-  Engine: 'engine',
-  default: 'car-wrench',
-};
-
-// Product category icons
-const PRODUCT_ICONS: Record<string, string> = {
-  Batteries: 'car-battery',
-  Body: 'car-door',
-  Engine: 'engine',
-  default: 'car-cog',
-};
-
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
@@ -107,28 +92,28 @@ export default function HomeScreen() {
         colors={['rgba(156,39,176,0.4)', 'rgba(233,30,140,0.3)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.serviceCardGradient}
+        style={[styles.serviceCardGradient, { borderColor: colors.cardBorder }]}
       >
-        <Text style={styles.serviceCardName} numberOfLines={2}>{service.name}</Text>
-        <Text style={styles.serviceCardPrice}>Starting at {service.price} EGP</Text>
+        <Text style={[styles.serviceCardName, { color: colors.textPrimary }]} numberOfLines={2}>{service.name}</Text>
+        <Text style={[styles.serviceCardPrice, { color: colors.textSecondary }]}>Starting at {service.price} EGP</Text>
         <View style={styles.serviceCardArrow}>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.pink} />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.pink} />
         </View>
       </LinearGradient>
     </Pressable>
   );
 
   const renderProductCard = (product: Product) => (
-    <Pressable key={product.product_id} style={styles.productCard}>
-      <View style={styles.productImage}>
-        <MaterialCommunityIcons name="car-wrench" size={32} color={Colors.textMuted} />
+    <Pressable key={product.product_id} style={[styles.productCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+      <View style={[styles.productImage, { backgroundColor: colors.imagePlaceholder }]}>
+        <MaterialCommunityIcons name="car-wrench" size={32} color={colors.textMuted} />
       </View>
       <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
-        <Text style={styles.productPrice}>{product.price} EGP</Text>
+        <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>{product.name}</Text>
+        <Text style={[styles.productPrice, { color: colors.pink }]}>{product.price} EGP</Text>
         <Pressable onPress={() => handleAddToCart(product.product_id)} style={styles.miniAddBtn}>
           <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientEnd]}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.miniAddBtnGrad}
@@ -142,48 +127,48 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={Colors.pink} />
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.pink} />
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.pink} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
     >
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.avatarCircle}>
-          <MaterialCommunityIcons name="account" size={24} color={Colors.pink} />
+        <View style={[styles.avatarCircle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}>
+          <MaterialCommunityIcons name="account" size={24} color={colors.pink} />
         </View>
         <View>
-          <Text style={styles.greeting}>
-            Hello, <Text style={styles.greetingName}>{user?.name || 'User'}!</Text>
+          <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+            Hello, <Text style={[styles.greetingName, { color: colors.pink }]}>{user?.name || 'User'}!</Text>
           </Text>
         </View>
       </View>
 
       {/* Search bar */}
-      <Pressable style={styles.searchBar} onPress={() => router.push('/(tabs)/search')}>
-        <MaterialCommunityIcons name="magnify" size={20} color={Colors.textMuted} />
-        <Text style={styles.searchPlaceholder}>Search for services, parts...</Text>
+      <Pressable style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]} onPress={() => router.push('/(tabs)/search')}>
+        <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
+        <Text style={[styles.searchPlaceholder, { color: colors.textMuted }]}>Search for services, parts...</Text>
       </Pressable>
 
       {/* Featured Services */}
-      <Text style={styles.sectionTitle}>Featured Services</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Services</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
         {services.map(renderServiceCard)}
         {services.length === 0 && (
-          <Text style={styles.emptyText}>No services yet</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet</Text>
         )}
       </ScrollView>
 
       {/* Featured Products */}
-      <Text style={styles.sectionTitle}>Featured Products</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Products</Text>
       {productCategories.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
           {productCategories.slice(0, 5).map((cat) => (
@@ -194,19 +179,19 @@ export default function HomeScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
         {products.map(renderProductCard)}
         {products.length === 0 && (
-          <Text style={styles.emptyText}>No products yet</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet</Text>
         )}
       </ScrollView>
 
       {/* Recent Activity */}
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-      <View style={styles.activityCard}>
-        <View style={styles.activityIcon}>
-          <MaterialCommunityIcons name="package-variant" size={20} color={Colors.pink} />
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
+      <View style={[styles.activityCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+        <View style={[styles.activityIcon, { backgroundColor: colors.pinkGlow }]}>
+          <MaterialCommunityIcons name="package-variant" size={20} color={colors.pink} />
         </View>
         <View style={styles.activityInfo}>
-          <Text style={styles.activityTitle}>Welcome to CarKit!</Text>
-          <Text style={styles.activitySub}>Browse products and services to get started</Text>
+          <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>Welcome to CarKit!</Text>
+          <Text style={[styles.activitySub, { color: colors.textMuted }]}>Browse products and services to get started</Text>
         </View>
       </View>
 
@@ -216,42 +201,36 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: Spacing.lg, paddingTop: 60 },
 
-  // Header
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg },
   avatarCircle: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 2, borderColor: Colors.pink,
+    borderWidth: 2,
     justifyContent: 'center', alignItems: 'center',
     marginRight: Spacing.sm,
   },
-  greeting: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.lg },
-  greetingName: { color: Colors.pink, fontFamily: Fonts.bold },
+  greeting: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg },
+  greetingName: { fontFamily: Fonts.bold },
 
-  // Search
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BorderRadius.md, borderWidth: 1,
     paddingHorizontal: Spacing.md, paddingVertical: 12,
     marginBottom: Spacing.lg,
   },
-  searchPlaceholder: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginLeft: Spacing.sm },
+  searchPlaceholder: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginLeft: Spacing.sm },
 
-  // Section
   sectionTitle: {
-    color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.lg,
+    fontFamily: Fonts.bold, fontSize: FontSizes.lg,
     marginBottom: Spacing.sm, marginTop: Spacing.sm,
   },
   horizontalScroll: { marginBottom: Spacing.md },
   pillRow: { marginBottom: Spacing.sm },
-  emptyText: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm, paddingHorizontal: Spacing.sm },
+  emptyText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, paddingHorizontal: Spacing.sm },
 
-  // Service Card
   serviceCard: {
     width: 180, height: 150, borderRadius: BorderRadius.lg,
     overflow: 'hidden', marginRight: Spacing.sm,
@@ -260,46 +239,38 @@ const styles = StyleSheet.create({
     flex: 1, padding: Spacing.md,
     justifyContent: 'space-between',
     borderRadius: BorderRadius.lg,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderWidth: 1,
   },
-  serviceCardName: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md },
-  serviceCardPrice: { color: Colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs },
-  serviceCardArrow: {
-    alignSelf: 'flex-start', marginTop: 4,
-  },
+  serviceCardName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  serviceCardPrice: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+  serviceCardArrow: { alignSelf: 'flex-start', marginTop: 4 },
 
-  // Product Card
   productCard: {
     width: 160, borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderWidth: 1,
     marginRight: Spacing.sm, overflow: 'hidden',
   },
   productImage: {
     height: 100, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(30,20,50,0.5)',
   },
   productInfo: { padding: Spacing.sm },
-  productName: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
-  productPrice: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
+  productName: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
+  productPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
   miniAddBtn: { borderRadius: BorderRadius.sm, overflow: 'hidden' },
   miniAddBtnGrad: { paddingVertical: 6, alignItems: 'center', borderRadius: BorderRadius.sm },
-  miniAddBtnText: { color: Colors.white, fontFamily: Fonts.semiBold, fontSize: 11 },
+  miniAddBtnText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: 11 },
 
-  // Activity
   activityCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.lg, borderWidth: 1,
     padding: Spacing.md, marginBottom: Spacing.sm,
   },
   activityIcon: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(233,30,140,0.15)',
     justifyContent: 'center', alignItems: 'center',
     marginRight: Spacing.sm,
   },
   activityInfo: { flex: 1 },
-  activityTitle: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  activitySub: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  activityTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  activitySub: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
 });

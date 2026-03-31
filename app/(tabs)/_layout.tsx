@@ -3,27 +3,29 @@ import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { CustomTabBar } from '@/components';
 
 // iOS: Keep the NativeTabs exactly as before
 function IOSTabLayout() {
+  const { colors } = useTheme();
+
   return (
     <NativeTabs
-      backgroundColor={Colors.backgroundSecondary}
-      tintColor={Colors.pink}
+      backgroundColor={colors.backgroundSecondary}
+      tintColor={colors.pink}
       iconColor={{
-        default: Colors.textMuted,
-        selected: Colors.pink,
+        default: colors.textMuted,
+        selected: colors.pink,
       }}
       labelStyle={{
         default: {
-          color: Colors.textMuted,
+          color: colors.textMuted,
           fontSize: 11,
           fontWeight: 500,
         },
         selected: {
-          color: Colors.pink,
+          color: colors.pink,
           fontSize: 11,
           fontWeight: 600,
         },

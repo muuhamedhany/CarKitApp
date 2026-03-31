@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Pressable, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
@@ -9,23 +9,27 @@ type CategoryPillProps = {
   onPress?: () => void;
 };
 
-export default function CategoryPill({ label, isActive, onPress }: CategoryPillProps) {
+export default function CategoryPill({ label, isActive = false, onPress }: CategoryPillProps) {
   const { colors } = useTheme();
 
   return (
     <Pressable
-      onPress={onPress}
       style={[
         styles.pill,
-        { borderColor: colors.cardBorder, backgroundColor: 'transparent' },
+        { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
         isActive && { backgroundColor: colors.pink, borderColor: colors.pink },
       ]}
+      onPress={onPress}
     >
-      <Text style={[
-        styles.label,
-        { color: colors.textSecondary },
-        isActive && { color: '#FFFFFF' },
-      ]}>{label}</Text>
+      <Text
+        style={[
+          styles.label,
+          { color: colors.textSecondary },
+          isActive && { color: '#FFFFFF' },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -33,7 +37,7 @@ export default function CategoryPill({ label, isActive, onPress }: CategoryPillP
 const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
+    paddingVertical: 6,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     marginRight: Spacing.sm,
