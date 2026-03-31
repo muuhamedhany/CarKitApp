@@ -1,15 +1,19 @@
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
+import { Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import { Layout } from '@/constants/Layout';
+import { useThemeContext, ThemeMode } from '@/contexts/ThemeContext';
+import { ThemeColors } from '@/constants/theme';
 
-// In a real app with light/dark mode, this hook would dynamically return
-// the right colors based on the current color scheme.
 export function useTheme() {
+  const { colors, isDark, themeMode, setThemeMode } = useThemeContext();
+
   return {
-    colors: Colors,
+    colors,
     fonts: Fonts,
     spacing: Spacing,
     borderRadius: BorderRadius,
     layout: Layout,
-    isDark: true, // Assuming dark theme is default for CarKit
+    isDark,
+    themeMode,
+    setThemeMode,
   };
 }

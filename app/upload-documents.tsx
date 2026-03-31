@@ -1,3 +1,4 @@
+import { useTheme } from '@/hooks/useTheme';
 import { useState } from 'react';
 import {
   View,
@@ -16,7 +17,7 @@ import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type DocStatus = {
   name: string | null;
@@ -31,7 +32,9 @@ type DocsState = {
 
 export default function UploadDocumentsScreen() {
   const router = useRouter();
-  const { showToast, showAlert } = useToast();
+    const { colors } = useTheme();
+  const styles = createStyles(colors);
+const { showToast, showAlert } = useToast();
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [docs, setDocs] = useState<DocsState>({
@@ -69,11 +72,11 @@ export default function UploadDocumentsScreen() {
 
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-      
+
       if (!supabaseUrl || !anonKey) {
         throw new Error('Supabase Config Missing');
       }
-      
+
       const uploadUrl = `${supabaseUrl}/storage/v1/object/documents/${filePath}`;
 
       const response = await FileSystem.uploadAsync(uploadUrl, uri, {
@@ -129,8 +132,8 @@ export default function UploadDocumentsScreen() {
       showToast('info', 'Registering', 'Creating your account...');
 
       // API Call to register vendor/provider
-      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-      const endpoint = params.role === 'vendor' ? '/api/vendors' : '/api/service-providers';
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
+      const endpoint = params.role === 'vendor' ? '/vendors' : '/service-providers';
 
       const payload = {
         name: params.name,
@@ -175,7 +178,7 @@ export default function UploadDocumentsScreen() {
           <MaterialCommunityIcons
             name="file-document-outline"
             size={24}
-            color={Colors.pink}
+            color={colors.pink}
             style={styles.docIcon}
           />
           <View>
@@ -202,7 +205,7 @@ export default function UploadDocumentsScreen() {
           <MaterialCommunityIcons
             name={hasFile ? 'check' : 'upload'}
             size={18}
-            color={hasFile ? '#4CAF50' : Colors.pink}
+            color={hasFile ? '#4CAF50' : colors.pink}
           />
           <Text style={[styles.uploadText, hasFile && styles.uploadTextDone]}>
             {'  '}{hasFile ? 'Uploaded' : 'Upload'}
@@ -244,8 +247,8 @@ export default function UploadDocumentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
@@ -253,13 +256,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   title: {
-    color: Colors.pink,
+    color: colors.pink,
     fontSize: 30,
     fontFamily: Fonts.extraBoldItalic,
     marginBottom: 4,
   },
   subtitle: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl,
@@ -267,11 +270,11 @@ const styles = StyleSheet.create({
   },
   docCard: {
     borderWidth: 1,
-    borderColor: 'rgba(156, 39, 176, 0.3)',
+    borderColor: colors.cardBorder,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
-    backgroundColor: 'rgba(30, 20, 50, 0.5)',
+    backgroundColor: colors.card,
   },
   docHeader: {
     flexDirection: 'row',
@@ -280,17 +283,17 @@ const styles = StyleSheet.create({
   },
   docIcon: { marginRight: Spacing.md },
   docTitle: {
-    color: Colors.white,
+    color: colors.textPrimary,
     fontSize: FontSizes.lg,
     fontFamily: Fonts.bold,
   },
   docRequired: {
-    color: Colors.pink,
+    color: colors.pink,
     fontSize: FontSizes.xs,
     fontFamily: Fonts.medium,
     marginTop: 2,
   },
-  docOptional: { color: Colors.textMuted },
+  docOptional: { color: colors.textMuted },
   fileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   fileName: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: FontSizes.xs,
     fontFamily: Fonts.regular,
     flex: 1,
@@ -310,21 +313,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(233, 30, 140, 0.3)',
-    backgroundColor: 'rgba(233, 30, 140, 0.05)',
+    borderColor: colors.pinkGlow,
+    backgroundColor: colors.pinkGlow,
   },
   uploadButtonDone: {
     borderColor: 'rgba(76, 175, 80, 0.3)',
     backgroundColor: 'rgba(76, 175, 80, 0.05)',
   },
   uploadText: {
-    color: Colors.pink,
+    color: colors.pink,
     fontSize: FontSizes.md,
     fontFamily: Fonts.semiBold,
   },
   uploadTextDone: { color: '#4CAF50' },
   reviewNote: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: FontSizes.sm,
     fontFamily: Fonts.regular,
     textAlign: 'center',

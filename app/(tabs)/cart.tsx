@@ -13,13 +13,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const TAB_BAR_HEIGHT = 65;
 
 export default function CartScreen() {
   const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
@@ -34,27 +36,25 @@ export default function CartScreen() {
   };
 
   const renderItem = ({ item }: { item: typeof items[0] }) => (
-    <View style={styles.cartItem}>
-      {/* Product image placeholder */}
-      <View style={styles.itemImage}>
-        <MaterialCommunityIcons name="car-wrench" size={28} color={Colors.textMuted} />
+    <View style={[styles.cartItem, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+      <View style={[styles.itemImage, { backgroundColor: colors.imagePlaceholder }]}>
+        <MaterialCommunityIcons name="car-wrench" size={28} color={colors.textMuted} />
       </View>
 
       <View style={styles.itemInfo}>
-        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-        <Text style={styles.itemPrice}>{item.price} EGP</Text>
+        <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>{item.name}</Text>
+        <Text style={[styles.itemPrice, { color: colors.pink }]}>{item.price} EGP</Text>
 
-        {/* Quantity controls */}
         <View style={styles.qtyRow}>
           <Pressable
-            style={styles.qtyBtn}
+            style={[styles.qtyBtn, { backgroundColor: colors.purpleGlow }]}
             onPress={() => updateQuantity(item.cart_item_id, item.quantity + 1)}
           >
-            <MaterialCommunityIcons name="plus" size={16} color={Colors.purpleLight} />
+            <MaterialCommunityIcons name="plus" size={16} color={colors.purpleLight} />
           </Pressable>
-          <Text style={styles.qtyText}>{item.quantity}</Text>
+          <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
           <Pressable
-            style={styles.qtyBtn}
+            style={[styles.qtyBtn, { backgroundColor: colors.purpleGlow }]}
             onPress={() => {
               if (item.quantity <= 1) {
                 removeItem(item.cart_item_id);
@@ -63,34 +63,32 @@ export default function CartScreen() {
               }
             }}
           >
-            <MaterialCommunityIcons name="minus" size={16} color={Colors.purpleLight} />
+            <MaterialCommunityIcons name="minus" size={16} color={colors.purpleLight} />
           </Pressable>
         </View>
       </View>
 
-      {/* Remove button */}
       <Pressable style={styles.removeBtn} onPress={() => removeItem(item.cart_item_id)}>
-        <MaterialCommunityIcons name="close-circle-outline" size={22} color={Colors.pink} />
+        <MaterialCommunityIcons name="close-circle-outline" size={22} color={colors.pink} />
       </Pressable>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Cart</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Cart</Text>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.pink} />
+          <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : items.length === 0 ? (
         <View style={styles.center}>
-          <MaterialCommunityIcons name="cart-off" size={64} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>Your cart is empty</Text>
-          <Text style={styles.emptySubtitle}>Browse products and add items to your cart</Text>
+          <MaterialCommunityIcons name="cart-off" size={64} color={colors.textMuted} />
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Browse products and add items to your cart</Text>
         </View>
       ) : (
         <FlatList
@@ -102,15 +100,14 @@ export default function CartScreen() {
         />
       )}
 
-      {/* Bottom bar */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + (Platform.OS === 'android' ? 25 : 0) }]}>
+      <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.cardBorder, paddingBottom: insets.bottom + TAB_BAR_HEIGHT + (Platform.OS === 'android' ? 25 : 0) }]}>
         <View>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>{total} EGP</Text>
+          <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total</Text>
+          <Text style={[styles.totalValue, { color: colors.pink }]}>{total} EGP</Text>
         </View>
         <Pressable onPress={handleCheckout} style={styles.checkoutBtn}>
           <LinearGradient
-            colors={[Colors.gradientStart, Colors.gradientEnd]}
+            colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.checkoutGradient}
@@ -124,64 +121,53 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { paddingHorizontal: Spacing.lg },
 
-  // Header
   header: {
     paddingTop: 60, paddingBottom: Spacing.md,
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
   },
-  headerTitle: {
-    color: Colors.textPrimary, fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-  },
+  headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
 
-  // Cart item
   cartItem: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.lg, borderWidth: 1,
     padding: Spacing.md, marginBottom: Spacing.sm,
   },
   itemImage: {
     width: 70, height: 70, borderRadius: BorderRadius.md,
-    backgroundColor: 'rgba(30,20,50,0.5)',
     justifyContent: 'center', alignItems: 'center',
     marginRight: Spacing.md,
   },
   itemInfo: { flex: 1 },
-  itemName: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
-  itemPrice: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
+  itemName: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
+  itemPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyBtn: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: 'rgba(156,39,176,0.15)',
     justifyContent: 'center', alignItems: 'center',
   },
-  qtyText: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md, minWidth: 20, textAlign: 'center' },
+  qtyText: { fontFamily: Fonts.bold, fontSize: FontSizes.md, minWidth: 20, textAlign: 'center' },
   removeBtn: { marginLeft: Spacing.sm },
 
-  // Bottom bar
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1.5, borderTopColor: Colors.cardBorder,
+    borderTopWidth: 1.5,
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md,
   },
-  totalLabel: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  totalValue: { color: Colors.pink, fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
+  totalLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+  totalValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
   checkoutBtn: { borderRadius: BorderRadius.lg, overflow: 'hidden' },
   checkoutGradient: {
     paddingVertical: 14, paddingHorizontal: 36,
     borderRadius: BorderRadius.lg, alignItems: 'center',
   },
-  checkoutText: { color: Colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  checkoutText: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: FontSizes.md },
 
-  // Empty
-  emptyTitle: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
-  emptySubtitle: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
+  emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
+  emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
 });
