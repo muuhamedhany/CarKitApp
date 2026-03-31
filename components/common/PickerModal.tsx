@@ -8,7 +8,8 @@ import {
   FlatList,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 
 type PickerItem = {
   id: number;
@@ -32,18 +33,20 @@ export default function PickerModal({
   onSelect,
   onClose,
 }: PickerModalProps) {
+  const { colors } = useTheme();
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         {/* Tap outside to close */}
         <Pressable style={styles.overlayTouchable} onPress={onClose} />
 
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
             <Pressable onPress={onClose} hitSlop={12}>
-              <MaterialCommunityIcons name="close" size={24} color={Colors.textMuted} />
+              <MaterialCommunityIcons name="close" size={24} color={colors.textMuted} />
             </Pressable>
           </View>
 
@@ -57,20 +60,20 @@ export default function PickerModal({
               const isSelected = item.id === selectedId;
               return (
                 <Pressable
-                  style={[styles.item, isSelected && styles.itemActive]}
+                  style={[styles.item, { borderBottomColor: colors.border }, isSelected && { backgroundColor: colors.pinkGlow, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg }]}
                   onPress={() => onSelect(item)}
                 >
-                  <Text style={[styles.itemText, isSelected && styles.itemTextActive]}>
+                  <Text style={[styles.itemText, { color: colors.textSecondary }, isSelected && { color: colors.pink, fontFamily: Fonts.semiBold }]}>
                     {item.label}
                   </Text>
                   {isSelected && (
-                    <MaterialCommunityIcons name="check" size={20} color={Colors.pink} />
+                    <MaterialCommunityIcons name="check" size={20} color={colors.pink} />
                   )}
                 </Pressable>
               );
             }}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>No options available</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No options available</Text>
             }
           />
         </View>
@@ -89,12 +92,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: Colors.backgroundSecondary,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: Colors.cardBorder,
     maxHeight: '60%',
     paddingBottom: 30,
   },
@@ -106,10 +107,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   title: {
-    color: Colors.textPrimary,
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
   },
@@ -122,24 +121,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  itemActive: {
-    backgroundColor: 'rgba(233,30,140,0.08)',
-    marginHorizontal: -Spacing.lg,
-    paddingHorizontal: Spacing.lg,
   },
   itemText: {
-    color: Colors.textSecondary,
     fontFamily: Fonts.regular,
     fontSize: FontSizes.md,
   },
-  itemTextActive: {
-    color: Colors.pink,
-    fontFamily: Fonts.semiBold,
-  },
   emptyText: {
-    color: Colors.textMuted,
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     textAlign: 'center',

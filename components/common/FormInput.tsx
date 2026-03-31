@@ -1,6 +1,7 @@
 import { View, TextInput, StyleSheet, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type FormInputProps = {
   icon: string;
@@ -27,18 +28,20 @@ export default function FormInput({
   autoCapitalize = 'none',
   autoComplete = 'off',
 }: FormInputProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderColor: colors.inputBorder }]}>
       <MaterialCommunityIcons
         name={icon as any}
         size={20}
-        color={Colors.textMuted}
+        color={colors.textMuted}
         style={styles.icon}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: colors.textPrimary }]}
         placeholder={placeholder}
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -51,7 +54,7 @@ export default function FormInput({
           <MaterialCommunityIcons
             name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
             size={22}
-            color={Colors.textMuted}
+            color={colors.textMuted}
           />
         </Pressable>
       )}
@@ -64,7 +67,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(156, 39, 176, 0.35)',
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
@@ -75,7 +77,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: Colors.white,
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
   },

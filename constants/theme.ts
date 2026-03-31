@@ -1,4 +1,4 @@
-// CarKit Design System — Dark theme with neon purple/pink accents
+// CarKit Design System — Dark & Light themes with neon purple/pink accents
 
 export const Fonts = {
   regular: 'Poppins_400Regular',
@@ -10,7 +10,10 @@ export const Fonts = {
   extraBoldItalic: 'Poppins_800ExtraBold_Italic',
 };
 
-export const Colors = {
+// ═══════════════════════════════════
+// Dark Theme Colors
+// ═══════════════════════════════════
+export const DarkColors = {
   // Backgrounds
   background: '#0A0A14',
   backgroundSecondary: '#12121F',
@@ -48,7 +51,79 @@ export const Colors = {
   error: '#FF4757',
   warning: '#FFA502',
   info: '#2196F3',
+
+  // Extras for image/placeholder backgrounds
+  imagePlaceholder: 'rgba(30,20,50,0.5)',
+  purpleGlow: 'rgba(156,39,176,0.15)',
+  pinkGlow: 'rgba(233,30,140,0.15)',
+  dividerLine: 'rgba(156, 39, 176, 0.2)',
+  inputBorder: 'rgba(156, 39, 176, 0.35)',
+  toastBorder: 'rgba(255, 255, 255, 0.1)',
+  itemSeparator: 'rgba(42,42,58,0.5)',
 };
+
+// ═══════════════════════════════════
+// Light Theme Colors
+// ═══════════════════════════════════
+export const LightColors = {
+  // Backgrounds
+  background: '#F5F5FA',
+  backgroundSecondary: '#FFFFFF',
+  card: 'rgba(255, 255, 255, 0.9)',
+  cardBorder: 'rgba(156, 39, 176, 0.2)',
+
+  // Primary (same neon accents!)
+  pink: '#E91E8C',
+  pinkLight: '#FF69B4',
+  purple: '#9C27B0',
+  purpleDark: '#7B2FBE',
+  purpleLight: '#9C27B0',
+
+  // Gradient
+  gradientStart: '#9C27B0',
+  gradientEnd: '#E91E8C',
+
+  // Text
+  textPrimary: '#1A1A2E',
+  textSecondary: '#6B6B80',
+  textMuted: '#9E9E9E',
+
+  border: '#E0E0E8',
+  primary: '#E91E8C',
+
+  // Utility
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+  overlay: 'rgba(0,0,0,0.4)',
+  surface: '#FFFFFF',
+
+  // Status
+  success: '#4CAF50',
+  error: '#FF4757',
+  warning: '#FFA502',
+  info: '#2196F3',
+
+  // Extras
+  imagePlaceholder: 'rgba(156,39,176,0.06)',
+  purpleGlow: 'rgba(156,39,176,0.08)',
+  pinkGlow: 'rgba(233,30,140,0.08)',
+  dividerLine: 'rgba(156, 39, 176, 0.15)',
+  inputBorder: 'rgba(156, 39, 176, 0.3)',
+  toastBorder: 'rgba(0, 0, 0, 0.08)',
+  itemSeparator: 'rgba(0,0,0,0.06)',
+};
+
+// Type for color palette
+export type ThemeColors = typeof DarkColors;
+
+// Helper to get colors based on mode
+export function getColors(isDark: boolean): ThemeColors {
+  return isDark ? DarkColors : LightColors;
+}
+
+// Legacy export — now defaults to dark for backward compatibility
+export const Colors = DarkColors;
 
 export const Spacing = {
   xs: 4,

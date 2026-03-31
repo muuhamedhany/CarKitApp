@@ -1,3 +1,4 @@
+import { useTheme } from '@/hooks/useTheme';
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -12,7 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/constants/config';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 import { BackButton } from '@/components';
 
@@ -38,7 +39,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function MyBookingsScreen() {
   const router = useRouter();
-  const { token } = useAuth();
+    const { colors } = useTheme();
+  const styles = createStyles(colors);
+const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,8 +85,8 @@ export default function MyBookingsScreen() {
             <Text style={styles.providerName}>{item.provider_name}</Text>
           )}
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || Colors.pink) + '30' }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || Colors.pink }]}>
+        <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '30' }]}>
+          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
             {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
           </Text>
         </View>
@@ -91,12 +94,12 @@ export default function MyBookingsScreen() {
 
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
-          <MaterialCommunityIcons name="calendar" size={14} color={Colors.textMuted} />
+          <MaterialCommunityIcons name="calendar" size={14} color={colors.textMuted} />
           <Text style={styles.metaText}>{formatDate(item.booking_date)}</Text>
         </View>
         {item.booking_time && (
           <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.textMuted} />
+            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
             <Text style={styles.metaText}>{item.booking_time}</Text>
           </View>
         )}
@@ -109,7 +112,7 @@ export default function MyBookingsScreen() {
 
       <Pressable style={styles.viewDetailsBtn}>
         <LinearGradient
-          colors={[Colors.gradientStart, Colors.gradientEnd]}
+          colors={[colors.gradientStart, colors.gradientEnd]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.viewDetailsGradient}
@@ -149,11 +152,11 @@ export default function MyBookingsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.pink} />
+          <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : filteredBookings.length === 0 ? (
         <View style={styles.center}>
-          <MaterialCommunityIcons name="calendar-blank" size={48} color={Colors.textMuted} />
+          <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No {tab} bookings</Text>
         </View>
       ) : (
@@ -169,8 +172,8 @@ export default function MyBookingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 40 },
 
@@ -179,7 +182,7 @@ const styles = StyleSheet.create({
     paddingTop: 60, paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
   },
   backBtn: { width: 32 },
-  headerTitle: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
 
   tabRow: {
     flexDirection: 'row', marginHorizontal: Spacing.lg,
@@ -187,19 +190,19 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1, paddingVertical: 10, borderRadius: BorderRadius.lg,
-    alignItems: 'center', backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    alignItems: 'center', backgroundColor: colors.backgroundSecondary,
+    borderWidth: 1, borderColor: colors.cardBorder,
   },
   tabActive: {
-    backgroundColor: Colors.gradientStart,
-    borderColor: Colors.gradientStart,
+    backgroundColor: colors.gradientStart,
+    borderColor: colors.gradientStart,
   },
-  tabText: { color: Colors.textSecondary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  tabTextActive: { color: Colors.white },
+  tabText: { color: colors.textSecondary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  tabTextActive: { color: colors.white },
 
   bookingCard: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder,
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder,
     padding: Spacing.md, marginBottom: Spacing.md,
   },
   bookingHeader: {
@@ -207,19 +210,19 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bookingLeft: { flex: 1, marginRight: Spacing.sm },
-  bookingName: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md },
-  providerName: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  bookingName: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  providerName: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.sm },
   statusText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
   metaRow: { flexDirection: 'row', gap: 12, marginBottom: Spacing.sm },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { color: Colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+  metaText: { color: colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  totalLabel: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  totalValue: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  totalLabel: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+  totalValue: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
   viewDetailsBtn: { borderRadius: BorderRadius.lg, overflow: 'hidden' },
   viewDetailsGradient: { paddingVertical: 12, alignItems: 'center', borderRadius: BorderRadius.lg },
-  viewDetailsText: { color: Colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  viewDetailsText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
 
-  emptyTitle: { color: Colors.textMuted, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginTop: Spacing.md },
+  emptyTitle: { color: colors.textMuted, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginTop: Spacing.md },
 });

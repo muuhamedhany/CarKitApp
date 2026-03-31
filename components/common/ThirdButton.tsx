@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type ThirdButtonProps = {
   title: string;
@@ -16,14 +17,16 @@ export default function ThirdButton({
   disabled = false,
   style,
 }: ThirdButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={[styles.button, (disabled || loading) && styles.disabled, style]}
+      style={[styles.button, { backgroundColor: colors.pink }, (disabled || loading) && styles.disabled, style]}
     >
       {loading ? (
-        <ActivityIndicator color={Colors.white} />
+        <ActivityIndicator color="#FFFFFF" />
       ) : (
         <Text style={styles.text}>{title}</Text>
       )}
@@ -36,13 +39,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
-    backgroundColor: Colors.pink,
   },
   disabled: {
     opacity: 0.6,
   },
   text: {
-    color: Colors.white,
+    color: '#FFFFFF',
     fontSize: FontSizes.lg,
     fontFamily: Fonts.bold,
   },

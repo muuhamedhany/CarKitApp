@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 type OutlinedButtonProps = {
   title: string;
@@ -16,16 +17,18 @@ export default function OutlinedButton({
   disabled = false,
   style,
 }: OutlinedButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={[styles.button, (disabled || loading) && styles.disabled, style]}
+      style={[styles.button, { borderColor: colors.pink, backgroundColor: colors.transparent }, (disabled || loading) && styles.disabled, style]}
     >
       {loading ? (
-        <ActivityIndicator color={Colors.pink} />
+        <ActivityIndicator color={colors.pink} />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, { color: colors.pink }]}>{title}</Text>
       )}
     </Pressable>
   );
@@ -37,14 +40,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: Colors.pink,
-    backgroundColor: Colors.transparent,
   },
   disabled: {
     opacity: 0.6,
   },
   text: {
-    color: Colors.pink,
     fontSize: FontSizes.lg,
     fontFamily: Fonts.bold,
   },
