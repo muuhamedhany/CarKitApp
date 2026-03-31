@@ -11,19 +11,19 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-// import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { FormInput } from '@/components';
 import { GradientButton } from '@/components';
 import { AuthFooter } from '@/components';
 import { SocialButton } from '@/components';
 import { Divider } from '@/components';
-import { Colors, Spacing, FontSizes, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
-  // const { request, response, promptAsync, getGoogleUser } = useGoogleAuth(); // Disabled for Expo Go
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -62,12 +62,10 @@ export default function LoginScreen() {
     }
   };
 
-  // Mock Google Login for Expo Go
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     showToast('info', 'Google Login', 'Connecting to Google...');
     
-    // Simulate network delay
     setTimeout(async () => {
       const mockUser = {
         id: 'mock_google_id_123',
@@ -89,7 +87,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -99,10 +97,10 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-          <Text style={styles.welcomeSubtitle}>Login to your account</Text>
+          <Text style={[styles.welcomeTitle, { color: colors.pink }]}>Welcome Back!</Text>
+          <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>Login to your account</Text>
 
-          <Text style={styles.label}>Email:</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Email:</Text>
           <FormInput
             icon="email-outline"
             placeholder="Your Email"
@@ -112,7 +110,7 @@ export default function LoginScreen() {
             autoComplete="email"
           />
 
-          <Text style={styles.label}>Password:</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Password:</Text>
           <FormInput
             icon="lock-outline"
             placeholder="Password"
@@ -124,7 +122,7 @@ export default function LoginScreen() {
           />
 
           <Pressable style={styles.forgotContainer} onPress={() => router.push('/forgot-password' as any)}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
+            <Text style={[styles.forgotText, { color: colors.pink }]}>Forgot Password?</Text>
           </Pressable>
 
           <GradientButton
@@ -155,7 +153,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
@@ -165,19 +163,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   welcomeTitle: {
-    color: Colors.pink,
     fontSize: 34,
     fontFamily: Fonts.extraBoldItalic,
     marginBottom: 6,
   },
   welcomeSubtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl + 8,
   },
   label: {
-    color: Colors.white,
     fontSize: FontSizes.sm,
     fontFamily: Fonts.medium,
     marginBottom: Spacing.xs,
@@ -187,7 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   forgotText: {
-    color: Colors.pink,
     fontSize: FontSizes.sm,
     fontFamily: Fonts.semiBold,
   },

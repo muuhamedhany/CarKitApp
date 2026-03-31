@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Fonts, Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Fonts, Spacing, BorderRadius } from '@/constants/theme';
 
 type TabItem = {
   name: string;
@@ -33,6 +34,7 @@ function TabButton({
   isFocused: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
 
   useEffect(() => {
@@ -69,23 +71,22 @@ function TabButton({
         <Ionicons
           name={isFocused ? tab.iconFilled : tab.icon}
           size={22}
-          color={isFocused ? Colors.pink : Colors.textSecondary}
+          color={isFocused ? colors.pink : colors.textSecondary}
         />
       </Animated.View>
       <Text
         style={[
           styles.label,
-          { color: isFocused ? Colors.pink : Colors.textSecondary },
+          { color: isFocused ? colors.pink : colors.textSecondary },
           isFocused && styles.labelActive,
         ]}
       >
         {tab.label}
       </Text>
-      {/* Pink underline accent */}
       <Animated.View
         style={[
           styles.activeIndicator,
-          { opacity: indicatorOpacity, transform: [{ scaleX: indicatorScaleX }] },
+          { backgroundColor: colors.pink, opacity: indicatorOpacity, transform: [{ scaleX: indicatorScaleX }] },
         ]}
       />
     </Pressable>
@@ -94,10 +95,11 @@ function TabButton({
 
 export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
 
@@ -139,10 +141,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: Colors.backgroundSecondary,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
     paddingVertical: 10,
     paddingHorizontal: Spacing.sm,
     width: '100%',
@@ -167,6 +167,5 @@ const styles = StyleSheet.create({
     bottom: -6,
     height: 3,
     borderRadius: 2,
-    backgroundColor: Colors.pink,
   },
 });
