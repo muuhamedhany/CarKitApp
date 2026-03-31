@@ -1,3 +1,4 @@
+import { useTheme } from '@/hooks/useTheme';
 import { useState, useEffect } from 'react';
 import {
   View,
@@ -24,7 +25,7 @@ import { BackButton } from '@/components';
 import { FormInput } from '@/components';
 import { PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -43,7 +44,9 @@ type Vehicle = {
 
 export default function VehicleDetailScreen() {
   const router = useRouter();
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
+    const { colors } = useTheme();
+  const styles = createStyles(colors);
+const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -255,7 +258,7 @@ export default function VehicleDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={Colors.pink} />
+        <ActivityIndicator size="large" color={colors.pink} />
       </View>
     );
   }
@@ -288,12 +291,12 @@ export default function VehicleDetailScreen() {
                 <>
                   <Image source={{ uri: displayPhoto }} style={styles.photoImg} />
                   <View style={styles.photoOverlay}>
-                    <MaterialCommunityIcons name="camera-outline" size={20} color={Colors.white} />
+                    <MaterialCommunityIcons name="camera-outline" size={20} color={colors.white} />
                   </View>
                 </>
               ) : (
                 <>
-                  <MaterialCommunityIcons name="plus-circle-outline" size={24} color={Colors.purpleLight} />
+                  <MaterialCommunityIcons name="plus-circle-outline" size={24} color={colors.purpleLight} />
                   <Text style={styles.photoText}>Add Photo</Text>
                 </>
               )}
@@ -306,7 +309,7 @@ export default function VehicleDetailScreen() {
             <Text style={[styles.pickerBtnText, selectedMake && styles.pickerBtnTextSelected]}>
               {selectedMake ? selectedMake.name : 'Select Make'}
             </Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textMuted} />
+            <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
           </Pressable>
 
           {/* Model Picker */}
@@ -318,7 +321,7 @@ export default function VehicleDetailScreen() {
             <Text style={[styles.pickerBtnText, selectedModel && styles.pickerBtnTextSelected]}>
               {selectedModel ? selectedModel.name : 'Select Model'}
             </Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textMuted} />
+            <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
           </Pressable>
 
           {/* Color */}
@@ -345,11 +348,11 @@ export default function VehicleDetailScreen() {
           {/* Save Button */}
           <Pressable onPress={handleSave} disabled={saving} style={{ marginTop: Spacing.sm }}>
             <LinearGradient
-              colors={[Colors.gradientStart, Colors.gradientEnd]}
+              colors={[colors.gradientStart, colors.gradientEnd]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={styles.saveBtn}
             >
-              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
             </LinearGradient>
           </Pressable>
 
@@ -368,10 +371,10 @@ export default function VehicleDetailScreen() {
             <Text style={styles.modalTitle}>Are you sure you want to delete your vehicle?</Text>
             <View style={styles.modalActions}>
               <Pressable style={styles.modalDeleteBtn} onPress={handleDelete} disabled={deleting}>
-                {deleting ? <ActivityIndicator color={Colors.pink} size="small" /> : <Text style={styles.modalDeleteText}>Delete</Text>}
+                {deleting ? <ActivityIndicator color={colors.pink} size="small" /> : <Text style={styles.modalDeleteText}>Delete</Text>}
               </Pressable>
               <Pressable style={styles.modalCancelBtn} onPress={() => setShowDeleteModal(false)}>
-                <LinearGradient colors={[Colors.purpleDark, Colors.purple]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.modalCancelGradient}>
+                <LinearGradient colors={[colors.purpleDark, colors.purple]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.modalCancelGradient}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
                 </LinearGradient>
               </Pressable>
@@ -383,22 +386,22 @@ export default function VehicleDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
   scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.lg, paddingBottom: 20 },
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingBottom: Spacing.md },
-  headerTitle: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
 
-  label: { color: Colors.white, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
+  label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 
   // Photo
   photoBoxWrapper: { alignItems: 'center', marginBottom: Spacing.md },
   photoBox: {
     width: 200, height: 150, borderRadius: BorderRadius.md,
-    borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.cardBorder,
+    borderWidth: 2, borderStyle: 'dashed', borderColor: colors.cardBorder,
     justifyContent: 'center', alignItems: 'center',
   },
   photoPreview: {
@@ -410,7 +413,7 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 6, right: 6,
     backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 14, padding: 4,
   },
-  photoText: { color: Colors.purpleLight, fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4 },
+  photoText: { color: colors.purpleLight, fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4 },
 
   // Row
   row: { flexDirection: 'row', gap: Spacing.md },
@@ -419,30 +422,30 @@ const styles = StyleSheet.create({
   // Picker
   pickerBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.backgroundSecondary, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: colors.backgroundSecondary, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: Spacing.md, paddingVertical: 14, marginBottom: Spacing.xs,
   },
   pickerBtnDisabled: { opacity: 0.5 },
-  pickerBtnText: { color: Colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  pickerBtnTextSelected: { color: Colors.textPrimary },
+  pickerBtnText: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+  pickerBtnTextSelected: { color: colors.textPrimary },
 
   // Delete
-  deleteBtn: { borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder, paddingVertical: 14, alignItems: 'center', marginTop: Spacing.md },
-  deleteBtnText: { color: Colors.pink, fontFamily: Fonts.medium, fontSize: FontSizes.md },
+  deleteBtn: { borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder, paddingVertical: 14, alignItems: 'center', marginTop: Spacing.md },
+  deleteBtnText: { color: colors.pink, fontFamily: Fonts.medium, fontSize: FontSizes.md },
 
   // Save
   saveBtn: { paddingVertical: 16, borderRadius: BorderRadius.lg, alignItems: 'center' },
-  saveBtnText: { color: Colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  saveBtnText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
-  modalCard: { backgroundColor: Colors.backgroundSecondary, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder, padding: Spacing.xl, width: '100%' },
-  modalTitle: { color: Colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, textAlign: 'center', marginBottom: Spacing.xl },
+  modalCard: { backgroundColor: colors.backgroundSecondary, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder, padding: Spacing.xl, width: '100%' },
+  modalTitle: { color: colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, textAlign: 'center', marginBottom: Spacing.xl },
   modalActions: { flexDirection: 'row', gap: Spacing.md },
-  modalDeleteBtn: { flex: 1, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder, paddingVertical: 14, alignItems: 'center' },
-  modalDeleteText: { color: Colors.pink, fontFamily: Fonts.medium, fontSize: FontSizes.md },
+  modalDeleteBtn: { flex: 1, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder, paddingVertical: 14, alignItems: 'center' },
+  modalDeleteText: { color: colors.pink, fontFamily: Fonts.medium, fontSize: FontSizes.md },
   modalCancelBtn: { flex: 1, borderRadius: BorderRadius.lg, overflow: 'hidden' },
   modalCancelGradient: { paddingVertical: 14, alignItems: 'center', borderRadius: BorderRadius.lg },
-  modalCancelText: { color: Colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  modalCancelText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
 });

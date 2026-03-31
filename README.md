@@ -1,101 +1,88 @@
-# CarKit — React Native Mobile App 🚗
+# CarKit
 
-CarKit is a cross-platform mobile application built with **React Native** and **Expo**. It uses file-based routing via [Expo Router](https://docs.expo.dev/router/introduction) and is written in **TypeScript**.
+CarKit is a comprehensive mobile utility and commerce application designed to provide automotive services, vehicle management tools, and an integrated marketplace for automotive products. Built with a focus on delivering a premium user experience, CarKit features a dynamic, responsive design system supporting custom light and dark themes.
 
----
+## Key Features
 
-## Prerequisites
+- **Dynamic Theming System:** Full support for system-default, light, and dark modes with a custom premium aesthetic and fluid theme transitions.
+- **Service Booking & Marketplace:** Integrated platform for purchasing automotive products and booking vehicle services.
+- **Vendor Management:** Capabilities for vendor onboarding and document uploads.
+- **Secure Authentication:** Integrated user authentication, authorization, and secure sessions.
+- **Cross-Platform Compatibility:** Unified codebase delivering native experiences on both iOS and Android.
 
-Before you begin, make sure the following are installed on your machine:
+## Technology Stack
 
-| Tool | Version | Download |
-|------|---------|----------|
-| **Node.js** | 18 or later | [nodejs.org](https://nodejs.org/) |
-| **npm** | comes with Node.js | — |
-| **Expo CLI** | latest | installed automatically via `npx` |
-| **Expo Go** (mobile) | latest | [App Store](https://apps.apple.com/app/expo-go/id982107779) / [Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent) |
+### Frontend
+- **React Native (v0.81)**
+- **Expo (SDK 54)**
+- **TypeScript** for static type checking and enhanced developer experience
+- **Expo Router** for file-based routing and deep linking
+- **React Context** for global state management (Authentication, Cart, Theme, etc.)
+- **Custom UI Components:** High-performance animations and custom-styled elements (e.g., custom toast notifications, blur effects)
+- **Typography:** @expo-google-fonts/poppins
 
-> **Optional:** To run on an emulator/simulator, install [Android Studio](https://docs.expo.dev/workflow/android-studio-emulator/) or [Xcode](https://docs.expo.dev/workflow/ios-simulator/) (macOS only).
-
----
+### Backend & Infrastructure
+- **Supabase:** Primary backend providing PostgreSQL database, authentications, and storage solutions.
+- **Node.js / Express:** Dedicated administrative server backend (hosted via Render).
 
 ## Getting Started
 
-### 1. Clone the repository
+### Prerequisites
 
+Ensure the following dependencies are installed on your local development environment:
+- **Node.js** (v18.0.0 or later)
+- **npm** (included with Node.js)
+- **Expo Go** application installed on your physical device for testing (or Android Studio / Xcode for emulator/simulator support)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-git clone https://github.com/muuhamedhany/CarKitApp
+git clone https://github.com/muuhamedhany/CarKitApp.git
 cd CarKitApp
 ```
 
-### 2. Install dependencies
-
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-### 3. Start the development server
+3. Environment Configuration:
+Ensure you have the required environment variables populated in your `.env` file (e.g., Supabase URL, API keys).
 
+4. Start the development server:
 ```bash
 npx expo start
 ```
 
-This will open the **Expo DevTools** in your terminal. From there you can:
+## Available Scripts
 
-- Press **`a`** — open on a connected Android device / emulator
-- Press **`i`** — open on the iOS Simulator (macOS only)
-- Press **`w`** — open in a web browser
-- **Scan the QR code** with the **Expo Go** app on your phone
+- `npm start` - Starts the Expo development server.
+- `npm run android` - Starts the server and opens the app on a connected Android device or emulator.
+- `npm run ios` - Starts the server and opens the app on an iOS simulator.
+- `npm run lint` - Runs ESLint to statically analyze the code for issues.
 
----
-
-## Platform-Specific Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start the Expo development server |
-| `npm run android` | Start and open on Android |
-| `npm run ios` | Start and open on iOS |
-| `npm run web` | Start and open in a web browser |
-| `npm run lint` | Run ESLint |
-| `npm run reset-project` | Reset to a blank project |
-
----
-
-## Project Structure
+## Project Architecture
 
 ```
 CarKitApp/
-├── app/              # Screens & routes (file-based routing)
-├── assets/           # Images, fonts, and static files
-├── components/       # Reusable UI components
-├── constants/        # Theme, colors, and config values
-├── contexts/         # React Context providers (Auth, Cart, etc.)
+├── app/              # File-based routing maps and screen components
+├── assets/           # Static assets, fonts, and images
+├── components/       # Reusable, stateless UI components
+├── constants/        # Global constants, theme definitions, and color palettes
+├── contexts/         # React Context providers for global state
 ├── hooks/            # Custom React hooks
-├── scripts/          # Utility scripts
-├── app.json          # Expo configuration
-├── package.json      # Dependencies & scripts
-└── tsconfig.json     # TypeScript configuration
+├── scripts/          # Build and deployment utility scripts
+├── services/         # API integration and external service layers
+├── .env              # Environment variables configuration
+├── app.json          # Expo environment configuration
+├── package.json      # Project metadata and dependencies
+└── tsconfig.json     # TypeScript compiler configuration
 ```
-
----
-
-## Tech Stack
-
-- **React Native** 0.81 + **Expo** SDK 54
-- **TypeScript**
-- **Expo Router** (file-based routing)
-- **React Navigation** (bottom tabs)
-- **Expo Image**, **Linear Gradient**, **Haptics**, and more
-- **Poppins** font via `@expo-google-fonts/poppins`
-
----
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Metro bundler not starting | Run `npx expo start --clear` to clear the cache |
-| Dependencies out of sync | Delete `node_modules` and run `npm install` again |
-| Expo Go can't connect | Ensure your phone and PC are on the **same Wi-Fi network** |
-| TypeScript errors | Run `npx tsc --noEmit` to check for type issues |
+- **Metro bundler fails to start:** Run `npx expo start --clear` to reset the Metro bundler cache.
+- **Dependency synchronization issues:** Remove the `node_modules` directory and `package-lock.json`, then execute `npm install`.
+- **Network connection failures in Expo Go:** Verify that your mobile device and development machine are connected to the same local network subnet.
+- **Type validation:** Run `npx tsc --noEmit` to validate TypeScript compilation across the project.

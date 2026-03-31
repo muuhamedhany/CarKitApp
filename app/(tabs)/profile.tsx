@@ -12,7 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -27,6 +28,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { showToast } = useToast();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
@@ -52,40 +54,57 @@ export default function ProfileScreen() {
   const renderMenuItem = (item: MenuItem, index: number) => (
     <Pressable
       key={index}
-      style={styles.menuItem}
+      style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]}
       onPress={() => {
         if (item.route) router.push(item.route as any);
         else if (item.onPress) item.onPress();
       }}
     >
-      <MaterialCommunityIcons name={item.icon as any} size={22} color={Colors.purpleLight} />
-      <Text style={styles.menuLabel}>{item.label}</Text>
-      <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textMuted} />
+      <MaterialCommunityIcons name={item.icon as any} size={22} color={colors.purpleLight} />
+      <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
+      <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
     </Pressable>
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
-      <Text style={styles.title}>Profile</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Profile</Text>
 
       {/* Avatar */}
       <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
-          <MaterialCommunityIcons name="account" size={48} color={Colors.pink} />
+        <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}>
+          <MaterialCommunityIcons name="account" size={48} color={colors.pink} />
         </View>
-        <Text style={styles.userName}>{user?.name || 'User'}</Text>
-        <Text style={styles.userEmail}>{user?.email || ''}</Text>
+        <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name || 'User'}</Text>
+        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
 
-        <Pressable style={styles.editProfileBtn}>
-          <Text style={styles.editProfileText}>Edit Profile</Text>
+        <Pressable style={[styles.editProfileBtn, { borderColor: colors.cardBorder }]}>
+          <Text style={[styles.editProfileText, { color: colors.purpleLight }]}>Edit Profile</Text>
         </Pressable>
       </View>
 
       {/* Personal Information */}
-      <Text style={styles.sectionLabel}>PERSONAL INFORMATION</Text>
-      <View style={styles.menuSection}>
+      <Text style={[styles.sectionLabel, { color: colors.pink }]}>PERSONAL INFORMATION</Text>
+      <View style={[styles.menuSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
         {personalItems.map(renderMenuItem)}
+      </View>
+
+      {/* Settings */}
+      <Text style={[styles.sectionLabel, { color: colors.pink }]}>GENERAL</Text>
+      <View style={[styles.menuSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+        <Pressable
+          style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]}
+          onPress={() => router.push('/settings' as any)}
+        >
+          <MaterialCommunityIcons name="cog-outline" size={22} color={colors.purpleLight} />
+          <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Settings</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+        </Pressable>
       </View>
 
       {/* Logout */}
@@ -96,8 +115,8 @@ export default function ProfileScreen() {
           end={{ x: 1, y: 0 }}
           style={styles.logoutGradient}
         >
-          <MaterialCommunityIcons name="logout" size={20} color={Colors.pink} />
-          <Text style={styles.logoutText}>Logout</Text>
+          <MaterialCommunityIcons name="logout" size={20} color={colors.pink} />
+          <Text style={[styles.logoutText, { color: colors.pink }]}>Logout</Text>
         </LinearGradient>
       </Pressable>
 
@@ -107,12 +126,12 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   content: { paddingHorizontal: Spacing.lg, paddingTop: 60, paddingBottom: 40 },
 
   // Header
   title: {
-    color: Colors.textPrimary, fontFamily: Fonts.bold,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.xl, textAlign: 'center', marginBottom: Spacing.lg,
   },
 
@@ -120,36 +139,34 @@ const styles = StyleSheet.create({
   avatarContainer: { alignItems: 'center', marginBottom: Spacing.xl },
   avatar: {
     width: 90, height: 90, borderRadius: 45,
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 3, borderColor: Colors.pink,
+    borderWidth: 3,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  userName: { color: Colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.lg },
-  userEmail: { color: Colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 2 },
+  userName: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
+  userEmail: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 2 },
   editProfileBtn: {
     marginTop: Spacing.sm, paddingHorizontal: Spacing.lg, paddingVertical: 8,
-    borderRadius: BorderRadius.full, borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.full, borderWidth: 1,
   },
-  editProfileText: { color: Colors.purpleLight, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  editProfileText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
 
   // Section
   sectionLabel: {
-    color: Colors.pink, fontFamily: Fonts.semiBold, fontSize: FontSizes.xs,
+    fontFamily: Fonts.semiBold, fontSize: FontSizes.xs,
     letterSpacing: 1, marginBottom: Spacing.sm, marginTop: Spacing.sm,
   },
   menuSection: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.lg, borderWidth: 1,
     overflow: 'hidden', marginBottom: Spacing.md,
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 14, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(42,42,58,0.5)',
+    borderBottomWidth: 1,
   },
   menuLabel: {
-    color: Colors.textPrimary, fontFamily: Fonts.medium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.md, flex: 1, marginLeft: Spacing.md,
   },
 
@@ -160,5 +177,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14, borderRadius: BorderRadius.lg,
     gap: 8,
   },
-  logoutText: { color: Colors.pink, fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
+  logoutText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
 });

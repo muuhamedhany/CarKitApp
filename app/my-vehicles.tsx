@@ -1,3 +1,4 @@
+import { useTheme } from '@/hooks/useTheme';
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -17,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { BackButton } from '@/components';
 import { API_URL } from '@/constants/config';
-import { Colors, Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -33,7 +34,9 @@ type Vehicle = {
 
 export default function MyVehiclesScreen() {
   const router = useRouter();
-  const { token } = useAuth();
+    const { colors } = useTheme();
+  const styles = createStyles(colors);
+const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
 
@@ -71,7 +74,7 @@ export default function MyVehiclesScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.pink} />
+          <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : (
         <ScrollView
@@ -80,7 +83,7 @@ export default function MyVehiclesScreen() {
         >
           {vehicles.length === 0 ? (
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="car-off" size={64} color={Colors.textMuted} />
+              <MaterialCommunityIcons name="car-off" size={64} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No vehicles yet</Text>
               <Text style={styles.emptySubtitle}>Add your first vehicle to personalize your experience</Text>
             </View>
@@ -95,7 +98,7 @@ export default function MyVehiclesScreen() {
                   {v.photo_url ? (
                     <Image source={{ uri: v.photo_url }} style={styles.vehicleThumbImg} />
                   ) : (
-                    <MaterialCommunityIcons name="car-side" size={32} color={Colors.textMuted} />
+                    <MaterialCommunityIcons name="car-side" size={32} color={colors.textMuted} />
                   )}
                 </View>
                 <View style={styles.vehicleInfo}>
@@ -104,7 +107,7 @@ export default function MyVehiclesScreen() {
                     {v.year ? `${v.year} ` : ''}{v.make_name} {v.model_name}
                   </Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.textMuted} />
+                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
               </Pressable>
             ))
           )}
@@ -115,12 +118,12 @@ export default function MyVehiclesScreen() {
             style={{ marginTop: Spacing.md }}
           >
             <LinearGradient
-              colors={[Colors.gradientStart, Colors.gradientEnd]}
+              colors={[colors.gradientStart, colors.gradientEnd]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.addBtn}
             >
-              <MaterialCommunityIcons name="plus" size={20} color={Colors.white} />
+              <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
               <Text style={styles.addBtnText}>Add New Vehicle</Text>
             </LinearGradient>
           </Pressable>
@@ -132,8 +135,8 @@ export default function MyVehiclesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
 
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   headerTitle: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Fonts.bold,
     fontSize: FontSizes.xl,
   },
@@ -156,10 +159,10 @@ const styles = StyleSheet.create({
   vehicleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
+    backgroundColor: colors.backgroundSecondary,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: colors.cardBorder,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
   },
@@ -180,12 +183,12 @@ const styles = StyleSheet.create({
   },
   vehicleInfo: { flex: 1 },
   vehicleName: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
   },
   vehicleSub: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontFamily: Fonts.regular,
     fontSize: FontSizes.xs,
     marginTop: 2,
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   addBtnText: {
-    color: Colors.white,
+    color: colors.white,
     fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
   },
@@ -209,13 +212,13 @@ const styles = StyleSheet.create({
   // Empty
   emptyState: { alignItems: 'center', marginTop: 80 },
   emptyTitle: {
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.lg,
     marginTop: Spacing.md,
   },
   emptySubtitle: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     marginTop: 4,
