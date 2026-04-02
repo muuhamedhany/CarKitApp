@@ -12,12 +12,12 @@ export default function SocialButton({ provider, actionText, onPress }: SocialBu
   const { colors, isDark } = useTheme();
 
   return (
-    <Pressable style={[styles.button, { backgroundColor: isDark ? '#FFFFFF' : '#F5F5F5', borderColor: isDark ? 'transparent' : colors.border, borderWidth: isDark ? 0 : 1 }]} onPress={onPress}>
+    <Pressable style={[styles.button, { backgroundColor: isDark ? '#FFFFFF' : '#0B0217', borderColor: isDark ? 'transparent' : colors.border, borderWidth: isDark ? 0 : 1 }]} onPress={onPress}>
       <Image 
         source={{ uri: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png' }} 
         style={styles.logo} 
       />
-      <Text style={[styles.text, { color: '#1A1A2E' }]}>{actionText}</Text>
+      <Text style={[styles.text, { color: isDark ? '#0B0217' : '#FFFFFF' }]}>{actionText}</Text>
     </Pressable>
   );
 }
