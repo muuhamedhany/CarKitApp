@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 // ═══════════════════════════════════
 // Toast Types & Config
@@ -102,7 +103,9 @@ type ToastData = {
 };
 
 function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: number) => void }) {
-  const config = TOAST_CONFIGS[toast.type];
+  const { colors, isDark } = useTheme();
+  const baseConfig = TOAST_CONFIGS[toast.type];
+  const config = toast.type === 'info' ? { ...baseConfig, accentColor: colors.purpleLight } : baseConfig;
   const translateY = useSharedValue(-150);
   const opacity = useSharedValue(0);
 
@@ -126,7 +129,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
   return (
     <Animated.View style={[styles.toastContainer, animatedStyle]}>
       <Pressable onPress={dismiss}>
-        <BlurView intensity={50} tint="dark" style={styles.toastInner}>
+        <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={[styles.toastInner, { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
           {/* Accent bar on left */}
           <View style={[styles.toastAccent, { backgroundColor: config.accentColor }]} />
 
@@ -137,12 +140,12 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
             style={styles.toastIcon}
           />
           <View style={styles.toastTextContainer}>
-            <Text style={styles.toastTitle}>{toast.title}</Text>
+            <Text style={[styles.toastTitle, { color: colors.textPrimary }]}>{toast.title}</Text>
             {toast.message ? (
-              <Text style={styles.toastMessage}>{toast.message}</Text>
+              <Text style={[styles.toastMessage, { color: colors.textSecondary }]}>{toast.message}</Text>
             ) : null}
           </View>
-          <MaterialCommunityIcons name="close" size={18} color={Colors.textMuted} />
+          <MaterialCommunityIcons name="close" size={18} color={colors.textMuted} />
         </BlurView>
       </Pressable>
     </Animated.View>
@@ -162,6 +165,7 @@ function AlertDialog({
   options: AlertOptions | null;
   onClose: () => void;
 }) {
+  const { colors, isDark } = useTheme();
   const scale = useSharedValue(0.85);
   const dialogOpacity = useSharedValue(0);
 
@@ -179,7 +183,8 @@ function AlertDialog({
 
   if (!visible || !options) return null;
 
-  const config = TOAST_CONFIGS[options.type || 'info'];
+  const baseConfig = TOAST_CONFIGS[options.type || 'info'];
+  const config = (options.type || 'info') === 'info' ? { ...baseConfig, accentColor: colors.purpleLight } : baseConfig;
   const buttons = options.buttons || [{ text: 'OK', onPress: undefined }];
 
   const handlePress = (button: AlertButton) => {
@@ -201,7 +206,7 @@ function AlertDialog({
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
       <Pressable style={styles.alertOverlay} onPress={() => handlePress({ text: 'dismiss' })}>
-        <Animated.View style={[styles.alertDialog, animatedDialogStyle]}>
+        <Animated.View style={[styles.alertDialog, animatedDialogStyle, { backgroundColor: colors.surface, borderColor: isDark ? 'rgba(156, 39, 176, 0.25)' : 'rgba(156, 39, 176, 0.15)' }]}>
           <Pressable>
             {/* Icon */}
             <View style={[styles.alertIconContainer, { backgroundColor: config.bgGlow }]}>
@@ -213,8 +218,8 @@ function AlertDialog({
             </View>
 
             {/* Title */}
-            <Text style={styles.alertTitle}>{options.title}</Text>
-            <Text style={styles.alertMessage}>{options.message}</Text>
+            <Text style={[styles.alertTitle, { color: colors.textPrimary }]}>{options.title}</Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>{options.message}</Text>
 
             {/* Buttons */}
             <View style={styles.alertButtonRow}>
@@ -249,10 +254,10 @@ function AlertDialog({
                 return (
                   <Pressable
                     key={index}
-                    style={styles.alertButtonSecondary}
+                    style={[styles.alertButtonSecondary, { borderColor: isDark ? 'rgba(156, 39, 176, 0.3)' : 'rgba(156, 39, 176, 0.2)' }]}
                     onPress={() => handlePress(button)}
                   >
-                    <Text style={styles.alertButtonSecondaryText}>{button.text}</Text>
+                    <Text style={[styles.alertButtonSecondaryText, { color: colors.textSecondary }]}>{button.text}</Text>
                   </Pressable>
                 );
               })}

@@ -11,9 +11,10 @@ type FormInputProps = {
   secureTextEntry?: boolean;
   showToggle?: boolean;
   onToggle?: () => void;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric';
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric' | 'number-pad';
   autoCapitalize?: 'none' | 'words' | 'sentences';
   autoComplete?: 'email' | 'name' | 'tel' | 'off';
+  maxLength?: number;
 };
 
 export default function FormInput({
@@ -27,6 +28,7 @@ export default function FormInput({
   keyboardType = 'default',
   autoCapitalize = 'none',
   autoComplete = 'off',
+  maxLength,
 }: FormInputProps) {
   const { colors } = useTheme();
 
@@ -48,6 +50,7 @@ export default function FormInput({
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
         autoComplete={autoComplete}
+        maxLength={maxLength}
       />
       {showToggle && onToggle && (
         <Pressable onPress={onToggle}>
