@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 36,
     borderRadius: BorderRadius.lg, alignItems: 'center',
   },
-  checkoutText: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  checkoutText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
 
   emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
