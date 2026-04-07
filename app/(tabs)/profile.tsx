@@ -127,7 +127,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: 60, paddingBottom: 40 },
+  content: { paddingHorizontal: Spacing.lg, paddingTop: 55, paddingBottom: 0 },
 
   // Header
   title: {

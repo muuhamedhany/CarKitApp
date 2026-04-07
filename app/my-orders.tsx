@@ -4,10 +4,10 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -147,7 +147,7 @@ const { token } = useAuth();
           <Text style={styles.emptyTitle}>No {tab} orders</Text>
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={filteredOrders}
           keyExtractor={(item) => item.order_id.toString()}
           renderItem={renderOrder}

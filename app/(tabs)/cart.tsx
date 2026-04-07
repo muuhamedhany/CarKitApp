@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   Pressable,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -91,7 +91,7 @@ export default function CartScreen() {
           <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Browse products and add items to your cart</Text>
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={items}
           keyExtractor={(item) => item.cart_item_id.toString()}
           renderItem={renderItem}
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 36,
     borderRadius: BorderRadius.lg, alignItems: 'center',
   },
-  checkoutText: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  checkoutText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
 
   emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },

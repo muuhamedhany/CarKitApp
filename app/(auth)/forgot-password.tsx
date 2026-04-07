@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, BackButton } from '@/components';
+import { FormInput, GradientButton, AuthFooter, BackButton } from '@/components';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
@@ -15,28 +15,69 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSendCode = async () => {
-    if (!email.trim()) { showToast('warning', 'Missing Email', 'Please enter your email address.'); return; }
+  const handleResetPassword = async () => {
+    if (!email.trim()) {
+      showToast('warning', 'Missing Email', 'Please enter your email address.');
+      return;
+    }
+
     setLoading(true);
     const result = await forgotPassword(email.trim());
     setLoading(false);
-    if (result.success) {
-      showToast('success', 'Code Sent', 'Please check your email for the OTP.');
-      router.push({ pathname: '/otp-verification', params: { email: email.trim() } } as any);
-    } else { showToast('error', 'Failed', result.message); }
+
+    if (!result.success) {
+      showToast('error', 'Error', result.message);
+    } else {
+      showToast('success', 'Code Sent', 'Please check your email for the 4-digit recovery code.');
+      router.push({
+        pathname: '/otp-verification',
+        params: { email: email.trim() }
+      });
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <BackButton onPress={() => router.back()} />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={[styles.title, { color: colors.pink }]}>Forgot Password?</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Enter your email address to receive a 4-digit verification code.</Text>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address:</Text>
-          <FormInput icon="email-outline" placeholder="example@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <BackButton onPress={() => router.back()} />
+
+          <Text style={[styles.title, { color: colors.pink }]}>Reset Password</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Enter your email to receive a 4-digit recovery code.
+          </Text>
+
+          <Text style={[styles.label, { color: colors.textPrimary }]}>Email:</Text>
+          <FormInput
+            icon="email-outline"
+            placeholder="Your Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+
+          <View style={{ height: Spacing.lg }} />
+
+          <GradientButton
+            title="Send Code"
+            onPress={handleResetPassword}
+            loading={loading}
+          />
+
           <View style={{ height: Spacing.xl }} />
-          <GradientButton title="Send Code" onPress={handleSendCode} loading={loading} />
+          <AuthFooter
+            message="Remember your password?"
+            actionText="Login"
+            onPress={() => router.replace('/login')}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -46,8 +87,25 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 80 },
-  title: { fontSize: 28, fontFamily: Fonts.extraBoldItalic, marginBottom: Spacing.sm },
-  subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl, lineHeight: 22 },
-  label: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs },
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 60,
+    paddingBottom: 0,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 34,
+    fontFamily: Fonts.extraBoldItalic,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.regular,
+    marginBottom: Spacing.xl + 8,
+  },
+  label: {
+    fontSize: FontSizes.sm,
+    fontFamily: Fonts.medium,
+    marginBottom: Spacing.xs,
+  },
 });
