@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, TextInput, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -153,9 +153,9 @@ export default function OTPVerificationScreen() {
 
           <View style={styles.resendContainer}>
             <Text style={[styles.resendText, { color: colors.textPrimary }]}>Didn't receive a code? </Text>
-            <TouchableOpacity onPress={handleResend}>
+            <Pressable onPress={handleResend}>
               <Text style={[styles.resendAction, { color: colors.pink }]}>Resend it</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {internalError && (

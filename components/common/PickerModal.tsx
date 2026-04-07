@@ -5,8 +5,8 @@ import {
   StyleSheet,
   Modal,
   Pressable,
-  FlatList,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
@@ -51,11 +51,11 @@ export default function PickerModal({
           </View>
 
           {/* List */}
-          <FlatList
+          <FlashList
             data={items}
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
-            style={styles.list}
+            contentContainerStyle={styles.list}
             renderItem={({ item }) => {
               const isSelected = item.id === selectedId;
               return (
