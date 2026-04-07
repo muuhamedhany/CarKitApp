@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
@@ -35,31 +36,23 @@ function TabButton({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
-  const scaleAnim = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+  const focusProgress = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: isFocused ? 1 : 0,
-      useNativeDriver: true,
-      tension: 120,
-      friction: 8,
-    }).start();
+    focusProgress.value = withSpring(isFocused ? 1 : 0, {
+      damping: 15,
+      stiffness: 150,
+    });
   }, [isFocused]);
 
-  const iconScale = scaleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.15],
-  });
+  const iconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(focusProgress.value, [0, 1], [1, 1.15]) }],
+  }));
 
-  const indicatorOpacity = scaleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
-  const indicatorScaleX = scaleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
+  const indicatorAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: focusProgress.value,
+    transform: [{ scaleX: focusProgress.value }],
+  }));
 
   return (
     <Pressable
@@ -67,7 +60,7 @@ function TabButton({
       style={styles.tab}
       android_ripple={{ color: 'rgba(233,30,140,0.1)', borderless: true, radius: 28 }}
     >
-      <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+      <Animated.View style={iconAnimatedStyle}>
         <Ionicons
           name={isFocused ? tab.iconFilled : tab.icon}
           size={22}
@@ -86,7 +79,8 @@ function TabButton({
       <Animated.View
         style={[
           styles.activeIndicator,
-          { backgroundColor: colors.pink, opacity: indicatorOpacity, transform: [{ scaleX: indicatorScaleX }] },
+          { backgroundColor: colors.pink },
+          indicatorAnimatedStyle,
         ]}
       />
     </Pressable>

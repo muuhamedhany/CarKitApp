@@ -15,29 +15,29 @@ export const Fonts = {
 // ═══════════════════════════════════
 export const DarkColors = {
   // Backgrounds
-  background: '#0A0A14',
+  background: '#0B0217',
   backgroundSecondary: '#12121F',
   card: 'rgba(30, 20, 50, 0.7)',
   cardBorder: 'rgba(156, 39, 176, 0.3)',
 
   // Primary
-  pink: '#E91E8C',
+  pink: '#CD42A8',
   pinkLight: '#FF69B4',
-  purple: '#9C27B0',
+  purple: '#5923A0',
   purpleDark: '#7B2FBE',
   purpleLight: '#B388FF',
 
   // Gradient
-  gradientStart: '#9C27B0',
-  gradientEnd: '#E91E8C',
+  gradientStart: '#CD42A8',
+  gradientEnd: '#5923A0',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#9E9E9E',
+  textPrimary: '#E9DEF8',
+  textSecondary: '#AA9DBB',
   textMuted: '#6B6B80',
 
   border: '#2A2A3A',
-  primary: '#E91E8C',
+  primary: '#CD42A8',
 
   // Utility
   white: '#FFFFFF',
@@ -73,15 +73,15 @@ export const LightColors = {
   cardBorder: 'rgba(156, 39, 176, 0.2)',
 
   // Primary (same neon accents!)
-  pink: '#E91E8C',
+  pink: '#CD42A8',
   pinkLight: '#FF69B4',
-  purple: '#9C27B0',
+  purple: '#5923A0',
   purpleDark: '#7B2FBE',
-  purpleLight: '#9C27B0',
+  purpleLight: '#5923A0',
 
   // Gradient
-  gradientStart: '#9C27B0',
-  gradientEnd: '#E91E8C',
+  gradientStart: '#5923A0',
+  gradientEnd: '#CD42A8',
 
   // Text
   textPrimary: '#1A1A2E',
@@ -89,7 +89,7 @@ export const LightColors = {
   textMuted: '#9E9E9E',
 
   border: '#E0E0E8',
-  primary: '#E91E8C',
+  primary: '#CD42A8',
 
   // Utility
   white: '#FFFFFF',

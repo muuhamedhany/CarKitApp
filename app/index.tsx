@@ -15,7 +15,7 @@ const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 export default function SplashScreenView() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
@@ -48,7 +48,7 @@ export default function SplashScreenView() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.logoContainer, animatedStyle]}>
         <Image
-          source={require('@/assets/images/splash-icon.png')}
+          source={ isDark ? require('@/assets/images/splash-icon-white.png') : require('@/assets/images/splash-icon-black.png')}
           style={styles.logo}
           contentFit="contain"
         />

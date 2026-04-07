@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
   text: {
     color: '#FFFFFF',
     fontSize: FontSizes.lg,
-    fontFamily: Fonts.bold,
+    fontFamily: Fonts.semiBold,
   },
 });
