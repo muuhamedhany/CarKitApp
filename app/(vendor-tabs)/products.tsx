@@ -16,7 +16,7 @@ export default function VendorProductsScreen() {
   const { showToast } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +50,7 @@ export default function VendorProductsScreen() {
           source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
           style={styles.productImage}
         />
-        <View style={styles.productInfo}> 
+        <View style={styles.productInfo}>
           <View style={styles.productHeaderRow}>
             <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
               {item.name}
@@ -91,7 +91,7 @@ export default function VendorProductsScreen() {
       )}
 
       {/* Floating Action Button */}
-      <Pressable 
+      <Pressable
         style={[styles.fab, { backgroundColor: '#c80ceb', bottom: insets.bottom + 80 }]}
         onPress={() => router.push('/(vendor-tabs)/add-product')}
       >

@@ -26,8 +26,8 @@ function InnerLayout() {
 
   return (
     <>
-      <Stack 
-        screenOptions={{ 
+      <Stack
+        screenOptions={{
           headerShown: false,
         }}
       >
