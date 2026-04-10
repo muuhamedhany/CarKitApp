@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, BackButton } from '@/components';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader } from '@/components';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function SignUpCustomerScreen() {
@@ -44,8 +44,7 @@ export default function SignUpCustomerScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <BackButton onPress={() => router.back()} />
-          <Text style={[styles.title, { color: colors.pink }]}>Create Account</Text>
+          <CenteredHeader title="Create Account" titleColor={colors.pink} />
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign up to start shopping</Text>
 
           <Text style={[styles.label, { color: colors.textPrimary }]}>Name:</Text>
@@ -73,8 +72,7 @@ export default function SignUpCustomerScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 40 },
-  title: { fontSize: 30, fontFamily: Fonts.extraBoldItalic, marginBottom: 4 },
-  subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 28, paddingBottom: 40 },
+  subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl, marginTop: 6 },
   label: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs },
 });

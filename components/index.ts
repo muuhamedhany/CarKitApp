@@ -13,6 +13,7 @@ export { default as SocialButton } from './common/SocialButton';
 export { default as ThirdButton } from './common/ThirdButton';
 
 export { default as BackButton } from './layout/BackButton';
+export { default as CenteredHeader } from './layout/CenteredHeader';
 export { default as CustomTabBar } from './layout/CustomTabBar';
 export { default as ProductCard } from './layout/ProductCard';
 export { default as ServiceCard } from './layout/ServiceCard';

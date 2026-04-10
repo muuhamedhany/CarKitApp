@@ -125,7 +125,7 @@ export default function ProfileScreen() {
     >
       {/* Header */}
       <View style={[styles.profileHeader, { marginTop: insets.top + 20 }]}>
-        <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+        <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pinkGlow, borderWidth: 2 }]}>
           <Text style={[styles.avatarInitial, { color: colors.pink }]}>{profileInitial}</Text>
         </View>
         <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name || 'Car Enthusiast'}</Text>

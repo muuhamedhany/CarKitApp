@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { addressService, AddressData } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -81,13 +81,11 @@ export default function AddressesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }]}>
-        <BackButton onPress={() => isAdding ? setIsAdding(false) : router.back()} />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          {isAdding ? 'Add Address' : 'Shipping Addresses'}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CenteredHeader
+        title={isAdding ? 'Add Address' : 'Addresses'}
+        titleColor={colors.textPrimary}
+        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+      />
 
       {loading ? (
         <View style={styles.center}>
@@ -189,13 +187,8 @@ export default function AddressesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
   content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: 40 },
-  
+
   formGroup: { marginBottom: Spacing.lg },
   label: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm },
   inputWrapper: {
@@ -222,7 +215,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
   cardAddress: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
   deleteBtn: { padding: Spacing.xs },
-  
+
   emptyState: { alignItems: 'center', marginTop: 80 },
   emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center' },
