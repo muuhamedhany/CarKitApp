@@ -6,14 +6,13 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, Colors } from '@/constants/theme';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -31,40 +30,73 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
+  const username = user?.name?.trim() ?? '';
+  const profileInitial = (username.charAt(0) || 'C').toUpperCase();
 
   const handleLogout = async () => {
     await logout();
     router.replace('/login');
   };
 
+  const quickActions: MenuItem[] = [
+    { icon: 'car-sports', label: 'Vehicles', route: '/my-vehicles' },
+    { icon: 'package-variant', label: 'Orders', route: '/my-orders' },
+    { icon: 'calendar-check', label: 'Bookings', route: '/my-bookings' },
+    { icon: 'heart-outline', label: 'Wishlists', onPress: () => showToast('info', 'Coming Soon', 'Wishlists are being built.') },
+  ];
+
   const personalItems: MenuItem[] = [
-    { icon: 'car-sports', label: 'My Vehicles', route: '/my-vehicles' },
-    { icon: 'package-variant', label: 'My Orders', route: '/my-orders' },
-    { icon: 'calendar-check', label: 'My Bookings', route: '/my-bookings' },
     { icon: 'map-marker-outline', label: 'Shipping Addresses', route: '/profile/addresses' },
     { icon: 'credit-card-outline', label: 'Payment Methods', onPress: () => showToast('info', 'Coming Soon', 'Payments is being built.') },
   ];
 
-  const supportItems: MenuItem[] = [
-    { icon: 'help-circle-outline', label: 'Help Center & Support', route: '/support' },
-    { icon: 'shield-lock-outline', label: 'Privacy Policy', onPress: () => showToast('info', 'Coming Soon', 'Privacy Policy is being built.') },
-  ];
+  const getIconStyles = (label: string) => {
+    switch (label) {
+      case 'Vehicles': return { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)' };
+      case 'Orders': return { color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' };
+      case 'Bookings': return { color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)' };
+      case 'Wishlists': return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
+      case 'My Bookings': return { color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)' };
+      case 'Shipping Addresses': return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
+      case 'Payment Methods': return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
+      default: return { color: colors.pink, bg: colors.pinkGlow };
+    }
+  };
 
+  const renderQuickAction = (item: MenuItem) => {
+    const iconStyle = getIconStyles(item.label);
+
+    return (
+      <Pressable
+        key={item.label}
+        style={[
+          styles.quickActionCard,
+          { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
+        ]}
+        onPress={() => {
+          if (item.route) router.push(item.route as any);
+          else if (item.onPress) item.onPress();
+        }}
+      >
+        <View style={[styles.quickActionIconBox, { backgroundColor: iconStyle.bg }]}>
+          <MaterialCommunityIcons name={item.icon as any} size={22} color={iconStyle.color} />
+        </View>
+        <View style={styles.quickActionTextWrap}>
+          <Text style={[styles.quickActionTitle, { color: colors.textPrimary }]}>{item.label}</Text>
+          <Text style={[styles.quickActionSubtitle, { color: colors.textSecondary }]}>
+            {item.label === 'Vehicles'
+              ? 'Manage & track'
+              : item.label === 'Orders'
+                ? 'Browse history'
+                : item.label === 'Bookings'
+                  ? 'View bookings'
+                  : 'Saved items'}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
   const renderMenuItem = (item: MenuItem, index: number) => {
-    // Dynamically assign icon colors/backgrounds for a premium look
-    const getIconStyles = (label: string) => {
-      switch (label) {
-        case 'My Vehicles': return { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)' };
-        case 'My Orders': return { color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.1)' };
-        case 'My Bookings': return { color: '#EC4899', bg: 'rgba(236, 72, 153, 0.1)' };
-        case 'Shipping Addresses': return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
-        case 'Payment Methods': return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
-        case 'Help Center & Support': return { color: '#0EA5E9', bg: 'rgba(14, 165, 233, 0.1)' };
-        case 'Privacy Policy': return { color: '#64748B', bg: 'rgba(100, 116, 139, 0.1)' };
-        default: return { color: colors.pink, bg: colors.pinkGlow };
-      }
-    };
-
     const iconStyle = getIconStyles(item.label);
 
     return (
@@ -94,12 +126,12 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={[styles.profileHeader, { marginTop: insets.top + 20 }]}>
         <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <MaterialCommunityIcons name="account" size={60} color={colors.pink} />
+          <Text style={[styles.avatarInitial, { color: colors.pink }]}>{profileInitial}</Text>
         </View>
         <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name || 'Car Enthusiast'}</Text>
         <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
-        
-        <Pressable 
+
+        <Pressable
           style={[styles.editProfileBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
           onPress={() => router.push('/profile/edit' as any)}
         >
@@ -107,25 +139,14 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
-      {/* Quick Stats (Clean Redesign) */}
-      <View style={styles.statsRow}>
-        <BlurView intensity={20} tint="dark" style={[styles.statCard, { borderColor: colors.cardBorder }]}>
-          <Text style={[styles.statNumber, { color: colors.textPrimary }]}>12</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Orders</Text>
-        </BlurView>
-        <BlurView intensity={20} tint="dark" style={[styles.statCard, { borderColor: colors.cardBorder }]}>
-          <Text style={[styles.statNumber, { color: colors.textPrimary }]}>3</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bookings</Text>
-        </BlurView>
-        <BlurView intensity={20} tint="dark" style={[styles.statCard, { borderColor: colors.cardBorder }]}>
-          <Text style={[styles.statNumber, { color: colors.textPrimary }]}>2</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Cars</Text>
-        </BlurView>
-      </View>
-
       {/* menu list */}
       <View style={styles.menuContainer}>
-        <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>ACCOUNT & VEHICLES</Text>
+        <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>QUICK ACCESS</Text>
+        <View style={styles.quickActionsGrid}>
+          {quickActions.map(renderQuickAction)}
+        </View>
+
+        <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>ACCOUNT</Text>
         <View style={[styles.menuSection, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
           {personalItems.map(renderMenuItem)}
         </View>
@@ -142,13 +163,12 @@ export default function ProfileScreen() {
             <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Settings</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
-          
         </View>
       </View>
 
       {/* Logout */}
-      <Pressable onPress={handleLogout} style={[styles.logoutBtn, { borderColor: 'rgba(236, 72, 153, 0.2)' }]}>
-        <MaterialCommunityIcons name="logout-variant" size={20} color="#EC4899" />
+      <Pressable onPress={handleLogout} style={[styles.logoutBtn, { borderColor: Colors.error }]}>
+        <MaterialCommunityIcons name="logout-variant" size={20} color={Colors.error} />
         <Text style={styles.logoutText}>Sign Out</Text>
       </Pressable>
 
@@ -168,8 +188,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: Spacing.md,
   },
+  avatarInitial: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 44,
+  },
   userName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl },
-  userEmail: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.6, marginTop: 4 },
+  userEmail: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.6 },
   editProfileBtn: {
     marginTop: Spacing.lg, paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 12, borderWidth: 1,
@@ -177,10 +201,10 @@ const styles = StyleSheet.create({
   editProfileText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
 
   // Stats
-  statsRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    marginBottom: Spacing.xxl 
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xxl
   },
   statCard: {
     flex: 0.3,
@@ -199,9 +223,44 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.extraBold, fontSize: 11,
     letterSpacing: 1.5, marginBottom: Spacing.md, marginLeft: 4,
   },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginBottom: Spacing.md
+  },
+  quickActionCard: {
+    width: '47.5%',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: Spacing.md,
+    minHeight: 132,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm
+  },
+  quickActionIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionTextWrap: {
+    marginTop: Spacing.md,
+  },
+  quickActionTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.md,
+  },
+  quickActionSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    marginTop: 4,
+    opacity: 0.7,
+  },
   menuSection: {
     borderRadius: 24, borderWidth: 1,
-    overflow: 'hidden', marginBottom: Spacing.xl,
+    overflow: 'hidden', marginBottom: Spacing.md
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center',
@@ -223,7 +282,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 16, borderRadius: 20,
     borderWidth: 1, gap: 10,
-    marginBottom: Spacing.xl,
+
   },
-  logoutText: { color: '#EC4899', fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
+  logoutText: { color: Colors.error, fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
 });
