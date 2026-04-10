@@ -15,10 +15,10 @@ export const Fonts = {
 // ═══════════════════════════════════
 export const DarkColors = {
   // Backgrounds
-  background: '#0B0217',
-  backgroundSecondary: '#12121F',
-  card: 'rgba(30, 20, 50, 0.7)',
-  cardBorder: 'rgba(156, 39, 176, 0.3)',
+  background: '#050505', // Deep Obsidian
+  backgroundSecondary: '#0D0D0F', // Slightly lighter for contrast
+  card: 'rgba(20, 20, 25, 0.4)', // Glassmorphic base
+  cardBorder: 'rgba(255, 255, 255, 0.08)', // High-end subtle border
 
   // Primary
   pink: '#CD42A8',
@@ -53,13 +53,13 @@ export const DarkColors = {
   info: '#2196F3',
 
   // Extras for image/placeholder backgrounds
-  imagePlaceholder: 'rgba(30,20,50,0.5)',
-  purpleGlow: 'rgba(156,39,176,0.15)',
-  pinkGlow: 'rgba(233,30,140,0.15)',
-  dividerLine: 'rgba(156, 39, 176, 0.2)',
-  inputBorder: 'rgba(156, 39, 176, 0.35)',
-  toastBorder: 'rgba(255, 255, 255, 0.1)',
-  itemSeparator: 'rgba(42,42,58,0.5)',
+  imagePlaceholder: 'rgba(255, 255, 255, 0.05)',
+  purpleGlow: 'rgba(147, 51, 234, 0.12)', // Refined violet
+  pinkGlow: 'rgba(236, 72, 153, 0.12)', // Refined fuchsia
+  dividerLine: 'rgba(255, 255, 255, 0.05)',
+  inputBorder: 'rgba(255, 255, 255, 0.1)',
+  toastBorder: 'rgba(255, 255, 255, 0.05)',
+  itemSeparator: 'rgba(255, 255, 255, 0.04)',
 };
 
 // ═══════════════════════════════════

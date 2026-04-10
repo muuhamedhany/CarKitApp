@@ -5,8 +5,8 @@ import {
   StyleSheet,
   Modal,
   Pressable,
+  FlatList,
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
@@ -51,31 +51,33 @@ export default function PickerModal({
           </View>
 
           {/* List */}
-          <FlashList
-            data={items}
-            keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => {
-              const isSelected = item.id === selectedId;
-              return (
-                <Pressable
-                  style={[styles.item, { borderBottomColor: colors.border }, isSelected && { backgroundColor: colors.pinkGlow, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg }]}
-                  onPress={() => onSelect(item)}
-                >
-                  <Text style={[styles.itemText, { color: colors.textSecondary }, isSelected && { color: colors.pink, fontFamily: Fonts.semiBold }]}>
-                    {item.label}
-                  </Text>
-                  {isSelected && (
-                    <MaterialCommunityIcons name="check" size={20} color={colors.pink} />
-                  )}
-                </Pressable>
-              );
-            }}
-            ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No options available</Text>
-            }
-          />
+          <View style={{ minHeight: 300, flexShrink: 1 }}>
+            <FlatList
+              data={items}
+              keyExtractor={(item) => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.list}
+              renderItem={({ item }) => {
+                const isSelected = item.id === selectedId;
+                return (
+                  <Pressable
+                    style={[styles.item, { borderBottomColor: colors.border }, isSelected && { backgroundColor: colors.pinkGlow, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg }]}
+                    onPress={() => onSelect(item)}
+                  >
+                    <Text style={[styles.itemText, { color: colors.textSecondary }, isSelected && { color: colors.pink, fontFamily: Fonts.semiBold }]}>
+                      {item.label}
+                    </Text>
+                    {isSelected && (
+                      <MaterialCommunityIcons name="check" size={20} color={colors.pink} />
+                    )}
+                  </Pressable>
+                );
+              }}
+              ListEmptyComponent={
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No options available</Text>
+              }
+            />
+          </View>
         </View>
       </View>
     </Modal>

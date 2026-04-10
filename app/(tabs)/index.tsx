@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Image,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -24,14 +25,97 @@ import { CategoryPill } from '@/components';
 
 const TAB_BAR_HEIGHT = 65;
 
+// ─── Typewriter Search Placeholder ────────────────────────────────────────────
+const SEARCH_PHRASES = [
+  'Engine oil & filters...',
+  'Brake pads & rotors...',
+  'Car wash & detailing...',
+  'Tire rotation & balance...',
+  'Battery replacement...',
+  'AC service & recharge...',
+  'Spark plugs & ignition...',
+  'Oil change near you...',
+  'Suspension & steering...',
+  'Windshield wipers...',
+];
+
+const TYPING_SPEED = 60;    // ms per character typed
+const ERASING_SPEED = 30;   // ms per character erased
+const PAUSE_AFTER_TYPE = 1800; // ms to hold the full phrase
+const PAUSE_AFTER_ERASE = 300; // ms before starting the next phrase
+
+function useTypewriter(phrases: string[]) {
+  const [displayed, setDisplayed] = useState('');
+  const [showCursor, setShowCursor] = useState(true);
+  const phraseIdx = useRef(0);
+  const charIdx = useRef(0);
+  const isErasing = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Blinking cursor
+  useEffect(() => {
+    const cursor = setInterval(() => setShowCursor(v => !v), 500);
+    return () => clearInterval(cursor);
+  }, []);
+
+  useEffect(() => {
+    const tick = () => {
+      const phrase = phrases[phraseIdx.current];
+
+      if (!isErasing.current) {
+        // Typing forward
+        if (charIdx.current < phrase.length) {
+          charIdx.current++;
+          setDisplayed(phrase.slice(0, charIdx.current));
+          timeoutRef.current = setTimeout(tick, TYPING_SPEED);
+        } else {
+          // Pause at full phrase, then start erasing
+          isErasing.current = true;
+          timeoutRef.current = setTimeout(tick, PAUSE_AFTER_TYPE);
+        }
+      } else {
+        // Erasing backward
+        if (charIdx.current > 0) {
+          charIdx.current--;
+          setDisplayed(phrase.slice(0, charIdx.current));
+          timeoutRef.current = setTimeout(tick, ERASING_SPEED);
+        } else {
+          // Move to next phrase
+          isErasing.current = false;
+          phraseIdx.current = (phraseIdx.current + 1) % phrases.length;
+          timeoutRef.current = setTimeout(tick, PAUSE_AFTER_ERASE);
+        }
+      }
+    };
+
+    timeoutRef.current = setTimeout(tick, PAUSE_AFTER_ERASE);
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [phrases]);
+
+  return { displayed, showCursor };
+}
+
+function TypewriterSearchBar({ textColor }: { textColor: string }) {
+  const { displayed, showCursor } = useTypewriter(SEARCH_PHRASES);
+  return (
+    <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm, color: textColor, flex: 1 }}>
+      {displayed}
+      <Text style={{ opacity: showCursor ? 1 : 0 }}>|</Text>
+    </Text>
+  );
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
 type Category = { category_id: number; name: string; description?: string };
 type Product = {
   product_id: number; name: string; price: string; description?: string;
   category_name?: string; vendor_name?: string;
+  image_url?: string | null;
 };
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
+  image_url?: string | null;
 };
 
 export default function HomeScreen() {
@@ -86,44 +170,66 @@ export default function HomeScreen() {
     }
   };
 
-  const renderServiceCard = (service: Service) => (
-    <Pressable key={service.service_id} style={styles.serviceCard}>
-      <LinearGradient
-        colors={['rgba(156,39,176,0.4)', 'rgba(233,30,140,0.3)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.serviceCardGradient, { borderColor: colors.cardBorder }]}
-      >
-        <Text style={[styles.serviceCardName, { color: colors.textPrimary }]} numberOfLines={2}>{service.name}</Text>
-        <Text style={[styles.serviceCardPrice, { color: colors.textSecondary }]}>Starting at {service.price} EGP</Text>
-        <View style={styles.serviceCardArrow}>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.pink} />
+  const renderServiceCard = (service: Service) => {
+    const hasImage = !!service.image_url;
+    return (
+      <Pressable key={service.service_id} style={[styles.serviceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+        {/* Image or gradient placeholder */}
+        <View style={[styles.serviceCardImage, { backgroundColor: colors.imagePlaceholder }]}>
+          {hasImage ? (
+            <Image
+              source={{ uri: service.image_url! }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+          ) : (
+            <MaterialCommunityIcons name="car-wash" size={28} color={colors.textMuted} />
+          )}
         </View>
-      </LinearGradient>
-    </Pressable>
-  );
+        <View style={styles.serviceCardContent}>
+          <Text style={[styles.serviceCardName, { color: colors.textPrimary }]} numberOfLines={2}>{service.name}</Text>
+          <View>
+            <Text style={[styles.serviceCardPrice, { color: colors.textPrimary }]}>Starting at {service.price} EGP</Text>
+            <View style={styles.serviceCardArrow}>
+              <MaterialCommunityIcons name="arrow-right" size={20} color={colors.textPrimary} />
+            </View>
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
 
-  const renderProductCard = (product: Product) => (
-    <Pressable key={product.product_id} style={[styles.productCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-      <View style={[styles.productImage, { backgroundColor: colors.imagePlaceholder }]}>
-        <MaterialCommunityIcons name="car-wrench" size={32} color={colors.textMuted} />
-      </View>
-      <View style={styles.productInfo}>
-        <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>{product.name}</Text>
-        <Text style={[styles.productPrice, { color: colors.pink }]}>{product.price} EGP</Text>
-        <Pressable onPress={() => handleAddToCart(product.product_id)} style={styles.miniAddBtn}>
-          <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.miniAddBtnGrad}
-          >
-            <Text style={styles.miniAddBtnText}>Add to Cart</Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
-    </Pressable>
-  );
+  const renderProductCard = (product: Product) => {
+    const hasImage = !!product.image_url;
+    return (
+      <Pressable 
+        key={product.product_id} 
+        style={[styles.productCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+        onPress={() => router.push(`/product/${product.product_id}`)}
+      >
+        <View style={[styles.productImage, { backgroundColor: colors.imagePlaceholder }]}>
+          {hasImage ? (
+            <Image
+              source={{ uri: product.image_url! }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+          ) : (
+            <MaterialCommunityIcons name="car-cog" size={32} color={colors.textMuted} />
+          )}
+        </View>
+        <View style={styles.productInfo}>
+          <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>{product.name}</Text>
+          <View style={styles.productMeta}>
+            <Text style={[styles.productPrice, { color: colors.textPrimary }]}>{product.price} EGP</Text>
+            <Pressable onPress={() => handleAddToCart(product.product_id)} style={styles.addIconBtn}>
+              <MaterialCommunityIcons name="plus-circle" size={24} color={colors.pink} />
+            </Pressable>
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
 
   if (loading) {
     return (
@@ -141,21 +247,21 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.avatarCircle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}>
-          <MaterialCommunityIcons name="account" size={24} color={colors.pink} />
+      <View style={[styles.header, { marginTop: insets.top }]}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.greetingLabel, { color: colors.textSecondary }]}>Welcome back,</Text>
+          <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
         </View>
-        <View>
-          <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-            Hello, <Text style={[styles.greetingName, { color: colors.pink }]}>{user?.name || 'User'}!</Text>
-          </Text>
-        </View>
+        <Pressable style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary }]}>
+          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
+          <View style={[styles.notificationDot, { backgroundColor: colors.pink }]} />
+        </Pressable>
       </View>
 
-      {/* Search bar */}
-      <Pressable style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]} onPress={() => router.push('/(tabs)/search')}>
+      {/* Quick Search — typewriter placeholder */}
+      <Pressable style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]} onPress={() => router.push('/(tabs)/search')}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-        <Text style={[styles.searchPlaceholder, { color: colors.textMuted }]}>Search for services, parts...</Text>
+        <TypewriterSearchBar textColor={colors.textMuted} />
       </Pressable>
 
       {/* Featured Services */}
@@ -203,74 +309,103 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: 60 },
+  content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
 
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg },
-  avatarCircle: {
-    width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: Spacing.sm,
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: Spacing.lg,
+    paddingTop: 10,
   },
-  greeting: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg },
-  greetingName: { fontFamily: Fonts.bold },
+  headerLeft: { flex: 1 },
+  greetingLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
+  greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4 },
+  notificationBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  notificationDot: {
+    position: 'absolute', top: 12, right: 12,
+    width: 8, height: 8, borderRadius: 4,
+    borderWidth: 2, borderColor: '#050505',
+  },
+
+  statusCardContainer: { marginBottom: Spacing.xl },
+  statusCard: {
+    borderRadius: 24, borderWidth: 1,
+    overflow: 'hidden', padding: Spacing.lg,
+  },
+  statusGradient: { ...StyleSheet.absoluteFillObject },
+  statusHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xl },
+  carName: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
+  carStatus: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2 },
+
+  statsRow: { flexDirection: 'row', alignItems: 'center' },
+  statItem: { flex: 1 },
+  statValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  statUnit: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, opacity: 0.6 },
+  statLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: Spacing.lg },
 
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: BorderRadius.md, borderWidth: 1,
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
-    marginBottom: Spacing.lg,
+    borderRadius: 16, borderWidth: 1,
+    paddingHorizontal: Spacing.md, paddingVertical: 14,
+    marginBottom: Spacing.xl,
   },
-  searchPlaceholder: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginLeft: Spacing.sm },
+  searchPlaceholder: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm },
 
   sectionTitle: {
-    fontFamily: Fonts.bold, fontSize: FontSizes.lg,
-    marginBottom: Spacing.sm, marginTop: Spacing.sm,
+    fontFamily: Fonts.extraBold, fontSize: FontSizes.lg,
+    marginBottom: Spacing.md, letterSpacing: -0.5,
   },
-  horizontalScroll: { marginBottom: Spacing.md },
-  pillRow: { marginBottom: Spacing.sm },
-  emptyText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, paddingHorizontal: Spacing.sm },
+  horizontalScroll: { marginBottom: Spacing.xl, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg },
+  pillRow: { marginBottom: Spacing.md },
+  emptyText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
 
   serviceCard: {
-    width: 180, height: 150, borderRadius: BorderRadius.lg,
-    overflow: 'hidden', marginRight: Spacing.sm,
+    width: 200, borderRadius: 20,
+    borderWidth: 1, marginRight: Spacing.md,
+    overflow: 'hidden',
   },
-  serviceCardGradient: {
-    flex: 1, padding: Spacing.md,
+  serviceCardImage: {
+    height: 90, width: '100%',
+    justifyContent: 'center', alignItems: 'center',
+    overflow: 'hidden',
+  },
+  serviceCardContent: {
+    padding: Spacing.sm,
     justifyContent: 'space-between',
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    flex: 1,
   },
-  serviceCardName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
-  serviceCardPrice: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+  serviceCardName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, lineHeight: 18 },
+  serviceCardPrice: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.8 },
   serviceCardArrow: { alignSelf: 'flex-start', marginTop: 4 },
 
   productCard: {
-    width: 160, borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginRight: Spacing.sm, overflow: 'hidden',
+    width: 170, borderRadius: 20,
+    borderWidth: 1, marginRight: Spacing.md, 
+    overflow: 'hidden',
   },
-  productImage: {
-    height: 100, justifyContent: 'center', alignItems: 'center',
-  },
-  productInfo: { padding: Spacing.sm },
-  productName: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 4 },
-  productPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 8 },
-  miniAddBtn: { borderRadius: BorderRadius.sm, overflow: 'hidden' },
-  miniAddBtnGrad: { paddingVertical: 6, alignItems: 'center', borderRadius: BorderRadius.sm },
-  miniAddBtnText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: 11 },
+  productImage: { height: 110, justifyContent: 'center', alignItems: 'center' },
+  productInfo: { padding: Spacing.md },
+  productName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 2 },
+  productMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  productPrice: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  addIconBtn: { padding: 4 },
 
   activityCard: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: BorderRadius.lg, borderWidth: 1,
+    borderRadius: 20, borderWidth: 1,
     padding: Spacing.md, marginBottom: Spacing.sm,
   },
   activityIcon: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 44, height: 44, borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   activityInfo: { flex: 1 },
-  activityTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  activitySub: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  activityTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+  activitySub: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
 });
