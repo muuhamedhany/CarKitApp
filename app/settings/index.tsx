@@ -69,6 +69,24 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
+        {/* Security Section */}
+        <Text style={[styles.sectionLabel, { color: colors.pink }]}>SECURITY</Text>
+        <View style={[styles.section, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+          <Pressable
+            style={styles.themeOption}
+            onPress={() => router.push('/settings/password')}
+          >
+            <View style={[styles.optionIcon, { backgroundColor: colors.purpleGlow }]}>
+              <MaterialCommunityIcons name="lock-reset" size={22} color={colors.pink} />
+            </View>
+            <View style={styles.optionText}>
+              <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Change Password</Text>
+              <Text style={[styles.optionDesc, { color: colors.textMuted }]}>Update your account password</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+          </Pressable>
+        </View>
+
         {/* About Section */}
         <Text style={[styles.sectionLabel, { color: colors.pink }]}>ABOUT</Text>
         <View style={[styles.section, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>

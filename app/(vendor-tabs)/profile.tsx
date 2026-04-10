@@ -1,0 +1,152 @@
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
+import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { GradientButton } from '@/components';
+
+export default function VendorProfileScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Vendor Profile</Text>
+        </View>
+
+        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
+            <Text style={[styles.avatarText, { color: colors.pink }]}>
+              {user?.name?.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
+            <Text style={[styles.email, { color: colors.textMuted }]}>{user?.email}</Text>
+            <View style={[styles.badge, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <Text style={[styles.badgeText, { color: '#10B981' }]}>Verified Vendor</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => {}}>
+            <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+              <MaterialCommunityIcons name="storefront" size={22} color="#6366F1" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Store Settings</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </Pressable>
+
+          <Pressable style={styles.menuItemLast} onPress={handleLogout}>
+            <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+              <MaterialCommunityIcons name="logout" size={22} color="#EF4444" />
+            </View>
+            <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: Spacing.xl,
+    paddingBottom: 150,
+  },
+  header: {
+    marginBottom: Spacing.xl,
+  },
+  title: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xxl,
+  },
+  profileCard: {
+    flexDirection: 'row',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xxl,
+  },
+  userInfo: {
+    marginLeft: Spacing.lg,
+    flex: 1,
+  },
+  name: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+  },
+  email: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    marginBottom: Spacing.xs,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.xs,
+  },
+  badgeText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 12,
+  },
+  section: {
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+  },
+  menuItemLast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuText: {
+    flex: 1,
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md,
+    marginLeft: Spacing.md,
+  },
+});

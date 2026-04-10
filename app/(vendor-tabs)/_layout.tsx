@@ -1,0 +1,92 @@
+import { Platform } from 'react-native';
+import { Tabs } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useTheme } from '@/hooks/useTheme';
+import { CustomTabBar } from '@/components';
+
+// iOS: NativeTabs
+function IOSTabLayout() {
+  const { colors } = useTheme();
+
+  return (
+    <NativeTabs
+      backgroundColor={colors.backgroundSecondary}
+      tintColor={colors.pink}
+      iconColor={{
+        default: colors.textMuted,
+        selected: colors.pink,
+      }}
+      labelStyle={{
+        default: {
+          color: colors.textMuted,
+          fontSize: 11,
+          fontWeight: 500,
+        },
+        selected: {
+          color: colors.pink,
+          fontSize: 11,
+          fontWeight: 600,
+        },
+      }}
+    >
+      <NativeTabs.Trigger name="index">
+        <Label>Dashboard</Label>
+        <Icon
+          sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="view-dashboard" />}
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="products">
+        <Label>Products</Label>
+        <Icon
+          sf={{ default: 'shippingbox', selected: 'shippingbox.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="package-variant" />}
+        />
+      </NativeTabs.Trigger>
+
+      {/* Optional add-product tab - User can choose between this and FAB on products screen */}
+      <NativeTabs.Trigger name="add-product">
+        <Label>Add</Label>
+        <Icon
+          sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="plus-circle" />}
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile">
+        <Label>Profile</Label>
+        <Icon
+          sf={{ default: 'person', selected: 'person.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="account" />}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}
+
+// Android: Custom floating tab bar matching the design
+function AndroidTabLayout() {
+  return (
+    <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
+      <Tabs.Screen name="products" options={{ title: 'Products' }} />
+      <Tabs.Screen name="add-product" options={{ title: 'Add' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    </Tabs>
+  );
+}
+
+export default function TabLayout() {
+  if (Platform.OS === 'ios') {
+    return <IOSTabLayout />;
+  }
+  return <AndroidTabLayout />;
+}
