@@ -35,6 +35,7 @@ function InnerLayout() {
         <Stack.Screen name="onboarding" options={{ title: '' }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="(vendor-tabs)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="settings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />

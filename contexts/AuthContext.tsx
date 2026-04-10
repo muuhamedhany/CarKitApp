@@ -29,18 +29,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load stored auth on mount
+  // Load stored auth on mount — then refresh from server to get latest role/token
   useEffect(() => {
     const loadAuth = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('token');
         const storedUser = await AsyncStorage.getItem('user');
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+
+        if (!storedToken || !storedUser) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Set state immediately from storage so the app isn't blocked
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+
+        // Then refresh session in the background to get fresh role/token from the server
+        try {
+          const API_URL = process.env.EXPO_PUBLIC_API_URL;
+          const res = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${storedToken}`,
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              // Replace stale token+user with fresh data from server
+              await AsyncStorage.setItem('token', data.data.token);
+              await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
+              setToken(data.data.token);
+              setUser(data.data.user);
+            }
+          }
+        } catch {
+          // Server unreachable — keep using stored data, will fail at API call time
         }
       } catch (e) {
-        // Ignore errors
+        // Storage error — clear and force re-login
+        await AsyncStorage.multiRemove(['token', 'user']);
       } finally {
         setIsLoading(false);
       }

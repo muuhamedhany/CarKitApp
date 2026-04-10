@@ -1,13 +1,13 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/useTheme';
-import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { Fonts, FontSizes, Spacing } from '@/constants/theme';
 
 type ProductCardProps = {
   name: string;
   price: string | number;
+  imageUrl?: string | null;
   rating?: number;
   reviewCount?: number;
   vendorName?: string;
@@ -18,6 +18,7 @@ type ProductCardProps = {
 export default function ProductCard({
   name,
   price,
+  imageUrl,
   rating,
   reviewCount,
   vendorName,
@@ -25,48 +26,68 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const { colors } = useTheme();
+  const [imgError, setImgError] = useState(false);
+  const [imgLoading, setImgLoading] = useState(!!imageUrl);
+
+  const showImage = !!imageUrl && !imgError;
 
   return (
-    <Pressable style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]} onPress={onPress}>
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+      onPress={onPress}
+    >
+      {/* Image / Placeholder */}
       <View style={[styles.imageContainer, { backgroundColor: colors.imagePlaceholder }]}>
-        <MaterialCommunityIcons name="car-wrench" size={40} color={colors.textMuted} />
+        {showImage ? (
+          <>
+            <Image
+              source={{ uri: imageUrl! }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              onLoad={() => setImgLoading(false)}
+              onError={() => { setImgError(true); setImgLoading(false); }}
+            />
+            {imgLoading && (
+              <ActivityIndicator
+                size="small"
+                color={colors.pink}
+                style={styles.imgLoader}
+              />
+            )}
+          </>
+        ) : (
+          <MaterialCommunityIcons name="car-wrench" size={40} color={colors.textMuted} />
+        )}
       </View>
 
+      {/* Info */}
       <View style={styles.info}>
-        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>{name}</Text>
+        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+          {name}
+        </Text>
         {vendorName && (
-          <Text style={[styles.vendor, { color: colors.textMuted }]} numberOfLines={1}>{vendorName}</Text>
+          <Text style={[styles.vendor, { color: colors.textMuted }]} numberOfLines={1}>
+            {vendorName}
+          </Text>
         )}
-        <Text style={[styles.price, { color: colors.pink }]}>{price} EGP</Text>
 
         {rating !== undefined && (
           <View style={styles.ratingRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <MaterialCommunityIcons
-                key={star}
-                name={star <= Math.round(rating) ? 'star' : 'star-outline'}
-                size={14}
-                color={star <= Math.round(rating) ? '#FFD700' : colors.textMuted}
-              />
-            ))}
-            {reviewCount !== undefined && (
-              <Text style={[styles.reviewCount, { color: colors.textMuted }]}>({reviewCount})</Text>
-            )}
+            <MaterialCommunityIcons name="star" size={14} color="#FBBF24" />
+            <Text style={[styles.reviewCount, { color: colors.textMuted }]}>
+              {rating.toFixed(1)}{reviewCount ? ` (${reviewCount})` : ''}
+            </Text>
           </View>
         )}
 
-        {onAddToCart && (
-          <Pressable onPress={onAddToCart} style={styles.addButton}>
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.addButtonGradient}
-            >
-              <Text style={styles.addButtonText}>Add to Cart</Text>
-            </LinearGradient>
-          </Pressable>
-        )}
+        <View style={styles.priceRow}>
+          <Text style={[styles.price, { color: colors.textPrimary }]}>{price} EGP</Text>
+          {onAddToCart && (
+            <Pressable onPress={onAddToCart} style={styles.addButton} hitSlop={8}>
+              <MaterialCommunityIcons name="plus-circle" size={24} color={colors.pink} />
+            </Pressable>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -75,26 +96,28 @@ export default function ProductCard({
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 20,
     borderWidth: 1,
-    overflow: 'hidden',
     margin: 4,
+    overflow: 'hidden',
   },
   imageContainer: {
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
-  info: { padding: Spacing.sm },
-  name: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 2 },
+  imgLoader: {
+    ...StyleSheet.absoluteFillObject as any,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  info: { padding: Spacing.md },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 2 },
   vendor: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginBottom: 4 },
-  price: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 4 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  price: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   reviewCount: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginLeft: 4 },
-  addButton: { borderRadius: BorderRadius.sm, overflow: 'hidden' },
-  addButtonGradient: {
-    paddingVertical: 6, paddingHorizontal: 12,
-    alignItems: 'center', borderRadius: BorderRadius.sm,
-  },
-  addButtonText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
+  addButton: { padding: 4 },
 });

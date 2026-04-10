@@ -1,14 +1,15 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/useTheme';
-import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { Fonts, FontSizes, Spacing } from '@/constants/theme';
 
 type ServiceCardProps = {
   name: string;
   providerName?: string;
   price: string | number;
+  imageUrl?: string | null;
   duration?: number;
   rating?: number;
   reviewCount?: number;
@@ -20,6 +21,7 @@ export default function ServiceCard({
   name,
   providerName,
   price,
+  imageUrl,
   duration,
   rating,
   reviewCount,
@@ -27,52 +29,87 @@ export default function ServiceCard({
   onView,
 }: ServiceCardProps) {
   const { colors } = useTheme();
+  const [imgError, setImgError] = useState(false);
+  const [imgLoading, setImgLoading] = useState(!!imageUrl);
+
+  const showImage = !!imageUrl && !imgError;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{name}</Text>
-          {providerName && (
-            <Text style={[styles.provider, { color: colors.textMuted }]} numberOfLines={1}>{providerName}</Text>
+      {/* Image banner */}
+      <View style={[styles.imageBanner, { backgroundColor: colors.imagePlaceholder }]}>
+        {showImage ? (
+          <>
+            <Image
+              source={{ uri: imageUrl! }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              onLoad={() => setImgLoading(false)}
+              onError={() => { setImgError(true); setImgLoading(false); }}
+            />
+            {/* Gradient scrim so text stays readable over photo */}
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.45)']}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0.4 }}
+              end={{ x: 0, y: 1 }}
+            />
+            {imgLoading && (
+              <ActivityIndicator size="small" color={colors.pink} />
+            )}
+          </>
+        ) : (
+          <View style={styles.placeholderInner}>
+            <MaterialCommunityIcons name="car-wash" size={36} color={colors.textMuted} />
+          </View>
+        )}
+
+        {/* Price badge overlaid on image */}
+        <View style={[styles.priceBadge, { backgroundColor: colors.pink }]}>
+          <Text style={styles.priceBadgeText}>{price} EGP</Text>
+        </View>
+      </View>
+
+      {/* Body */}
+      <View style={styles.body}>
+        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+          {name}
+        </Text>
+        {providerName && (
+          <Text style={[styles.provider, { color: colors.textMuted }]} numberOfLines={1}>
+            {providerName}
+          </Text>
+        )}
+
+        <View style={styles.metaRow}>
+          {rating !== undefined && (
+            <View style={styles.metaItem}>
+              <MaterialCommunityIcons name="star" size={13} color="#FBBF24" />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                {rating.toFixed(1)}{reviewCount ? ` (${reviewCount})` : ''}
+              </Text>
+            </View>
+          )}
+          {duration !== undefined && (
+            <View style={styles.metaItem}>
+              <MaterialCommunityIcons name="clock-outline" size={13} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}>{duration} min</Text>
+            </View>
           )}
         </View>
-        <Text style={[styles.price, { color: colors.pink }]}>{price} EGP</Text>
-      </View>
 
-      <View style={styles.metaRow}>
-        {rating !== undefined && (
-          <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="star" size={14} color="#FFD700" />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{rating.toFixed(1)}</Text>
-          </View>
-        )}
-        {duration !== undefined && (
-          <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{duration}mins</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.actions}>
-        {onBookNow && (
-          <Pressable onPress={onBookNow} style={styles.bookButton}>
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.bookButtonGradient}
-            >
+        <View style={styles.actions}>
+          {onBookNow && (
+            <Pressable onPress={onBookNow} style={[styles.bookButton, { backgroundColor: colors.pink }]}>
               <Text style={styles.bookButtonText}>Book Now</Text>
-            </LinearGradient>
-          </Pressable>
-        )}
-        {onView && (
-          <Pressable onPress={onView} style={[styles.viewButton, { borderColor: colors.cardBorder }]}>
-            <Text style={[styles.viewButtonText, { color: colors.purpleLight }]}>View</Text>
-          </Pressable>
-        )}
+            </Pressable>
+          )}
+          {onView && (
+            <Pressable onPress={onView} style={[styles.viewButton, { borderColor: colors.cardBorder }]}>
+              <Text style={[styles.viewButtonText, { color: colors.textPrimary }]}>Details</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -80,31 +117,51 @@ export default function ServiceCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: 20,
     borderWidth: 1,
-    padding: Spacing.md,
     marginBottom: Spacing.sm,
+    overflow: 'hidden',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
+  imageBanner: {
+    height: 130,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  headerLeft: { flex: 1, marginRight: Spacing.sm },
-  name: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-  provider: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
-  price: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: Spacing.sm },
+  placeholderInner: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+    width: '100%',
+  },
+  priceBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  priceBadgeText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xs,
+    color: '#FFFFFF',
+  },
+  body: { padding: Spacing.md },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
+  provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: Spacing.md },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+  metaText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
   actions: { flexDirection: 'row', gap: 8 },
-  bookButton: { borderRadius: BorderRadius.sm, overflow: 'hidden', flex: 1 },
-  bookButtonGradient: { paddingVertical: 8, alignItems: 'center', borderRadius: BorderRadius.sm },
-  bookButtonText: { color: '#FFFFFF', fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  viewButton: {
-    flex: 1, paddingVertical: 8, alignItems: 'center',
-    borderRadius: BorderRadius.sm, borderWidth: 1,
+  bookButton: {
+    borderRadius: 12, flex: 1,
+    paddingVertical: 10, alignItems: 'center',
   },
-  viewButtonText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  bookButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: '#FFFFFF' },
+  viewButton: {
+    flex: 1, paddingVertical: 10, alignItems: 'center',
+    borderRadius: 12, borderWidth: 1,
+  },
+  viewButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
 });
