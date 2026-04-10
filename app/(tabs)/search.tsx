@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -28,15 +29,18 @@ const TAB_BAR_HEIGHT = 65;
 type Product = {
   product_id: number; name: string; price: string; description?: string;
   category_name?: string; vendor_name?: string; stock?: number;
+  image_url?: string | null;
 };
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
+  image_url?: string | null;
 };
 
 type ViewMode = 'all' | 'products' | 'services';
 
 export default function SearchScreen() {
+  const router = useRouter();
   const { token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
@@ -161,8 +165,10 @@ export default function SearchScreen() {
                     <ProductCard
                       name={p.name}
                       price={p.price}
+                      imageUrl={p.image_url}
                       vendorName={p.vendor_name}
                       onAddToCart={() => handleAddToCart(p.product_id)}
+                      onPress={() => router.push(`/product/${p.product_id}` as any)}
                     />
                   </View>
                 ))}
@@ -180,6 +186,7 @@ export default function SearchScreen() {
                   name={s.name}
                   providerName={s.provider_name}
                   price={s.price}
+                  imageUrl={s.image_url}
                   duration={s.duration || undefined}
                 />
               ))}
@@ -206,37 +213,37 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   results: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
 
-  searchRow: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm },
+  searchRow: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.xl },
   searchInputContainer: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: BorderRadius.md, borderWidth: 1,
-    paddingHorizontal: Spacing.md, paddingVertical: 10,
+    borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: Spacing.md, paddingVertical: 14,
   },
   searchInput: {
-    flex: 1, fontFamily: Fonts.regular,
+    flex: 1, fontFamily: Fonts.medium,
     fontSize: FontSizes.sm, marginLeft: Spacing.sm, paddingVertical: 0,
   },
 
   toggleRow: {
     flexDirection: 'row', paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md, gap: Spacing.sm,
+    marginBottom: Spacing.xl, gap: Spacing.sm,
   },
   togglePill: {
-    paddingHorizontal: Spacing.md, paddingVertical: 6,
-    borderRadius: BorderRadius.full, borderWidth: 1,
+    paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1,
     backgroundColor: 'transparent',
   },
-  toggleText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+  toggleText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   sectionTitle: {
-    fontFamily: Fonts.bold, fontSize: FontSizes.xl,
-    marginBottom: 4, marginTop: Spacing.sm,
+    fontFamily: Fonts.extraBold, fontSize: FontSizes.xl,
+    marginBottom: 4, marginTop: Spacing.md,
   },
-  resultCount: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginBottom: Spacing.sm },
+  resultCount: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginBottom: Spacing.lg, opacity: 0.6 },
   productGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
   productGridItem: { width: '50%' },
 
   emptyState: { alignItems: 'center', marginTop: 80 },
-  emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
-  emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginTop: Spacing.md },
+  emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4, opacity: 0.6 },
 });

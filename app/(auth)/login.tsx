@@ -53,6 +53,12 @@ export default function LoginScreen() {
         
         showToast(status === 'pending' ? 'info' : 'error', title, msg);
         router.replace('/pending');
+      } else if (user?.role === 'vendor') {
+        showToast('success', 'Welcome Back!', 'Login successful.');
+        router.replace('/(vendor-tabs)');
+      } else if (user?.role === 'provider') {
+        showToast('success', 'Welcome Back!', 'Login successful.');
+        router.replace('/(provider-tabs)');
       } else {
         showToast('success', 'Welcome Back!', 'Login successful.');
         router.replace('/(tabs)');

@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import { useAuth } from './AuthContext';
 import { API_URL } from '@/constants/config';
 
+// Timeout wrapper — Render free tier can be slow to wake up
+const fetchWithTimeout = (url: string, options: RequestInit = {}, ms = 15000): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+};
+
 type CartItem = {
   cart_item_id: number;
   cart_id_fk: number;
@@ -11,6 +18,7 @@ type CartItem = {
   price: string;
   stock: number;
   item_total: string;
+  image_url?: string | null;
 };
 
 type CartContextType = {
@@ -48,7 +56,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/cart`, { headers: authHeaders() });
+      const res = await fetchWithTimeout(`${API_URL}/cart`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) {
         setItems(data.data.items || []);
@@ -64,7 +72,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = useCallback(async (productId: number, quantity = 1) => {
     if (!token) return { success: false, message: 'Not logged in.' };
     try {
-      const res = await fetch(`${API_URL}/cart`, {
+      const res = await fetchWithTimeout(`${API_URL}/cart/items`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ product_id: productId, quantity }),
@@ -76,14 +84,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, message: data.message || 'Failed to add.' };
     } catch {
-      return { success: false, message: 'Could not connect to server.' };
+      return { success: false, message: 'Server is waking up, please try again in a moment.' };
     }
   }, [token, authHeaders, fetchCart]);
 
   const updateQuantity = useCallback(async (cartItemId: number, quantity: number) => {
     if (!token) return;
     try {
-      await fetch(`${API_URL}/cart/${cartItemId}`, {
+      await fetchWithTimeout(`${API_URL}/cart/items/${cartItemId}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ quantity }),
@@ -97,7 +105,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeItem = useCallback(async (cartItemId: number) => {
     if (!token) return;
     try {
-      await fetch(`${API_URL}/cart/${cartItemId}`, {
+      await fetchWithTimeout(`${API_URL}/cart/items/${cartItemId}`, {
         method: 'DELETE',
         headers: authHeaders(),
       });
@@ -110,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(async () => {
     if (!token) return;
     try {
-      await fetch(`${API_URL}/cart/clear`, {
+      await fetchWithTimeout(`${API_URL}/cart/clear`, {
         method: 'DELETE',
         headers: authHeaders(),
       });
