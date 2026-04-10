@@ -19,9 +19,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
-import { FormInput } from '@/components';
-import { PickerModal } from '@/components';
+import { CenteredHeader, FormInput, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -30,9 +28,9 @@ type Model = { model_id: number; name: string };
 
 export default function AddVehicleSignupScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { token } = useAuth();
+  const { token } = useAuth();
   const { showToast } = useToast();
 
   const [makes, setMakes] = useState<Make[]>([]);
@@ -193,9 +191,7 @@ const { token } = useAuth();
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <BackButton onPress={() => router.back()} />
-
-          <Text style={styles.title}>Car Form</Text>
+          <CenteredHeader title="Car Form" titleColor={colors.pink} />
           <Text style={styles.subtitle}>Sign up to start shopping</Text>
 
           {/* Car Photo */}
@@ -287,9 +283,8 @@ const { token } = useAuth();
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 40 },
-  title: { color: colors.pink, fontSize: 30, fontFamily: Fonts.extraBoldItalic, marginBottom: 4 },
-  subtitle: { color: colors.textSecondary, fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 28, paddingBottom: 40 },
+  subtitle: { color: colors.textSecondary, fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl, marginTop: 6 },
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 
   // Photo

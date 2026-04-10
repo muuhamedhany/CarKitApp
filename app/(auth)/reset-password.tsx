@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, BackButton } from '@/components';
+import { FormInput, GradientButton, CenteredHeader } from '@/components';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function ResetPasswordScreen() {
@@ -64,9 +64,7 @@ export default function ResetPasswordScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <BackButton onPress={() => router.back()} />
-
-          <Text style={[styles.title, { color: colors.pink }]}>New Password</Text>
+          <CenteredHeader title="New Password" titleColor={colors.pink} />
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Choose a new password for your account.
           </Text>
@@ -109,19 +107,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
+    paddingTop: 28,
     paddingBottom: 0,
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 34,
-    fontFamily: Fonts.extraBoldItalic,
-    marginBottom: 6,
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl + 8,
+    marginTop: 6,
   },
   label: {
     fontSize: FontSizes.sm,

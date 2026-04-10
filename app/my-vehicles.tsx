@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -34,9 +34,9 @@ type Vehicle = {
 
 export default function MyVehiclesScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { token } = useAuth();
+  const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
 
@@ -65,12 +65,7 @@ const { token } = useAuth();
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <BackButton onPress={() => router.back()} />
-        <Text style={styles.headerTitle}>My Vehicles</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CenteredHeader title="My Vehicles" titleColor={colors.textPrimary} />
 
       {loading ? (
         <View style={styles.center}>
@@ -139,21 +134,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingBottom: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: {
-    color: colors.textPrimary,
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-  },
 
   // Vehicle card
   vehicleCard: {

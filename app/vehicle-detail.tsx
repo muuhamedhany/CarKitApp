@@ -21,9 +21,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
-import { FormInput } from '@/components';
-import { PickerModal } from '@/components';
+import { CenteredHeader, FormInput, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -44,9 +42,9 @@ type Vehicle = {
 
 export default function VehicleDetailScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -276,12 +274,7 @@ const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <BackButton onPress={() => router.back()} />
-            <Text style={styles.headerTitle}>Edit Vehicle</Text>
-            <View style={{ width: 40 }} />
-          </View>
+          <CenteredHeader title="Edit Vehicle" titleColor={colors.textPrimary} />
 
           {/* Vehicle Photo */}
           <Text style={styles.label}>Vehicle Photo:</Text>
@@ -391,9 +384,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   flex: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
   scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.lg, paddingBottom: 20 },
-
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingBottom: Spacing.md },
-  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
 
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 
