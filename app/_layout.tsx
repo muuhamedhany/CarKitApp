@@ -44,6 +44,7 @@ function InnerLayout() {
         <Stack.Screen name="my-vehicles" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="add-vehicle" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="vehicle-detail" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="edit-product/[id]" options={{ headerShown: false, title: '' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

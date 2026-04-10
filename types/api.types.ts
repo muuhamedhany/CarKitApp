@@ -11,6 +11,46 @@ export type User = {
   provider_id?: number;
 };
 
+export type Category = {
+  category_id: number;
+  name: string;
+  description?: string;
+};
+
+export type Product = {
+  product_id: number;
+  name: string;
+  description?: string;
+  price: string | number;
+  stock?: number;
+  category_id_fk?: number;
+  category_name?: string;
+  vendor_name?: string;
+  image_url?: string | null;
+  image_url_2?: string | null;
+  image_url_3?: string | null;
+};
+
+export type ProductFormInitialValues = {
+  name?: string;
+  description?: string;
+  price?: string | number;
+  stock?: string | number;
+  categoryId?: number | null;
+  imageUrls?: Array<string | null>;
+};
+
+export type ProductFormPayload = {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category_id_fk: number;
+  image_url: string | null;
+  image_url_2: string | null;
+  image_url_3: string | null;
+};
+
 export type Vehicle = {
   id: string;
   make: string;

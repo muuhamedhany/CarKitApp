@@ -4,6 +4,7 @@ export { default as CategoryPill } from './common/CategoryPill';
 export { default as Divider } from './common/Divider';
 export { default as FormInput } from './common/FormInput';
 export { default as GradientButton } from './common/GradientButton';
+export { default as ProductForm } from './common/ProductForm';
 export { default as OutlinedButton } from './common/OutlinedButton';
 export { default as PickerModal } from './common/PickerModal';
 export { default as PrimaryButton } from './common/PrimaryButton';

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   Pressable,
-  FlatList,
   ScrollView,
   ActivityIndicator,
   Platform,
@@ -20,17 +19,11 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { ProductCard } from '@/components';
-import { ServiceCard } from '@/components';
-import { CategoryPill } from '@/components';
+import { ProductCard, ServiceCard, CategoryPill } from '@/components';
+import { Category, Product } from '@/types/api.types';
 
 const TAB_BAR_HEIGHT = 65;
 
-type Product = {
-  product_id: number; name: string; price: string; description?: string;
-  category_name?: string; vendor_name?: string; stock?: number;
-  image_url?: string | null;
-};
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
@@ -52,26 +45,32 @@ export default function SearchScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const search = useCallback(async () => {
+  const search = useCallback(async (searchQuery: string, categoryId: number | null) => {
     setLoading(true);
     setSearched(true);
     try {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (categoryId) params.set('category_id', String(categoryId));
+
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products${query ? `?search=${encodeURIComponent(query)}` : ''}`, { headers }),
+        fetch(`${API_URL}/products${params.toString() ? `?${params.toString()}` : ''}`, { headers }),
         fetch(`${API_URL}/services`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
       if (prodData.success) setProducts(prodData.data || []);
       if (servData.success) {
         let filtered = servData.data || [];
-        if (query) {
-          const q = query.toLowerCase();
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
           filtered = filtered.filter((s: Service) =>
             s.name.toLowerCase().includes(q) ||
             s.provider_name?.toLowerCase().includes(q)
@@ -84,9 +83,29 @@ export default function SearchScreen() {
     } finally {
       setLoading(false);
     }
-  }, [query, token]);
+  }, [showToast, token]);
 
-  useEffect(() => { search(); }, []);
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/categories`);
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data || []);
+        }
+      } catch {
+        // Category filtering remains optional if the category endpoint fails.
+      }
+    };
+
+    loadCategories();
+    search('', null);
+  }, [search]);
+
+  const handleCategoryPress = (categoryId: number | null) => {
+    setSelectedCategoryId(categoryId);
+    search(query, categoryId);
+  };
 
   const handleAddToCart = async (productId: number) => {
     const result = await addToCart(productId);
@@ -112,11 +131,16 @@ export default function SearchScreen() {
             placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={search}
+            onSubmitEditing={() => search(query, selectedCategoryId)}
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <Pressable onPress={() => { setQuery(''); }}>
+            <Pressable
+              onPress={() => {
+                setQuery('');
+                search('', selectedCategoryId);
+              }}
+            >
               <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           )}
@@ -144,6 +168,24 @@ export default function SearchScreen() {
             </Text>
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.categorySection}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+          <CategoryPill
+            label="All"
+            isActive={selectedCategoryId === null}
+            onPress={() => handleCategoryPress(null)}
+          />
+          {categories.map((category) => (
+            <CategoryPill
+              key={category.category_id}
+              label={category.name}
+              isActive={selectedCategoryId === category.category_id}
+              onPress={() => handleCategoryPress(category.category_id)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
       {loading ? (
@@ -227,6 +269,12 @@ const styles = StyleSheet.create({
   toggleRow: {
     flexDirection: 'row', paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.xl, gap: Spacing.sm,
+  },
+  categorySection: {
+    marginBottom: Spacing.lg,
+  },
+  categoryRow: {
+    paddingHorizontal: Spacing.lg,
   },
   togglePill: {
     paddingHorizontal: 20, paddingVertical: 10,

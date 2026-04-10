@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { apiFetch } from '@/services/api/client';
+import { Product } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 export default function VendorProductsScreen() {
@@ -16,10 +17,10 @@ export default function VendorProductsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const res = await apiFetch(`/products?vendor_id=${user?.vendor_id}`);
@@ -31,26 +32,39 @@ export default function VendorProductsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast, user?.vendor_id]);
 
   useFocusEffect(
     useCallback(() => {
       fetchProducts();
-    }, [user?.vendor_id])
+    }, [fetchProducts])
   );
 
-  const renderProduct = ({ item }: { item: any }) => (
-    <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Image 
-        source={{ uri: item.image_url || 'https://via.placeholder.com/150' }} 
-        style={styles.productImage} 
-      />
-      <View style={styles.productInfo}>
-        <Text style={[styles.productName, { color: colors.textPrimary }]}>{item.name}</Text>
-        <Text style={[styles.productPrice, { color: colors.pink }]}>${Number(item.price).toFixed(2)}</Text>
-        <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock}</Text>
+  const renderProduct = ({ item }: { item: Product }) => (
+    <Pressable
+      onPress={() => router.push(`/edit-product/${item.product_id}`)}
+      style={({ pressed }) => [styles.productPressable, { opacity: pressed ? 0.9 : 1 }]}
+    >
+      <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Image
+          source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
+          style={styles.productImage}
+        />
+        <View style={styles.productInfo}> 
+          <View style={styles.productHeaderRow}>
+            <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <View style={[styles.editBadge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
+              <MaterialCommunityIcons name="pencil" size={12} color={colors.pink} />
+              <Text style={[styles.editBadgeText, { color: colors.pink }]}>Edit</Text>
+            </View>
+          </View>
+          <Text style={[styles.productPrice, { color: colors.pink }]}>${Number(item.price).toFixed(2)}</Text>
+          <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock}</Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (
@@ -104,6 +118,9 @@ const styles = StyleSheet.create({
     paddingBottom: 150,
     gap: Spacing.md,
   },
+  productPressable: {
+    borderRadius: BorderRadius.lg,
+  },
   productCard: {
     flexDirection: 'row',
     padding: Spacing.md,
@@ -121,10 +138,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
+  productHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
   productName: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
-    marginBottom: Spacing.xs,
   },
   productPrice: {
     fontFamily: Fonts.bold,
@@ -134,6 +157,19 @@ const styles = StyleSheet.create({
   productStock: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
+  },
+  editBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  editBadgeText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.xs,
   },
   emptyState: {
     padding: Spacing.xxl,
