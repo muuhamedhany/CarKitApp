@@ -17,6 +17,11 @@ export type Category = {
   description?: string;
 };
 
+export type ServiceCategory = {
+  service_category_id: number;
+  name: string;
+};
+
 export type Product = {
   product_id: number;
   name: string;
