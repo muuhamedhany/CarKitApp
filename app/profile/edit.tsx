@@ -77,15 +77,6 @@ export default function EditProfileScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-          <View style={styles.avatarWrap}>
-            <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}>
-              <MaterialCommunityIcons name="account" size={48} color={colors.pink} />
-            </View>
-            <Pressable style={[styles.changePhotoBtn, { backgroundColor: colors.cardBorder }]}>
-              <Text style={[styles.changePhotoText, { color: colors.textPrimary }]}>Change Photo</Text>
-            </Pressable>
-          </View>
-
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name</Text>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>

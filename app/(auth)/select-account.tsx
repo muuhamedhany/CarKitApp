@@ -11,7 +11,7 @@ export default function SelectAccountScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.pink }]}>Choose Account{'\n'}Type</Text>
+        <Text style={[styles.title, { color: colors.pink }]}>Choose Account Type</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Select how you want to use CarKit</Text>
 
         <Pressable
@@ -60,7 +60,7 @@ export default function SelectAccountScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.md },
-  title: { fontSize: 34, fontFamily: Fonts.extraBoldItalic, marginBottom: 6 },
+  title: { fontSize: 30, fontFamily: Fonts.extraBoldItalic, marginBottom: 6 },
   subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xxl },
   card: {
     flexDirection: 'row', alignItems: 'center',
