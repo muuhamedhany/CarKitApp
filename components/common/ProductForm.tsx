@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import FormInput from './FormInput';
 import GradientButton from './GradientButton';
+import BackButton from './BackButton';
 
 type ImageSlot = {
     previewUri: string | null;
@@ -195,16 +196,15 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         }
     };
 
-    const progressWidth = `${(step / 3) * 100}%`;
+    const progressWidth = `${(step / 3) * 100}%` as `${number}%`;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+            <BackButton />
             <View style={[styles.header, { paddingTop: Spacing.lg }]}>
-                <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.textPrimary} />
-                </Pressable>
+                <View style={styles.headerSpacer} />
                 <Text style={[styles.title, { color: colors.textPrimary }]}>{screenTitle}</Text>
-                <View style={{ width: 24 }} />
+                <View style={styles.headerSpacer} />
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -221,7 +221,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                         <FormInput
                             icon="format-title"
-                            placeholder="Product Name * (e.g. Engine Oil 5W-30)"
+                            placeholder="Product Name"
                             value={name}
                             onChangeText={setName}
                         />
@@ -366,12 +366,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: Spacing.xl,
+        paddingHorizontal: Spacing.md,
         paddingBottom: Spacing.md,
     },
-    backButton: {
-        padding: Spacing.sm,
-        marginLeft: -Spacing.sm,
+    headerSpacer: {
+        width: 40,
+        height: 40,
     },
     title: {
         fontFamily: Fonts.bold,
