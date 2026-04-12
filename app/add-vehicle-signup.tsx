@@ -283,7 +283,7 @@ export default function AddVehicleSignupScreen() {
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 28, paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingTop: 28, paddingBottom: 40 },
   subtitle: { color: colors.textSecondary, fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl, marginTop: 6 },
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 

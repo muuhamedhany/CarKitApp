@@ -292,9 +292,9 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  results: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
+  results: { paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
-  searchRow: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
+  searchRow: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
   searchInputContainer: {
     flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)',
     paddingHorizontal: Spacing.md, paddingVertical: 14,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
 
   toggleRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg,
+    flexDirection: 'row', paddingHorizontal: Spacing.md,
     marginBottom: Spacing.sm, gap: Spacing.sm,
   },
   categorySection: {
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
   categoryButton: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,

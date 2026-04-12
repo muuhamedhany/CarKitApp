@@ -179,7 +179,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: 0 },
+  content: { paddingHorizontal: Spacing.md, paddingBottom: 0 },
 
   // Header Redesign
   profileHeader: { alignItems: 'center', marginBottom: Spacing.xl },

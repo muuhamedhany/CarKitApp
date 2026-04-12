@@ -133,7 +133,7 @@ export default function MyVehiclesScreen() {
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
+  scrollContent: { paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
   // Vehicle card
   vehicleCard: {
