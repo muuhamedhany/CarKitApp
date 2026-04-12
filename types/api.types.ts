@@ -34,6 +34,9 @@ export type Product = {
   image_url?: string | null;
   image_url_2?: string | null;
   image_url_3?: string | null;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type ProductFormInitialValues = {
@@ -89,4 +92,57 @@ export type ApiResponse<T> = {
   success: boolean;
   message: string;
   data?: T;
+};
+
+export type VendorDashboardStats = {
+  total_products: number;
+  total_stock: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  total_orders: number;
+  active_orders: number;
+  revenue: string | number;
+};
+
+export type VendorDashboardOrder = {
+  order_id: number;
+  status: string;
+  order_date: string;
+  total_amount: string | number;
+  customer_name: string;
+  item_count: number;
+};
+
+export type VendorTopProduct = {
+  product_id: number;
+  name: string;
+  price: string | number;
+  stock: number;
+  sold_units: number;
+};
+
+export type VendorDashboardResponse = {
+  stats: VendorDashboardStats;
+  recent_orders: VendorDashboardOrder[];
+  top_products: VendorTopProduct[];
+};
+
+export type VendorOrderItem = {
+  order_item_id: number;
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  price_each: string | number;
+};
+
+export type VendorOrder = {
+  order_id: number;
+  status: string;
+  order_date: string;
+  total_amount: string | number;
+  customer_name: string;
+  customer_email: string;
+  item_count: number;
+  total_quantity: number;
+  items: VendorOrderItem[];
 };
