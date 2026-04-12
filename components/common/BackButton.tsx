@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Platform, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing } from '@/constants/theme';
 
@@ -19,9 +20,18 @@ export default function BackButton({ onPress }: BackButtonProps) {
     <View style={[styles.container, { top: Platform.OS === 'ios' ? insets.top : insets.top + 10 }]}>
       <Pressable
         onPress={onPress || (() => router.back())}
-        style={[styles.button, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+        style={[
+          styles.button,
+          {
+            backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.backgroundSecondary,
+            borderColor: colors.cardBorder,
+          },
+        ]}
         hitSlop={8}
       >
+        {Platform.OS === 'ios' && (
+          <BlurView intensity={35} tint="dark" style={StyleSheet.absoluteFill} />
+        )}
         <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
       </Pressable>
     </View>
@@ -41,5 +51,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
 });

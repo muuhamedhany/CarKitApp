@@ -133,10 +133,30 @@ export default function VendorProductsScreen() {
       <View style={styles.header}>
         <View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Inventory</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{totals.total} items · {totals.low} low stock · {totals.out} out of stock</Text>
         </View>
-        <Pressable onPress={() => router.push('/(vendor-tabs)/add-product')} style={[styles.headerAction, { backgroundColor: colors.pink }]}>
-          <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
+
+        <View style={styles.statsRow}>
+          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
+            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total Items</Text>
+          </View>
+          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
+            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Low Stock</Text>
+          </View>
+          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
+            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Out</Text>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => router.push(`/add-product`)}
+          hitSlop={8}
+          style={[styles.headerAction, { backgroundColor: colors.pink }]}
+        >
+          <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
+          <Text style={[styles.headerActionText, { color: colors.white }]}>Add Product</Text>
         </Pressable>
       </View>
 
@@ -147,21 +167,6 @@ export default function VendorProductsScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
-          <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total Items</Text>
-        </View>
-        <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
-          <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Low Stock</Text>
-        </View>
-        <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
-          <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Out</Text>
-        </View>
       </View>
 
       <ScrollView
@@ -260,10 +265,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     marginTop: Spacing.md,
   },
   title: {
@@ -276,20 +278,25 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   headerAction: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    paddingHorizontal: Spacing.md,
+    minHeight: 42,
+    borderRadius: BorderRadius.full,
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActionText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
   },
   searchWrap: {
     paddingHorizontal: Spacing.md,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   statsCard: {
     flex: 1,
