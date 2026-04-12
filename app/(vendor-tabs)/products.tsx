@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     padding: Spacing.md,
-    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
     flexDirection: 'row',
     gap: Spacing.sm,
     alignItems: 'flex-start',
