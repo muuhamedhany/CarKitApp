@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   greeting: {
     fontFamily: Fonts.medium,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   quickAction: {
     flex: 1,
@@ -215,12 +215,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.md,
   },
   statCard: {
     flex: 1,
     minWidth: '45%',
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
   },
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     marginTop: Spacing.md,
-    padding: Spacing.xxl,
+    padding: Spacing.xl,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     alignItems: 'center',

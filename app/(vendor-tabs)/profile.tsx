@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     paddingBottom: 150,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   title: {
     fontFamily: Fonts.bold,
@@ -105,18 +105,18 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     flexDirection: 'row',
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   infoGrid: {
     flexDirection: 'row',
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xl,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
     gap: Spacing.md,
   },
   infoItem: {
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xxl,
   },
   userInfo: {
-    marginLeft: Spacing.lg,
+    marginLeft: Spacing.md,
     flex: 1,
   },
   name: {
@@ -176,13 +176,13 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderBottomWidth: 1,
   },
   menuItemLast: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   iconContainer: {
     width: 40,
