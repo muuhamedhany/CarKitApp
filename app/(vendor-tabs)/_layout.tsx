@@ -4,7 +4,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@/hooks/useTheme';
-import { CustomTabBar } from '@/components';
+import { VendorTabBar } from '@/components';
 
 // iOS: NativeTabs
 function IOSTabLayout() {
@@ -40,19 +40,18 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="products">
-        <Label>Products</Label>
+        <Label>Inventory</Label>
         <Icon
           sf={{ default: 'shippingbox', selected: 'shippingbox.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="package-variant" />}
         />
       </NativeTabs.Trigger>
 
-      {/* Optional add-product tab - User can choose between this and FAB on products screen */}
-      <NativeTabs.Trigger name="add-product">
-        <Label>Add</Label>
+      <NativeTabs.Trigger name="orders">
+        <Label>Orders</Label>
         <Icon
-          sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }}
-          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="plus-circle" />}
+          sf={{ default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="receipt-text" />}
         />
       </NativeTabs.Trigger>
 
@@ -71,14 +70,14 @@ function IOSTabLayout() {
 function AndroidTabLayout() {
   return (
     <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={(props) => <VendorTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="products" options={{ title: 'Products' }} />
-      <Tabs.Screen name="add-product" options={{ title: 'Add' }} />
+      <Tabs.Screen name="orders" options={{ title: 'Orders' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );

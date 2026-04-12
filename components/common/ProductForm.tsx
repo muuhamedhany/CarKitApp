@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -53,6 +53,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
     const [imageSlots, setImageSlots] = useState<ImageSlot[]>(createImageSlots());
     const [submitting, setSubmitting] = useState(false);
+    const [step, setStep] = useState(1);
 
     useEffect(() => {
         setName(initialValues?.name ?? '');
@@ -132,14 +133,35 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         }
     };
 
-    const handleSubmit = async () => {
-        if (!name.trim() || !price.trim()) {
-            showToast('warning', 'Missing Fields', 'Name and Price are required.');
+    const goNextStep = () => {
+        if (step === 1) {
+            if (!name.trim()) {
+                showToast('warning', 'Missing Fields', 'Product name is required.');
+                return;
+            }
+
+            if (!selectedCategoryId) {
+                showToast('warning', 'Category Required', 'Please select a category.');
+                return;
+            }
+
+            setStep(2);
             return;
         }
 
-        if (!selectedCategoryId) {
-            showToast('warning', 'Category Required', 'Please select a category.');
+        if (step === 2) {
+            if (!price.trim()) {
+                showToast('warning', 'Missing Fields', 'Price is required.');
+                return;
+            }
+
+            setStep(3);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!name.trim() || !price.trim() || !selectedCategoryId) {
+            showToast('warning', 'Missing Fields', 'Please complete the required fields before saving.');
             return;
         }
 
@@ -173,6 +195,8 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         }
     };
 
+    const progressWidth = `${(step / 3) * 100}%`;
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
             <View style={[styles.header, { paddingTop: Spacing.lg }]}>
@@ -184,101 +208,150 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Product Images (1, 2, 3)</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesRow}>
-                    {imageSlots.map((slot, index) => {
-                        const hasImage = !!slot.previewUri;
-
-                        return (
-                            <Pressable
-                                key={index}
-                                onPress={() => pickImage(index)}
-                                style={[
-                                    styles.imageSlot,
-                                    { backgroundColor: colors.card, borderColor: colors.border },
-                                ]}
-                            >
-                                <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
-                                    {hasImage ? (
-                                        <Image source={{ uri: slot.previewUri! }} style={styles.image} />
-                                    ) : (
-                                        <MaterialCommunityIcons name="camera-plus" size={28} color={colors.textMuted} />
-                                    )}
-                                </View>
-                                <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
-                                    {hasImage ? `Replace ${index + 1}` : `Add ${index + 1}`}
-                                </Text>
-                            </Pressable>
-                        );
-                    })}
-                </ScrollView>
-
-                <FormInput
-                    icon="format-title"
-                    placeholder="Product Name * (e.g. Engine Oil 5W-30)"
-                    value={name}
-                    onChangeText={setName}
-                />
-
-                <FormInput
-                    icon="text"
-                    placeholder="Product details..."
-                    value={description}
-                    onChangeText={setDescription}
-                />
-
-                <View style={styles.row}>
-                    <View style={styles.halfWidth}>
-                        <FormInput
-                            icon="currency-usd"
-                            placeholder="Price ($) *"
-                            keyboardType="numeric"
-                            value={price}
-                            onChangeText={setPrice}
-                        />
-                    </View>
-                    <View style={styles.halfWidth}>
-                        <FormInput
-                            icon="package-variant"
-                            placeholder="Stock"
-                            keyboardType="number-pad"
-                            value={stock}
-                            onChangeText={setStock}
-                        />
+                <View style={[styles.stepCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                    <Text style={[styles.stepLabel, { color: colors.textMuted }]}>Step {step} of 3</Text>
+                    <View style={[styles.progressTrack, { backgroundColor: colors.cardBorder }]}>
+                        <View style={[styles.progressFill, { backgroundColor: colors.pink, width: progressWidth }]} />
                     </View>
                 </View>
 
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
-                {categoriesLoading ? (
-                    <ActivityIndicator size="small" color={colors.pink} style={styles.categoryLoader} />
-                ) : (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
-                        {categories.map((cat) => {
-                            const isSelected = selectedCategoryId === cat.category_id;
+                {step === 1 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Info</Text>
 
-                            return (
-                                <Pressable
-                                    key={cat.category_id}
-                                    onPress={() => setSelectedCategoryId(cat.category_id)}
-                                    style={[
-                                        styles.categoryChip,
-                                        {
-                                            backgroundColor: isSelected ? colors.pink : colors.card,
-                                            borderColor: isSelected ? colors.pink : colors.border,
-                                        },
-                                    ]}
-                                >
-                                    <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
-                                        {cat.name}
-                                    </Text>
-                                </Pressable>
-                            );
-                        })}
-                    </ScrollView>
+                        <FormInput
+                            icon="format-title"
+                            placeholder="Product Name * (e.g. Engine Oil 5W-30)"
+                            value={name}
+                            onChangeText={setName}
+                        />
+
+                        <View style={[styles.textAreaShell, { backgroundColor: colors.backgroundSecondary, borderColor: colors.inputBorder }]}>
+                            <View style={styles.textAreaHeader}>
+                                <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />
+                                <Text style={[styles.textAreaTitle, { color: colors.textMuted }]}>Description</Text>
+                            </View>
+                            <TextInput
+                                style={[styles.textAreaInput, { color: colors.textPrimary }]}
+                                placeholder="Detailed product description..."
+                                placeholderTextColor={colors.textMuted}
+                                value={description}
+                                onChangeText={setDescription}
+                                multiline
+                                textAlignVertical="top"
+                            />
+                        </View>
+
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
+                        {categoriesLoading ? (
+                            <ActivityIndicator size="small" color={colors.pink} style={styles.categoryLoader} />
+                        ) : (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
+                                {categories.map((cat) => {
+                                    const isSelected = selectedCategoryId === cat.category_id;
+
+                                    return (
+                                        <Pressable
+                                            key={cat.category_id}
+                                            onPress={() => setSelectedCategoryId(cat.category_id)}
+                                            style={[
+                                                styles.categoryChip,
+                                                {
+                                                    backgroundColor: isSelected ? colors.pink : colors.card,
+                                                    borderColor: isSelected ? colors.pink : colors.border,
+                                                },
+                                            ]}
+                                        >
+                                            <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
+                                                {cat.name}
+                                            </Text>
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        )}
+                    </>
                 )}
 
-                <View style={styles.submitContainer}>
-                    <GradientButton title={submitLabel} onPress={handleSubmit} loading={submitting} />
+                {step === 2 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Inventory</Text>
+                        <View style={styles.row}>
+                            <View style={styles.halfWidth}>
+                                <FormInput
+                                    icon="currency-usd"
+                                    placeholder="Price *"
+                                    keyboardType="numeric"
+                                    value={price}
+                                    onChangeText={setPrice}
+                                />
+                            </View>
+                            <View style={styles.halfWidth}>
+                                <FormInput
+                                    icon="package-variant"
+                                    placeholder="Stock"
+                                    keyboardType="number-pad"
+                                    value={stock}
+                                    onChangeText={setStock}
+                                />
+                            </View>
+                        </View>
+                    </>
+                )}
+
+                {step === 3 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Upload Photos</Text>
+                        <Text style={[styles.helperText, { color: colors.textMuted }]}>Add up to three images for the product listing.</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesRow}>
+                            {imageSlots.map((slot, index) => {
+                                const hasImage = !!slot.previewUri;
+
+                                return (
+                                    <Pressable
+                                        key={index}
+                                        onPress={() => pickImage(index)}
+                                        style={[
+                                            styles.imageSlot,
+                                            { backgroundColor: colors.card, borderColor: colors.border },
+                                        ]}
+                                    >
+                                        <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
+                                            {hasImage ? (
+                                                <Image source={{ uri: slot.previewUri! }} style={styles.image} />
+                                            ) : (
+                                                <MaterialCommunityIcons name="camera-plus" size={28} color={colors.textMuted} />
+                                            )}
+                                        </View>
+                                        <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
+                                            {hasImage ? `Replace ${index + 1}` : `Add ${index + 1}`}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </ScrollView>
+                    </>
+                )}
+
+                <View style={styles.actionsRow}>
+                    {step > 1 ? (
+                        <Pressable
+                            onPress={() => setStep((current) => Math.max(1, current - 1))}
+                            style={[styles.secondaryButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                        >
+                            <Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Back</Text>
+                        </Pressable>
+                    ) : (
+                        <View style={styles.secondaryButtonSpacer} />
+                    )}
+
+                    <View style={styles.primaryButtonWrapper}>
+                        {step < 3 ? (
+                            <GradientButton title="Next" onPress={goNextStep} />
+                        ) : (
+                            <GradientButton title={submitLabel} onPress={handleSubmit} loading={submitting} />
+                        )}
+                    </View>
                 </View>
             </ScrollView>
         </View>
@@ -312,6 +385,32 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.bold,
         fontSize: FontSizes.md,
         marginBottom: Spacing.sm,
+    },
+    stepCard: {
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        marginBottom: Spacing.lg,
+    },
+    stepLabel: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+        marginBottom: Spacing.sm,
+    },
+    progressTrack: {
+        height: 6,
+        borderRadius: 999,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        borderRadius: 999,
+    },
+    helperText: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        marginBottom: Spacing.md,
+        marginTop: -Spacing.xs,
     },
     imagesRow: {
         flexDirection: 'row',
@@ -370,7 +469,53 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.semiBold,
         fontSize: FontSizes.sm,
     },
-    submitContainer: {
+    textAreaShell: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.sm,
+        minHeight: 140,
+        marginBottom: Spacing.md,
+    },
+    textAreaHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    textAreaTitle: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.sm,
+    },
+    textAreaInput: {
+        minHeight: 96,
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.md,
+        paddingBottom: Spacing.md,
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
         marginTop: Spacing.lg,
+    },
+    secondaryButton: {
+        minWidth: 88,
+        paddingVertical: 14,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    secondaryButtonText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+    },
+    secondaryButtonSpacer: {
+        minWidth: 88,
+    },
+    primaryButtonWrapper: {
+        flex: 1,
     },
 });

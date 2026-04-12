@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { GradientButton } from '@/components';
 
 export default function VendorProfileScreen() {
   const router = useRouter();
@@ -40,12 +39,39 @@ export default function VendorProfileScreen() {
           </View>
         </View>
 
+        <View style={[styles.infoGrid, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.infoItem}>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Role</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Vendor ID</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
+          </View>
+        </View>
+
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => {}}>
+          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/profile/edit')}>
+            <View style={[styles.iconContainer, { backgroundColor: 'rgba(233, 30, 140, 0.1)' }]}>
+              <MaterialCommunityIcons name="account-edit" size={22} color={colors.pink} />
+            </View>
+            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Edit Personal Info</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </Pressable>
+
+          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/settings')}>
             <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
               <MaterialCommunityIcons name="storefront" size={22} color="#6366F1" />
             </View>
             <Text style={[styles.menuText, { color: colors.textPrimary }]}>Store Settings</Text>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </Pressable>
+
+          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/support')}>
+            <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <MaterialCommunityIcons name="lifebuoy" size={22} color="#10B981" />
+            </View>
+            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Support</Text>
             <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
           </Pressable>
 
@@ -67,7 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
     paddingBottom: 150,
   },
   header: {
@@ -84,6 +110,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     marginBottom: Spacing.xl,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  infoItem: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
   },
   avatar: {
     width: 60,

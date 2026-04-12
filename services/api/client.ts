@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Helper to make authenticated requests to the CarKit API.
  */
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = await AsyncStorage.getItem('token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -26,5 +26,5 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error(data.message || 'Something went wrong');
   }
 
-  return data;
+  return data as T;
 }
