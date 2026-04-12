@@ -96,7 +96,7 @@ export default function VendorProductsScreen() {
   const renderProduct = ({ item }: { item: Product }) => (
     <Pressable
       onPress={() => router.push(`/edit-product/${item.product_id}`)}
-      style={({ pressed }) => [styles.productPressable, { opacity: pressed ? 0.9 : 1 }]}
+      style={({ pressed }) => [styles.productPressable, styles.productListItem, { opacity: pressed ? 0.9 : 1 }]}
     >
       <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image
@@ -126,8 +126,10 @@ export default function VendorProductsScreen() {
     </Pressable>
   );
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+  const hasLowStock = normalizedProducts.some((product) => Number(product.stock ?? 0) <= 5);
+
+  const renderHeader = () => (
+    <>
       <View style={styles.header}>
         <View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Inventory</Text>
@@ -215,7 +217,7 @@ export default function VendorProductsScreen() {
         })}
       </ScrollView>
 
-      {normalizedProducts.some((product) => Number(product.stock ?? 0) <= 5) && (
+      {hasLowStock && (
         <View style={[styles.alertBox, { backgroundColor: 'rgba(249,115,22,0.12)', borderColor: 'rgba(249,115,22,0.6)' }]}>
           <MaterialCommunityIcons name="alert-outline" size={22} color="#F97316" />
           <View style={{ flex: 1 }}>
@@ -224,24 +226,29 @@ export default function VendorProductsScreen() {
           </View>
         </View>
       )}
+    </>
+  );
 
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.pink} style={{ marginTop: 50 }} />
-      ) : (
-        <FlatList
-          data={normalizedProducts}
-          keyExtractor={(item) => item.product_id?.toString() || Math.random().toString()}
-          renderItem={renderProduct}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <FlatList
+        data={loading ? [] : normalizedProducts}
+        keyExtractor={(item) => item.product_id?.toString() || Math.random().toString()}
+        renderItem={renderProduct}
+        ListHeaderComponent={renderHeader}
+        ItemSeparatorComponent={() => <View style={styles.productSeparator} />}
+        contentContainerStyle={styles.screenContent}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
+          ) : (
+            <View style={[styles.emptyState]}>
               <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products found.</Text>
             </View>
-          }
-        />
-      )}
-
+          )
+        }
+      />
     </View>
   );
 }
@@ -257,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: Spacing.md,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   title: {
     fontFamily: Fonts.bold,
@@ -330,6 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
   },
   sortChip: {
     paddingHorizontal: Spacing.md,
@@ -352,7 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     padding: Spacing.md,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     flexDirection: 'row',
     gap: Spacing.sm,
     alignItems: 'flex-start',
@@ -368,11 +376,17 @@ const styles = StyleSheet.create({
     color: '#F97316',
     marginTop: 2,
   },
-  listContent: {
-    paddingHorizontal: Spacing.md,
+  screenContent: {
     paddingBottom: 120,
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
+  },
+  loadingState: {
+    marginTop: 50,
+  },
+  productListItem: {
+    marginHorizontal: Spacing.md,
+  },
+  productSeparator: {
+    height: Spacing.sm,
   },
   productPressable: {
     borderRadius: BorderRadius.lg,
@@ -442,12 +456,10 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
   },
   emptyState: {
-    padding: Spacing.xxl,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
+    padding: Spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   emptyText: {
     fontFamily: Fonts.medium,
