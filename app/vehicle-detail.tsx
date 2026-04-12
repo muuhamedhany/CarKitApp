@@ -383,7 +383,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.lg, paddingBottom: 20 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 
@@ -429,7 +429,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   saveBtnText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.md },
   modalCard: { backgroundColor: colors.backgroundSecondary, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder, padding: Spacing.xl, width: '100%' },
   modalTitle: { color: colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, textAlign: 'center', marginBottom: Spacing.xl },
   modalActions: { flexDirection: 'row', gap: Spacing.md },

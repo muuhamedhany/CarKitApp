@@ -153,7 +153,7 @@ export default function MyOrdersScreen() {
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 40 },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 40 },
 
   tabRow: {
     flexDirection: 'row', marginHorizontal: Spacing.lg,

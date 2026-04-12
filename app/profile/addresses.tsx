@@ -187,7 +187,7 @@ export default function AddressesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: 40 },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.lg, paddingBottom: 40 },
 
   formGroup: { marginBottom: Spacing.lg },
   label: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm },

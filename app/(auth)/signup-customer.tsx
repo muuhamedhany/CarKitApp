@@ -72,7 +72,7 @@ export default function SignUpCustomerScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 28, paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingTop: 28, paddingBottom: 40 },
   subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xl, marginTop: 6 },
   label: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs },
 });

@@ -123,8 +123,7 @@ export default function CartScreen() {
               onRemove={removeItem}
             />
           )}
-          estimatedItemSize={84}
-          contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: androidTabOffset + 130 }}
+          contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: androidTabOffset + 130 }}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -157,7 +156,7 @@ const styles = StyleSheet.create({
 
   header: {
     paddingTop: Spacing.lg, paddingBottom: Spacing.xl,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
   headerTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl, marginBottom: 4 },
   headerSubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
@@ -191,7 +190,7 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderTopWidth: 1,
-    paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.md, paddingTop: Spacing.lg,
   },
   totalLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: 2 },
   totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl },

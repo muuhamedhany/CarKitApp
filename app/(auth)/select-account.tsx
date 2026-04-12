@@ -59,7 +59,7 @@ export default function SelectAccountScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.xl },
+  content: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.md },
   title: { fontSize: 34, fontFamily: Fonts.extraBoldItalic, marginBottom: 6 },
   subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xxl },
   card: {
