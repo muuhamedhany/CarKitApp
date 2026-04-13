@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   skipButton: { position: 'absolute', top: 60, right: 24, zIndex: 10, padding: 8 },
   skipText: { fontSize: FontSizes.md, fontFamily: Fonts.semiBold },
   slideOuter: { width, flex: 1 },
-  slideScroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.xl, paddingTop: 80, paddingBottom: Spacing.md },
+  slideScroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.md, paddingTop: 80, paddingBottom: Spacing.md },
   imageWrapper: { alignItems: 'center', marginBottom: Spacing.xl },
   imageGlowBorder: {
     width: width - 64, aspectRatio: 1.2, borderRadius: BorderRadius.lg, overflow: 'hidden',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontFamily: Fonts.extraBoldItalic, textAlign: 'center', marginBottom: Spacing.md, lineHeight: 42 },
   subtitle: { fontSize: FontSizes.md, textAlign: 'center', lineHeight: 24, paddingHorizontal: Spacing.sm, fontFamily: Fonts.regular },
   cardsContainer: { marginTop: Spacing.lg },
-  bottomContainer: { paddingBottom: 40, paddingTop: Spacing.md, paddingHorizontal: Spacing.xl, alignItems: 'center' },
+  bottomContainer: { paddingBottom: 40, paddingTop: Spacing.md, paddingHorizontal: Spacing.md, alignItems: 'center' },
   pagination: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.lg },
   buttonWrapper: { width: '100%' },
   button: { paddingVertical: Spacing.md, borderRadius: BorderRadius.full, alignItems: 'center' },

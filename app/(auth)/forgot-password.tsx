@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, BackButton } from '@/components';
+import { FormInput, GradientButton, AuthFooter, CenteredHeader } from '@/components';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
 
 export default function ForgotPasswordScreen() {
@@ -47,9 +47,7 @@ export default function ForgotPasswordScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <BackButton onPress={() => router.back()} />
-
-          <Text style={[styles.title, { color: colors.pink }]}>Reset Password</Text>
+          <CenteredHeader title="Reset Password" titleColor={colors.pink} />
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter your email to receive a 4-digit recovery code.
           </Text>
@@ -88,20 +86,16 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 28,
     paddingBottom: 0,
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 34,
-    fontFamily: Fonts.extraBoldItalic,
-    marginBottom: 6,
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl + 8,
+    marginTop: 6,
   },
   label: {
     fontSize: FontSizes.sm,

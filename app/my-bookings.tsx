@@ -8,14 +8,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 
 type Booking = {
   booking_id: number;
@@ -38,10 +37,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MyBookingsScreen() {
-  const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { token } = useAuth();
+  const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,14 +123,7 @@ const { token } = useAuth();
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.backBtn}>
-          <BackButton noSpacer />
-        </View>
-        <Text style={styles.headerTitle}>My Bookings</Text>
-        <View style={styles.backBtn} />
-      </View>
+      <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
 
       {/* Tabs */}
       <View style={styles.tabRow}>
@@ -175,14 +166,7 @@ const { token } = useAuth();
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 40 },
-
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 60, paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
-  },
-  backBtn: { width: 32 },
-  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 40 },
 
   tabRow: {
     flexDirection: 'row', marginHorizontal: Spacing.lg,

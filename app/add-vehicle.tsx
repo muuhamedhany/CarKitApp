@@ -20,9 +20,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
-import { FormInput } from '@/components';
-import { PickerModal } from '@/components';
+import { CenteredHeader, FormInput, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -33,9 +31,9 @@ type Model = { model_id: number; name: string };
 
 export default function AddVehicleScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { token } = useAuth();
+  const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
 
@@ -199,12 +197,7 @@ const { token } = useAuth();
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <BackButton onPress={() => router.back()} />
-            <Text style={styles.headerTitle}>Add New Vehicle</Text>
-            <View style={{ width: 40 }} />
-          </View>
+          <CenteredHeader title="Add New Vehicle" titleColor={colors.textPrimary} />
 
           {/* Photo */}
           <Text style={styles.label}>Vehicle Photo:</Text>
@@ -291,10 +284,7 @@ const { token } = useAuth();
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.lg, paddingBottom: 20 },
-
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingBottom: Spacing.md },
-  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 

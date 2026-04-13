@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { userService } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -54,11 +54,11 @@ export default function PasswordScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }]}>
-        <BackButton />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Change Password</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CenteredHeader
+        title="Change Password"
+        titleColor={colors.textPrimary}
+        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+      />
 
       <View style={styles.content}>
         <View style={styles.formGroup}>
@@ -122,11 +122,6 @@ export default function PasswordScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
   content: { padding: Spacing.lg },
 
   formGroup: { marginBottom: Spacing.lg },
