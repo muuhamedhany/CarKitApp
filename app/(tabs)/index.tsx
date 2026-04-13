@@ -202,8 +202,8 @@ export default function HomeScreen() {
   const renderProductCard = (product: Product) => {
     const hasImage = !!product.image_url;
     return (
-      <Pressable 
-        key={product.product_id} 
+      <Pressable
+        key={product.product_id}
         style={[styles.productCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
         onPress={() => router.push(`/product/${product.product_id}`)}
       >
@@ -309,12 +309,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  content: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
 
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.lg,
     paddingTop: 10,
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
 
   productCard: {
     width: 170, borderRadius: 20,
-    borderWidth: 1, marginRight: Spacing.md, 
+    borderWidth: 1, marginRight: Spacing.md,
     overflow: 'hidden',
   },
   productImage: { height: 110, justifyContent: 'center', alignItems: 'center' },

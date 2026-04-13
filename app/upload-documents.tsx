@@ -7,15 +7,13 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
-import { GradientButton } from '@/components';
+import { CenteredHeader, GradientButton } from '@/components';
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
@@ -32,9 +30,9 @@ type DocsState = {
 
 export default function UploadDocumentsScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { showToast, showAlert } = useToast();
+  const { showToast, showAlert } = useToast();
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [docs, setDocs] = useState<DocsState>({
@@ -58,7 +56,7 @@ const { showToast, showAlert } = useToast();
         }));
         showToast('success', 'Uploaded', `${asset.name} selected.`);
       }
-    } catch (error) {
+    } catch {
       showToast('error', 'Upload Failed', 'Could not pick document.');
     }
   };
@@ -221,9 +219,7 @@ const { showToast, showAlert } = useToast();
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <BackButton onPress={() => router.back()} />
-
-        <Text style={styles.title}>Upload Documents</Text>
+        <CenteredHeader title="Upload Documents" titleColor={colors.pink} />
         <Text style={styles.subtitle}>
           Submit required business documents for verification
         </Text>
@@ -251,21 +247,16 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 28,
     paddingBottom: 40,
-  },
-  title: {
-    color: colors.pink,
-    fontSize: 30,
-    fontFamily: Fonts.extraBoldItalic,
-    marginBottom: 4,
   },
   subtitle: {
     color: colors.textSecondary,
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl,
+    marginTop: 6,
     lineHeight: 22,
   },
   docCard: {

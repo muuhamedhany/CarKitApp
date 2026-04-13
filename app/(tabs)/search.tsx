@@ -1,18 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   Pressable,
-  FlatList,
   ScrollView,
   ActivityIndicator,
   Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -20,17 +18,11 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { ProductCard } from '@/components';
-import { ServiceCard } from '@/components';
-import { CategoryPill } from '@/components';
+import { ProductCard, ServiceCard } from '@/components';
+import { Product } from '@/types/api.types';
 
 const TAB_BAR_HEIGHT = 65;
 
-type Product = {
-  product_id: number; name: string; price: string; description?: string;
-  category_name?: string; vendor_name?: string; stock?: number;
-  image_url?: string | null;
-};
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
@@ -38,6 +30,11 @@ type Service = {
 };
 
 type ViewMode = 'all' | 'products' | 'services';
+
+type CategoryParams = {
+  product_categories?: string;
+  service_categories?: string;
+};
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -52,26 +49,48 @@ export default function SearchScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState<number[]>([]);
+  const [selectedServiceCategoryIds, setSelectedServiceCategoryIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const search = useCallback(async () => {
+  const queryRef = useRef(query);
+  const params = useLocalSearchParams<CategoryParams>();
+
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
+
+  const search = useCallback(async (
+    searchQuery: string,
+    productCategoryIds: number[],
+    serviceCategoryIds: number[]
+  ) => {
     setLoading(true);
     setSearched(true);
     try {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (productCategoryIds.length > 0) params.set('category_ids', productCategoryIds.join(','));
+
+      const serviceParams = new URLSearchParams();
+      if (serviceCategoryIds.length > 0) {
+        serviceParams.set('category_ids', serviceCategoryIds.join(','));
+      }
+
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products${query ? `?search=${encodeURIComponent(query)}` : ''}`, { headers }),
-        fetch(`${API_URL}/services`, { headers }),
+        fetch(`${API_URL}/products${params.toString() ? `?${params.toString()}` : ''}`, { headers }),
+        fetch(`${API_URL}/services${serviceParams.toString() ? `?${serviceParams.toString()}` : ''}`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
       if (prodData.success) setProducts(prodData.data || []);
       if (servData.success) {
         let filtered = servData.data || [];
-        if (query) {
-          const q = query.toLowerCase();
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
           filtered = filtered.filter((s: Service) =>
             s.name.toLowerCase().includes(q) ||
             s.provider_name?.toLowerCase().includes(q)
@@ -84,9 +103,45 @@ export default function SearchScreen() {
     } finally {
       setLoading(false);
     }
-  }, [query, token]);
+  }, [showToast, token]);
 
-  useEffect(() => { search(); }, []);
+  useEffect(() => {
+    const rawProducts = Array.isArray(params.product_categories)
+      ? params.product_categories[0]
+      : params.product_categories;
+    const rawServices = Array.isArray(params.service_categories)
+      ? params.service_categories[0]
+      : params.service_categories;
+    const parsedProducts = rawProducts && rawProducts.trim().length > 0
+      ? rawProducts.split(',')
+        .map((value: string) => Number(value))
+        .filter((value: number) => Number.isFinite(value) && value > 0)
+      : [];
+    const parsedServices = rawServices && rawServices.trim().length > 0
+      ? rawServices.split(',')
+        .map((value: string) => Number(value))
+        .filter((value: number) => Number.isFinite(value) && value > 0)
+      : [];
+    setSelectedProductCategoryIds(parsedProducts);
+    setSelectedServiceCategoryIds(parsedServices);
+    search(queryRef.current, parsedProducts, parsedServices);
+  }, [params.product_categories, params.service_categories, search]);
+
+  const handleOpenCategoryFilter = () => {
+    router.push({
+      pathname: '/category-filter',
+      params: {
+        product_categories: selectedProductCategoryIds.join(','),
+        service_categories: selectedServiceCategoryIds.join(','),
+      },
+    });
+  };
+
+  const handleClearCategories = () => {
+    setSelectedProductCategoryIds([]);
+    setSelectedServiceCategoryIds([]);
+    search(query, [], []);
+  };
 
   const handleAddToCart = async (productId: number) => {
     const result = await addToCart(productId);
@@ -104,7 +159,7 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Input */}
       <View style={styles.searchRow}>
-        <View style={[styles.searchInputContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
+        <View style={[styles.searchInputContainer, { backgroundColor: colors.backgroundSecondary, borderWidth: 2, borderColor: colors.border }]}>
           <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
@@ -112,11 +167,16 @@ export default function SearchScreen() {
             placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={search}
+            onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds)}
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <Pressable onPress={() => { setQuery(''); }}>
+            <Pressable
+              onPress={() => {
+                setQuery('');
+                search('', selectedProductCategoryIds, selectedServiceCategoryIds);
+              }}
+            >
               <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           )}
@@ -125,7 +185,7 @@ export default function SearchScreen() {
 
       {/* Mode toggle */}
       <View style={styles.toggleRow}>
-        {(['products', 'services', 'all'] as ViewMode[]).map((mode) => (
+        {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
           <Pressable
             key={mode}
             style={[
@@ -144,6 +204,27 @@ export default function SearchScreen() {
             </Text>
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.categorySection}>
+        <View style={styles.categoryRow}>
+          <Pressable
+            style={[styles.categoryButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+            onPress={handleOpenCategoryFilter}
+          >
+            <MaterialCommunityIcons name="filter-variant" size={18} color={colors.textMuted} />
+            <Text style={[styles.categoryButtonText, { color: colors.textPrimary }]}>
+              {selectedProductCategoryIds.length === 0 && selectedServiceCategoryIds.length === 0
+                ? 'All categories'
+                : `Products: ${selectedProductCategoryIds.length} · Services: ${selectedServiceCategoryIds.length}`}
+            </Text>
+          </Pressable>
+          {(selectedProductCategoryIds.length > 0 || selectedServiceCategoryIds.length > 0) && (
+            <Pressable onPress={handleClearCategories} style={styles.clearButton}>
+              <Text style={[styles.clearButtonText, { color: colors.pink }]}>Clear</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {loading ? (
@@ -211,12 +292,11 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  results: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
+  results: { paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
-  searchRow: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.xl },
+  searchRow: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
   searchInputContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)',
     paddingHorizontal: Spacing.md, paddingVertical: 14,
   },
   searchInput: {
@@ -225,9 +305,25 @@ const styles = StyleSheet.create({
   },
 
   toggleRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl, gap: Spacing.sm,
+    flexDirection: 'row', paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.sm, gap: Spacing.sm,
   },
+  categorySection: {
+    marginBottom: Spacing.xs,
+  },
+  categoryRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  categoryButton: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingHorizontal: Spacing.md, paddingVertical: 12,
+    borderRadius: BorderRadius.lg, borderWidth: 1,
+    flex: 1,
+  },
+  categoryButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+  clearButton: { paddingHorizontal: Spacing.xs, paddingVertical: 6 },
+  clearButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, textTransform: 'uppercase' },
   togglePill: {
     paddingHorizontal: 20, paddingVertical: 10,
     borderRadius: 20, borderWidth: 1,

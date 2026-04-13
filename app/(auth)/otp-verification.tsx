@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { GradientButton, BackButton } from '@/components';
+import { GradientButton, CenteredHeader } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const OTP_LENGTH = 4;
@@ -15,27 +15,27 @@ export default function OTPVerificationScreen() {
   const { verifyOtp, forgotPassword } = useAuth();
   const { showToast } = useToast();
   const { colors } = useTheme();
-  const [code, setCode] = useState(Array(OTP_LENGTH).fill(''));
+  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const [internalError, setInternalError] = useState<string | null>(null);
 
   const handleCodeChange = (text: string, index: number) => {
     const formattedText = text.replace(/[^0-9]/g, '');
-    
+
     // Handle pasting multiple digits (e.g. from clipboard)
     if (formattedText.length > 1) {
       const pasteData = formattedText.slice(0, OTP_LENGTH).split('');
       const newCode = [...code];
-      
+
       pasteData.forEach((char, i) => {
         if (index + i < OTP_LENGTH) {
           newCode[index + i] = char;
         }
       });
-      
+
       setCode(newCode);
-      
+
       // Focus the last filled input
       const focusIndex = Math.min(index + pasteData.length, OTP_LENGTH - 1);
       inputRefs.current[focusIndex]?.focus();
@@ -121,9 +121,7 @@ export default function OTPVerificationScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <BackButton onPress={() => router.back()} />
-
-          <Text style={[styles.title, { color: colors.pink }]}>OTP Verification</Text>
+          <CenteredHeader title="OTP Verification" titleColor={colors.pink} />
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter the {OTP_LENGTH}-digit code we sent to your registered email.
           </Text>
@@ -152,14 +150,14 @@ export default function OTPVerificationScreen() {
           </View>
 
           <View style={styles.resendContainer}>
-            <Text style={[styles.resendText, { color: colors.textPrimary }]}>Didn't receive a code? </Text>
+            <Text style={[styles.resendText, { color: colors.textPrimary }]}>Didn&apos;t receive a code? </Text>
             <Pressable onPress={handleResend}>
               <Text style={[styles.resendAction, { color: colors.pink }]}>Resend it</Text>
             </Pressable>
           </View>
 
           {internalError && (
-             <Text style={[styles.errorText, { color: colors.error }]}>{internalError}</Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>{internalError}</Text>
           )}
 
           <View style={styles.spacer} />
@@ -181,20 +179,16 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 28,
     paddingBottom: 40,
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 34,
-    fontFamily: Fonts.extraBoldItalic,
-    marginBottom: 6,
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     marginBottom: Spacing.xl + 8,
+    marginTop: 6,
   },
   otpContainer: {
     flexDirection: 'row',

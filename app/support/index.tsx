@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { supportService } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -75,13 +75,11 @@ export default function SupportScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }]}>
-        <BackButton onPress={() => isCreating ? setIsCreating(false) : router.back()} />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          {isCreating ? 'New Ticket' : 'Help & Support'}
-        </Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CenteredHeader
+        title={isCreating ? 'New Ticket' : 'Help & Support'}
+        titleColor={colors.textPrimary}
+        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+      />
 
       {loading ? (
         <View style={styles.center}>
@@ -182,13 +180,8 @@ export default function SupportScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
   content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: 40 },
-  
+
   infoBox: {
     flexDirection: 'row', alignItems: 'flex-start',
     backgroundColor: 'rgba(255, 64, 129, 0.1)', padding: Spacing.md,
@@ -222,7 +215,7 @@ const styles = StyleSheet.create({
   cardTitle: { flex: 1, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginRight: Spacing.sm },
   cardAddress: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, lineHeight: 20 },
   statusBadge: { fontFamily: Fonts.bold, fontSize: FontSizes.xs },
-  
+
   emptyState: { alignItems: 'center', marginTop: 80, marginBottom: 40 },
   emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center', paddingHorizontal: Spacing.xl, lineHeight: 22 },

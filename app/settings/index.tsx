@@ -102,7 +102,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, flex: 1 },
+  content: { paddingHorizontal: Spacing.md, flex: 1 },
   title: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.xl,

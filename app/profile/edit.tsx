@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { userService } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -64,11 +64,11 @@ export default function EditProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }]}>
-        <BackButton onPress={() => router.back()} />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Edit Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <CenteredHeader
+        title="Edit Profile"
+        titleColor={colors.textPrimary}
+        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+      />
 
       {initialFetch ? (
         <View style={styles.center}>
@@ -76,15 +76,6 @@ export default function EditProfileScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          
-          <View style={styles.avatarWrap}>
-            <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}>
-              <MaterialCommunityIcons name="account" size={48} color={colors.pink} />
-            </View>
-            <Pressable style={[styles.changePhotoBtn, { backgroundColor: colors.cardBorder }]}>
-              <Text style={[styles.changePhotoText, { color: colors.textPrimary }]}>Change Photo</Text>
-            </Pressable>
-          </View>
 
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name</Text>
@@ -151,13 +142,8 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingBottom: Spacing.md, paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: 40 },
-  
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.lg, paddingBottom: 40 },
+
   avatarWrap: { alignItems: 'center', marginBottom: Spacing.xl },
   avatar: {
     width: 100, height: 100, borderRadius: 50, borderWidth: 3,

@@ -21,9 +21,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { BackButton } from '@/components';
-import { FormInput } from '@/components';
-import { PickerModal } from '@/components';
+import { CenteredHeader, FormInput, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -44,9 +42,9 @@ type Vehicle = {
 
 export default function VehicleDetailScreen() {
   const router = useRouter();
-    const { colors } = useTheme();
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   const { token } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -276,12 +274,7 @@ const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <BackButton onPress={() => router.back()} />
-            <Text style={styles.headerTitle}>Edit Vehicle</Text>
-            <View style={{ width: 40 }} />
-          </View>
+          <CenteredHeader title="Edit Vehicle" titleColor={colors.textPrimary} />
 
           {/* Vehicle Photo */}
           <Text style={styles.label}>Vehicle Photo:</Text>
@@ -390,10 +383,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.lg, paddingBottom: 20 },
-
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 60, paddingBottom: Spacing.md },
-  headerTitle: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 20 },
 
   label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
 
@@ -439,7 +429,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   saveBtnText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.md },
   modalCard: { backgroundColor: colors.backgroundSecondary, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder, padding: Spacing.xl, width: '100%' },
   modalTitle: { color: colors.textPrimary, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, textAlign: 'center', marginBottom: Spacing.xl },
   modalActions: { flexDirection: 'row', gap: Spacing.md },

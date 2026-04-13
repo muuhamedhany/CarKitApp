@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, KeyboardAvoidingView, Pl
 import { useRouter } from 'expo-router';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, BackButton } from '@/components';
+import { FormInput, GradientButton, AuthFooter, CenteredHeader } from '@/components';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 
 export default function SignUpVendorScreen() {
@@ -19,7 +19,6 @@ export default function SignUpVendorScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim() || !password || !confirmPassword) {
@@ -38,8 +37,7 @@ export default function SignUpVendorScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <BackButton onPress={() => router.back()} />
-          <Text style={[styles.title, { color: colors.pink }]}>Create Account</Text>
+          <CenteredHeader title="Create Account" titleColor={colors.pink} />
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign up to start selling</Text>
 
           <Text style={[styles.label, { color: colors.textPrimary }]}>Choose What you will do:</Text>
@@ -71,7 +69,7 @@ export default function SignUpVendorScreen() {
           <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm Password:</Text>
           <FormInput icon="lock-outline" placeholder="Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} showToggle onToggle={() => setShowConfirm(!showConfirm)} />
 
-          <GradientButton title="Continue" onPress={handleContinue} loading={loading} style={{ marginTop: Spacing.sm }} />
+          <GradientButton title="Continue" onPress={handleContinue} style={{ marginTop: Spacing.sm }} />
           <View style={{ height: Spacing.lg }} />
           <AuthFooter message="Already have an account?" actionText="Login" onPress={() => router.push('/login')} />
         </ScrollView>
@@ -83,9 +81,8 @@ export default function SignUpVendorScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.xl, paddingTop: 60, paddingBottom: 40 },
-  title: { fontSize: 30, fontFamily: Fonts.extraBoldItalic, marginBottom: 4 },
-  subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.lg },
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingTop: 28, paddingBottom: 40 },
+  subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.lg, marginTop: 6 },
   label: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs },
   toggleRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.lg },
   toggleButton: {

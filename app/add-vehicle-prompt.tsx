@@ -45,7 +45,7 @@ export default function AddVehiclePromptScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.xl },
+  container: { flex: 1, justifyContent: 'center', paddingHorizontal: Spacing.md },
   content: { alignItems: 'center' },
   title: { fontSize: 32, fontFamily: Fonts.bold, marginBottom: Spacing.sm, textAlign: 'center' },
   subtitle: { fontSize: FontSizes.md, fontFamily: Fonts.regular, marginBottom: Spacing.xxl, textAlign: 'center' },
