@@ -282,7 +282,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             <View style={styles.halfWidth}>
                                 <FormInput
                                     icon="currency-usd"
-                                    placeholder="Price *"
+                                    placeholder="Price"
                                     keyboardType="numeric"
                                     value={price}
                                     onChangeText={setPrice}
@@ -417,7 +417,6 @@ const styles = StyleSheet.create({
     imagesRow: {
         flexDirection: 'row',
         gap: Spacing.md,
-        paddingBottom: Spacing.xl,
     },
     imageSlot: {
         width: 112,
