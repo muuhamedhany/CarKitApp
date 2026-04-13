@@ -226,11 +226,12 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             onChangeText={setName}
                         />
 
-                        <View style={[styles.textAreaShell, { backgroundColor: colors.backgroundSecondary, borderColor: colors.inputBorder }]}>
+                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder }]}>
+
                             <View style={styles.textAreaHeader}>
                                 <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />
-                                <Text style={[styles.textAreaTitle, { color: colors.textMuted }]}>Description</Text>
                             </View>
+
                             <TextInput
                                 style={[styles.textAreaInput, { color: colors.textPrimary }]}
                                 placeholder="Detailed product description..."
@@ -240,6 +241,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                 multiline
                                 textAlignVertical="top"
                             />
+
                         </View>
 
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
@@ -378,7 +380,7 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xl,
     },
     scrollContent: {
-        paddingHorizontal: Spacing.xl,
+        paddingHorizontal: Spacing.md,
         paddingBottom: 150,
     },
     sectionTitle: {
@@ -456,8 +458,6 @@ const styles = StyleSheet.create({
     categoriesRow: {
         flexDirection: 'row',
         gap: Spacing.sm,
-        paddingBottom: Spacing.sm,
-        marginBottom: Spacing.md,
     },
     categoryChip: {
         paddingHorizontal: Spacing.lg,
@@ -475,13 +475,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.md,
         paddingTop: Spacing.sm,
         minHeight: 140,
-        marginBottom: Spacing.md,
     },
     textAreaHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
-        marginBottom: Spacing.sm,
     },
     textAreaTitle: {
         fontFamily: Fonts.medium,
@@ -497,7 +495,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.md,
-        marginTop: Spacing.lg,
+        marginTop: Spacing.lg
     },
     secondaryButton: {
         minWidth: 88,
