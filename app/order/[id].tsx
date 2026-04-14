@@ -155,24 +155,24 @@ export default function OrderDetailScreen() {
 
     if (!order) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}> 
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Order not found.</Text>
             </View>
         );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}> 
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <CenteredHeader title="Order Details" titleColor={colors.textPrimary} />
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                     <View style={styles.headerRow}>
                         <View>
                             <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
                             <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
                         </View>
-                        <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}> 
+                        <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
                             <Text style={[styles.statusText, { color: statusPalette.fg }]}>{order.status}</Text>
                         </View>
                     </View>
@@ -182,7 +182,7 @@ export default function OrderDetailScreen() {
                 </View>
 
                 {role === 'customer' ? (
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tracking</Text>
                         {timelineSteps.map((step, index) => {
                             const reached = currentPosition >= index;
@@ -214,7 +214,7 @@ export default function OrderDetailScreen() {
                         })}
                     </View>
                 ) : (
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer</Text>
                         <View style={styles.vendorCustomerRow}>
                             <View style={styles.vendorCustomerText}>
@@ -233,7 +233,7 @@ export default function OrderDetailScreen() {
                     </View>
                 )}
 
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
                     <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Shipping'}</Text>
                     <Text style={[styles.addressText, { color: colors.textSecondary }]}>
@@ -241,7 +241,7 @@ export default function OrderDetailScreen() {
                     </Text>
                 </View>
 
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Order Items ({order.items.length})</Text>
 
                     {order.items.map((item) => (
@@ -275,7 +275,7 @@ export default function OrderDetailScreen() {
             </ScrollView>
 
             {role === 'vendor' ? (
-                <View style={[styles.footer, { backgroundColor: colors.background }]}> 
+                <View style={[styles.footer, { backgroundColor: colors.background }]}>
                     {primaryAction ? (
                         <Pressable
                             style={[styles.primaryButton, { backgroundColor: colors.pink, opacity: updatingStatus ? 0.7 : 1 }]}
@@ -297,7 +297,7 @@ export default function OrderDetailScreen() {
                     ) : null}
                 </View>
             ) : (
-                <View style={[styles.footerRow, { backgroundColor: colors.background }]}> 
+                <View style={[styles.footerRow, { backgroundColor: colors.background }]}>
                     <Pressable style={[styles.dualButton, { backgroundColor: colors.gradientStart }]} onPress={() => router.push('/support' as any)}>
                         <Text style={styles.dualButtonText}>Support</Text>
                     </Pressable>

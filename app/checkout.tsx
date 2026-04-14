@@ -291,7 +291,7 @@ export default function CheckoutScreen() {
                 })}
 
                 {(paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') ? (
-                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
                         <Text style={[styles.paymentDetailsText, { color: colors.textSecondary }]}>Send to: {paymentMethod === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}</Text>
 
@@ -315,7 +315,7 @@ export default function CheckoutScreen() {
                 ) : null}
 
                 {paymentMethod === 'credit_card' ? (
-                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
                         <TextInput
                             value={cardHolderName}
