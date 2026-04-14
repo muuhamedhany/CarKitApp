@@ -39,6 +39,9 @@ function InnerLayout() {
         <Stack.Screen name="settings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="order-success" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="order-failure" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="add-vehicle-prompt" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="add-vehicle-signup" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-vehicles" options={{ headerShown: false, title: '' }} />
