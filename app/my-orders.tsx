@@ -47,7 +47,7 @@ export default function MyOrdersScreen() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/orders`, {
+      const res = await fetch(`${API_URL}/orders/my`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
