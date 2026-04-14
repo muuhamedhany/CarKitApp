@@ -1,8 +1,9 @@
 import { apiFetch } from './client';
-import { ApiResponse } from '@/types/api.types';
+import { ApiResponse, OrderDetail } from '@/types/api.types';
 
 export interface OrderPayload {
     shipping_address_id?: number;
+    preferred_delivery_date?: string;
 }
 
 export interface OrderRecord {
@@ -12,6 +13,9 @@ export interface OrderRecord {
     total_amount: string;
     status: string;
     order_date: string;
+    preferred_delivery_date?: string | null;
+    estimated_delivery_start?: string | null;
+    estimated_delivery_end?: string | null;
 }
 
 export const orderService = {
@@ -27,6 +31,6 @@ export const orderService = {
     },
 
     async getOrderById(id: number) {
-        return apiFetch<ApiResponse<OrderRecord>>(`/orders/${id}`);
+        return apiFetch<ApiResponse<OrderDetail>>(`/orders/${id}`);
     },
 };

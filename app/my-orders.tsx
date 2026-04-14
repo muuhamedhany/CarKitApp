@@ -10,6 +10,7 @@ import {
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
@@ -20,7 +21,7 @@ type Order = {
   order_id: number;
   total_amount: string;
   status: string;
-  created_at: string;
+  order_date: string;
   items?: any[];
 };
 
@@ -38,6 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function MyOrdersScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const router = useRouter();
   const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('active');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -79,7 +81,7 @@ export default function MyOrdersScreen() {
       <View style={styles.orderHeader}>
         <View>
           <Text style={styles.orderId}>Order #{item.order_id}</Text>
-          <Text style={styles.orderDate}>{formatDate(item.created_at)}</Text>
+          <Text style={styles.orderDate}>{formatDate(item.order_date)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '30' }]}>
           <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
@@ -95,7 +97,12 @@ export default function MyOrdersScreen() {
         <Text style={styles.totalValue}>{item.total_amount} EGP</Text>
       </View>
 
-      <Pressable style={styles.viewDetailsBtn}>
+      <Pressable
+        style={styles.viewDetailsBtn}
+        onPress={() => {
+          router.push({ pathname: '/order/[id]', params: { id: String(item.order_id), role: 'customer' } });
+        }}
+      >
         <LinearGradient
           colors={[colors.gradientStart, colors.gradientEnd]}
           start={{ x: 0, y: 0 }}

@@ -140,9 +140,42 @@ export type VendorOrder = {
   status: string;
   order_date: string;
   total_amount: string | number;
+  preferred_delivery_date?: string | null;
+  estimated_delivery_start?: string | null;
+  estimated_delivery_end?: string | null;
   customer_name: string;
   customer_email: string;
   item_count: number;
   total_quantity: number;
   items: VendorOrderItem[];
 };
+
+export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | string;
+
+export type OrderAddressSummary = {
+  address_id?: number | null;
+  shipping_title?: string | null;
+  shipping_street?: string | null;
+  shipping_city?: string | null;
+};
+
+export type OrderDetailItem = {
+  order_item_id: number;
+  product_id: number;
+  quantity: number;
+  price_each: string | number;
+  product_name: string;
+};
+
+export type OrderDetail = {
+  order_id: number;
+  user_id_fk: number;
+  shipping_address_fk: number | null;
+  total_amount: string | number;
+  status: OrderStatus;
+  order_date: string;
+  preferred_delivery_date?: string | null;
+  estimated_delivery_start?: string | null;
+  estimated_delivery_end?: string | null;
+  items: OrderDetailItem[];
+} & OrderAddressSummary;
