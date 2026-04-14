@@ -335,7 +335,7 @@ export default function OrderDetailScreen() {
                     ) : null}
                 </View>
             ) : (
-                <View style={[styles.footerRow, { backgroundColor: colors.background }]}> 
+                <View style={[styles.footerRow, { backgroundColor: colors.background }]}>
                     <Pressable
                         style={[
                             styles.dualButton,
