@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,11 +16,11 @@ export default function VendorOrdersScreen() {
     const { colors } = useTheme();
     const { showToast } = useToast();
     const insets = useSafeAreaInsets();
+    const router = useRouter();
 
     const [orders, setOrders] = useState<VendorOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<OrderFilter>('all');
-    const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
 
     const loadOrders = useCallback(async () => {
         try {
@@ -96,12 +96,11 @@ export default function VendorOrdersScreen() {
     );
 
     const renderOrder = ({ item: order }: { item: VendorOrder }) => {
-        const isExpanded = expandedOrderId === order.order_id;
         const palette = getStatusPalette(order.status);
 
         return (
             <Pressable
-                onPress={() => setExpandedOrderId(isExpanded ? null : order.order_id)}
+                onPress={() => router.push({ pathname: '/order/[id]', params: { id: String(order.order_id), role: 'vendor' } })}
                 style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             >
                 <View style={styles.orderTopRow}>
@@ -119,19 +118,10 @@ export default function VendorOrdersScreen() {
                     <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
                 </View>
 
-                {isExpanded && (
-                    <View style={[styles.expandedBox, { borderTopColor: colors.itemSeparator }]}>
-                        {order.items.map((orderItem) => (
-                            <View key={orderItem.order_item_id} style={styles.itemRow}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.itemName, { color: colors.textPrimary }]}>{orderItem.product_name}</Text>
-                                    <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Qty {orderItem.quantity} · {Number(orderItem.price_each).toLocaleString('en-EG')} EGP</Text>
-                                </View>
-                                <Text style={[styles.itemTotal, { color: colors.pink }]}>{(Number(orderItem.price_each) * orderItem.quantity).toLocaleString('en-EG')} EGP</Text>
-                            </View>
-                        ))}
-                    </View>
-                )}
+                <View style={styles.chevronRow}>
+                    <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
+                    <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
+                </View>
             </Pressable>
         );
     };
@@ -253,30 +243,18 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         textTransform: 'capitalize',
     },
-    expandedBox: {
+    chevronRow: {
         marginTop: Spacing.md,
-        paddingTop: Spacing.md,
         borderTopWidth: 1,
-        gap: Spacing.md,
-    },
-    itemRow: {
+        borderTopColor: 'rgba(255,255,255,0.06)',
+        paddingTop: Spacing.sm,
         flexDirection: 'row',
-        alignItems: 'flex-start',
         justifyContent: 'space-between',
-        gap: Spacing.md,
-    },
-    itemName: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.sm,
-        marginBottom: 2,
+        alignItems: 'center',
     },
     itemMeta: {
         fontFamily: Fonts.regular,
         fontSize: FontSizes.xs,
-    },
-    itemTotal: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.sm,
     },
     emptyState: {
         borderRadius: BorderRadius.xl,
