@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+    Alert,
     ActivityIndicator,
     Pressable,
     ScrollView,
@@ -58,6 +59,11 @@ const getVendorPrimaryAction = (status: string) => {
 };
 
 const canVendorCancel = (status: string) => {
+    const normalized = normalizeStatus(status);
+    return normalized === 'pending' || normalized === 'processing';
+};
+
+const canCustomerCancel = (status: string) => {
     const normalized = normalizeStatus(status);
     return normalized === 'pending' || normalized === 'processing';
 };
@@ -124,6 +130,38 @@ export default function OrderDetailScreen() {
         } finally {
             setUpdatingStatus(false);
         }
+    };
+
+    const handleCustomerCancelOrder = () => {
+        if (!order) return;
+
+        Alert.alert(
+            'Cancel Order',
+            'Are you sure you want to cancel this order?',
+            [
+                { text: 'Keep Order', style: 'cancel' },
+                {
+                    text: 'Cancel Order',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setUpdatingStatus(true);
+                            const response = await orderService.cancelOrder(order.order_id);
+                            if (!response.success) {
+                                showToast('error', 'Cancel Failed', response.message || 'Could not cancel order.');
+                                return;
+                            }
+                            showToast('success', 'Order Cancelled', 'Your order has been cancelled successfully.');
+                            await loadOrder();
+                        } catch {
+                            showToast('error', 'Cancel Failed', 'Could not cancel order.');
+                        } finally {
+                            setUpdatingStatus(false);
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const statusPalette = getStatusPalette(order?.status || 'pending', colors);
@@ -297,10 +335,29 @@ export default function OrderDetailScreen() {
                     ) : null}
                 </View>
             ) : (
-                <View style={[styles.footerRow, { backgroundColor: colors.background }]}>
-                    <Pressable style={[styles.dualButton, { backgroundColor: colors.gradientStart }]} onPress={() => router.push('/support' as any)}>
+                <View style={[styles.footerRow, { backgroundColor: colors.background }]}> 
+                    <Pressable
+                        style={[
+                            styles.dualButton,
+                            { backgroundColor: colors.gradientStart, opacity: updatingStatus ? 0.65 : 1 },
+                        ]}
+                        onPress={() => router.push('/support' as any)}
+                        disabled={updatingStatus}
+                    >
                         <Text style={styles.dualButtonText}>Support</Text>
                     </Pressable>
+                    {canCustomerCancel(order.status) ? (
+                        <Pressable
+                            style={[
+                                styles.dualButton,
+                                { backgroundColor: colors.error, opacity: updatingStatus ? 0.65 : 1 },
+                            ]}
+                            onPress={handleCustomerCancelOrder}
+                            disabled={updatingStatus}
+                        >
+                            <Text style={styles.dualButtonText}>Cancel Order</Text>
+                        </Pressable>
+                    ) : null}
                     {normalizeStatus(order.status) === 'delivered' ? (
                         <Pressable style={[styles.dualButton, { backgroundColor: colors.gradientEnd }]}>
                             <Text style={styles.dualButtonText}>Review</Text>
