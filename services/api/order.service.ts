@@ -33,4 +33,10 @@ export const orderService = {
     async getOrderById(id: number) {
         return apiFetch<ApiResponse<OrderDetail>>(`/orders/${id}`);
     },
+
+    async cancelOrder(id: number) {
+        return apiFetch<ApiResponse<OrderRecord>>(`/orders/${id}/cancel`, {
+            method: 'PATCH',
+        });
+    },
 };
