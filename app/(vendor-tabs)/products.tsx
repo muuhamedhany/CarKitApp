@@ -87,7 +87,13 @@ export default function VendorProductsScreen() {
     { total: 0, low: 0, out: 0, good: 0 }
   );
 
-  const getStockBadge = (stock: number) => {
+  const getStockBadge = (product: Product) => {
+    const status = String(product.status || '').toLowerCase();
+    if (status && status !== 'active') {
+      return { label: 'Disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
+    }
+
+    const stock = Number(product.stock ?? 0);
     if (stock === 0) return { label: 'Out of Stock', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
     if (stock <= 5) return { label: 'Low Stock', backgroundColor: 'rgba(249,115,22,0.16)', color: '#F97316' };
     return { label: 'Active', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
@@ -95,7 +101,7 @@ export default function VendorProductsScreen() {
 
   const renderProduct = ({ item }: { item: Product }) => (
     <Pressable
-      onPress={() => router.push(`/edit-product/${item.product_id}`)}
+      onPress={() => router.push(`/vendor-product/${item.product_id}`)}
       style={({ pressed }) => [styles.productPressable, styles.productListItem, { opacity: pressed ? 0.9 : 1 }]}
     >
       <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -113,9 +119,9 @@ export default function VendorProductsScreen() {
                 {item.category_name || 'Uncategorized'}
               </Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStockBadge(Number(item.stock ?? 0)).backgroundColor }]}>
-              <Text style={[styles.statusBadgeText, { color: getStockBadge(Number(item.stock ?? 0)).color }]}>
-                {getStockBadge(Number(item.stock ?? 0)).label}
+            <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
+              <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
+                {getStockBadge(item).label}
               </Text>
             </View>
           </View>
