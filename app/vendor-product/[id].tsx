@@ -161,7 +161,7 @@ export default function VendorProductDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.imageWrap, { backgroundColor: colors.backgroundSecondary }]}> 
+          <View style={[styles.imageWrap, { backgroundColor: colors.backgroundSecondary }]}>
             {productImages.length > 0 ? (
               <ScrollView
                 horizontal
