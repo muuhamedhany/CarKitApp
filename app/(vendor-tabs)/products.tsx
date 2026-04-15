@@ -89,8 +89,11 @@ export default function VendorProductsScreen() {
 
   const getStockBadge = (product: Product) => {
     const status = String(product.status || '').toLowerCase();
-    if (status && status !== 'active') {
-      return { label: 'Disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
+     if (status === 'pending') {
+       return { label: 'Pending Approval', backgroundColor: 'rgba(59,130,246,0.16)', color: '#3B82F6' };
+     }
+     if (status && status !== 'active') {
+       return { label: 'Disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
     }
 
     const stock = Number(product.stock ?? 0);
