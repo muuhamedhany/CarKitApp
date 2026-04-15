@@ -10,12 +10,16 @@ export default function AddProductScreen() {
     const { showToast } = useToast();
 
     const handleAddProduct = async (payload: ProductFormPayload) => {
-        await apiFetch('/products', {
+        const response = await apiFetch<{ success: boolean; data: any; message?: string }>('/products', {
             method: 'POST',
             body: JSON.stringify(payload),
         });
 
-        showToast('success', 'Success', 'Product added successfully.');
+        showToast(
+            'success',
+            'Product Created',
+            response.message || 'Your product has been submitted for admin approval.'
+        );
         router.back();
     };
 

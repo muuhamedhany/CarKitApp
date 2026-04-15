@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
   statCard: {
