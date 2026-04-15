@@ -8,6 +8,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -80,6 +81,7 @@ function CartItemRow({ item, onUpdate, onRemove }: {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CartScreen() {
+  const router = useRouter();
   const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
   const { colors } = useTheme();
@@ -93,7 +95,7 @@ export default function CartScreen() {
       showToast('warning', 'Empty Cart', 'Add some products first!');
       return;
     }
-    showToast('info', 'Coming Soon', 'Checkout flow is being built.');
+    router.push('/checkout');
   };
 
   return (
