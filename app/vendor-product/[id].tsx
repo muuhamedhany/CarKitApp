@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,6 +43,7 @@ export default function VendorProductDetailScreen() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [restockValue, setRestockValue] = useState('');
 
   const fetchProduct = useCallback(async () => {
     if (!id) {
@@ -135,6 +136,38 @@ export default function VendorProductDetailScreen() {
     );
   };
 
+  const handleQuickRestock = async (newStock: number) => {
+    if (!product || saving || newStock < 0) return;
+    try {
+      setSaving(true);
+      const response = await apiFetch<ProductResponse>(`/products/${product.product_id}/stock`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stock: newStock }),
+      });
+      setProduct(response.data);
+      setRestockValue('');
+      showToast('success', 'Restocked', response.message || `Stock updated to ${newStock} units.`);
+    } catch (error: any) {
+      showToast('error', 'Error', error.message || 'Failed to update stock.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (!product) return;
+    router.push({
+      pathname: '/add-product',
+      params: {
+        duplicate_name: product.name + ' (Copy)',
+        duplicate_description: product.description || '',
+        duplicate_price: String(product.price || ''),
+        duplicate_stock: String(product.stock || 0),
+        duplicate_category_id: String(product.category_id_fk || ''),
+      },
+    });
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -212,6 +245,51 @@ export default function VendorProductDetailScreen() {
           </View>
         </View>
 
+        {/* Quick Restock */}
+        <View style={[styles.restockCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Restock</Text>
+          <Text style={[styles.restockHint, { color: colors.textMuted }]}>Current: {Number(product.stock ?? 0)} units</Text>
+          <View style={styles.restockRow}>
+            <Pressable
+              onPress={() => handleQuickRestock(Math.max(0, Number(product.stock ?? 0) - 10))}
+              style={[styles.restockBtn, { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.3)' }]}
+            >
+              <Text style={{ fontFamily: Fonts.bold, color: '#EF4444', fontSize: FontSizes.sm }}>−10</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleQuickRestock(Math.max(0, Number(product.stock ?? 0) - 1))}
+              style={[styles.restockBtn, { backgroundColor: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.3)' }]}
+            >
+              <Text style={{ fontFamily: Fonts.bold, color: '#EF4444', fontSize: FontSizes.sm }}>−1</Text>
+            </Pressable>
+            <TextInput
+              style={[styles.restockInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+              value={restockValue}
+              onChangeText={setRestockValue}
+              keyboardType="number-pad"
+              placeholder={String(product.stock ?? 0)}
+              placeholderTextColor={colors.textMuted}
+              textAlign="center"
+              onSubmitEditing={() => {
+                const val = parseInt(restockValue, 10);
+                if (!isNaN(val) && val >= 0) handleQuickRestock(val);
+              }}
+            />
+            <Pressable
+              onPress={() => handleQuickRestock(Number(product.stock ?? 0) + 1)}
+              style={[styles.restockBtn, { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}
+            >
+              <Text style={{ fontFamily: Fonts.bold, color: '#10B981', fontSize: FontSizes.sm }}>+1</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleQuickRestock(Number(product.stock ?? 0) + 10)}
+              style={[styles.restockBtn, { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}
+            >
+              <Text style={{ fontFamily: Fonts.bold, color: '#10B981', fontSize: FontSizes.sm }}>+10</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <View style={[styles.descriptionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>
@@ -230,6 +308,18 @@ export default function VendorProductDetailScreen() {
           >
             <MaterialCommunityIcons name="square-edit-outline" size={20} color={colors.pink} />
             <Text style={[styles.editActionText, { color: colors.pink }]}>Edit product</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleDuplicate}
+            disabled={saving}
+            style={({ pressed }) => [
+              styles.editAction,
+              { borderColor: '#6366F1', opacity: pressed || saving ? 0.85 : 1 },
+            ]}
+          >
+            <MaterialCommunityIcons name="content-duplicate" size={20} color="#6366F1" />
+            <Text style={[styles.editActionText, { color: '#6366F1' }]}>Duplicate product</Text>
           </Pressable>
 
           <Pressable
@@ -440,5 +530,37 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
     color: '#EF4444',
+  },
+  restockCard: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  restockHint: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    marginBottom: Spacing.sm,
+  },
+  restockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  restockBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restockInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
   },
 });

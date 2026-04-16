@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image, ScrollView } from 'react-native';
+import { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image, ScrollView, RefreshControl, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -26,6 +26,7 @@ export default function VendorProductsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('latest');
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -46,6 +47,12 @@ export default function VendorProductsScreen() {
       fetchProducts();
     }, [fetchProducts])
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchProducts();
+    setRefreshing(false);
+  }, [fetchProducts]);
 
   const normalizedProducts = products
     .filter((product) => {
@@ -102,38 +109,47 @@ export default function VendorProductsScreen() {
     return { label: 'Active', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <Pressable
-      onPress={() => router.push(`/vendor-product/${item.product_id}`)}
-      style={({ pressed }) => [styles.productPressable, styles.productListItem, { opacity: pressed ? 0.9 : 1 }]}
-    >
-      <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Image
-          source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
-          style={styles.productImage}
-        />
-        <View style={styles.productInfo}>
-          <View style={styles.productHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={[styles.productCategory, { color: colors.textMuted }]} numberOfLines={1}>
-                {item.category_name || 'Uncategorized'}
-              </Text>
+  const renderProduct = ({ item }: { item: Product }) => {
+    const scaleAnim = new Animated.Value(1);
+
+    const onPressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+    const onPressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+
+    return (
+      <Pressable
+        onPress={() => router.push(`/vendor-product/${item.product_id}`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[styles.productPressable, styles.productListItem]}
+      >
+        <Animated.View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border, transform: [{ scale: scaleAnim }] }]}>
+          <Image
+            source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
+            style={styles.productImage}
+          />
+          <View style={styles.productInfo}>
+            <View style={styles.productHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.productCategory, { color: colors.textMuted }]} numberOfLines={1}>
+                  {item.category_name || 'Uncategorized'}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
+                <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
+                  {getStockBadge(item).label}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
-              <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
-                {getStockBadge(item).label}
-              </Text>
-            </View>
+            <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
+            <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
           </View>
-          <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
-          <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
-        </View>
-      </View>
-    </Pressable>
-  );
+        </Animated.View>
+      </Pressable>
+    );
+  };
 
   const hasLowStock = normalizedProducts.some((product) => Number(product.stock ?? 0) <= 5);
 
@@ -252,6 +268,7 @@ export default function VendorProductsScreen() {
         ListHeaderComponent={renderHeader}
         ItemSeparatorComponent={() => <View style={styles.productSeparator} />}
         contentContainerStyle={styles.screenContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
         ListEmptyComponent={
           loading ? (
             <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />

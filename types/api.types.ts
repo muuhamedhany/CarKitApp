@@ -119,6 +119,7 @@ export type VendorTopProduct = {
   price: string | number;
   stock: number;
   sold_units: number;
+  image_url?: string | null;
 };
 
 export type VendorDashboardResponse = {
