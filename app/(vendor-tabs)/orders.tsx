@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList, RefreshControl, Animated, TextInput } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,8 @@ export default function VendorOrdersScreen() {
     const [orders, setOrders] = useState<VendorOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<OrderFilter>('all');
+    const [refreshing, setRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const loadOrders = useCallback(async () => {
         try {
@@ -42,6 +44,12 @@ export default function VendorOrdersScreen() {
         }, [loadOrders])
     );
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await loadOrders();
+        setRefreshing(false);
+    }, [loadOrders]);
+
     const formatDate = (value: string) => {
         const date = new Date(value);
         return Number.isNaN(date.getTime())
@@ -58,11 +66,50 @@ export default function VendorOrdersScreen() {
         return { bg: colors.pinkGlow, fg: colors.pink };
     };
 
+    const getRelativeTime = (dateStr: string) => {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        const days = Math.floor(hrs / 24);
+        if (days < 7) return `${days}d ago`;
+        return formatDate(dateStr);
+    };
+
+    const filteredOrders = useMemo(() => {
+        if (!searchQuery.trim()) return orders;
+        const q = searchQuery.toLowerCase();
+        return orders.filter(o =>
+            String(o.order_id).includes(q) ||
+            (o.customer_name || '').toLowerCase().includes(q) ||
+            (o.status || '').toLowerCase().includes(q)
+        );
+    }, [orders, searchQuery]);
+
     const renderHeader = () => (
         <>
             <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Orders</Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>Track current vendor order flow.</Text>
+            </View>
+
+            <View style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
+                <TextInput
+                    style={[styles.searchInput, { color: colors.textPrimary }]}
+                    placeholder="Search by order #, customer, status..."
+                    placeholderTextColor={colors.textMuted}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoCapitalize="none"
+                />
+                {searchQuery.length > 0 && (
+                    <Pressable onPress={() => setSearchQuery('')}>
+                        <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
+                    </Pressable>
+                )}
             </View>
 
             <ScrollView
@@ -97,31 +144,42 @@ export default function VendorOrdersScreen() {
 
     const renderOrder = ({ item: order }: { item: VendorOrder }) => {
         const palette = getStatusPalette(order.status);
+        const scaleAnim = new Animated.Value(1);
+        const initial = (order.customer_name || '?').charAt(0).toUpperCase();
+
+        const onPressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
+        const onPressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
 
         return (
             <Pressable
                 onPress={() => router.push({ pathname: '/order/[id]', params: { id: String(order.order_id), role: 'vendor' } })}
-                style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPressIn={onPressIn}
+                onPressOut={onPressOut}
             >
-                <View style={styles.orderTopRow}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.orderNumber, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
-                        <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.customer_name} · {formatDate(order.order_date)}</Text>
+                <Animated.View style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: palette.fg, borderLeftWidth: 3, transform: [{ scale: scaleAnim }] }]}>
+                    <View style={styles.orderTopRow}>
+                        <View style={[styles.customerAvatar, { backgroundColor: palette.bg }]}>
+                            <Text style={[styles.customerAvatarText, { color: palette.fg }]}>{initial}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.orderNumber, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
+                            <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.customer_name} · {getRelativeTime(order.order_date)}</Text>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: palette.bg }]}>
+                            <Text style={[styles.statusBadgeText, { color: palette.fg }]}>{order.status}</Text>
+                        </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: palette.bg }]}>
-                        <Text style={[styles.statusBadgeText, { color: palette.fg }]}>{order.status}</Text>
+
+                    <View style={styles.orderStatsRow}>
+                        <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.item_count} items</Text>
+                        <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
                     </View>
-                </View>
 
-                <View style={styles.orderStatsRow}>
-                    <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.item_count} items</Text>
-                    <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
-                </View>
-
-                <View style={styles.chevronRow}>
-                    <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
-                    <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
-                </View>
+                    <View style={styles.chevronRow}>
+                        <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
+                        <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
+                    </View>
+                </Animated.View>
             </Pressable>
         );
     };
@@ -129,13 +187,14 @@ export default function VendorOrdersScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
             <FlatList
-                data={loading ? [] : orders}
+                data={loading ? [] : filteredOrders}
                 keyExtractor={(item) => item.order_id.toString()}
                 renderItem={renderOrder}
                 ListHeaderComponent={renderHeader}
                 ItemSeparatorComponent={() => <View style={styles.orderSeparator} />}
                 contentContainerStyle={styles.screenContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                 ListEmptyComponent={
                     loading ? (
                         <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
@@ -268,5 +327,33 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.md,
         marginTop: Spacing.md,
         textAlign: 'center',
+    },
+    searchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: Spacing.md,
+        marginBottom: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        height: 44,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        gap: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        height: '100%',
+    },
+    customerAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    customerAvatarText: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
     },
 });

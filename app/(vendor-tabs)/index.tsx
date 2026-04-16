@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
 
 export default function VendorDashboard() {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export default function VendorDashboard() {
 
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -40,12 +42,18 @@ export default function VendorDashboard() {
     }, [loadDashboard])
   );
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadDashboard();
+    setRefreshing(false);
+  }, [loadDashboard]);
+
   const stats = dashboard
     ? [
-      { label: 'Total Products', value: String(dashboard.stats.total_products), icon: 'package-variant', color: '#6366F1' },
-      { label: 'Orders', value: String(dashboard.stats.total_orders), icon: 'receipt-text', color: '#10B981' },
-      { label: 'Revenue', value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')} EGP`, icon: 'currency-usd', color: '#EC4899' },
-      { label: 'Low Stock', value: String(dashboard.stats.low_stock_count), icon: 'alert-circle-outline', color: '#F97316' },
+      { label: 'Total Products', value: String(dashboard.stats.total_products), icon: 'package-variant', color: '#6366F1', subtitle: 'In catalogue' },
+      { label: 'Total Orders', value: String(dashboard.stats.total_orders), icon: 'receipt-text', color: '#10B981', subtitle: `${dashboard.stats.active_orders} active` },
+      { label: 'Revenue', value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')}`, icon: 'cash-multiple', color: colors.pink, subtitle: 'All time' },
+      { label: 'Low Stock', value: String(dashboard.stats.low_stock_count), icon: 'alert-circle-outline', color: '#F97316', subtitle: `${dashboard.stats.out_of_stock_count} out of stock` },
     ]
     : [];
 
@@ -58,14 +66,17 @@ export default function VendorDashboard() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+      >
         <View style={styles.header}>
           <Text style={[styles.greeting, { color: colors.textMuted }]}>Hello, {user?.name}</Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color={colors.pink} style={{ marginTop: 40 }} />
+          <DashboardSkeleton />
         ) : (
           <>
             <View style={styles.statsContainer}>
@@ -76,6 +87,7 @@ export default function VendorDashboard() {
                   </View>
                   <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
+                  <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
                 </View>
               ))}
             </View>
@@ -142,6 +154,10 @@ export default function VendorDashboard() {
               {dashboard?.top_products.length ? (
                 dashboard.top_products.map((product) => (
                   <View key={product.product_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                    <Image
+                      source={{ uri: product.image_url || 'https://via.placeholder.com/40' }}
+                      style={styles.productThumb}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
                       <Text style={[styles.productMeta, { color: colors.textMuted }]}>{product.sold_units} sold · {product.stock} left</Text>
@@ -241,6 +257,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
   },
+  statSubtitle: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    marginTop: 2,
+    opacity: 0.7,
+  },
   section: {
     marginTop: Spacing.md,
     marginBottom: Spacing.md,
@@ -307,6 +329,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+  },
+  productThumb: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: '#f0f0f0',
   },
   productName: {
     fontFamily: Fonts.semiBold,

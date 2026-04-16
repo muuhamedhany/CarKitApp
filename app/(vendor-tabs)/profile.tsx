@@ -1,9 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { vendorService } from '@/services/api/vendor.service';
+import { VendorDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 export default function VendorProfileScreen() {
@@ -16,6 +19,23 @@ export default function VendorProfileScreen() {
     await logout();
     router.replace('/login');
   };
+
+  const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      vendorService.getDashboard().then(res => {
+        if (res.success && res.data) setDashboard(res.data);
+      }).catch(() => {});
+    }, [])
+  );
+
+  const verificationStatus = (user as any)?.verification_status || 'pending';
+  const verificationBadge = verificationStatus === 'verified'
+    ? { label: 'Verified', bg: 'rgba(16,185,129,0.1)', fg: '#10B981', icon: 'shield-check' as const }
+    : verificationStatus === 'rejected'
+    ? { label: 'Rejected', bg: 'rgba(239,68,68,0.1)', fg: '#EF4444', icon: 'shield-off' as const }
+    : { label: 'Pending Review', bg: 'rgba(249,115,22,0.1)', fg: '#F97316', icon: 'shield-half-full' as const };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -33,9 +53,29 @@ export default function VendorProfileScreen() {
           <View style={styles.userInfo}>
             <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
             <Text style={[styles.email, { color: colors.textMuted }]}>{user?.email}</Text>
-            <View style={[styles.badge, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <Text style={[styles.badgeText, { color: '#10B981' }]}>Verified Vendor</Text>
+            <View style={[styles.badge, { backgroundColor: verificationBadge.bg }]}>
+              <MaterialCommunityIcons name={verificationBadge.icon} size={14} color={verificationBadge.fg} />
+              <Text style={[styles.badgeText, { color: verificationBadge.fg }]}>{verificationBadge.label}</Text>
             </View>
+          </View>
+        </View>
+
+        {/* Store Stats Summary */}
+        <View style={styles.storeStatsRow}>
+          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <MaterialCommunityIcons name="package-variant" size={22} color="#6366F1" />
+            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_products ?? '—'}</Text>
+            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Products</Text>
+          </View>
+          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <MaterialCommunityIcons name="receipt-text" size={22} color="#10B981" />
+            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_orders ?? '—'}</Text>
+            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Orders</Text>
+          </View>
+          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <MaterialCommunityIcons name="cash-multiple" size={22} color={colors.pink} />
+            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard ? Number(dashboard.stats.revenue).toLocaleString('en-EG') : '—'}</Text>
+            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Revenue</Text>
           </View>
         </View>
 
@@ -159,6 +199,9 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
@@ -196,5 +239,26 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     fontSize: FontSizes.md,
     marginLeft: Spacing.md,
+  },
+  storeStatsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  storeStat: {
+    flex: 1,
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    gap: 4,
+  },
+  storeStatValue: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+  },
+  storeStatLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
   },
 });

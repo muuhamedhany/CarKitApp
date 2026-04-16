@@ -310,25 +310,41 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                 const hasImage = !!slot.previewUri;
 
                                 return (
-                                    <Pressable
-                                        key={index}
-                                        onPress={() => pickImage(index)}
-                                        style={[
-                                            styles.imageSlot,
-                                            { backgroundColor: colors.card, borderColor: colors.border },
-                                        ]}
-                                    >
-                                        <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
-                                            {hasImage ? (
-                                                <Image source={{ uri: slot.previewUri! }} style={styles.image} />
-                                            ) : (
-                                                <MaterialCommunityIcons name="camera-plus" size={28} color={colors.textMuted} />
-                                            )}
-                                        </View>
-                                        <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
-                                            {hasImage ? `Replace ${index + 1}` : `Add ${index + 1}`}
-                                        </Text>
-                                    </Pressable>
+                                    <View key={index} style={{ position: 'relative' }}>
+                                        <Pressable
+                                            onPress={() => pickImage(index)}
+                                            style={[
+                                                styles.imageSlot,
+                                                { backgroundColor: colors.card, borderColor: colors.border },
+                                            ]}
+                                        >
+                                            <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
+                                                {hasImage ? (
+                                                    <Image source={{ uri: slot.previewUri! }} style={styles.image} />
+                                                ) : (
+                                                    <MaterialCommunityIcons name="camera-plus" size={28} color={colors.textMuted} />
+                                                )}
+                                            </View>
+                                            <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
+                                                {index === 0 ? (hasImage ? 'Primary ✦' : 'Main Photo') : (hasImage ? `Photo ${index + 1}` : `Add ${index + 1}`)}
+                                            </Text>
+                                        </Pressable>
+
+                                        {hasImage && (
+                                            <Pressable
+                                                onPress={() => {
+                                                    setImageSlots((current) => {
+                                                        const next = [...current];
+                                                        next[index] = { previewUri: null, base64: null, sourceUrl: null };
+                                                        return next;
+                                                    });
+                                                }}
+                                                style={styles.imageRemoveButton}
+                                            >
+                                                <MaterialCommunityIcons name="close-circle" size={22} color="#EF4444" />
+                                            </Pressable>
+                                        )}
+                                    </View>
                                 );
                             })}
                         </ScrollView>
@@ -443,6 +459,15 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.xs,
         textAlign: 'center',
         marginTop: Spacing.xs,
+    },
+    imageRemoveButton: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        zIndex: 10,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 1,
     },
     row: {
         flexDirection: 'row',
