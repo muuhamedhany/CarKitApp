@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing } from '@/constants/theme';
 
 type ProductCardProps = {
+  productId?: number;
   name: string;
   price: string | number;
   imageUrl?: string | null;
@@ -16,6 +19,7 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({
+  productId,
   name,
   price,
   imageUrl,
@@ -28,6 +32,14 @@ export default function ProductCard({
   const { colors } = useTheme();
   const [imgError, setImgError] = useState(false);
   const [imgLoading, setImgLoading] = useState(!!imageUrl);
+  const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
+  const isWishlisted = productId ? !!wishlist[productId] : false;
+
+  const handleToggleWishlist = () => {
+    if (!productId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    contextToggleWishlist(productId);
+  };
 
   const showImage = !!imageUrl && !imgError;
 
@@ -57,6 +69,19 @@ export default function ProductCard({
           </>
         ) : (
           <MaterialCommunityIcons name="car-wrench" size={40} color={colors.textMuted} />
+        )}
+        {productId && (
+          <Pressable 
+            style={styles.favoriteCardIcon}
+            onPress={handleToggleWishlist}
+            hitSlop={8}
+          >
+            <MaterialCommunityIcons 
+              name={isWishlisted ? "cards-heart" : "cards-heart-outline"} 
+              size={18} 
+              color={isWishlisted ? colors.pink : '#FFF'} 
+            />
+          </Pressable>
         )}
       </View>
 
@@ -120,4 +145,12 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   reviewCount: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginLeft: 4 },
   addButton: { padding: 4 },
+  favoriteCardIcon: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 4,
+  },
 });

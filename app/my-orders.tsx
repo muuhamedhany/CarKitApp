@@ -11,7 +11,11 @@ import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useAuth } from '@/contexts/AuthContext';
+import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
+const AnimatedPressableComponent = Animated.createAnimatedComponent(Pressable);
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -77,29 +81,40 @@ export default function MyOrdersScreen() {
   };
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <View style={styles.orderCard}>
-      <View style={styles.orderHeader}>
-        <View>
-          <Text style={styles.orderId}>Order #{item.order_id}</Text>
-          <Text style={styles.orderDate}>{formatDate(item.order_date)}</Text>
+      <View style={styles.orderCard}>
+        <View style={styles.orderHeader}>
+          <View>
+            <Text style={styles.orderId}>Order #{item.order_id}</Text>
+            <Text style={styles.orderDate}>{formatDate(item.order_date)}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '30' }]}>
+            <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
+              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            </Text>
+          </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '30' }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-          </Text>
+
+        <View style={styles.orderDivider} />
+
+        <View style={styles.orderFooter}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>{item.total_amount} EGP</Text>
         </View>
+
+        <AnimatedDetailsBtn item={item} styles={styles} colors={colors} router={router} />
       </View>
+    );
 
-      <View style={styles.orderDivider} />
-
-      <View style={styles.orderFooter}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{item.total_amount} EGP</Text>
-      </View>
-
-      <Pressable
-        style={styles.viewDetailsBtn}
+  const AnimatedDetailsBtn = ({ item, styles, colors, router }: any) => {
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+    return (
+      <AnimatedPressableComponent
+        style={[styles.viewDetailsBtn, animatedStyle]}
+        onPressIn={() => scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })}
+        onPressOut={() => scale.value = withSpring(1, { damping: 15, stiffness: 300 })}
         onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           router.push({ pathname: '/order/[id]', params: { id: String(item.order_id), role: 'customer' } });
         }}
       >
@@ -111,9 +126,9 @@ export default function MyOrdersScreen() {
         >
           <Text style={styles.viewDetailsText}>View Details</Text>
         </LinearGradient>
-      </Pressable>
-    </View>
-  );
+      </AnimatedPressableComponent>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -123,21 +138,43 @@ export default function MyOrdersScreen() {
       <View style={styles.tabRow}>
         <Pressable
           style={[styles.tab, tab === 'active' && styles.tabActive]}
-          onPress={() => setTab('active')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setTab('active');
+          }}
         >
           <Text style={[styles.tabText, tab === 'active' && styles.tabTextActive]}>Active</Text>
         </Pressable>
         <Pressable
           style={[styles.tab, tab === 'delivered' && styles.tabActive]}
-          onPress={() => setTab('delivered')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setTab('delivered');
+          }}
         >
           <Text style={[styles.tabText, tab === 'delivered' && styles.tabTextActive]}>Delivered</Text>
         </Pressable>
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.pink} />
+        <View style={{ paddingHorizontal: Spacing.lg, gap: Spacing.md, marginTop: Spacing.md }}>
+          {[1,2,3].map(i => (
+            <View key={i} style={{ backgroundColor: colors.backgroundSecondary, borderRadius: 16, padding: Spacing.md, borderWidth: 1, borderColor: colors.cardBorder }}>
+               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.md }}>
+                 <View>
+                   <SkeletonBone width={100} height={18} />
+                   <SkeletonBone width={80} height={14} style={{ marginTop: 6 }} />
+                 </View>
+                 <SkeletonBone width={70} height={26} borderRadius={13} />
+               </View>
+               <SkeletonBone width="100%" height={1} style={{ marginBottom: Spacing.md }} />
+               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.md }}>
+                 <SkeletonBone width={40} height={14} />
+                 <SkeletonBone width={80} height={18} />
+               </View>
+               <SkeletonBone width="100%" height={44} borderRadius={12} />
+            </View>
+          ))}
         </View>
       ) : filteredOrders.length === 0 ? (
         <View style={styles.center}>
