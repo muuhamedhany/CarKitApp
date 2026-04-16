@@ -42,7 +42,7 @@ export default function ProfileScreen() {
     { icon: 'car-sports', label: 'Vehicles', route: '/my-vehicles' },
     { icon: 'package-variant', label: 'Orders', route: '/my-orders' },
     { icon: 'calendar-check', label: 'Bookings', route: '/my-bookings' },
-    { icon: 'heart-outline', label: 'Wishlists', onPress: () => showToast('info', 'Coming Soon', 'Wishlists are being built.') },
+    { icon: 'heart-outline', label: 'Wishlists', route: '/wishlist' },
   ];
 
   const personalItems: MenuItem[] = [

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatL
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
@@ -123,7 +125,10 @@ export default function VendorOrdersScreen() {
                     return (
                         <Pressable
                             key={filter}
-                            onPress={() => setActiveFilter(filter)}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setActiveFilter(filter);
+                            }}
                             style={[
                                 styles.filterChip,
                                 {
@@ -197,7 +202,24 @@ export default function VendorOrdersScreen() {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                 ListEmptyComponent={
                     loading ? (
-                        <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
+                        <View style={{ padding: Spacing.md, gap: Spacing.md }}>
+                            {[1, 2, 3].map(i => (
+                                <View key={i} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border, padding: Spacing.md }]}>
+                                    <View style={styles.orderTopRow}>
+                                        <SkeletonBone width={40} height={40} borderRadius={20} />
+                                        <View style={{ flex: 1, marginLeft: 12 }}>
+                                            <SkeletonBone width={100} height={16} />
+                                            <SkeletonBone width={140} height={12} style={{ marginTop: 6 }} />
+                                        </View>
+                                        <SkeletonBone width={70} height={24} borderRadius={12} />
+                                    </View>
+                                    <View style={styles.orderStatsRow}>
+                                        <SkeletonBone width={60} height={14} />
+                                        <SkeletonBone width={80} height={16} />
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
                     ) : (
                         <View style={[styles.emptyState]}>
                             <MaterialCommunityIcons name="receipt-text-outline" size={48} color={colors.textMuted} />

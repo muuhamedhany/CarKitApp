@@ -15,6 +15,7 @@ import {
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
 import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
 import 'react-native-reanimated';
 
@@ -49,6 +50,8 @@ function InnerLayout() {
         <Stack.Screen name="add-vehicle" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="vehicle-detail" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="edit-product/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="wishlist" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="image-viewer" options={{ headerShown: false, title: '', presentation: 'fullScreenModal' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
@@ -81,7 +84,9 @@ export default function RootLayout() {
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
-            <InnerLayout />
+            <WishlistProvider>
+              <InnerLayout />
+            </WishlistProvider>
           </ToastProvider>
         </CartProvider>
       </AuthProvider>

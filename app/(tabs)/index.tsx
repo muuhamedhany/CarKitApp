@@ -17,6 +17,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
@@ -132,6 +135,12 @@ export default function HomeScreen() {
   const [productCategories, setProductCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
+
+  const toggleFavorite = (productId: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    contextToggleWishlist(productId);
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -227,6 +236,18 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </View>
+        {/* Favorite Heart Icon */}
+        <Pressable 
+          style={styles.favoriteIndexIcon}
+          onPress={() => toggleFavorite(product.product_id)}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons 
+            name={wishlist[product.product_id] ? "cards-heart" : "cards-heart-outline"} 
+            size={20} 
+            color={wishlist[product.product_id] ? colors.pink : colors.textPrimary} 
+          />
+        </Pressable>
       </Pressable>
     );
   };
@@ -262,6 +283,21 @@ export default function HomeScreen() {
       <Pressable style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]} onPress={() => router.push('/(tabs)/search')}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
         <TypewriterSearchBar textColor={colors.textMuted} />
+      </Pressable>
+
+      {/* Hero Banner */}
+      <Pressable style={styles.heroBanner} onPress={() => router.push('/(tabs)/search')}>
+        <Image style={styles.heroImage} source={{ uri: 'https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&q=80&w=1000' }} />
+        <LinearGradient 
+          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']} 
+          style={styles.heroOverlay}
+        >
+          <Text style={styles.heroTitle}>Premium Auto Care</Text>
+          <Text style={styles.heroSubtitle}>Find everything you need for your ride</Text>
+          <View style={[styles.heroBtn, { backgroundColor: colors.pink }]}>
+            <Text style={styles.heroBtnText}>Shop Now</Text>
+          </View>
+        </LinearGradient>
       </Pressable>
 
       {/* Featured Services */}
@@ -408,4 +444,53 @@ const styles = StyleSheet.create({
   activityInfo: { flex: 1 },
   activityTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
   activitySub: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
+
+  favoriteIndexIcon: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  
+  heroBanner: {
+    marginVertical: Spacing.md,
+    height: 160,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    padding: Spacing.md,
+    justifyContent: 'flex-end',
+  },
+  heroTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xl,
+    color: '#FFF',
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    color: '#ECECEC',
+    marginBottom: Spacing.md,
+  },
+  heroBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  heroBtnText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xs,
+    color: '#000',
+  }
 });

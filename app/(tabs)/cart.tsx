@@ -16,6 +16,8 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
+import * as Haptics from 'expo-haptics';
+import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -55,21 +57,21 @@ function CartItemRow({ item, onUpdate, onRemove }: {
 
       {/* Qty controls + delete */}
       <View style={styles.rightCol}>
-        <Pressable onPress={() => onRemove(item.cart_item_id)} style={styles.deleteBtn} hitSlop={8}>
+        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onRemove(item.cart_item_id); }} style={styles.deleteBtn} hitSlop={8}>
           <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.textMuted} />
         </Pressable>
 
         <View style={styles.qtyRow}>
           <Pressable
             style={[styles.qtyBtn, { backgroundColor: colors.backgroundSecondary }]}
-            onPress={() => onUpdate(item.cart_item_id, item.quantity - 1)}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity - 1); }}
           >
             <MaterialCommunityIcons name="minus" size={16} color={colors.textPrimary} />
           </Pressable>
           <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
           <Pressable
             style={[styles.qtyBtn, { backgroundColor: colors.backgroundSecondary }]}
-            onPress={() => onUpdate(item.cart_item_id, item.quantity + 1)}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity + 1); }}
           >
             <MaterialCommunityIcons name="plus" size={16} color={colors.textPrimary} />
           </Pressable>
@@ -106,8 +108,16 @@ export default function CartScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.pink} />
+        <View style={{ paddingHorizontal: Spacing.md, paddingTop: 20, gap: 16 }}>
+          {[1, 2, 3].map((skeleton) => (
+             <View key={skeleton} style={{ flexDirection: 'row', gap: 16 }}>
+               <SkeletonBone width={80} height={80} borderRadius={16} />
+               <View style={{ flex: 1, justifyContent: 'center', gap: 12 }}>
+                 <SkeletonBone width="70%" height={16} borderRadius={4} />
+                 <SkeletonBone width="40%" height={16} borderRadius={4} />
+               </View>
+             </View>
+          ))}
         </View>
       ) : items.length === 0 ? (
         <View style={styles.center}>
