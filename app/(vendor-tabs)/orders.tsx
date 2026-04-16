@@ -190,7 +190,7 @@ export default function VendorOrdersScreen() {
                 data={loading ? [] : filteredOrders}
                 keyExtractor={(item) => item.order_id.toString()}
                 renderItem={renderOrder}
-                ListHeaderComponent={renderHeader}
+                ListHeaderComponent={renderHeader()}
                 ItemSeparatorComponent={() => <View style={styles.orderSeparator} />}
                 contentContainerStyle={styles.screenContent}
                 showsVerticalScrollIndicator={false}
