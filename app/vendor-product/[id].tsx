@@ -70,6 +70,9 @@ export default function VendorProductDetailScreen() {
 
   const publishInfo = useMemo(() => {
     const status = String(product?.status || 'active').toLowerCase();
+    if (status === 'pending') {
+      return { label: 'Pending', backgroundColor: 'rgba(59,130,246,0.16)', color: '#3B82F6' };
+    }
     if (status === 'active') {
       return { label: 'Enabled', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
     }
@@ -181,6 +184,7 @@ export default function VendorProductDetailScreen() {
   }
 
   const isEnabled = String(product.status || 'active').toLowerCase() === 'active';
+  const isPending = String(product.status || '').toLowerCase() === 'pending';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -193,6 +197,18 @@ export default function VendorProductDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {isPending && (
+          <View style={{ backgroundColor: 'rgba(59,130,246,0.1)', padding: Spacing.md, borderRadius: BorderRadius.xl, borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <MaterialCommunityIcons name="clock-outline" size={24} color="#3B82F6" />
+              <Text style={{ fontFamily: Fonts.semiBold, color: '#3B82F6', fontSize: FontSizes.md }}>Pending Approval</Text>
+            </View>
+            <Text style={{ fontFamily: Fonts.regular, color: '#9E9E9E', fontSize: FontSizes.sm, marginTop: Spacing.xs, lineHeight: 20 }}>
+              This product is under review. You'll be notified once it's approved.
+            </Text>
+          </View>
+        )}
+
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.imageWrap, { backgroundColor: colors.backgroundSecondary }]}>
             {productImages.length > 0 ? (
@@ -246,9 +262,10 @@ export default function VendorProductDetailScreen() {
         </View>
 
         {/* Quick Restock */}
-        <View style={[styles.restockCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Restock</Text>
-          <Text style={[styles.restockHint, { color: colors.textMuted }]}>Current: {Number(product.stock ?? 0)} units</Text>
+        {!isPending && (
+          <View style={[styles.restockCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Restock</Text>
+            <Text style={[styles.restockHint, { color: colors.textMuted }]}>Current: {Number(product.stock ?? 0)} units</Text>
           <View style={styles.restockRow}>
             <Pressable
               onPress={() => handleQuickRestock(Math.max(0, Number(product.stock ?? 0) - 10))}
@@ -281,14 +298,15 @@ export default function VendorProductDetailScreen() {
             >
               <Text style={{ fontFamily: Fonts.bold, color: '#10B981', fontSize: FontSizes.sm }}>+1</Text>
             </Pressable>
-            <Pressable
-              onPress={() => handleQuickRestock(Number(product.stock ?? 0) + 10)}
-              style={[styles.restockBtn, { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}
-            >
-              <Text style={{ fontFamily: Fonts.bold, color: '#10B981', fontSize: FontSizes.sm }}>+10</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => handleQuickRestock(Number(product.stock ?? 0) + 10)}
+                style={[styles.restockBtn, { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.3)' }]}
+              >
+                <Text style={{ fontFamily: Fonts.bold, color: '#10B981', fontSize: FontSizes.sm }}>+10</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={[styles.descriptionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
@@ -298,51 +316,55 @@ export default function VendorProductDetailScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            onPress={() => router.push(`/edit-product/${product.product_id}`)}
-            disabled={saving}
-            style={({ pressed }) => [
-              styles.editAction,
-              { borderColor: colors.pink, opacity: pressed || saving ? 0.85 : 1 },
-            ]}
-          >
-            <MaterialCommunityIcons name="square-edit-outline" size={20} color={colors.pink} />
-            <Text style={[styles.editActionText, { color: colors.pink }]}>Edit product</Text>
-          </Pressable>
+          {!isPending && (
+            <>
+              <Pressable
+                onPress={() => router.push(`/edit-product/${product.product_id}`)}
+                disabled={saving}
+                style={({ pressed }) => [
+                  styles.editAction,
+                  { borderColor: colors.pink, opacity: pressed || saving ? 0.85 : 1 },
+                ]}
+              >
+                <MaterialCommunityIcons name="square-edit-outline" size={20} color={colors.pink} />
+                <Text style={[styles.editActionText, { color: colors.pink }]}>Edit product</Text>
+              </Pressable>
 
-          <Pressable
-            onPress={handleDuplicate}
-            disabled={saving}
-            style={({ pressed }) => [
-              styles.editAction,
-              { borderColor: '#6366F1', opacity: pressed || saving ? 0.85 : 1 },
-            ]}
-          >
-            <MaterialCommunityIcons name="content-duplicate" size={20} color="#6366F1" />
-            <Text style={[styles.editActionText, { color: '#6366F1' }]}>Duplicate product</Text>
-          </Pressable>
+              <Pressable
+                onPress={handleDuplicate}
+                disabled={saving}
+                style={({ pressed }) => [
+                  styles.editAction,
+                  { borderColor: '#6366F1', opacity: pressed || saving ? 0.85 : 1 },
+                ]}
+              >
+                <MaterialCommunityIcons name="content-duplicate" size={20} color="#6366F1" />
+                <Text style={[styles.editActionText, { color: '#6366F1' }]}>Duplicate product</Text>
+              </Pressable>
 
-          <Pressable
-            onPress={handleToggleStatus}
-            disabled={saving}
-            style={({ pressed }) => [
-              styles.primaryAction,
-              {
-                backgroundColor: isEnabled ? colors.backgroundSecondary : colors.pink,
-                borderColor: colors.pink,
-                opacity: pressed || saving ? 0.85 : 1,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={isEnabled ? 'pause-circle-outline' : 'play-circle-outline'}
-              size={20}
-              color={isEnabled ? colors.pink : colors.white}
-            />
-            <Text style={[styles.primaryActionText, { color: isEnabled ? colors.pink : colors.white }]}>
-              {isEnabled ? 'Disable product' : 'Enable product'}
-            </Text>
-          </Pressable>
+              <Pressable
+                onPress={handleToggleStatus}
+                disabled={saving}
+                style={({ pressed }) => [
+                  styles.primaryAction,
+                  {
+                    backgroundColor: isEnabled ? colors.backgroundSecondary : colors.pink,
+                    borderColor: colors.pink,
+                    opacity: pressed || saving ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={isEnabled ? 'pause-circle-outline' : 'play-circle-outline'}
+                  size={20}
+                  color={isEnabled ? colors.pink : colors.white}
+                />
+                <Text style={[styles.primaryActionText, { color: isEnabled ? colors.pink : colors.white }]}>
+                  {isEnabled ? 'Disable product' : 'Enable product'}
+                </Text>
+              </Pressable>
+            </>
+          )}
 
           <Pressable
             onPress={handleDelete}
