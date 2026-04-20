@@ -372,7 +372,13 @@ export default function VendorAnalyticsScreen() {
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardHeader}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
-                <Text style={[styles.cardLink, { color: colors.pink }]}>Manage</Text>
+                <Pressable
+                  onPress={() => router.push('/(vendor-tabs)/products')}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.cardLink, { color: colors.pink }]}>Manage</Text>
+                </Pressable>
               </View>
               {analytics.top_products.length ? (
                 analytics.top_products.map((product) => (
