@@ -62,6 +62,7 @@ function IOSTabLayout() {
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="account" />}
         />
       </NativeTabs.Trigger>
+
     </NativeTabs>
   );
 }
@@ -79,6 +80,7 @@ function AndroidTabLayout() {
       <Tabs.Screen name="products" options={{ title: 'Products' }} />
       <Tabs.Screen name="orders" options={{ title: 'Orders' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="analytics" options={{ title: 'Analytics', href: null }} />
     </Tabs>
   );
 }
