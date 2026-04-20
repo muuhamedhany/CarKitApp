@@ -128,6 +128,51 @@ export type VendorDashboardResponse = {
   top_products: VendorTopProduct[];
 };
 
+export type VendorAnalyticsRange = 'weekly' | 'monthly' | 'yearly';
+
+export type VendorAnalyticsMetric = {
+  total: number;
+  change_pct: number;
+};
+
+export type VendorAnalyticsTrendPoint = {
+  label: string;
+  value: number;
+};
+
+export type VendorAnalyticsTrend = {
+  title: string;
+  subtitle: string;
+  summary_label: string;
+  summary_value: number;
+  points: VendorAnalyticsTrendPoint[];
+};
+
+export type VendorAnalyticsCategory = {
+  category_id: number | null;
+  name: string;
+  revenue: number;
+  percentage: number;
+};
+
+export type VendorAnalyticsTopProduct = {
+  product_id: number;
+  name: string;
+  revenue: number;
+  sold_units: number;
+  change_pct: number;
+};
+
+export type VendorAnalyticsResponse = {
+  range: VendorAnalyticsRange;
+  revenue: VendorAnalyticsMetric;
+  orders: VendorAnalyticsMetric;
+  order_value: VendorAnalyticsMetric;
+  trend: VendorAnalyticsTrend;
+  categories: VendorAnalyticsCategory[];
+  top_products: VendorAnalyticsTopProduct[];
+};
+
 export type VendorOrderItem = {
   order_item_id: number;
   product_id: number;

@@ -95,19 +95,33 @@ export default function VendorDashboard() {
             <View style={styles.quickActions}>
               <Pressable
                 onPress={() => router.push('/(vendor-tabs)/products')}
-                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.primary }]}
               >
-                <MaterialCommunityIcons name="package-variant" size={20} color={colors.pink} />
-                <Text style={[styles.quickActionText, { color: colors.textPrimary }]}>Inventory</Text>
+                <MaterialCommunityIcons name="package-variant" size={20} color={colors.white} />
+                <Text style={[styles.quickActionText, { color: colors.white }]}>Inventory</Text>
               </Pressable>
               <Pressable
                 onPress={() => router.push('/(vendor-tabs)/orders')}
-                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.purpleDark }]}
               >
-                <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
-                <Text style={[styles.quickActionText, { color: colors.textPrimary }]}>Orders</Text>
+                <MaterialCommunityIcons name="receipt-text" size={20} color={colors.white} />
+                <Text style={[styles.quickActionText, { color: colors.white }]}>Orders</Text>
               </Pressable>
             </View>
+
+            <Pressable
+              onPress={() => router.push('/vendor-analytics')}
+              style={[styles.analyticsCard, { borderColor: colors.pink }]}
+            >
+              <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
+                <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
+                <Text style={[styles.analyticsSubtitle, { color: colors.textMuted }]}>Track product performance</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
+            </Pressable>
 
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -214,7 +228,7 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     flex: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
@@ -225,6 +239,31 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
+  },
+  analyticsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
+    marginBottom: Spacing.lg,
+  },
+  analyticsIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  analyticsTitle: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.md,
+    marginBottom: 2,
+  },
+  analyticsSubtitle: {
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
   },
   statsContainer: {
