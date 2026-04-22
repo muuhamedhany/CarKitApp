@@ -1,9 +1,14 @@
 import { apiFetch } from './client';
-import { ApiResponse, VendorDashboardResponse, VendorOrder } from '@/types/api.types';
+import { ApiResponse, VendorAnalyticsRange, VendorAnalyticsResponse, VendorDashboardResponse, VendorOrder } from '@/types/api.types';
 
 export const vendorService = {
     async getDashboard() {
         return apiFetch<ApiResponse<VendorDashboardResponse>>('/vendors/me/dashboard');
+    },
+
+    async getAnalytics(range: VendorAnalyticsRange = 'monthly') {
+        const query = range ? `?range=${encodeURIComponent(range)}` : '';
+        return apiFetch<ApiResponse<VendorAnalyticsResponse>>(`/vendors/me/analytics${query}`);
     },
 
     async getOrders(status: string = 'all') {
