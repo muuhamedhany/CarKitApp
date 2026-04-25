@@ -58,6 +58,7 @@ function InnerLayout() {
         <Stack.Screen name="add-service" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-service/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-booking/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="edit-service/[id]" options={{ headerShown: false, title: '' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>

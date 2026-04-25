@@ -1,238 +1,357 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, Pressable, Switch,
-    Image, ActivityIndicator, Alert,
+    ActivityIndicator, Alert, Image, Pressable,
+    ScrollView, StyleSheet, Text, View, Switch,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { providerService } from '@/services/api/provider.service';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { providerService } from '@/services/api/provider.service';
-import { Service } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { GradientButton } from '@/components';
+import type { Service } from '@/types/api.types';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+
+const buildStatusBadge = (isActive: boolean) =>
+    isActive
+        ? { label: 'Enabled', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' }
+        : { label: 'Disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
+
+const buildLocationBadge = (type?: string | null) => {
+    if (!type) return null;
+    const map: Record<string, { label: string; bg: string; fg: string }> = {
+        'both':    { label: 'Mobile & In-Shop', bg: 'rgba(129,140,248,0.16)', fg: '#818CF8' },
+        'mobile':  { label: 'Mobile Service',   bg: 'rgba(16,185,129,0.16)',  fg: '#10B981' },
+        'in-shop': { label: 'In-Shop Only',      bg: 'rgba(249,115,22,0.16)',  fg: '#F97316' },
+    };
+    return map[type] ?? null;
+};
 
 export default function ProviderServiceDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const insets = useSafeAreaInsets();
     const { colors } = useTheme();
+    const insets = useSafeAreaInsets();
     const { showToast } = useToast();
 
     const [service, setService] = useState<Service | null>(null);
     const [loading, setLoading] = useState(true);
-    const [toggling, setToggling] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    const loadService = useCallback(async () => {
+    const fetchService = useCallback(async () => {
         if (!id) return;
         try {
             setLoading(true);
             const res = await providerService.getServiceById(Number(id));
             if (res.success && res.data) setService(res.data);
+            else throw new Error((res as any).message || 'Not found');
         } catch (err: any) {
-            showToast('error', 'Error', 'Failed to load service.');
+            showToast('error', 'Error', err.message || 'Failed to load service details.');
+            router.back();
         } finally {
             setLoading(false);
         }
-    }, [id, showToast]);
+    }, [id, router, showToast]);
 
-    useFocusEffect(useCallback(() => { loadService(); }, [loadService]));
+    useFocusEffect(useCallback(() => { fetchService(); }, [fetchService]));
 
-    const handleToggle = async () => {
-        if (!service) return;
-        setToggling(true);
+    // ─── Derived ───────────────────────────────────────────────────────────
+    const statusInfo = useMemo(() => buildStatusBadge(service?.is_active ?? true), [service?.is_active]);
+    const locationInfo = useMemo(() => buildLocationBadge(service?.location_type), [service?.location_type]);
+
+    const serviceImages = useMemo(
+        () => [service?.image_url, service?.image_url_2, service?.image_url_3]
+            .filter((u): u is string => Boolean(u)),
+        [service?.image_url, service?.image_url_2, service?.image_url_3]
+    );
+
+    // ─── Actions ───────────────────────────────────────────────────────────
+    const handleToggleStatus = async () => {
+        if (!service || saving) return;
         try {
+            setSaving(true);
             const res = await providerService.toggleServiceActive(service.service_id);
             if (res.success && res.data) {
                 setService(res.data);
-                showToast('success', 'Updated', `Service is now ${res.data.is_active ? 'enabled' : 'disabled'}.`);
+                showToast(
+                    'success', 'Updated',
+                    `Service ${res.data.is_active ? 'enabled' : 'disabled'} successfully.`
+                );
             }
-        } catch {
-            showToast('error', 'Error', 'Could not toggle service status.');
+        } catch (err: any) {
+            showToast('error', 'Error', err.message || 'Failed to update service status.');
         } finally {
-            setToggling(false);
+            setSaving(false);
         }
     };
 
     const handleDelete = () => {
-        Alert.alert('Delete Service', 'Are you sure you want to delete this service?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Delete', style: 'destructive',
-                onPress: async () => {
-                    try {
-                        await providerService.deleteService(Number(id));
-                        showToast('success', 'Deleted', 'Service has been deleted.');
-                        router.back();
-                    } catch {
-                        showToast('error', 'Error', 'Could not delete service.');
-                    }
+        if (!service || saving) return;
+        Alert.alert(
+            'Delete Service',
+            'This will permanently remove this service. Bookings already made will not be affected.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete', style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setSaving(true);
+                            await providerService.deleteService(service.service_id);
+                            showToast('success', 'Deleted', 'Service deleted successfully.');
+                            router.replace('/(provider-tabs)/services');
+                        } catch (err: any) {
+                            showToast('error', 'Error', err.message || 'Failed to delete service.');
+                        } finally {
+                            setSaving(false);
+                        }
+                    },
                 },
-            },
-        ]);
+            ]
+        );
     };
 
-    const photos = service
-        ? [service.image_url, service.image_url_2, service.image_url_3].filter(Boolean) as string[]
-        : [];
+    // ─── Loading / empty ───────────────────────────────────────────────────
+    if (loading) {
+        return (
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.pink} />
+            </View>
+        );
+    }
+
+    if (!service) return null;
+
+    const isEnabled = service.is_active;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+
+            {/* ── Header ── */}
             <View style={styles.header}>
-                <Pressable onPress={() => router.back()}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.textPrimary} />
+                <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerIconButton}>
+                    <MaterialCommunityIcons name="chevron-left" size={30} color={colors.textPrimary} />
                 </Pressable>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Service Details</Text>
-                <Pressable onPress={handleDelete}>
-                    <MaterialCommunityIcons name="trash-can-outline" size={22} color="#EF4444" />
-                </Pressable>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Service details</Text>
+                <View style={styles.headerIconSpacer} />
             </View>
 
-            {loading ? (
-                <View style={styles.centered}>
-                    <ActivityIndicator size="large" color={colors.pink} />
-                </View>
-            ) : !service ? (
-                <View style={styles.centered}>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>Service not found.</Text>
-                </View>
-            ) : (
-                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                    {/* Photos */}
-                    {photos.length > 0 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
-                            {photos.map((uri, i) => (
-                                <Image key={i} source={{ uri }} style={styles.photo} resizeMode="cover" />
-                            ))}
-                        </ScrollView>
-                    )}
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-                    {/* Name + Badge */}
-                    <View style={styles.titleRow}>
-                        <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
-                        <View style={[
-                            styles.badge,
-                            { backgroundColor: service.is_active ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)' }
-                        ]}>
-                            <Text style={[
-                                styles.badgeText,
-                                { color: service.is_active ? '#10B981' : '#EF4444' }
-                            ]}>
-                                {service.is_active ? 'Enabled' : 'Disabled'}
-                            </Text>
-                        </View>
-                    </View>
-
-                    {/* Details card */}
-                    <View style={[styles.detailsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <DetailRow icon="tag-outline" label="Category" value={service.category_name || '—'} colors={colors} />
-                        <DetailRow icon="clock-outline" label="Duration" value={`${service.duration} min`} colors={colors} />
-                        <DetailRow icon="cash" label="Price" value={`${Number(service.price).toLocaleString('en-EG')} EGP`} colors={colors} pink />
-                        {service.location_type && (
-                            <DetailRow icon="map-marker-outline" label="Location" value={service.location_type} colors={colors} />
-                        )}
-                    </View>
-
-                    {/* Description */}
-                    {service.description ? (
-                        <View style={[styles.descCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.descLabel, { color: colors.textMuted }]}>Description</Text>
-                            <Text style={[styles.descText, { color: colors.textPrimary }]}>{service.description}</Text>
-                        </View>
-                    ) : null}
-
-                    {/* Available times */}
-                    {service.available_times && service.available_times.length > 0 && (
-                        <View style={[styles.timesCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.descLabel, { color: colors.textMuted }]}>Available Times</Text>
-                            <View style={styles.timePills}>
-                                {service.available_times.map((t, i) => (
-                                    <View key={i} style={[styles.timePill, { backgroundColor: colors.pinkGlow, borderColor: colors.pink }]}>
-                                        <Text style={[styles.timePillText, { color: colors.pink }]}>{t}</Text>
-                                    </View>
+                {/* ── Hero card: images + name + price + badges ── */}
+                <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={[styles.imageWrap, { backgroundColor: colors.backgroundSecondary }]}>
+                        {serviceImages.length > 0 ? (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.imageScrollContent}
+                            >
+                                {serviceImages.map((uri, i) => (
+                                    <Image
+                                        key={`${uri}-${i}`}
+                                        source={{ uri }}
+                                        style={styles.galleryImage}
+                                        resizeMode="cover"
+                                    />
                                 ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {/* Toggle status */}
-                    <View style={[styles.toggleCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>
-                                {service.is_active ? 'Service is Active' : 'Service is Inactive'}
-                            </Text>
-                            <Text style={[styles.toggleSub, { color: colors.textMuted }]}>
-                                Toggle to {service.is_active ? 'disable' : 'enable'} this service
-                            </Text>
-                        </View>
-                        {toggling ? (
-                            <ActivityIndicator color={colors.pink} />
+                            </ScrollView>
                         ) : (
-                            <Switch
-                                value={service.is_active}
-                                onValueChange={handleToggle}
-                                trackColor={{ true: colors.pink, false: colors.border }}
-                                thumbColor="#fff"
-                            />
+                            <MaterialCommunityIcons name="wrench-outline" size={48} color={colors.textMuted} />
                         )}
                     </View>
-                </ScrollView>
-            )}
-        </View>
-    );
-}
 
-function DetailRow({ icon, label, value, colors, pink }: {
-    icon: any; label: string; value: string; colors: any; pink?: boolean;
-}) {
-    return (
-        <View style={styles.detailRow}>
-            <MaterialCommunityIcons name={icon} size={18} color={colors.textMuted} />
-            <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{label}</Text>
-            <Text style={[styles.detailValue, { color: pink ? colors.pink : colors.textPrimary }]}>{value}</Text>
+                    <View style={styles.heroInfo}>
+                        <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
+                        <Text style={[styles.servicePrice, { color: colors.pink }]}>
+                            {Number(service.price).toLocaleString('en-EG')} EGP
+                        </Text>
+
+                        <View style={styles.badgeRow}>
+                            <View style={[styles.badge, { backgroundColor: statusInfo.backgroundColor }]}>
+                                <Text style={[styles.badgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+                            </View>
+                            {locationInfo && (
+                                <View style={[styles.badge, { backgroundColor: locationInfo.bg }]}>
+                                    <Text style={[styles.badgeText, { color: locationInfo.fg }]}>{locationInfo.label}</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* ── Info card ── */}
+                <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={styles.infoRow}>
+                        <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Category</Text>
+                        <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                            {service.category_name || 'Uncategorized'}
+                        </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Duration</Text>
+                        <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{service.duration} min</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Service ID</Text>
+                        <Text style={[styles.infoValue, { color: colors.textPrimary }]}>#{service.service_id}</Text>
+                    </View>
+                </View>
+
+                {/* ── Available times ── */}
+                {service.available_times && service.available_times.length > 0 && (
+                    <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Times</Text>
+                        <View style={styles.timePillsRow}>
+                            {service.available_times.map((t, i) => (
+                                <View
+                                    key={i}
+                                    style={[styles.timePill, { backgroundColor: 'rgba(205,66,168,0.12)', borderColor: colors.pink }]}
+                                >
+                                    <MaterialCommunityIcons name="clock-outline" size={13} color={colors.pink} />
+                                    <Text style={[styles.timePillText, { color: colors.pink }]}>{t}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* ── Description ── */}
+                <View style={[styles.descriptionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
+                    <Text style={[styles.description, { color: colors.textSecondary }]}>
+                        {service.description || 'No description provided for this service.'}
+                    </Text>
+                </View>
+
+                {/* ── Actions ── */}
+                <View style={styles.actions}>
+                    {/* Edit */}
+                    <Pressable
+                        onPress={() => router.push({ pathname: '/edit-service/[id]', params: { id: String(service.service_id) } })}
+                        disabled={saving}
+                        style={({ pressed }) => [
+                            styles.editAction,
+                            { borderColor: colors.pink, opacity: pressed || saving ? 0.85 : 1 },
+                        ]}
+                    >
+                        <MaterialCommunityIcons name="square-edit-outline" size={20} color={colors.pink} />
+                        <Text style={[styles.editActionText, { color: colors.pink }]}>Edit service</Text>
+                    </Pressable>
+
+                    {/* Enable / Disable */}
+                    <Pressable
+                        onPress={handleToggleStatus}
+                        disabled={saving}
+                        style={({ pressed }) => [
+                            styles.primaryAction,
+                            {
+                                backgroundColor: isEnabled ? colors.backgroundSecondary : colors.pink,
+                                borderColor: colors.pink,
+                                opacity: pressed || saving ? 0.85 : 1,
+                            },
+                        ]}
+                    >
+                        {saving ? (
+                            <ActivityIndicator size="small" color={isEnabled ? colors.pink : '#fff'} />
+                        ) : (
+                            <>
+                                <MaterialCommunityIcons
+                                    name={isEnabled ? 'pause-circle-outline' : 'play-circle-outline'}
+                                    size={20}
+                                    color={isEnabled ? colors.pink : '#fff'}
+                                />
+                                <Text style={[styles.primaryActionText, { color: isEnabled ? colors.pink : '#fff' }]}>
+                                    {isEnabled ? 'Disable service' : 'Enable service'}
+                                </Text>
+                            </>
+                        )}
+                    </Pressable>
+
+                    {/* Delete */}
+                    <Pressable
+                        onPress={handleDelete}
+                        disabled={saving}
+                        style={({ pressed }) => [
+                            styles.deleteAction,
+                            { borderColor: '#EF4444', opacity: pressed || saving ? 0.85 : 1 },
+                        ]}
+                    >
+                        <MaterialCommunityIcons name="delete-outline" size={20} color="#EF4444" />
+                        <Text style={styles.deleteActionText}>Delete service</Text>
+                    </Pressable>
+                </View>
+            </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
-    headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
-    centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
-    scrollContent: { paddingHorizontal: Spacing.md, paddingBottom: 120 },
-    photoScroll: { marginBottom: Spacing.md },
-    photo: {
-        width: 200, height: 130, borderRadius: BorderRadius.lg,
-        marginRight: Spacing.sm,
+    headerIconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    headerIconSpacer: { width: 44, height: 44 },
+    headerTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg },
+    content: { paddingHorizontal: Spacing.md, paddingBottom: 120, gap: Spacing.md },
+
+    // Hero
+    heroCard: { borderWidth: 1, borderRadius: BorderRadius.xl, overflow: 'hidden' },
+    imageWrap: { height: 240, alignItems: 'center', justifyContent: 'center' },
+    imageScrollContent: { paddingHorizontal: Spacing.md, alignItems: 'center', gap: Spacing.sm },
+    galleryImage: { width: 240, height: 200, borderRadius: BorderRadius.md },
+    heroInfo: { padding: Spacing.md, gap: Spacing.xs },
+    serviceName: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+    servicePrice: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
+    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xs },
+    badge: { paddingHorizontal: Spacing.sm, paddingVertical: 6, borderRadius: BorderRadius.full },
+    badgeText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
+
+    // Info
+    infoCard: { borderWidth: 1, borderRadius: BorderRadius.xl, padding: Spacing.md, gap: Spacing.md },
+    infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.md },
+    infoLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+    infoValue: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, textAlign: 'right', flexShrink: 1 },
+    sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.xs },
+
+    // Times
+    timePillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    timePill: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        borderWidth: 1, borderRadius: BorderRadius.full,
+        paddingHorizontal: Spacing.sm, paddingVertical: 5,
     },
-    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.md },
-    serviceName: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, flex: 1 },
-    badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: BorderRadius.full },
-    badgeText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
-    detailsCard: { borderRadius: BorderRadius.xl, borderWidth: 1, overflow: 'hidden', marginBottom: Spacing.md },
-    detailRow: {
-        flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-        paddingHorizontal: Spacing.md, paddingVertical: 12,
-        borderBottomWidth: 0.5,
+    timePillText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
+
+    // Description
+    descriptionCard: { borderWidth: 1, borderRadius: BorderRadius.xl, padding: Spacing.md },
+    description: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 22 },
+
+    // Actions
+    actions: { gap: Spacing.sm, marginTop: Spacing.xs },
+    primaryAction: {
+        minHeight: 52, borderRadius: BorderRadius.full, borderWidth: 1,
+        alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'row', gap: 8, paddingHorizontal: Spacing.md,
     },
-    detailLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, flex: 1 },
-    detailValue: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-    descCard: { borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md, marginBottom: Spacing.md },
-    descLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
-    descText: { fontFamily: Fonts.regular, fontSize: FontSizes.md, lineHeight: 22 },
-    timesCard: { borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md, marginBottom: Spacing.md },
-    timePills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
-    timePill: { borderRadius: BorderRadius.full, borderWidth: 1, paddingHorizontal: Spacing.sm, paddingVertical: 5 },
-    timePillText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
-    toggleCard: {
-        flexDirection: 'row', alignItems: 'center',
-        borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md, gap: Spacing.md,
+    primaryActionText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
+    editAction: {
+        minHeight: 52, borderRadius: BorderRadius.full, borderWidth: 1,
+        alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'row', gap: 8, paddingHorizontal: Spacing.md,
     },
-    toggleLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginBottom: 2 },
-    toggleSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+    editActionText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
+    deleteAction: {
+        minHeight: 52, borderRadius: BorderRadius.full, borderWidth: 1,
+        alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'row', gap: 8, paddingHorizontal: Spacing.md,
+    },
+    deleteActionText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, color: '#EF4444' },
 });

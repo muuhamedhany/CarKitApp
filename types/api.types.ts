@@ -348,7 +348,6 @@ export type ProviderBooking = {
   service_name: string;
   customer_name: string;
   customer_phone?: string;
-  customer_picture?: string | null;
   vehicle_year?: number | null;
   model_name?: string | null;
   make_name?: string | null;
