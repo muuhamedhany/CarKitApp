@@ -225,3 +225,137 @@ export type OrderDetail = {
   estimated_delivery_end?: string | null;
   items: OrderDetailItem[];
 } & OrderAddressSummary;
+
+// ─── Service (for provider management) ───────────────────────────────────────
+
+export type Service = {
+  service_id: number;
+  name: string;
+  description?: string;
+  price: string | number;
+  duration: number;
+  is_active: boolean;
+  service_cat_id_fk?: number;
+  category_name?: string;
+  provider_id_fk?: number;
+  provider_name?: string;
+  image_url?: string | null;
+  image_url_2?: string | null;
+  image_url_3?: string | null;
+  location_type?: 'both' | 'mobile' | 'in-shop';
+  available_times?: string[];
+  created_at?: string;
+};
+
+export type ServiceFormPayload = {
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  service_cat_id_fk: number;
+  is_active: boolean;
+  image_url: string | null;
+  image_url_2: string | null;
+  image_url_3: string | null;
+  location_type: 'both' | 'mobile' | 'in-shop';
+  available_times: string[];
+};
+
+// ─── Provider Dashboard ───────────────────────────────────────────────────────
+
+export type ProviderDashboardStats = {
+  todays_bookings: number;
+  total_customers: number;
+  revenue: string | number;
+  growth_pct: number;
+};
+
+export type ProviderAppointment = {
+  booking_id: number;
+  service_name: string;
+  customer_name: string;
+  booking_date: string;
+  start_time: string;
+  status: string;
+  booking_price: string | number;
+};
+
+export type ProviderPopularService = {
+  service_id: number;
+  name: string;
+  booking_count: number;
+  revenue: string | number;
+};
+
+export type ProviderDashboardResponse = {
+  stats: ProviderDashboardStats;
+  todays_appointments: ProviderAppointment[];
+  popular_services: ProviderPopularService[];
+};
+
+// ─── Provider Analytics ───────────────────────────────────────────────────────
+
+export type ProviderAnalyticsRange = 'weekly' | 'monthly' | 'yearly';
+
+export type ProviderAnalyticsMetric = {
+  total: number;
+  change_pct: number;
+};
+
+export type ProviderAnalyticsTrendPoint = {
+  label: string;
+  value: number;
+};
+
+export type ProviderAnalyticsTrend = {
+  subtitle: string;
+  points: ProviderAnalyticsTrendPoint[];
+};
+
+export type ProviderAnalyticsServiceRevenue = {
+  name: string;
+  revenue: number;
+};
+
+export type ProviderAnalyticsCustomerMix = {
+  total: number;
+  returning: number;
+  new: number;
+};
+
+export type ProviderAnalyticsResponse = {
+  range: ProviderAnalyticsRange;
+  revenue: ProviderAnalyticsMetric;
+  bookings: ProviderAnalyticsMetric;
+  new_customers: ProviderAnalyticsMetric;
+  trend: ProviderAnalyticsTrend;
+  customer_mix: ProviderAnalyticsCustomerMix;
+  service_revenue: ProviderAnalyticsServiceRevenue[];
+};
+
+// ─── Provider Bookings ────────────────────────────────────────────────────────
+
+export type ProviderBookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | string;
+
+export type ProviderBooking = {
+  booking_id: number;
+  status: ProviderBookingStatus;
+  booking_date: string;
+  start_time: string;
+  end_time?: string | null;
+  location?: string | null;
+  booking_price: string | number;
+  service_name: string;
+  customer_name: string;
+  customer_phone?: string;
+  customer_picture?: string | null;
+  vehicle_year?: number | null;
+  model_name?: string | null;
+  make_name?: string | null;
+};
+
+export type ProviderBookingDetail = ProviderBooking & {
+  service_description?: string;
+  service_duration?: number;
+  notes?: string | null;
+};
