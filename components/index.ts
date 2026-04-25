@@ -16,5 +16,6 @@ export { default as BackButton } from './layout/BackButton';
 export { default as CenteredHeader } from './layout/CenteredHeader';
 export { default as CustomTabBar } from './layout/CustomTabBar';
 export { default as VendorTabBar } from './layout/VendorTabBar';
+export { default as ProviderTabBar } from './layout/ProviderTabBar';
 export { default as ProductCard } from './layout/ProductCard';
 export { default as ServiceCard } from './layout/ServiceCard';
