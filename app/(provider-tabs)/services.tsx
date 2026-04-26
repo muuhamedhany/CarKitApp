@@ -129,12 +129,11 @@ export default function ServicesScreen() {
     const totals = services.reduce(
         (acc, service) => {
             acc.total += 1;
-            if (service.status === 'pending') acc.pending += 1;
-            else if (service.is_active) acc.enabled += 1;
+            if (service.is_active) acc.enabled += 1;
             else acc.disabled += 1;
             return acc;
         },
-        { total: 0, enabled: 0, disabled: 0, pending: 0 }
+        { total: 0, enabled: 0, disabled: 0 }
     );
 
     const filterOptions: { key: Filter; label: string }[] = [
@@ -154,10 +153,6 @@ export default function ServicesScreen() {
                     <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total</Text>
-                    </View>
-                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statsValue, { color: '#F59E0B' }]}>{totals.pending}</Text>
-                        <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Pending</Text>
                     </View>
                     <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
