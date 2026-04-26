@@ -421,7 +421,6 @@ export default function AddServiceScreen() {
                 price: parseFloat(price),
                 duration: parseInt(duration, 10),
                 service_cat_id_fk: selectedCatId,
-                is_active: true,
                 image_url: uploadedUrls[0] || null,
                 image_url_2: uploadedUrls[1] || null,
                 image_url_3: uploadedUrls[2] || null,
@@ -430,7 +429,7 @@ export default function AddServiceScreen() {
             });
 
             if (res.success) {
-                showToast('success', 'Service Added', `"${name}" is now live!`);
+                showToast('success', 'Service Submitted', `"${name}" is pending admin approval.`);
                 router.back();
             } else {
                 showToast('error', 'Failed', (res as any).message || 'Could not add service.');

@@ -124,6 +124,8 @@ export default function ProviderServiceDetailScreen() {
     if (!service) return null;
 
     const isEnabled = service.is_active;
+    const isPending = service.status === 'pending';
+    const isRejected = service.status === 'rejected';
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -138,6 +140,24 @@ export default function ProviderServiceDetailScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+                {/* ── Pending / Rejected banner ── */}
+                {isPending && (
+                    <View style={styles.pendingBanner}>
+                        <MaterialCommunityIcons name="clock-outline" size={18} color="#F59E0B" />
+                        <Text style={styles.pendingBannerText}>
+                            Pending Admin Approval — this service is not visible to customers yet.
+                        </Text>
+                    </View>
+                )}
+                {isRejected && (
+                    <View style={[styles.pendingBanner, styles.rejectedBanner]}>
+                        <MaterialCommunityIcons name="close-circle-outline" size={18} color="#EF4444" />
+                        <Text style={[styles.pendingBannerText, { color: '#EF4444' }]}>
+                            Service Rejected — contact admin for more information.
+                        </Text>
+                    </View>
+                )}
 
                 {/* ── Hero card: images + name + price + badges ── */}
                 <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -240,16 +260,18 @@ export default function ProviderServiceDetailScreen() {
                         <Text style={[styles.editActionText, { color: colors.pink }]}>Edit service</Text>
                     </Pressable>
 
-                    {/* Enable / Disable */}
+                    {/* Enable / Disable — disabled while pending */}
                     <Pressable
-                        onPress={handleToggleStatus}
-                        disabled={saving}
+                        onPress={isPending ? undefined : handleToggleStatus}
+                        disabled={saving || isPending}
                         style={({ pressed }) => [
                             styles.primaryAction,
                             {
-                                backgroundColor: isEnabled ? colors.backgroundSecondary : colors.pink,
-                                borderColor: colors.pink,
-                                opacity: pressed || saving ? 0.85 : 1,
+                                backgroundColor: isPending
+                                    ? colors.backgroundSecondary
+                                    : isEnabled ? colors.backgroundSecondary : colors.pink,
+                                borderColor: isPending ? colors.border : colors.pink,
+                                opacity: pressed || saving || isPending ? 0.6 : 1,
                             },
                         ]}
                     >
@@ -258,12 +280,14 @@ export default function ProviderServiceDetailScreen() {
                         ) : (
                             <>
                                 <MaterialCommunityIcons
-                                    name={isEnabled ? 'pause-circle-outline' : 'play-circle-outline'}
+                                    name={isPending ? 'clock-outline' : isEnabled ? 'pause-circle-outline' : 'play-circle-outline'}
                                     size={20}
-                                    color={isEnabled ? colors.pink : '#fff'}
+                                    color={isPending ? colors.textMuted : isEnabled ? colors.pink : '#fff'}
                                 />
-                                <Text style={[styles.primaryActionText, { color: isEnabled ? colors.pink : '#fff' }]}>
-                                    {isEnabled ? 'Disable service' : 'Enable service'}
+                                <Text style={[styles.primaryActionText, {
+                                    color: isPending ? colors.textMuted : isEnabled ? colors.pink : '#fff',
+                                }]}>
+                                    {isPending ? 'Awaiting approval' : isEnabled ? 'Disable service' : 'Enable service'}
                                 </Text>
                             </>
                         )}
@@ -354,4 +378,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row', gap: 8, paddingHorizontal: Spacing.md,
     },
     deleteActionText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, color: '#EF4444' },
+
+    // Pending / rejected banner
+    pendingBanner: {
+        flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+        backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1,
+        borderColor: 'rgba(245,158,11,0.35)', borderRadius: BorderRadius.md,
+        padding: Spacing.sm, marginBottom: Spacing.sm,
+    },
+    pendingBannerText: {
+        fontFamily: Fonts.medium, fontSize: FontSizes.xs,
+        color: '#F59E0B', flex: 1,
+    },
+    rejectedBanner: {
+        backgroundColor: 'rgba(239,68,68,0.12)',
+        borderColor: 'rgba(239,68,68,0.35)',
+    },
 });

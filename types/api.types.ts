@@ -235,6 +235,7 @@ export type Service = {
   price: string | number;
   duration: number;
   is_active: boolean;
+  status?: 'pending' | 'active' | 'rejected' | string;
   service_cat_id_fk?: number;
   category_name?: string;
   provider_id_fk?: number;

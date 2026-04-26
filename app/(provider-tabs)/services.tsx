@@ -18,14 +18,28 @@ import { Service } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { FormInput, GradientButton } from '@/components';
 
-type Filter = 'all' | 'enabled' | 'disabled';
+type Filter = 'all' | 'enabled' | 'disabled' | 'pending';
 type SortMode = 'latest' | 'price-desc' | 'duration-asc';
 
 function ServiceCard({ item, colors, router, onToggle }: {
     item: Service; colors: any; router: any;
     onToggle: (id: number) => void;
 }) {
-    const isActive = item.is_active;
+    const isPending = item.status === 'pending';
+    const isRejected = item.status === 'rejected';
+    const isActive = item.is_active && !isPending && !isRejected;
+
+    const badgeBg = isPending
+        ? 'rgba(245,158,11,0.15)'
+        : isRejected
+            ? 'rgba(239,68,68,0.15)'
+            : isActive
+                ? 'rgba(16,185,129,0.15)'
+                : 'rgba(239,68,68,0.15)';
+
+    const badgeColor = isPending ? '#F59E0B' : isRejected ? '#EF4444' : isActive ? '#10B981' : '#EF4444';
+    const badgeLabel = isPending ? 'Pending' : isRejected ? 'Rejected' : isActive ? 'Enabled' : 'Disabled';
+
     return (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.cardTop}>
@@ -36,17 +50,10 @@ function ServiceCard({ item, colors, router, onToggle }: {
                         {Number(item.price).toLocaleString('en-EG')} EGP
                     </Text>
                 </View>
-                <Pressable onPress={() => onToggle(item.service_id)}>
-                    <View style={[
-                        styles.badge,
-                        { backgroundColor: isActive ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)' }
-                    ]}>
-                        <Text style={[
-                            styles.badgeText,
-                            { color: isActive ? '#10B981' : '#EF4444' }
-                        ]}>
-                            {isActive ? 'Enabled' : 'Disabled'}
-                        </Text>
+                {/* Badge — tappable only when not pending/rejected */}
+                <Pressable onPress={() => !isPending && !isRejected && onToggle(item.service_id)} disabled={isPending || isRejected}>
+                    <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+                        <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeLabel}</Text>
                     </View>
                 </Pressable>
             </View>
@@ -108,8 +115,9 @@ export default function ServicesScreen() {
     const filtered = services
         .filter((service) => {
             const matchQ = service.name.toLowerCase().includes(query.toLowerCase());
-            if (filter === 'enabled') return matchQ && service.is_active;
-            if (filter === 'disabled') return matchQ && !service.is_active;
+            if (filter === 'pending') return matchQ && service.status === 'pending';
+            if (filter === 'enabled') return matchQ && service.is_active && service.status !== 'pending';
+            if (filter === 'disabled') return matchQ && !service.is_active && service.status !== 'pending';
             return matchQ;
         })
         .sort((left, right) => {
@@ -121,15 +129,17 @@ export default function ServicesScreen() {
     const totals = services.reduce(
         (acc, service) => {
             acc.total += 1;
-            if (service.is_active) acc.enabled += 1;
+            if (service.status === 'pending') acc.pending += 1;
+            else if (service.is_active) acc.enabled += 1;
             else acc.disabled += 1;
             return acc;
         },
-        { total: 0, enabled: 0, disabled: 0 }
+        { total: 0, enabled: 0, disabled: 0, pending: 0 }
     );
 
     const filterOptions: { key: Filter; label: string }[] = [
         { key: 'all', label: 'All' },
+        { key: 'pending', label: 'Pending' },
         { key: 'enabled', label: 'Enabled' },
         { key: 'disabled', label: 'Disabled' },
     ];
@@ -146,7 +156,11 @@ export default function ServicesScreen() {
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total</Text>
                     </View>
                     <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.enabled}</Text>
+                        <Text style={[styles.statsValue, { color: '#F59E0B' }]}>{totals.pending}</Text>
+                        <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Pending</Text>
+                    </View>
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Enabled</Text>
                     </View>
                     <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
