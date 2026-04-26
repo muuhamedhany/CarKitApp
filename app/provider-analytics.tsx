@@ -133,7 +133,7 @@ export default function ProviderAnalyticsScreen() {
             </View>
 
             {/* Range selector */}
-            <View style={[styles.rangeToggle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+            <View style={[styles.rangeToggle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                 {RANGE_OPTIONS.map(opt => (
                     <Pressable
                         key={opt.value}

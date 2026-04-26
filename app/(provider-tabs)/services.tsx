@@ -141,15 +141,15 @@ export default function ServicesScreen() {
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
 
                 <View style={styles.statsRow}>
-                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total</Text>
                     </View>
-                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.enabled}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Enabled</Text>
                     </View>
-                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Disabled</Text>
                     </View>

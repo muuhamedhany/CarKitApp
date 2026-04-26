@@ -30,7 +30,7 @@ export default function ProviderProfileScreen() {
                         setStats(res.data.stats as any);
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }, [])
     );
 
@@ -43,24 +43,24 @@ export default function ProviderProfileScreen() {
     const verBadge =
         verificationStatus === 'verified'
             ? {
-                  label: 'Verified',
-                  bg: 'rgba(16,185,129,0.1)',
-                  fg: '#10B981',
-                  icon: 'shield-check' as const,
-              }
+                label: 'Verified',
+                bg: 'rgba(16,185,129,0.1)',
+                fg: '#10B981',
+                icon: 'shield-check' as const,
+            }
             : verificationStatus === 'rejected'
-            ? {
-                  label: 'Rejected',
-                  bg: 'rgba(239,68,68,0.1)',
-                  fg: '#EF4444',
-                  icon: 'shield-off' as const,
-              }
-            : {
-                  label: 'Pending Review',
-                  bg: 'rgba(249,115,22,0.1)',
-                  fg: '#F97316',
-                  icon: 'shield-half-full' as const,
-              };
+                ? {
+                    label: 'Rejected',
+                    bg: 'rgba(239,68,68,0.1)',
+                    fg: '#EF4444',
+                    icon: 'shield-off' as const,
+                }
+                : {
+                    label: 'Pending Review',
+                    bg: 'rgba(249,115,22,0.1)',
+                    fg: '#F97316',
+                    icon: 'shield-half-full' as const,
+                };
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -71,7 +71,7 @@ export default function ProviderProfileScreen() {
 
                 <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
-                        <Text style={[styles.avatarText, { color: colors.pink }]}> 
+                        <Text style={[styles.avatarText, { color: colors.pink }]}>
                             {user?.name?.charAt(0).toUpperCase()}
                         </Text>
                     </View>
@@ -86,17 +86,17 @@ export default function ProviderProfileScreen() {
                 </View>
 
                 <View style={styles.storeStatsRow}>
-                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <MaterialCommunityIcons name="calendar-check" size={22} color="#6366F1" />
                         <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{stats.todays_bookings}</Text>
                         <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Today</Text>
                     </View>
-                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <MaterialCommunityIcons name="account-group" size={22} color="#10B981" />
                         <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{stats.total_customers}</Text>
                         <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Customers</Text>
                     </View>
-                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                    <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
                         <MaterialCommunityIcons name="cash-multiple" size={22} color={colors.pink} />
                         <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>
                             {Number(stats.revenue).toLocaleString('en-EG')}

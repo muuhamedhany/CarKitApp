@@ -208,7 +208,7 @@ export default function ProviderDashboard() {
 
                             {dashboard?.popular_services.length ? (
                                 dashboard.popular_services.map((service) => (
-                                    <View key={service.service_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                                    <View key={service.service_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                                         <View style={styles.productThumbPlaceholder}>
                                             <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
                                         </View>
@@ -216,7 +216,7 @@ export default function ProviderDashboard() {
                                             <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
                                             <Text style={[styles.productMeta, { color: colors.textMuted }]}>{service.booking_count} bookings</Text>
                                         </View>
-                                        <Text style={[styles.productRevenue, { color: colors.pink }]}> 
+                                        <Text style={[styles.productRevenue, { color: colors.pink }]}>
                                             {Number(service.revenue).toLocaleString('en-EG')} EGP
                                         </Text>
                                     </View>
