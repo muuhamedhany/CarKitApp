@@ -37,6 +37,7 @@ function InnerLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="(vendor-tabs)" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="(provider-tabs)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="settings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
@@ -52,6 +53,12 @@ function InnerLayout() {
         <Stack.Screen name="edit-product/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="wishlist" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="image-viewer" options={{ headerShown: false, title: '', presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="vendor-analytics" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="provider-analytics" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="add-service" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="provider-service/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="provider-booking/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="edit-service/[id]" options={{ headerShown: false, title: '' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
