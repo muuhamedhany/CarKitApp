@@ -1,17 +1,20 @@
 import { useCallback, useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, Pressable, RefreshControl,
-    FlatList,
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    RefreshControl,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
-import { ProviderAppointment, ProviderDashboardResponse, ProviderPopularService } from '@/types/api.types';
+import { ProviderDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
 
@@ -21,38 +24,6 @@ function getStatusTint(status: string, colors: any) {
     if (s === 'confirmed') return { bg: 'rgba(99,102,241,0.15)', fg: '#818CF8' };
     if (s === 'cancelled') return { bg: 'rgba(239,68,68,0.15)', fg: '#EF4444' };
     return { bg: colors.pinkGlow, fg: colors.pink };
-}
-
-function AppointmentCard({ item, colors, router }: { item: ProviderAppointment; colors: any; router: any }) {
-    const tint = getStatusTint(item.status, colors);
-    const time = item.start_time ? item.start_time.slice(0, 5) : '';
-    return (
-        <Pressable
-            onPress={() => router.push(`/provider-booking/${item.booking_id}`)}
-            style={[styles.apptCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-        >
-            <View style={styles.apptTopRow}>
-                <View style={{ flex: 1 }}>
-                    <Text style={[styles.apptService, { color: colors.textPrimary }]}>{item.service_name}</Text>
-                    <Text style={[styles.apptCustomer, { color: colors.textMuted }]}>{item.customer_name}</Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
-                    <Text style={[styles.statusText, { color: tint.fg }]}>{item.status}</Text>
-                </View>
-            </View>
-            <View style={styles.apptMetaRow}>
-                <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.apptMeta, { color: colors.textMuted }]}>{time}</Text>
-            </View>
-            <View style={[styles.apptDivider, { borderColor: colors.border }]} />
-            <View style={styles.apptFooter}>
-                <Text style={[styles.apptTotal, { color: colors.textMuted }]}>Total</Text>
-                <Text style={[styles.apptPrice, { color: colors.textPrimary }]}>
-                    {Number(item.booking_price).toLocaleString('en-EG')} EGP
-                </Text>
-            </View>
-        </Pressable>
-    );
 }
 
 export default function ProviderDashboard() {
@@ -95,31 +66,36 @@ export default function ProviderDashboard() {
                 value: String(dashboard.stats.todays_bookings),
                 icon: 'calendar-check',
                 color: '#F97316',
-                bg: 'rgba(249,115,22,0.12)',
+                subtitle: 'Scheduled today',
             },
             {
-                label: 'Customers',
+                label: 'Total Customers',
                 value: String(dashboard.stats.total_customers),
                 icon: 'account-group',
                 color: '#818CF8',
-                bg: 'rgba(129,140,248,0.12)',
+                subtitle: 'Served customers',
             },
             {
                 label: 'Revenue',
-                value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')} EGP`,
-                icon: 'cash',
-                color: '#10B981',
-                bg: 'rgba(16,185,129,0.12)',
+                value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')}`,
+                icon: 'cash-multiple',
+                color: colors.pink,
+                subtitle: 'All time',
             },
             {
                 label: 'Growth',
                 value: `${dashboard.stats.growth_pct >= 0 ? '+' : ''}${dashboard.stats.growth_pct}%`,
                 icon: 'trending-up',
-                color: colors.pink,
-                bg: colors.pinkGlow,
+                color: '#10B981',
+                subtitle: 'Vs previous period',
             },
         ]
         : [];
+
+    const formatTime = (value: string | null) => {
+        if (!value) return 'Time not set';
+        return value.slice(0, 5);
+    };
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -130,6 +106,7 @@ export default function ProviderDashboard() {
             >
                 {/* Header */}
                 <View style={styles.header}>
+                    <Text style={[styles.greeting, { color: colors.textMuted }]}>Hello, {user?.name}</Text>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
                 </View>
 
@@ -138,44 +115,50 @@ export default function ProviderDashboard() {
                 ) : (
                     <>
                         {/* Stats Grid */}
-                        <View style={styles.statsGrid}>
-                            {stats.map((s) => (
-                                <View key={s.label} style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                                    <View style={[styles.iconBox, { backgroundColor: s.bg }]}>
-                                        <MaterialCommunityIcons name={s.icon as any} size={22} color={s.color} />
+                        <View style={styles.statsContainer}>
+                            {stats.map((stat) => (
+                                <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                    <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
+                                        <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
                                     </View>
-                                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{s.value}</Text>
-                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{s.label}</Text>
+                                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
+                                    <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
                                 </View>
                             ))}
                         </View>
 
-                        {/* My Services CTA */}
-                        <LinearGradient
-                            colors={['#CD42A8', '#8B5CF6']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.myServicesCta}
-                        >
+                        <View style={styles.quickActions}>
                             <Pressable
-                                style={styles.myServicesInner}
                                 onPress={() => router.push('/(provider-tabs)/services')}
+                                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.primary }]}
                             >
-                                <MaterialCommunityIcons name="wrench" size={20} color="#fff" />
-                                <Text style={styles.myServicesText}>My Services</Text>
+                                <MaterialCommunityIcons name="wrench" size={20} color={colors.white} />
+                                <Text style={[styles.quickActionText, { color: colors.white }]}>Services</Text>
                             </Pressable>
-                        </LinearGradient>
+                            <Pressable
+                                onPress={() => router.push('/(provider-tabs)/bookings')}
+                                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.purpleDark }]}
+                            >
+                                <MaterialCommunityIcons name="calendar-check" size={20} color={colors.white} />
+                                <Text style={[styles.quickActionText, { color: colors.white }]}>Bookings</Text>
+                            </Pressable>
+                        </View>
 
-                        {/* Analytics */}
                         <Pressable
                             onPress={() => router.push('/provider-analytics')}
-                            style={[styles.analyticsBtn, { borderColor: colors.pink }]}
+                            style={[styles.analyticsCard, { borderColor: colors.pink }]}
                         >
-                            <MaterialCommunityIcons name="chart-bar" size={18} color={colors.pink} />
-                            <Text style={[styles.analyticsBtnText, { color: colors.pink }]}>Analytics</Text>
+                            <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
+                                <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
+                                <Text style={[styles.analyticsSubtitle, { color: colors.textMuted }]}>Track service performance</Text>
+                            </View>
+                            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
                         </Pressable>
 
-                        {/* Today's Appointments */}
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Appointments</Text>
@@ -185,18 +168,27 @@ export default function ProviderDashboard() {
                             </View>
 
                             {dashboard?.todays_appointments.length ? (
-                                <FlatList
-                                    data={dashboard.todays_appointments}
-                                    horizontal
-                                    showsHorizontalScrollIndicator={false}
-                                    keyExtractor={(i) => String(i.booking_id)}
-                                    ItemSeparatorComponent={() => <View style={{ width: Spacing.sm }} />}
-                                    contentContainerStyle={{ paddingRight: Spacing.md }}
-                                    renderItem={({ item }) => (
-                                        <AppointmentCard item={item} colors={colors} router={router} />
-                                    )}
-                                    scrollEnabled
-                                />
+                                dashboard.todays_appointments.map((appointment) => (
+                                    <Pressable
+                                        key={appointment.booking_id}
+                                        onPress={() => router.push(`/provider-booking/${appointment.booking_id}`)}
+                                        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                                    >
+                                        <View style={styles.orderTopRow}>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.orderCustomer, { color: colors.textPrimary }]}>{appointment.customer_name}</Text>
+                                                <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{appointment.service_name} · {formatTime(appointment.start_time)}</Text>
+                                            </View>
+                                            <View style={[styles.statusBadge, { backgroundColor: getStatusTint(appointment.status, colors).bg }]}>
+                                                <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>{appointment.status}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.orderBottomRow}>
+                                            <Text style={[styles.orderMeta, { color: colors.textMuted }]}>Booking #{appointment.booking_id}</Text>
+                                            <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} EGP</Text>
+                                        </View>
+                                    </Pressable>
+                                ))
                             ) : (
                                 <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     <MaterialCommunityIcons name="calendar-blank-outline" size={44} color={colors.textMuted} />
@@ -215,14 +207,17 @@ export default function ProviderDashboard() {
                             </View>
 
                             {dashboard?.popular_services.length ? (
-                                dashboard.popular_services.map((svc: ProviderPopularService) => (
-                                    <View key={svc.service_id} style={[styles.svcRow, { borderColor: colors.border }]}>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={[styles.svcName, { color: colors.textPrimary }]}>{svc.name}</Text>
-                                            <Text style={[styles.svcMeta, { color: colors.textMuted }]}>{svc.booking_count} bookings</Text>
+                                dashboard.popular_services.map((service) => (
+                                    <View key={service.service_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
+                                        <View style={styles.productThumbPlaceholder}>
+                                            <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
                                         </View>
-                                        <Text style={[styles.svcRevenue, { color: colors.pink }]}>
-                                            {Number(svc.revenue).toLocaleString('en-EG')} EGP
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
+                                            <Text style={[styles.productMeta, { color: colors.textMuted }]}>{service.booking_count} bookings</Text>
+                                        </View>
+                                        <Text style={[styles.productRevenue, { color: colors.pink }]}> 
+                                            {Number(service.revenue).toLocaleString('en-EG')} EGP
                                         </Text>
                                     </View>
                                 ))
@@ -241,65 +236,205 @@ export default function ProviderDashboard() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    scrollContent: { padding: Spacing.md, paddingBottom: 100 },
-    header: { marginBottom: Spacing.md },
-    title: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
-    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
+    container: {
+        flex: 1,
+    },
+    scrollContent: {
+        padding: Spacing.md,
+        paddingBottom: 100,
+    },
+    header: {
+        marginBottom: Spacing.md,
+    },
+    greeting: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.md,
+        marginBottom: Spacing.xs,
+    },
+    title: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.xxl,
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
     statCard: {
-        flex: 1, minWidth: '45%', padding: Spacing.md,
-        borderRadius: BorderRadius.xl, borderWidth: 1,
+        flex: 1,
+        minWidth: '45%',
+        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
     },
-    iconBox: {
-        width: 44, height: 44, borderRadius: 22,
-        alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.sm,
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
     },
-    statValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 2 },
-    statLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    myServicesCta: { borderRadius: BorderRadius.full, marginBottom: Spacing.sm },
-    myServicesInner: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        gap: Spacing.sm, paddingVertical: Spacing.md,
+    statValue: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.xl,
+        marginBottom: Spacing.xs,
     },
-    myServicesText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, color: '#fff' },
-    analyticsBtn: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        gap: Spacing.sm, borderWidth: 1.5, borderRadius: BorderRadius.full,
-        paddingVertical: Spacing.sm + 2, marginBottom: Spacing.lg,
+    statLabel: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.sm,
     },
-    analyticsBtnText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-    section: { marginBottom: Spacing.lg },
+    statSubtitle: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.xs,
+        marginTop: 2,
+        opacity: 0.7,
+    },
+    quickActions: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        marginBottom: Spacing.md,
+    },
+    quickAction: {
+        flex: 1,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: Spacing.sm,
+    },
+    quickActionText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+    },
+    analyticsCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.full,
+        borderWidth: 2,
+        marginBottom: Spacing.lg,
+    },
+    analyticsIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    analyticsTitle: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+        marginBottom: 2,
+    },
+    analyticsSubtitle: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+    },
+    section: {
+        marginBottom: Spacing.lg,
+    },
     sectionHeader: {
-        flexDirection: 'row', justifyContent: 'space-between',
-        alignItems: 'center', marginBottom: Spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
     },
-    sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
-    sectionLink: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-    apptCard: {
-        width: 220, padding: Spacing.md,
-        borderRadius: BorderRadius.xl, borderWidth: 1,
+    sectionTitle: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.lg,
     },
-    apptTopRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.xs },
-    apptService: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginBottom: 2 },
-    apptCustomer: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    apptMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
-    apptMeta: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    apptDivider: { borderTopWidth: 1, marginVertical: Spacing.sm },
-    apptFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    apptTotal: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    apptPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
-    statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.full },
-    statusText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
-    svcRow: {
-        flexDirection: 'row', alignItems: 'center',
-        paddingVertical: Spacing.md, borderBottomWidth: 1,
+    sectionLink: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
     },
-    svcName: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginBottom: 2 },
-    svcMeta: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    svcRevenue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    orderCard: {
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        padding: Spacing.md,
+        marginBottom: Spacing.sm,
+    },
+    orderTopRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: Spacing.sm,
+    },
+    orderBottomRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: Spacing.sm,
+    },
+    orderCustomer: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+        marginBottom: 2,
+    },
+    orderMeta: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+    },
+    orderTotal: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.md,
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+    },
+    statusBadgeText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+        textTransform: 'capitalize',
+    },
+    productRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        padding: Spacing.sm,
+        marginBottom: Spacing.sm,
+        gap: Spacing.sm,
+    },
+    productThumbPlaceholder: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(205,66,168,0.12)',
+    },
+    productName: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+        marginBottom: 2,
+    },
+    productMeta: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+    },
+    productRevenue: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
+    },
     emptyState: {
-        padding: Spacing.xl, borderRadius: BorderRadius.xl, borderWidth: 1,
-        alignItems: 'center', justifyContent: 'center',
+        padding: Spacing.xl,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md, marginTop: Spacing.sm, textAlign: 'center' },
+    emptyText: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.md,
+        marginTop: Spacing.sm,
+        textAlign: 'center',
+    },
 });
