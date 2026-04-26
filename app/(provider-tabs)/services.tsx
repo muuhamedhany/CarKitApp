@@ -1,6 +1,12 @@
 import { useCallback, useState } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl,
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    Pressable,
+    RefreshControl,
+    ScrollView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,9 +16,10 @@ import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { Service } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { GradientButton } from '@/components';
+import { FormInput, GradientButton } from '@/components';
 
 type Filter = 'all' | 'enabled' | 'disabled';
+type SortMode = 'latest' | 'price-desc' | 'duration-asc';
 
 function ServiceCard({ item, colors, router, onToggle }: {
     item: Service; colors: any; router: any;
@@ -63,6 +70,7 @@ export default function ServicesScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState<Filter>('all');
+    const [sortMode, setSortMode] = useState<SortMode>('latest');
 
     const load = useCallback(async () => {
         try {
@@ -97,12 +105,28 @@ export default function ServicesScreen() {
         }
     };
 
-    const filtered = services.filter(s => {
-        const matchQ = s.name.toLowerCase().includes(query.toLowerCase());
-        if (filter === 'enabled') return matchQ && s.is_active;
-        if (filter === 'disabled') return matchQ && !s.is_active;
-        return matchQ;
-    });
+    const filtered = services
+        .filter((service) => {
+            const matchQ = service.name.toLowerCase().includes(query.toLowerCase());
+            if (filter === 'enabled') return matchQ && service.is_active;
+            if (filter === 'disabled') return matchQ && !service.is_active;
+            return matchQ;
+        })
+        .sort((left, right) => {
+            if (sortMode === 'price-desc') return Number(right.price) - Number(left.price);
+            if (sortMode === 'duration-asc') return Number(left.duration) - Number(right.duration);
+            return Number(right.service_id) - Number(left.service_id);
+        });
+
+    const totals = services.reduce(
+        (acc, service) => {
+            acc.total += 1;
+            if (service.is_active) acc.enabled += 1;
+            else acc.disabled += 1;
+            return acc;
+        },
+        { total: 0, enabled: 0, disabled: 0 }
+    );
 
     const filterOptions: { key: Filter; label: string }[] = [
         { key: 'all', label: 'All' },
@@ -115,49 +139,101 @@ export default function ServicesScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
+
+                <View style={styles.statsRow}>
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
+                        <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total</Text>
+                    </View>
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.enabled}</Text>
+                        <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Enabled</Text>
+                    </View>
+                    <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
+                        <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Disabled</Text>
+                    </View>
+                </View>
+
                 <Pressable
                     onPress={() => router.push('/add-service')}
-                    style={[styles.addBtn, { backgroundColor: colors.pink }]}
+                    hitSlop={8}
+                    style={[styles.headerAction, { backgroundColor: colors.pink }]}
                 >
-                    <MaterialCommunityIcons name="plus" size={20} color="#fff" />
+                    <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
+                    <Text style={[styles.headerActionText, { color: colors.white }]}>Add Service</Text>
                 </Pressable>
             </View>
 
             {/* Search */}
-            <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-                <TextInput
+            <View style={styles.searchWrap}>
+                <FormInput
+                    icon="magnify"
+                    placeholder="Search services..."
                     value={query}
                     onChangeText={setQuery}
-                    placeholder="Search for Services..."
-                    placeholderTextColor={colors.textMuted}
-                    style={[styles.searchInput, { color: colors.textPrimary }]}
                 />
             </View>
 
             {/* Filter pills */}
-            <View style={styles.filterRow}>
-                {filterOptions.map(f => (
+            <ScrollView
+                style={styles.controlsScroll}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterRow}
+            >
+                {filterOptions.map((f) => (
                     <Pressable
                         key={f.key}
                         onPress={() => setFilter(f.key)}
                         style={[
-                            styles.filterPill,
+                            styles.filterChip,
                             {
-                                backgroundColor: filter === f.key ? colors.pink : colors.card,
-                                borderColor: filter === f.key ? colors.pink : colors.border,
+                                backgroundColor: filter === f.key ? colors.pink : colors.backgroundSecondary,
+                                borderColor: filter === f.key ? colors.pink : colors.cardBorder,
                             },
                         ]}
                     >
                         <Text style={[
-                            styles.filterText,
-                            { color: filter === f.key ? '#fff' : colors.textMuted },
+                            styles.filterChipText,
+                            { color: filter === f.key ? colors.white : colors.textPrimary },
                         ]}>
                             {f.label}
                         </Text>
                     </Pressable>
                 ))}
-            </View>
+            </ScrollView>
+
+            <ScrollView
+                style={styles.controlsScroll}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sortRow}
+            >
+                {([
+                    { key: 'latest', label: 'Latest' },
+                    { key: 'price-desc', label: 'Price' },
+                    { key: 'duration-asc', label: 'Duration' },
+                ] as const).map((option) => {
+                    const isActive = sortMode === option.key;
+                    return (
+                        <Pressable
+                            key={option.key}
+                            onPress={() => setSortMode(option.key)}
+                            style={[
+                                styles.sortChip,
+                                {
+                                    backgroundColor: isActive ? colors.backgroundSecondary : colors.card,
+                                    borderColor: isActive ? colors.pink : colors.border,
+                                },
+                            ]}
+                        >
+                            <MaterialCommunityIcons name="sort" size={14} color={isActive ? colors.pink : colors.textMuted} />
+                            <Text style={[styles.sortText, { color: isActive ? colors.pink : colors.textMuted }]}>{option.label}</Text>
+                        </Pressable>
+                    );
+                })}
+            </ScrollView>
 
             <FlatList
                 data={filtered}
@@ -187,30 +263,93 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: Spacing.md, paddingTop: Spacing.md, marginBottom: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.md,
+        gap: Spacing.sm,
+        marginTop: Spacing.md,
     },
-    title: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-    addBtn: {
-        width: 36, height: 36, borderRadius: 18,
-        alignItems: 'center', justifyContent: 'center',
+    title: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl },
+    headerAction: {
+        paddingHorizontal: Spacing.md,
+        minHeight: 42,
+        borderRadius: BorderRadius.full,
+        flexDirection: 'row',
+        gap: 6,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    searchBar: {
-        flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-        borderRadius: BorderRadius.full, borderWidth: 1,
-        paddingHorizontal: Spacing.md, paddingVertical: 10,
-        marginHorizontal: Spacing.md, marginBottom: Spacing.sm,
+    headerActionText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
     },
-    searchInput: { flex: 1, fontFamily: Fonts.regular, fontSize: FontSizes.md },
+    searchWrap: {
+        paddingHorizontal: Spacing.md,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        marginBottom: Spacing.sm,
+    },
+    statsCard: {
+        flex: 1,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        padding: Spacing.md,
+    },
+    statsValue: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.lg,
+    },
+    statsLabel: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.xs,
+        marginTop: 2,
+    },
+    controlsScroll: {
+        flexGrow: 0,
+        flexShrink: 0,
+        maxHeight: 56,
+    },
     filterRow: {
-        flexDirection: 'row', gap: Spacing.sm,
-        paddingHorizontal: Spacing.md, marginBottom: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.sm,
     },
-    filterPill: {
-        paddingHorizontal: Spacing.md, paddingVertical: 6,
-        borderRadius: BorderRadius.full, borderWidth: 1,
+    filterChip: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 7,
+        minHeight: 40,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        alignSelf: 'flex-start',
     },
-    filterText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+    filterChipText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+    },
+    sortRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.sm,
+    },
+    sortChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 7,
+        minHeight: 40,
+    },
+    sortText: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.xs,
+    },
     list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
     card: { borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md },
     cardTop: { flexDirection: 'row', alignItems: 'flex-start' },

@@ -122,28 +122,30 @@ export default function ProviderAnalyticsScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
             {/* Header */}
-            <View style={styles.header}>
-                <Pressable onPress={() => router.back()}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.textPrimary} />
+            <View style={styles.headerRow}>
+                <Pressable
+                    onPress={() => router.back()}
+                    style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                >
+                    <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
                 </Pressable>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
-                <View style={{ width: 24 }} />
             </View>
 
             {/* Range selector */}
-            <View style={[styles.rangeBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.rangeToggle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}> 
                 {RANGE_OPTIONS.map(opt => (
                     <Pressable
                         key={opt.value}
                         onPress={() => setRange(opt.value)}
                         style={[
-                            styles.rangeBtn,
-                            range === opt.value && { backgroundColor: colors.purpleDark },
+                            styles.rangePill,
+                            { backgroundColor: range === opt.value ? colors.purple : 'transparent' },
                         ]}
                     >
                         <Text style={[
-                            styles.rangeBtnText,
-                            { color: range === opt.value ? '#fff' : colors.textMuted },
+                            styles.rangeLabel,
+                            { color: range === opt.value ? '#E9DEF8' : colors.textMuted },
                         ]}>{opt.label}</Text>
                     </Pressable>
                 ))}
@@ -258,18 +260,37 @@ export default function ProviderAnalyticsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.md,
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-    rangeBar: {
-        flexDirection: 'row', marginHorizontal: Spacing.md,
-        borderRadius: BorderRadius.xl, borderWidth: 1,
-        padding: 4, marginBottom: Spacing.md,
+    rangeToggle: {
+        flexDirection: 'row',
+        marginHorizontal: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        padding: 4,
+        marginBottom: Spacing.md,
     },
-    rangeBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: BorderRadius.lg },
-    rangeBtnText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+    rangePill: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: 'center',
+        borderRadius: BorderRadius.lg,
+    },
+    rangeLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     scrollContent: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
     cardsRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
