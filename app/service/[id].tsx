@@ -111,7 +111,7 @@ export default function ServiceDetailScreen() {
         <Pressable onPress={() => router.back()} style={styles.iconBtn}>
           <MaterialCommunityIcons name="chevron-left" size={32} color="#FFFFFF" />
         </Pressable>
-        <Pressable onPress={() => {}} style={styles.iconBtn}>
+        <Pressable onPress={() => { }} style={styles.iconBtn}>
           <MaterialCommunityIcons name="share-variant" size={24} color="#FFFFFF" />
         </Pressable>
       </View>
