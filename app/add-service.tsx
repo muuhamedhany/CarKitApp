@@ -24,9 +24,9 @@ type ImageSlot = { previewUri: string | null; base64: string | null };
 type LocationType = 'both' | 'mobile' | 'in-shop';
 
 const LOCATION_OPTIONS: Array<{ key: LocationType; label: string; sub: string }> = [
-    { key: 'both',    label: 'Mobile & In-Shop', sub: 'We can come to you or at your location' },
-    { key: 'mobile',  label: 'Mobile Service',   sub: 'We come to the customer' },
-    { key: 'in-shop', label: 'In-Shop Only',      sub: 'Customer visits your location' },
+    { key: 'both', label: 'Mobile & In-Shop', sub: 'We can come to you or at your location' },
+    { key: 'mobile', label: 'Mobile Service', sub: 'We come to the customer' },
+    { key: 'in-shop', label: 'In-Shop Only', sub: 'Customer visits your location' },
 ];
 
 const TOTAL_STEPS = 3;
