@@ -41,6 +41,8 @@ function InnerLayout() {
         <Stack.Screen name="settings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="booking-confirmation" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="booking-success" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="checkout" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="order/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="order-success" options={{ headerShown: false, title: '' }} />
@@ -55,6 +57,7 @@ function InnerLayout() {
         <Stack.Screen name="image-viewer" options={{ headerShown: false, title: '', presentation: 'fullScreenModal' }} />
         <Stack.Screen name="vendor-analytics" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-analytics" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="service/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="add-service" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-service/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-booking/[id]" options={{ headerShown: false, title: '' }} />

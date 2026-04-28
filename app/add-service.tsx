@@ -420,6 +420,7 @@ export default function AddServiceScreen() {
                 description: description.trim(),
                 price: parseFloat(price),
                 duration: parseInt(duration, 10),
+                is_active: true,
                 service_cat_id_fk: selectedCatId,
                 image_url: uploadedUrls[0] || null,
                 image_url_2: uploadedUrls[1] || null,

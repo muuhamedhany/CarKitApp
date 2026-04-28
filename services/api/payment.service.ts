@@ -8,7 +8,8 @@ export type PaymentMethod =
     | 'credit_card';
 
 export interface PaymentPayload {
-    order_id: number;
+    order_id?: number;
+    booking_id?: number;
     method: PaymentMethod;
     amount: number;
 }

@@ -67,9 +67,11 @@ export default function ProviderBookingDetailScreen() {
     const bookingDate = booking?.booking_date?.slice(0, 10) || '';
     const time = booking?.start_time?.slice(0, 5) || '';
 
-    const isPending = booking?.status?.toLowerCase() === 'pending';
-    const isConfirmed = booking?.status?.toLowerCase() === 'confirmed';
-    const isCancellable = isPending || isConfirmed;
+    const status = booking?.status?.toLowerCase();
+    const isPending = status === 'pending';
+    const isConfirmed = status === 'confirmed';
+    const isInProgress = status === 'in-progress';
+    const isCancellable = isPending || isConfirmed || isInProgress;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -171,6 +173,13 @@ export default function ProviderBookingDetailScreen() {
                                 />
                             )}
                             {isConfirmed && (
+                                <GradientButton
+                                    title="Mark In Progress"
+                                    onPress={() => handleStatusChange('in-progress')}
+                                    style={{ flex: 1 }}
+                                />
+                            )}
+                            {isInProgress && (
                                 <GradientButton
                                     title="Mark as Completed"
                                     onPress={() => handleStatusChange('completed')}
