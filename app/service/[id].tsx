@@ -24,6 +24,7 @@ type ServiceDetail = {
   duration: number;
   category_name: string;
   provider_name: string;
+  provider_id_fk?: number;
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
@@ -75,6 +76,9 @@ export default function ServiceDetailScreen() {
         serviceName: service.name,
         price: String(service.price),
         duration: String(service.duration),
+        providerId: service.provider_id_fk ? String(service.provider_id_fk) : '',
+        providerName: service.provider_name || '',
+        availableTimes: JSON.stringify(service.available_times || []),
       },
     } as any);
   };

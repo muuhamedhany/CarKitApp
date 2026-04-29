@@ -24,6 +24,7 @@ export type Booking = {
   booking_price: string | number;
   service_name: string;
   service_description?: string;
+  service_duration?: number;
   provider_name?: string;
   provider_phone?: string;
   customer_name?: string;
@@ -33,10 +34,9 @@ export type Booking = {
   model_name?: string;
   make_name?: string;
   vehicle_color?: string;
+  address_title?: string;
   street?: string;
   city?: string;
-  building?: string;
-  apartment?: string;
 };
 
 export const bookingService = {

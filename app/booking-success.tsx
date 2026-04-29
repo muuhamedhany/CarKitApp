@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,16 +12,35 @@ export default function BookingSuccessScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
+  const iconScale = useRef(new Animated.Value(0.9)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
 
   const bookingId = params.bookingId || 'N/A';
   const serviceName = params.serviceName || 'Service';
+  const providerName = params.providerName || 'Provider';
   const price = params.price || '0';
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(iconScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        damping: 10,
+        stiffness: 120,
+      }),
+      Animated.timing(iconOpacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [iconOpacity, iconScale]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <View style={styles.iconCircle}>
+      <Animated.View style={[styles.iconCircle, { transform: [{ scale: iconScale }], opacity: iconOpacity }]}>
         <MaterialCommunityIcons name="check" size={48} color="#FFFFFF" />
-      </View>
+      </Animated.View>
 
       <Text style={[styles.title, { color: colors.textPrimary }]}>Booking Confirmed!</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -31,13 +51,18 @@ export default function BookingSuccessScreen() {
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Booking Details</Text>
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Booking ID</Text>
-          <Text style={[styles.detailValue, { color: colors.textPrimary }]}>#{bookingId}</Text>
+          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Service</Text>
+          <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{serviceName}</Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Service</Text>
-          <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{serviceName}</Text>
+          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Provider</Text>
+          <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{providerName}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Booking ID</Text>
+          <Text style={[styles.detailValue, { color: colors.textPrimary }]}>#{bookingId}</Text>
         </View>
 
         <View style={styles.detailRow}>
