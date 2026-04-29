@@ -24,9 +24,9 @@ type ImageSlot = { previewUri: string | null; base64: string | null };
 type LocationType = 'both' | 'mobile' | 'in-shop';
 
 const LOCATION_OPTIONS: Array<{ key: LocationType; label: string; sub: string }> = [
-    { key: 'both',    label: 'Mobile & In-Shop', sub: 'We can come to you or at your location' },
-    { key: 'mobile',  label: 'Mobile Service',   sub: 'We come to the customer' },
-    { key: 'in-shop', label: 'In-Shop Only',      sub: 'Customer visits your location' },
+    { key: 'both', label: 'Mobile & In-Shop', sub: 'We can come to you or at your location' },
+    { key: 'mobile', label: 'Mobile Service', sub: 'We come to the customer' },
+    { key: 'in-shop', label: 'In-Shop Only', sub: 'Customer visits your location' },
 ];
 
 const TOTAL_STEPS = 3;
@@ -420,6 +420,7 @@ export default function AddServiceScreen() {
                 description: description.trim(),
                 price: parseFloat(price),
                 duration: parseInt(duration, 10),
+                is_active: true,
                 service_cat_id_fk: selectedCatId,
                 image_url: uploadedUrls[0] || null,
                 image_url_2: uploadedUrls[1] || null,
