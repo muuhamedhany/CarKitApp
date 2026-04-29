@@ -10,8 +10,9 @@ import {
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_URL } from '@/constants/config';
+import { bookingService } from '@/services/api/booking.service';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 import { CenteredHeader } from '@/components';
@@ -21,8 +22,10 @@ type Booking = {
   service_name: string;
   provider_name?: string;
   booking_date: string;
-  booking_time?: string;
-  total_amount: string;
+  start_time?: string;
+  end_time?: string;
+  booking_price: string | number;
+  location?: string;
   status: string;
 };
 
@@ -39,20 +42,21 @@ const STATUS_COLORS: Record<string, string> = {
 export default function MyBookingsScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
+  const router = useRouter();
   const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBookings = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/bookings/my`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) setBookings(data.data || []);
+      if (!token) {
+        setBookings([]);
+        return;
+      }
+      const response = await bookingService.getMyBookings();
+      if (response.success) setBookings(response.data || []);
     } catch {
       // silently fail
     } finally {
@@ -74,6 +78,20 @@ export default function MyBookingsScreen() {
     } catch { return dateStr; }
   };
 
+  const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
+
+  const formatTime = (value?: string | null) => {
+    if (!value) return '-';
+    try {
+      const [hours, minutes] = value.split(':').map((part) => Number(part));
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch {
+      return value;
+    }
+  };
+
   const renderBooking = ({ item }: { item: Booking }) => (
     <View style={styles.bookingCard}>
       <View style={styles.bookingHeader}>
@@ -90,25 +108,35 @@ export default function MyBookingsScreen() {
         </View>
       </View>
 
+      <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
+        {item.provider_name ? `Provider: ${item.provider_name}` : 'Provider details unavailable'}
+      </Text>
+      <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
+        {item.location || 'No location selected'}
+      </Text>
+
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
           <MaterialCommunityIcons name="calendar" size={14} color={colors.textMuted} />
           <Text style={styles.metaText}>{formatDate(item.booking_date)}</Text>
         </View>
-        {item.booking_time && (
+        {item.start_time && (
           <View style={styles.metaItem}>
             <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-            <Text style={styles.metaText}>{item.booking_time}</Text>
+            <Text style={styles.metaText}>{formatTime(item.start_time)}</Text>
           </View>
         )}
       </View>
 
       <View style={styles.footer}>
         <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{item.total_amount} EGP</Text>
+        <Text style={styles.totalValue}>{formatMoney(item.booking_price)}</Text>
       </View>
 
-      <Pressable style={styles.viewDetailsBtn}>
+      <Pressable
+        style={styles.viewDetailsBtn}
+        onPress={() => router.push({ pathname: '/booking/[id]' as any, params: { id: String(item.booking_id) } })}
+      >
         <LinearGradient
           colors={[colors.gradientStart, colors.gradientEnd]}
           start={{ x: 0, y: 0 }}
@@ -196,6 +224,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   bookingLeft: { flex: 1, marginRight: Spacing.sm },
   bookingName: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md },
   providerName: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  serviceText: { color: colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 4 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.sm },
   statusText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
   metaRow: { flexDirection: 'row', gap: 12, marginBottom: Spacing.sm },

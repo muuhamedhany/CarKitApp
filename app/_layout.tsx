@@ -43,6 +43,7 @@ function InnerLayout() {
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="booking-confirmation" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="booking-success" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="booking/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="checkout" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="order/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="order-success" options={{ headerShown: false, title: '' }} />

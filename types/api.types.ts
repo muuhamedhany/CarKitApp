@@ -336,7 +336,7 @@ export type ProviderAnalyticsResponse = {
 
 // ─── Provider Bookings ────────────────────────────────────────────────────────
 
-export type ProviderBookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | string;
+export type ProviderBookingStatus = 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled' | string;
 
 export type ProviderBooking = {
   booking_id: number;
@@ -349,13 +349,19 @@ export type ProviderBooking = {
   service_name: string;
   customer_name: string;
   customer_phone?: string;
+  customer_email?: string;
   vehicle_year?: number | null;
   model_name?: string | null;
   make_name?: string | null;
+  street?: string | null;
+  city?: string | null;
+  building?: string | null;
+  apartment?: string | null;
 };
 
 export type ProviderBookingDetail = ProviderBooking & {
   service_description?: string;
   service_duration?: number;
   notes?: string | null;
+  address_title?: string | null;
 };
