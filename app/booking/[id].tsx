@@ -206,19 +206,19 @@ export default function BookingDetailScreen() {
                         </View>
                         <View style={styles.metaRow}>
                             <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-                            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</Text>
+                            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.start_time}</Text>
                         </View>
-                        {booking.location ? (
+                        {booking.location || booking.address_title ? (
                             <View style={styles.metaRow}>
                                 <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.location}</Text>
+                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.location || booking.address_title || 'No location selected'}</Text>
                             </View>
                         ) : null}
                     </View>
 
                     <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
-                        <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.street || 'No street address'}</Text>
+                        <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.street || booking.location || 'No street address'}</Text>
                         <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
                             {[booking.address_title, booking.city].filter(Boolean).join(' • ') || 'No additional address details'}
                         </Text>
