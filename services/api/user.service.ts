@@ -5,7 +5,7 @@ export const userService = {
     return apiFetch('/users/profile');
   },
 
-  async updateUser(data: { name?: string; phone?: string; profile_picture?: string }) {
+  async updateUser(data: { name?: string; phone?: string }) {
     return apiFetch('/users/profile', {
       method: 'PUT',
       body: JSON.stringify(data),

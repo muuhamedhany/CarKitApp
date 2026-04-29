@@ -3,7 +3,6 @@ export type User = {
   name: string;
   email: string;
   phone?: string;
-  picture?: string;
   provider?: 'local' | 'google';
   role?: string;
   verification_status?: string;
@@ -60,11 +59,17 @@ export type ProductFormPayload = {
 };
 
 export type Vehicle = {
-  id: string;
+  vehicle_id: number;
+  user_id_fk: number;
   make: string;
   model: string;
   year: number;
-  // Add other vehicle fields as necessary
+  license_plate?: string | null;
+  color?: string | null;
+  photo_url?: string | null;
+  engine_number?: string | null;
+  vin?: string | null;
+  created_at?: string;
 };
 
 export type Order = {
