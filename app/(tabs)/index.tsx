@@ -182,7 +182,11 @@ export default function HomeScreen() {
   const renderServiceCard = (service: Service) => {
     const hasImage = !!service.image_url;
     return (
-      <Pressable key={service.service_id} style={[styles.serviceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+      <Pressable
+        key={service.service_id}
+        style={[styles.serviceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+        onPress={() => router.push(`/service/${service.service_id}`)}
+      >
         {/* Image or gradient placeholder */}
         <View style={[styles.serviceCardImage, { backgroundColor: colors.imagePlaceholder }]}>
           {hasImage ? (

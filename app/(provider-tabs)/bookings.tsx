@@ -1,318 +1,313 @@
-import { useCallback, useState } from 'react';
-import {
-    View, Text, StyleSheet, SectionList, Pressable, RefreshControl,
-} from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
+import { useFocusEffect, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
+import { CenteredHeader } from '@/components';
+import { GradientButton, OutlinedButton } from '@/components';
 import { providerService } from '@/services/api/provider.service';
 import { ProviderBooking } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { GradientButton, OutlinedButton } from '@/components';
+import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/contexts/ToastContext';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 
-type ViewMode = 'Month' | 'Week' | 'Day';
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTHS = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-];
+const STATUS_FILTERS = ['all', 'pending', 'confirmed', 'in-progress', 'completed', 'cancelled'] as const;
 
-function getStatusTint(status: string, colors: any) {
-    const s = (status || '').toLowerCase();
-    if (s === 'completed') return { bg: 'rgba(16,185,129,0.15)', fg: '#10B981' };
-    if (s === 'confirmed') return { bg: 'rgba(129,140,248,0.15)', fg: '#818CF8' };
-    if (s === 'cancelled') return { bg: 'rgba(239,68,68,0.15)', fg: '#EF4444' };
-    return { bg: 'rgba(205,66,168,0.15)', fg: '#CD42A8' };
-}
+type StatusFilter = (typeof STATUS_FILTERS)[number];
 
-function getWeekDays(date: Date) {
-    const day = date.getDay(); // 0=Sun
-    const start = new Date(date);
-    start.setDate(date.getDate() - day);
-    return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        return d;
-    });
-}
+const STATUS_TINTS: Record<string, { bg: string; fg: string }> = {
+    pending: { bg: 'rgba(255,183,77,0.18)', fg: '#FFB74D' },
+    confirmed: { bg: 'rgba(129,140,248,0.18)', fg: '#818CF8' },
+    'in-progress': { bg: 'rgba(205,66,168,0.18)', fg: '#CD42A8' },
+    completed: { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' },
+    cancelled: { bg: 'rgba(239,68,68,0.18)', fg: '#EF4444' },
+    all: { bg: 'rgba(205,66,168,0.18)', fg: '#CD42A8' },
+};
 
-function isSameDay(a: Date, b: Date) {
-    return a.getFullYear() === b.getFullYear() &&
-        a.getMonth() === b.getMonth() &&
-        a.getDate() === b.getDate();
-}
+const formatDate = (value?: string | null) => {
+    if (!value) return '-';
+    try {
+        return new Date(value).toLocaleDateString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+        });
+    } catch {
+        return value;
+    }
+};
 
-function formatLongDate(date: Date) {
-    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-}
+const formatTime = (value?: string | null) => {
+    if (!value) return '-';
+    try {
+        const [hours, minutes] = value.split(':').map((part) => Number(part));
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch {
+        return value;
+    }
+};
 
-function BookingCard({ item, colors, router, onConfirm }: {
-    item: ProviderBooking; colors: any; router: any;
-    onConfirm: (id: number) => void;
+const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
+
+const getMetaLine = (booking: ProviderBooking) => {
+    const parts = [booking.street, booking.city, booking.building, booking.apartment].filter(Boolean);
+    return parts.join(' • ');
+};
+
+function BookingCard({
+    item,
+    colors,
+    onPressDetails,
+    onQuickConfirm,
+}: {
+    item: ProviderBooking;
+    colors: any;
+    onPressDetails: () => void;
+    onQuickConfirm: () => void;
 }) {
-    const tint = getStatusTint(item.status, colors);
-    const isPending = item.status?.toLowerCase() === 'pending';
-    const bookingDate = item.booking_date?.slice(0, 10) || '';
-    const time = item.start_time?.slice(0, 5) || '';
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+    const statusKey = (item.status || 'all').toLowerCase();
+    const tint = STATUS_TINTS[statusKey] || STATUS_TINTS.all;
+    const isPending = statusKey === 'pending';
 
     return (
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.cardTop}>
-                <View style={{ flex: 1 }}>
-                    <Text style={[styles.cardService, { color: colors.textPrimary }]}>{item.service_name}</Text>
-                    <Text style={[styles.cardCustomer, { color: colors.textMuted }]}>{item.customer_name}</Text>
+        <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+            <View style={styles.cardHeader}>
+                <View style={styles.cardTextBlock}>
+                    <Text style={[styles.cardService, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {item.service_name}
+                    </Text>
+                    <Text style={[styles.cardCustomer, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {item.customer_name}
+                    </Text>
                 </View>
-                <View style={[styles.badge, { backgroundColor: tint.bg }]}>
-                    <Text style={[styles.badgeText, { color: tint.fg }]}>{item.status}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
+                    <Text style={[styles.statusText, { color: tint.fg }]}>{item.status}</Text>
                 </View>
             </View>
 
             <View style={styles.metaRow}>
                 <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.metaText, { color: colors.textMuted }]}>{bookingDate}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(item.booking_date)}</Text>
                 <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} style={{ marginLeft: 8 }} />
-                <Text style={[styles.metaText, { color: colors.textMuted }]}>{time}</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                    {formatTime(item.start_time)} {item.end_time ? `- ${formatTime(item.end_time)}` : ''}
+                </Text>
             </View>
 
-            <View style={styles.cardActions}>
-                {isPending && (
+            {getMetaLine(item) ? (
+                <View style={styles.metaRow}>
+                    <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {getMetaLine(item)}
+                    </Text>
+                </View>
+            ) : null}
+
+            <View style={styles.footerRow}>
+                <Text style={[styles.priceLabel, { color: colors.textMuted }]}>Total</Text>
+                <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{formatMoney(item.booking_price)}</Text>
+            </View>
+
+            <View style={styles.actionsRow}>
+                {isPending ? (
                     <OutlinedButton
                         title="Confirm"
-                        onPress={() => onConfirm(item.booking_id)}
+                        onPress={onQuickConfirm}
                         style={{ flex: 1 }}
                     />
-                )}
-                <GradientButton
-                    title="View Details"
-                    onPress={() => router.push(`/provider-booking/${item.booking_id}`)}
-                    style={{ flex: 1 }}
-                />
+                ) : null}
+                <AnimatedPressable
+                    style={[styles.detailsButton, animatedStyle]}
+                    onPressIn={() => {
+                        scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+                    }}
+                    onPressOut={() => {
+                        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+                    }}
+                    onPress={onPressDetails}
+                >
+                    <GradientButton title="View Details" onPress={onPressDetails} style={{ flex: 1 }} />
+                </AnimatedPressable>
             </View>
         </View>
     );
 }
 
-export default function BookingsScreen() {
+export default function ProviderBookingsScreen() {
     const { colors } = useTheme();
-    const insets = useSafeAreaInsets();
-    const router = useRouter();
     const { showToast } = useToast();
+    const router = useRouter();
 
+    const [filter, setFilter] = useState<StatusFilter>('all');
     const [bookings, setBookings] = useState<ProviderBooking[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('Week');
-    const [selectedDate, setSelectedDate] = useState(new Date());
 
-    const load = useCallback(async () => {
+    const loadBookings = useCallback(async (status: StatusFilter = filter) => {
         try {
             setLoading(true);
-            const res = await providerService.getBookings('all');
-            if (res.success && res.data) setBookings(res.data);
-        } catch (err: any) {
-            showToast('error', 'Error', err?.message || 'Failed to load bookings.');
+            const response = await providerService.getBookings(status);
+            if (response.success && response.data) {
+                setBookings(response.data);
+            }
+        } catch {
+            showToast('error', 'Error', 'Failed to load bookings.');
         } finally {
             setLoading(false);
         }
-    }, [showToast]);
+    }, [filter, showToast]);
 
-    useFocusEffect(useCallback(() => { load(); }, [load]));
+    useFocusEffect(
+        useCallback(() => {
+            loadBookings(filter);
+        }, [filter, loadBookings])
+    );
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        await load();
+        await loadBookings(filter);
         setRefreshing(false);
-    }, [load]);
+    }, [filter, loadBookings]);
 
-    const handleConfirm = async (id: number) => {
+    const statusCounts = useMemo(() => {
+        const counts: Record<string, number> = { all: bookings.length };
+        bookings.forEach((booking) => {
+            const key = (booking.status || '').toLowerCase();
+            counts[key] = (counts[key] || 0) + 1;
+        });
+        return counts;
+    }, [bookings]);
+
+    const handleConfirm = async (bookingId: number) => {
         try {
-            const res = await providerService.updateBookingStatus(id, 'confirmed');
-            if (res.success) {
-                setBookings(prev => prev.map(b => b.booking_id === id ? { ...b, status: 'confirmed' } : b));
-                showToast('success', 'Confirmed', 'Booking confirmed.');
+            const response = await providerService.updateBookingStatus(bookingId, 'confirmed');
+            if (!response.success) {
+                showToast('error', 'Update Failed', response.message || 'Could not confirm booking.');
+                return;
             }
+            setBookings((current) => current.map((booking) => booking.booking_id === bookingId ? { ...booking, status: 'confirmed' } : booking));
+            showToast('success', 'Booking Confirmed', 'The booking status has been updated.');
         } catch {
-            showToast('error', 'Error', 'Could not confirm booking.');
+            showToast('error', 'Update Failed', 'Could not confirm booking.');
         }
     };
 
-    // Navigate month
-    const goMonth = (dir: -1 | 1) => {
-        const d = new Date(selectedDate);
-        d.setMonth(d.getMonth() + dir);
-        setSelectedDate(d);
-    };
-
-    const weekDays = getWeekDays(selectedDate);
-
-    // Filter bookings for selected day
-    const dayBookings = bookings.filter(b => {
-        if (!b.booking_date) return false;
-        const bDate = new Date(b.booking_date);
-        return isSameDay(bDate, selectedDate);
-    });
-
-    const modes: ViewMode[] = ['Month', 'Week', 'Day'];
+    const visibleBookings = bookings;
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.textPrimary }]}>Bookings</Text>
-                <Pressable onPress={() => setSelectedDate(new Date())}>
-                    <Text style={[styles.todayBtn, { color: colors.pink }]}>Today</Text>
-                </Pressable>
-            </View>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
 
-            {/* View mode selector */}
-            <View style={[styles.modeBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                {modes.map(m => (
-                    <Pressable
-                        key={m}
-                        onPress={() => setViewMode(m)}
-                        style={[
-                            styles.modeBtn,
-                            viewMode === m && { backgroundColor: colors.purpleDark },
-                        ]}
-                    >
-                        <Text style={[
-                            styles.modeBtnText,
-                            { color: viewMode === m ? '#fff' : colors.textMuted },
-                        ]}>{m}</Text>
-                    </Pressable>
-                ))}
-            </View>
-
-            {/* Month nav */}
-            <View style={styles.monthNav}>
-                <Pressable onPress={() => goMonth(-1)}>
-                    <MaterialCommunityIcons name="chevron-left" size={24} color={colors.textPrimary} />
-                </Pressable>
-                <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>
-                    {MONTHS[selectedDate.getMonth()]} {selectedDate.getFullYear()}
-                </Text>
-                <Pressable onPress={() => goMonth(1)}>
-                    <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textPrimary} />
-                </Pressable>
-            </View>
-
-            {/* Week days */}
-            <View style={styles.weekRow}>
-                {DAYS.map(d => (
-                    <Text key={d} style={[styles.dayLabel, { color: colors.textMuted }]}>{d}</Text>
-                ))}
-            </View>
-            <View style={styles.weekDates}>
-                {weekDays.map((d, i) => {
-                    const isSelected = isSameDay(d, selectedDate);
-                    const isToday = isSameDay(d, new Date());
+            <View style={styles.filterRow}>
+                {STATUS_FILTERS.map((status) => {
+                    const active = filter === status;
+                    const label = status === 'all' ? 'All' : status.replace('-', ' ');
                     return (
                         <Pressable
-                            key={i}
-                            onPress={() => setSelectedDate(d)}
+                            key={status}
                             style={[
-                                styles.datePill,
-                                isSelected && { backgroundColor: colors.pink },
+                                styles.filterChip,
+                                {
+                                    backgroundColor: active ? colors.pink : colors.backgroundSecondary,
+                                    borderColor: active ? colors.pink : colors.cardBorder,
+                                },
                             ]}
+                            onPress={() => setFilter(status)}
                         >
-                            <Text style={[
-                                styles.dateNum,
-                                { color: isSelected ? '#fff' : isToday ? colors.pink : colors.textPrimary },
-                            ]}>
-                                {d.getDate()}
+                            <Text style={[styles.filterLabel, { color: active ? colors.white : colors.textSecondary }]}>
+                                {label}
+                                {statusCounts[status] ? ` (${statusCounts[status]})` : ''}
                             </Text>
-                            {isToday && !isSelected && (
-                                <View style={[styles.todayDot, { backgroundColor: colors.pink }]} />
-                            )}
                         </Pressable>
                     );
                 })}
             </View>
 
-            {/* Selected day label */}
-            <Text style={[styles.dayHeading, { color: colors.textPrimary }]}>
-                {formatLongDate(selectedDate)}
-            </Text>
-
-            {/* Bookings list */}
-            <SectionList
-                sections={[{ title: '', data: dayBookings }]}
-                keyExtractor={(item) => String(item.booking_id)}
-                contentContainerStyle={styles.list}
-                showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
-                renderItem={({ item }) => (
-                    <BookingCard item={item} colors={colors} router={router} onConfirm={handleConfirm} />
-                )}
-                ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-                ListEmptyComponent={
-                    !loading ? (
-                        <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <MaterialCommunityIcons name="calendar-blank-outline" size={52} color={colors.textMuted} />
-                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No bookings for this day.</Text>
-                        </View>
-                    ) : null
-                }
-                renderSectionHeader={() => null}
-            />
+            {loading ? (
+                <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={colors.pink} />
+                </View>
+            ) : visibleBookings.length === 0 ? (
+                <View style={styles.centered}>
+                    <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textMuted} />
+                    <Text style={[styles.emptyTitle, { color: colors.textMuted }]}>No bookings found</Text>
+                    <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
+                </View>
+            ) : (
+                <FlashList
+                    data={visibleBookings}
+                    keyExtractor={(item) => String(item.booking_id)}
+                    renderItem={({ item }) => (
+                        <BookingCard
+                            item={item}
+                            colors={colors}
+                            onPressDetails={() => router.push(`/provider-booking/${item.booking_id}`)}
+                            onQuickConfirm={() => handleConfirm(item.booking_id)}
+                        />
+                    )}
+                    contentContainerStyle={styles.list}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+                    showsVerticalScrollIndicator={false}
+                    ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+                />
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: Spacing.md, paddingTop: Spacing.md, marginBottom: Spacing.sm,
+    centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.lg },
+    filterRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        marginBottom: Spacing.md,
     },
-    title: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-    todayBtn: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-    modeBar: {
-        flexDirection: 'row', marginHorizontal: Spacing.md,
-        borderRadius: BorderRadius.xl, borderWidth: 1,
-        padding: 4, marginBottom: Spacing.md,
-    },
-    modeBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: BorderRadius.lg },
-    modeBtnText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-    monthNav: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: Spacing.md, marginBottom: Spacing.md,
-    },
-    monthLabel: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
-    weekRow: { flexDirection: 'row', paddingHorizontal: Spacing.md, marginBottom: 6 },
-    dayLabel: {
-        flex: 1, textAlign: 'center',
-        fontFamily: Fonts.medium, fontSize: FontSizes.xs,
-    },
-    weekDates: { flexDirection: 'row', paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
-    datePill: {
-        flex: 1, alignItems: 'center', paddingVertical: 8,
+    filterChip: {
+        borderWidth: 1,
         borderRadius: BorderRadius.full,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 8,
     },
-    dateNum: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-    todayDot: {
-        width: 4, height: 4, borderRadius: 2, marginTop: 2,
-    },
-    dayHeading: {
-        fontFamily: Fonts.bold, fontSize: FontSizes.lg,
-        paddingHorizontal: Spacing.md, marginBottom: Spacing.md,
-    },
+    filterLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
     list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
-    card: { borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md },
-    cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.sm },
-    cardService: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
-    cardCustomer: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: BorderRadius.full },
-    badgeText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: Spacing.md },
-    metaText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-    cardActions: { flexDirection: 'row', gap: Spacing.sm },
-    empty: {
-        padding: Spacing.xl, borderRadius: BorderRadius.xl, borderWidth: 1,
-        alignItems: 'center', marginTop: Spacing.lg,
+    card: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.md,
     },
-    emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md, marginTop: Spacing.sm },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.sm,
+    },
+    cardTextBlock: { flex: 1, marginRight: Spacing.sm },
+    cardService: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    cardCustomer: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 2 },
+    statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.full },
+    statusText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
+    metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+    metaText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+    footerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: Spacing.sm,
+    },
+    priceLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+    priceValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
+    actionsRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+    detailsButton: { flex: 1 },
+    emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginTop: Spacing.md },
+    emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center' },
 });

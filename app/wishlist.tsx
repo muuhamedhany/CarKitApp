@@ -55,16 +55,16 @@ export default function WishlistScreen() {
         setProducts([]);
         return;
       }
-      // Fetch each product detail in parallel
-      const results = await Promise.allSettled(
-        wishlistIds.map(pid => fetch(`${API_URL}/products/${pid}`).then(r => r.json()))
-      );
-      const fetched: WishlistProduct[] = results
-        .filter(r => r.status === 'fulfilled' && (r as any).value?.success)
-        .map(r => (r as any).value.data);
-      setProducts(fetched);
-    } catch {
-      // silent — wishlist context already handles errors
+      
+      const idsParam = wishlistIds.join(',');
+      const res = await fetch(`${API_URL}/products?product_ids=${idsParam}`);
+      const data = await res.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        setProducts(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching wishlist products:', error);
     }
   }, [JSON.stringify(wishlistIds)]);
 
