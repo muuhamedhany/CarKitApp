@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader } from '@/components';
+import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
 import { addressService, AddressData } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -26,6 +27,9 @@ export default function AddressesScreen() {
   const [title, setTitle] = useState('');
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const fetchAddresses = useCallback(async () => {
     try {
@@ -44,6 +48,13 @@ export default function AddressesScreen() {
     fetchAddresses();
   }, [fetchAddresses]);
 
+  const handleMapResult = useCallback((result: MapPickerResult) => {
+    if (result.street) setStreet(result.street);
+    if (result.city) setCity(result.city);
+    setLatitude(result.latitude);
+    setLongitude(result.longitude);
+  }, []);
+
   const handleSave = async () => {
     if (!title.trim() || !street.trim() || !city.trim()) {
       return showToast('error', 'Missing Fields', 'Please complete all fields.');
@@ -51,11 +62,18 @@ export default function AddressesScreen() {
 
     setSaving(true);
     try {
-      const res = await addressService.addAddress({ title, street, city });
+      const addressData: AddressData = {
+        title,
+        street,
+        city,
+        ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
+      };
+      const res = await addressService.addAddress(addressData);
       if (res.success) {
         showToast('success', 'Address Saved', 'New address added successfully.');
         setIsAdding(false);
         setTitle(''); setStreet(''); setCity('');
+        setLatitude(null); setLongitude(null);
         fetchAddresses();
       } else {
         showToast('error', 'Failed', res.message || 'Could not add address.');
@@ -93,6 +111,34 @@ export default function AddressesScreen() {
         </View>
       ) : isAdding ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Pick from Map button */}
+          <Pressable
+            onPress={() => setShowMapPicker(true)}
+            style={[styles.mapPickerBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}
+          >
+            <View style={styles.mapPickerInner}>
+              <View style={[styles.mapPickerIconWrap, { backgroundColor: colors.pink + '18' }]}>
+                <MaterialCommunityIcons name="map-marker-radius" size={24} color={colors.pink} />
+              </View>
+              <View style={styles.mapPickerTextWrap}>
+                <Text style={[styles.mapPickerTitle, { color: colors.textPrimary }]}>Pick from Map</Text>
+                <Text style={[styles.mapPickerSubtitle, { color: colors.textMuted }]}>
+                  {latitude != null ? 'Location selected ✓  Tap to change' : 'Tap to open the map and pin your location'}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+            </View>
+          </Pressable>
+
+          {latitude != null && longitude != null && (
+            <View style={[styles.coordsBadge, { backgroundColor: colors.pink + '12' }]}>
+              <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.pink} />
+              <Text style={[styles.coordsBadgeText, { color: colors.pink }]}>
+                {latitude.toFixed(5)}, {longitude.toFixed(5)}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>Title (e.g. Home, Work)</Text>
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
@@ -125,7 +171,7 @@ export default function AddressesScreen() {
             <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Ex. Austin"
+                placeholder="Ex. Cairo"
                 placeholderTextColor={colors.textMuted}
                 value={city}
                 onChangeText={setCity}
@@ -180,6 +226,13 @@ export default function AddressesScreen() {
           </Pressable>
         </ScrollView>
       )}
+
+      {/* Map Location Picker Modal */}
+      <MapLocationPicker
+        visible={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        onLocationSelected={handleMapResult}
+      />
     </View>
   );
 }
@@ -219,4 +272,50 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', marginTop: 80 },
   emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center' },
+
+  mapPickerBtn: {
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderStyle: 'dashed',
+  },
+  mapPickerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  mapPickerIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapPickerTextWrap: {
+    flex: 1,
+  },
+  mapPickerTitle: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.md,
+  },
+  mapPickerSubtitle: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    marginTop: 2,
+  },
+  coordsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    alignSelf: 'flex-start',
+  },
+  coordsBadgeText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+  },
 });

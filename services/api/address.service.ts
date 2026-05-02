@@ -8,6 +8,8 @@ export interface AddressData {
   zip_code?: string;
   details?: string;
   is_default?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export const addressService = {
