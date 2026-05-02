@@ -27,6 +27,9 @@ export default function AddressesScreen() {
   const [title, setTitle] = useState('');
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
+  const [apartmentFloor, setApartmentFloor] = useState('');
+  const [building, setBuilding] = useState('');
+  const [notes, setNotes] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -66,6 +69,9 @@ export default function AddressesScreen() {
         title,
         street,
         city,
+        apartment_floor: apartmentFloor,
+        building,
+        notes,
         ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
       };
       const res = await addressService.addAddress(addressData);
@@ -73,6 +79,7 @@ export default function AddressesScreen() {
         showToast('success', 'Address Saved', 'New address added successfully.');
         setIsAdding(false);
         setTitle(''); setStreet(''); setCity('');
+        setApartmentFloor(''); setBuilding(''); setNotes('');
         setLatitude(null); setLongitude(null);
         fetchAddresses();
       } else {
@@ -179,6 +186,48 @@ export default function AddressesScreen() {
             </View>
           </View>
 
+          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+            <View style={[styles.formGroup, { flex: 1 }]}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Building</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="Ex. 42"
+                  placeholderTextColor={colors.textMuted}
+                  value={building}
+                  onChangeText={setBuilding}
+                />
+              </View>
+            </View>
+            <View style={[styles.formGroup, { flex: 1 }]}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Apt / Floor</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="Ex. Apt 4, Floor 2"
+                  placeholderTextColor={colors.textMuted}
+                  value={apartmentFloor}
+                  onChangeText={setApartmentFloor}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Delivery Notes (Optional)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder, height: 80, alignItems: 'flex-start', paddingTop: 10 }]}>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, textAlignVertical: 'top' }]}
+                placeholder="Ex. Gate code, ring bell twice..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                numberOfLines={3}
+                value={notes}
+                onChangeText={setNotes}
+              />
+            </View>
+          </View>
+
           <Pressable onPress={handleSave} disabled={saving} style={{ marginTop: Spacing.xl }}>
             <LinearGradient
               colors={[colors.gradientStart, colors.gradientEnd]}
@@ -205,7 +254,15 @@ export default function AddressesScreen() {
                     <MaterialCommunityIcons name="map-marker" size={20} color={colors.pink} />
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{addr.title || 'Address'}</Text>
                   </View>
-                  <Text style={[styles.cardAddress, { color: colors.textSecondary }]}>{addr.street}, {addr.city}</Text>
+                  <Text style={[styles.cardAddress, { color: colors.textSecondary }]}>
+                    {addr.building ? `Bldg ${addr.building}, ` : ''}
+                    {addr.street}, {addr.city}
+                  </Text>
+                  {addr.apartment_floor && (
+                    <Text style={[styles.cardSubText, { color: colors.textMuted }]}>
+                      Apartment/Floor: {addr.apartment_floor}
+                    </Text>
+                  )}
                 </View>
                 <Pressable onPress={() => handleDelete(addr.address_id || addr.id)} style={styles.deleteBtn}>
                   <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.error} />
@@ -267,6 +324,7 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1 },
   cardTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
   cardAddress: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
+  cardSubText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
   deleteBtn: { padding: Spacing.xs },
 
   emptyState: { alignItems: 'center', marginTop: 80 },

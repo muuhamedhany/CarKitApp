@@ -37,6 +37,11 @@ export type Booking = {
   address_title?: string;
   street?: string;
   city?: string;
+  apartment_floor?: string;
+  building?: string;
+  notes?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 export const bookingService = {

@@ -53,7 +53,7 @@ const formatTime = (value?: string | null) => {
 const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
 
 const getMetaLine = (booking: ProviderBooking) => {
-    const parts = [booking.street, booking.city, booking.building, booking.apartment].filter(Boolean);
+    const parts = [booking.street, booking.city, booking.building, booking.apartment_floor].filter(Boolean);
     return parts.join(' • ');
 };
 

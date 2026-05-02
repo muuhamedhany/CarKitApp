@@ -11,7 +11,7 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GetDirectionsButton } from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
@@ -273,10 +273,32 @@ export default function OrderDetailScreen() {
 
                 <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
-                    <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Shipping'}</Text>
-                    <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                        {order.shipping_street || 'No street address'}{order.shipping_street && order.shipping_city ? ', ' : ''}{order.shipping_city || ''}
-                    </Text>
+                    <View style={{ gap: 2 }}>
+                        <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Shipping'}</Text>
+                        <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                            {order.shipping_street || 'No street address'}{order.shipping_street && order.shipping_city ? ', ' : ''}{order.shipping_city || ''}
+                        </Text>
+                        {(order.shipping_building || order.shipping_apartment_floor) && (
+                            <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
+                                {order.shipping_building ? `Building: ${order.shipping_building}` : ''}
+                                {order.shipping_building && order.shipping_apartment_floor ? ' | ' : ''}
+                                {order.shipping_apartment_floor ? `Apt/Floor: ${order.shipping_apartment_floor}` : ''}
+                            </Text>
+                        )}
+                        {order.shipping_notes && (
+                            <View style={[styles.notesContainer, { borderTopColor: colors.border }]}>
+                                <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Notes:</Text>
+                                <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.shipping_notes}</Text>
+                            </View>
+                        )}
+                        {order.shipping_latitude && order.shipping_longitude ? (
+                            <GetDirectionsButton
+                                latitude={order.shipping_latitude}
+                                longitude={order.shipping_longitude}
+                                label={order.shipping_street || undefined}
+                            />
+                        ) : null}
+                    </View>
                 </View>
 
                 <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
@@ -498,6 +520,28 @@ const styles = StyleSheet.create({
     addressText: {
         fontFamily: Fonts.regular,
         fontSize: FontSizes.sm,
+    },
+    addressSubtext: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.xs,
+        opacity: 0.8,
+    },
+    notesContainer: {
+        marginTop: Spacing.xs,
+        paddingTop: Spacing.xs,
+        borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    notesLabel: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 2,
+    },
+    notesText: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        lineHeight: 20,
     },
     itemRow: {
         flexDirection: 'row',

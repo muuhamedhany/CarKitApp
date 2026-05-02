@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Alert, ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton } from '@/components';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,10 +218,30 @@ export default function BookingDetailScreen() {
 
                     <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
-                        <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.street || booking.location || 'No street address'}</Text>
+                        <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.address_title || 'Service Location'}</Text>
                         <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
-                            {[booking.address_title, booking.city].filter(Boolean).join(' • ') || 'No additional address details'}
+                            {booking.street || booking.location || 'No street address'}{booking.city ? `, ${booking.city}` : ''}
                         </Text>
+                        {(booking.building || booking.apartment_floor) && (
+                            <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
+                                {booking.building ? `Building: ${booking.building}` : ''}
+                                {booking.building && booking.apartment_floor ? ' | ' : ''}
+                                {booking.apartment_floor ? `Apt/Floor: ${booking.apartment_floor}` : ''}
+                            </Text>
+                        )}
+                        {booking.notes && (
+                            <View style={[styles.notesContainer, { borderTopColor: colors.border }]}>
+                                <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Delivery/Service Notes:</Text>
+                                <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
+                            </View>
+                        )}
+                        {booking.latitude && booking.longitude ? (
+                            <GetDirectionsButton
+                                latitude={booking.latitude}
+                                longitude={booking.longitude}
+                                label={booking.street || booking.location || undefined}
+                            />
+                        ) : null}
                     </View>
 
                     <View style={[styles.priceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
@@ -274,6 +294,28 @@ const styles = StyleSheet.create({
     timelineDate: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
     cardValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 4 },
     cardSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 4 },
+    addressSubtext: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.xs,
+        opacity: 0.8,
+    },
+    notesContainer: {
+        marginTop: Spacing.xs,
+        paddingTop: Spacing.xs,
+        borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    notesLabel: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 2,
+    },
+    notesText: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        lineHeight: 20,
+    },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
     metaText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
     priceCard: {

@@ -10,6 +10,9 @@ export interface AddressData {
   is_default?: boolean;
   latitude?: number;
   longitude?: number;
+  apartment_floor?: string;
+  building?: string;
+  notes?: string;
 }
 
 export const addressService = {
