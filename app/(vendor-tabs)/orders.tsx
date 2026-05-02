@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList, RefreshControl, Animated, TextInput } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,7 +12,8 @@ import { vendorService } from '@/services/api/vendor.service';
 import { VendorOrder } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
-type OrderFilter = 'all' | 'pending' | 'processing' | 'shipped' | 'delivered';
+const ORDER_FILTERS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
+type OrderFilter = (typeof ORDER_FILTERS)[number];
 
 export default function VendorOrdersScreen() {
     const { colors } = useTheme();
@@ -29,22 +30,37 @@ export default function VendorOrdersScreen() {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     
-    // Debounce search query
+    // Use a ref for debounced search so loadOrders keeps a stable identity
+    const debouncedSearchRef = useRef('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchQuery);
+            debouncedSearchRef.current = searchQuery;
         }, 500);
         return () => clearTimeout(handler);
     }, [searchQuery]);
 
+    const showToastRef = useRef(showToast);
+    showToastRef.current = showToast;
+
+    const isLoadingRef = useRef(false);
+
     const loadOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
+        if (isLoadingRef.current && !isRefresh) return;
+        
+        const currentSearch = debouncedSearchRef.current;
+        console.log(`[VendorOrders] loadOrders(${pageNum}) - filter: ${activeFilter}, search: "${currentSearch}"`);
+        
         try {
+            isLoadingRef.current = true;
             if (pageNum === 1 && !isRefresh) setLoading(true);
             if (pageNum > 1) setLoadingMore(true);
             
-            const res = await vendorService.getOrders(activeFilter, pageNum, 10, debouncedSearch);
+            const res = await vendorService.getOrders(activeFilter, pageNum, 10, currentSearch || undefined);
+            console.log(`[VendorOrders] Response for page ${pageNum}:`, res.success, 'Items:', res.data?.length);
+
             if (res.success && res.data) {
                 const newOrders = res.data;
                 setOrders(prev => pageNum === 1 ? newOrders : [...prev, ...newOrders]);
@@ -56,21 +72,38 @@ export default function VendorOrdersScreen() {
                 }
             }
         } catch (error: any) {
-            showToast('error', 'Error', error?.message || 'Failed to load orders.');
+            console.error(`[VendorOrders] Error page ${pageNum}:`, error);
+            showToastRef.current('error', 'Error', error?.message || 'Failed to load orders.');
         } finally {
+            isLoadingRef.current = false;
             setLoading(false);
             setLoadingMore(false);
             setRefreshing(false);
         }
-    }, [activeFilter, debouncedSearch, showToast]);
+    }, [activeFilter]);
 
+    // Initial load + reload on filter change
     useFocusEffect(
         useCallback(() => {
+            console.log('[VendorOrders] Focus effect triggered');
             setPage(1);
             setHasMore(true);
             loadOrders(1);
         }, [loadOrders])
     );
+
+    // Reload when debounced search text actually changes (skip initial mount)
+    const isFirstMount = useRef(true);
+    useEffect(() => {
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
+        console.log('[VendorOrders] Debounce search effect triggered');
+        setPage(1);
+        setHasMore(true);
+        loadOrders(1);
+    }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -79,8 +112,10 @@ export default function VendorOrdersScreen() {
     }, [loadOrders]);
 
     const handleLoadMore = () => {
-        if (!loadingMore && hasMore) {
+        // Prevent loading more if we are already loading or if initial load hasn't finished
+        if (!loading && !loadingMore && !refreshing && hasMore) {
             const nextPage = page + 1;
+            console.log(`[VendorOrders] handleLoadMore -> page ${nextPage}`);
             setPage(nextPage);
             loadOrders(nextPage);
         }
