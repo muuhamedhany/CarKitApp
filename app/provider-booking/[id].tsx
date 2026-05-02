@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton } from '@/components';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
@@ -253,10 +253,24 @@ export default function ProviderBookingDetailScreen() {
 
                     <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
-                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.street || 'No street address'}</Text>
-                        <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
-                            {[booking.building, booking.apartment, booking.city].filter(Boolean).join(' • ') || 'No additional address details'}
+                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.address_title || 'Service Location'}</Text>
+                        <Text style={[styles.metaText, { color: colors.textSecondary, marginBottom: 4 }]}>
+                            {booking.street || 'No street address'}{booking.city ? `, ${booking.city}` : ''}
                         </Text>
+                        {(booking.building || booking.apartment_floor) && (
+                            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+                                {booking.building ? `Building: ${booking.building}` : ''}
+                                {booking.building && booking.apartment_floor ? ' | ' : ''}
+                                {booking.apartment_floor ? `Apt/Floor: ${booking.apartment_floor}` : ''}
+                            </Text>
+                        )}
+                        {booking.latitude && booking.longitude ? (
+                            <GetDirectionsButton
+                                latitude={booking.latitude}
+                                longitude={booking.longitude}
+                                label={booking.street || undefined}
+                            />
+                        ) : null}
                     </View>
 
                     <View style={[styles.priceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
@@ -266,8 +280,8 @@ export default function ProviderBookingDetailScreen() {
 
                     {booking.notes ? (
                         <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notes</Text>
-                            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.notes}</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Notes</Text>
+                            <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
                         </View>
                     ) : null}
 
@@ -346,6 +360,11 @@ const styles = StyleSheet.create({
     cardSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 4 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
     metaText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+    notesText: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        lineHeight: 20,
+    },
     priceCard: {
         borderRadius: BorderRadius.xl,
         borderWidth: 1,

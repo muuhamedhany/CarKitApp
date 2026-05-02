@@ -216,6 +216,11 @@ export type OrderAddressSummary = {
   shipping_title?: string | null;
   shipping_street?: string | null;
   shipping_city?: string | null;
+  shipping_apartment_floor?: string | null;
+  shipping_building?: string | null;
+  shipping_notes?: string | null;
+  shipping_latitude?: number | null;
+  shipping_longitude?: number | null;
 };
 
 export type OrderDetailItem = {
@@ -369,7 +374,10 @@ export type ProviderBooking = {
   street?: string | null;
   city?: string | null;
   building?: string | null;
-  apartment?: string | null;
+  apartment_floor?: string | null;
+  notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type ProviderBookingDetail = ProviderBooking & {

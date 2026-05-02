@@ -19,3 +19,5 @@ export { default as VendorTabBar } from './layout/VendorTabBar';
 export { default as ProviderTabBar } from './layout/ProviderTabBar';
 export { default as ProductCard } from './layout/ProductCard';
 export { default as ServiceCard } from './layout/ServiceCard';
+
+export { default as GetDirectionsButton } from './GetDirectionsButton';
