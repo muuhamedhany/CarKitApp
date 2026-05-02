@@ -47,29 +47,58 @@ export default function MyBookingsScreen() {
   const [tab, setTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchBookings = useCallback(async () => {
-    setLoading(true);
+  const fetchBookings = useCallback(async (pageNum = 1, isRefresh = false) => {
+    if (!token) return;
+    
+    if (pageNum === 1 && !isRefresh) setLoading(true);
+    if (pageNum > 1) setLoadingMore(true);
+
     try {
-      if (!token) {
-        setBookings([]);
-        return;
+      const statusParam = tab === 'upcoming' ? 'upcoming' : 'completed_all';
+      const response = await bookingService.getMyBookings(statusParam, pageNum, 10);
+      if (response.success) {
+        const newBookings = response.data || [];
+        setBookings(prev => pageNum === 1 ? newBookings : [...prev, ...newBookings]);
+        
+        if (response.pagination) {
+          setHasMore(pageNum < response.pagination.totalPages);
+        } else {
+          setHasMore(false);
+        }
       }
-      const response = await bookingService.getMyBookings();
-      if (response.success) setBookings(response.data || []);
     } catch {
       // silently fail
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
-  }, [token]);
+  }, [token, tab]);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchBookings(1);
+  }, [tab, fetchBookings]);
 
-  const filteredBookings = bookings.filter((b) => {
-    if (tab === 'completed') return b.status === 'completed' || b.status === 'cancelled';
-    return b.status !== 'completed' && b.status !== 'cancelled';
-  });
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchBookings(nextPage);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setPage(1);
+    fetchBookings(1, true);
+  };
 
   const formatDate = (dateStr: string) => {
     try {
@@ -169,22 +198,27 @@ export default function MyBookingsScreen() {
         </Pressable>
       </View>
 
-      {loading ? (
+      {loading && !refreshing ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
-      ) : filteredBookings.length === 0 ? (
+      ) : bookings.length === 0 ? (
         <View style={styles.center}>
           <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No {tab} bookings</Text>
         </View>
       ) : (
         <FlashList
-          data={filteredBookings}
+          data={bookings}
           keyExtractor={(item) => item.booking_id.toString()}
           renderItem={renderBooking}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
         />
       )}
     </View>

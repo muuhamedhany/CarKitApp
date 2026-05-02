@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -149,41 +149,65 @@ export default function ProviderBookingsScreen() {
     const [bookings, setBookings] = useState<ProviderBooking[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
 
-    const loadBookings = useCallback(async (status: StatusFilter = filter) => {
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    const loadBookings = useCallback(async (pageNum = 1, isRefresh = false) => {
         try {
-            setLoading(true);
-            const response = await providerService.getBookings(status);
+            if (pageNum === 1 && !isRefresh) setLoading(true);
+            if (pageNum > 1) setLoadingMore(true);
+
+            const response = await providerService.getBookings(filter, undefined, pageNum, 10, debouncedSearch);
             if (response.success && response.data) {
-                setBookings(response.data);
+                const newBookings = response.data;
+                setBookings(prev => pageNum === 1 ? newBookings : [...prev, ...newBookings]);
+                
+                if (response.pagination) {
+                    setHasMore(pageNum < response.pagination.totalPages);
+                } else {
+                    setHasMore(false);
+                }
             }
         } catch {
             showToast('error', 'Error', 'Failed to load bookings.');
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+            setRefreshing(false);
         }
-    }, [filter, showToast]);
+    }, [filter, debouncedSearch, showToast]);
 
     useFocusEffect(
         useCallback(() => {
-            loadBookings(filter);
-        }, [filter, loadBookings])
+            setPage(1);
+            setHasMore(true);
+            loadBookings(1);
+        }, [loadBookings])
     );
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        await loadBookings(filter);
-        setRefreshing(false);
-    }, [filter, loadBookings]);
+        setPage(1);
+        await loadBookings(1, true);
+    }, [loadBookings]);
 
-    const statusCounts = useMemo(() => {
-        const counts: Record<string, number> = { all: bookings.length };
-        bookings.forEach((booking) => {
-            const key = (booking.status || '').toLowerCase();
-            counts[key] = (counts[key] || 0) + 1;
-        });
-        return counts;
-    }, [bookings]);
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            loadBookings(nextPage);
+        }
+    };
+
+    // Server-side filtering removes the need for local counting. We'll just display labels without counts.
 
     const handleConfirm = async (bookingId: number) => {
         try {
@@ -223,14 +247,13 @@ export default function ProviderBookingsScreen() {
                         >
                             <Text style={[styles.filterLabel, { color: active ? colors.white : colors.textSecondary }]}>
                                 {label}
-                                {statusCounts[status] ? ` (${statusCounts[status]})` : ''}
                             </Text>
                         </Pressable>
                     );
                 })}
             </View>
 
-            {loading ? (
+            {loading && !refreshing ? (
                 <View style={styles.centered}>
                     <ActivityIndicator size="large" color={colors.pink} />
                 </View>
@@ -254,8 +277,12 @@ export default function ProviderBookingsScreen() {
                     )}
                     contentContainerStyle={styles.list}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
                     showsVerticalScrollIndicator={false}
                     ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+                    estimatedItemSize={150}
                 />
             )}
         </View>

@@ -25,32 +25,66 @@ export default function VendorOrdersScreen() {
     const [activeFilter, setActiveFilter] = useState<OrderFilter>('all');
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    
+    // Debounce search query
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
 
-    const loadOrders = useCallback(async () => {
+    const loadOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
         try {
-            setLoading(true);
-            const res = await vendorService.getOrders(activeFilter);
+            if (pageNum === 1 && !isRefresh) setLoading(true);
+            if (pageNum > 1) setLoadingMore(true);
+            
+            const res = await vendorService.getOrders(activeFilter, pageNum, 10, debouncedSearch);
             if (res.success && res.data) {
-                setOrders(res.data);
+                const newOrders = res.data;
+                setOrders(prev => pageNum === 1 ? newOrders : [...prev, ...newOrders]);
+                
+                if (res.pagination) {
+                    setHasMore(pageNum < res.pagination.totalPages);
+                } else {
+                    setHasMore(false);
+                }
             }
         } catch (error: any) {
             showToast('error', 'Error', error?.message || 'Failed to load orders.');
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+            setRefreshing(false);
         }
-    }, [activeFilter, showToast]);
+    }, [activeFilter, debouncedSearch, showToast]);
 
     useFocusEffect(
         useCallback(() => {
-            loadOrders();
+            setPage(1);
+            setHasMore(true);
+            loadOrders(1);
         }, [loadOrders])
     );
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        await loadOrders();
-        setRefreshing(false);
+        setPage(1);
+        await loadOrders(1, true);
     }, [loadOrders]);
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            loadOrders(nextPage);
+        }
+    };
 
     const formatDate = (value: string) => {
         const date = new Date(value);
@@ -80,15 +114,8 @@ export default function VendorOrdersScreen() {
         return formatDate(dateStr);
     };
 
-    const filteredOrders = useMemo(() => {
-        if (!searchQuery.trim()) return orders;
-        const q = searchQuery.toLowerCase();
-        return orders.filter(o =>
-            String(o.order_id).includes(q) ||
-            (o.customer_name || '').toLowerCase().includes(q) ||
-            (o.status || '').toLowerCase().includes(q)
-        );
-    }, [orders, searchQuery]);
+    // Local filter removed in favor of server-side search
+    const filteredOrders = orders;
 
     const renderHeader = () => (
         <>
@@ -200,8 +227,11 @@ export default function VendorOrdersScreen() {
                 contentContainerStyle={styles.screenContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
                 ListEmptyComponent={
-                    loading ? (
+                    loading && !refreshing ? (
                         <View style={{ padding: Spacing.md, gap: Spacing.md }}>
                             {[1, 2, 3].map(i => (
                                 <View key={i} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border, padding: Spacing.md }]}>

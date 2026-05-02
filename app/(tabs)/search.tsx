@@ -75,28 +75,25 @@ export default function SearchScreen() {
       const params = new URLSearchParams();
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
       if (productCategoryIds.length > 0) params.set('category_ids', productCategoryIds.join(','));
+      params.set('page', '1');
+      params.set('pageSize', '20');
 
       const serviceParams = new URLSearchParams();
       if (serviceCategoryIds.length > 0) {
         serviceParams.set('category_ids', serviceCategoryIds.join(','));
       }
+      if (searchQuery.trim()) serviceParams.set('search', searchQuery.trim());
+      serviceParams.set('page', '1');
+      serviceParams.set('pageSize', '20');
 
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products${params.toString() ? `?${params.toString()}` : ''}`, { headers }),
-        fetch(`${API_URL}/services${serviceParams.toString() ? `?${serviceParams.toString()}` : ''}`, { headers }),
+        fetch(`${API_URL}/products?${params.toString()}`, { headers }),
+        fetch(`${API_URL}/services?${serviceParams.toString()}`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
       if (prodData.success) setProducts(prodData.data || []);
       if (servData.success) {
-        let filtered = servData.data || [];
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          filtered = filtered.filter((s: Service) =>
-            s.name.toLowerCase().includes(q) ||
-            s.provider_name?.toLowerCase().includes(q)
-          );
-        }
-        setServices(filtered);
+        setServices(servData.data || []);
       }
     } catch {
       showToast('error', 'Error', 'Could not fetch results.');

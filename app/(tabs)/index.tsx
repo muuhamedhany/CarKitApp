@@ -148,15 +148,15 @@ export default function HomeScreen() {
       if (token) headers.Authorization = `Bearer ${token}`;
 
       const [prodRes, servRes, catRes] = await Promise.all([
-        fetch(`${API_URL}/products`, { headers }),
-        fetch(`${API_URL}/services`, { headers }),
+        fetch(`${API_URL}/products?page=1&pageSize=6`, { headers }),
+        fetch(`${API_URL}/services?page=1&pageSize=4`, { headers }),
         fetch(`${API_URL}/categories`, { headers }),
       ]);
       const [prodData, servData, catData] = await Promise.all([
         prodRes.json(), servRes.json(), catRes.json(),
       ]);
-      if (prodData.success) setProducts(prodData.data?.slice(0, 6) || []);
-      if (servData.success) setServices(servData.data?.slice(0, 4) || []);
+      if (prodData.success) setProducts(prodData.data || []);
+      if (servData.success) setServices(servData.data || []);
       if (catData.success) setProductCategories(catData.data || []);
     } catch {
       // silently fail

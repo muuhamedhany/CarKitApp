@@ -48,29 +48,61 @@ export default function MyOrdersScreen() {
   const [tab, setTab] = useState<TabType>('active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
     if (!token) return;
-    setLoading(true);
+    
+    if (pageNum === 1 && !isRefresh) setLoading(true);
+    if (pageNum > 1) setLoadingMore(true);
+
     try {
-      const res = await fetch(`${API_URL}/orders/my`, {
+      const statusParam = tab === 'active' ? 'active' : 'delivered';
+      const res = await fetch(`${API_URL}/orders/my?status=${statusParam}&page=${pageNum}&pageSize=10`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) setOrders(data.data || []);
+      if (data.success) {
+        const newOrders = data.data || [];
+        setOrders(prev => pageNum === 1 ? newOrders : [...prev, ...newOrders]);
+        
+        if (data.pagination) {
+          setHasMore(pageNum < data.pagination.totalPages);
+        } else {
+          setHasMore(false);
+        }
+      }
     } catch {
       // silently fail
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
-  }, [token]);
+  }, [token, tab]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchOrders(1);
+  }, [tab, fetchOrders]);
 
-  const filteredOrders = orders.filter((o) => {
-    if (tab === 'delivered') return o.status === 'delivered';
-    return o.status !== 'delivered';
-  });
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchOrders(nextPage);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setPage(1);
+    fetchOrders(1, true);
+  };
 
   const formatDate = (dateStr: string) => {
     try {
@@ -156,7 +188,7 @@ export default function MyOrdersScreen() {
         </Pressable>
       </View>
 
-      {loading ? (
+      {loading && !refreshing ? (
         <View style={{ paddingHorizontal: Spacing.lg, gap: Spacing.md, marginTop: Spacing.md }}>
           {[1,2,3].map(i => (
             <View key={i} style={{ backgroundColor: colors.backgroundSecondary, borderRadius: 16, padding: Spacing.md, borderWidth: 1, borderColor: colors.cardBorder }}>
@@ -176,18 +208,23 @@ export default function MyOrdersScreen() {
             </View>
           ))}
         </View>
-      ) : filteredOrders.length === 0 ? (
+      ) : orders.length === 0 ? (
         <View style={styles.center}>
           <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No {tab} orders</Text>
         </View>
       ) : (
         <FlashList
-          data={filteredOrders}
+          data={orders}
           keyExtractor={(item) => item.order_id.toString()}
           renderItem={renderOrder}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
         />
       )}
     </View>

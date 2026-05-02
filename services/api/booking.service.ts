@@ -49,8 +49,12 @@ export const bookingService = {
   },
 
   // Customer: Get my bookings
-  async getMyBookings() {
-    return apiFetch<ApiResponse<Booking[]>>('/bookings/my');
+  async getMyBookings(status?: string, page: number = 1, pageSize: number = 10) {
+    const query = new URLSearchParams();
+    if (status) query.append('status', status);
+    query.append('page', page.toString());
+    query.append('pageSize', pageSize.toString());
+    return apiFetch<ApiResponse<Booking[]>>(`/bookings/my?${query.toString()}`);
   },
 
   // Customer: Get single booking
@@ -66,10 +70,13 @@ export const bookingService = {
   },
 
   // Provider: Get my bookings
-  async getProviderBookings(status?: string, date?: string) {
+  async getProviderBookings(status?: string, date?: string, page: number = 1, pageSize: number = 10, search?: string) {
     const params = new URLSearchParams();
     if (status && status !== 'all') params.append('status', status);
     if (date) params.append('date', date);
+    if (search) params.append('search', search);
+    params.append('page', page.toString());
+    params.append('pageSize', pageSize.toString());
     const query = params.toString() ? `?${params.toString()}` : '';
     return apiFetch<ApiResponse<Booking[]>>(`/bookings/provider/me${query}`);
   },

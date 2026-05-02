@@ -26,8 +26,12 @@ export const orderService = {
         });
     },
 
-    async getMyOrders() {
-        return apiFetch<ApiResponse<OrderRecord[]>>('/orders/my');
+    async getMyOrders(status?: string, page: number = 1, pageSize: number = 10) {
+        const query = new URLSearchParams();
+        if (status) query.append('status', status);
+        query.append('page', page.toString());
+        query.append('pageSize', pageSize.toString());
+        return apiFetch<ApiResponse<OrderRecord[]>>(`/orders/my?${query.toString()}`);
     },
 
     async getOrderById(id: number) {
