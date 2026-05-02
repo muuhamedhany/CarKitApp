@@ -1,5 +1,6 @@
 import { apiFetch } from './client';
 import { ApiResponse, VendorAnalyticsRange, VendorAnalyticsResponse, VendorDashboardResponse, VendorOrder } from '@/types/api.types';
+import { API_URL } from '@/constants/config';
 
 export const vendorService = {
     async getDashboard() {
@@ -12,12 +13,12 @@ export const vendorService = {
     },
 
     async getOrders(status: string = 'all', page: number = 1, pageSize: number = 10, search?: string) {
-        const query = new URLSearchParams();
-        if (status && status !== 'all') query.append('status', status);
-        if (search) query.append('search', search);
-        query.append('page', page.toString());
-        query.append('pageSize', pageSize.toString());
-        return apiFetch<ApiResponse<VendorOrder[]>>(`/vendors/me/orders?${query.toString()}`);
+        let url = `/vendors/me/orders?page=${page}&pageSize=${pageSize}`;
+        if (status && status !== 'all') url += `&status=${encodeURIComponent(status)}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        
+        console.log(`[VendorService] API_URL: ${API_URL}, endpoint: ${url}`);
+        return apiFetch<ApiResponse<VendorOrder[]>>(url);
     },
 
     async updateOrderStatus(orderId: number, status: string) {
