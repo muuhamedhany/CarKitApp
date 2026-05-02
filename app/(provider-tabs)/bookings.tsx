@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-
+import { ProviderBooking } from '@/types/api.types';
 import { CenteredHeader } from '@/components';
 import { GradientButton, OutlinedButton } from '@/components';
 import { providerService } from '@/services/api/provider.service';
-import { ProviderBooking } from '@/types/api.types';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
@@ -133,7 +131,9 @@ function BookingCard({
                     }}
                     onPress={onPressDetails}
                 >
-                    <GradientButton title="View Details" onPress={onPressDetails} style={{ flex: 1 }} />
+                    <View pointerEvents="none" style={{ flex: 1 }}>
+                        <GradientButton title="View Details" onPress={() => { }} style={{ flex: 1 }} />
+                    </View>
                 </AnimatedPressable>
             </View>
         </View>
@@ -169,7 +169,7 @@ export default function ProviderBookingsScreen() {
             if (response.success && response.data) {
                 const newBookings = response.data;
                 setBookings(prev => pageNum === 1 ? newBookings : [...prev, ...newBookings]);
-                
+
                 if (response.pagination) {
                     setHasMore(pageNum < response.pagination.totalPages);
                 } else {
@@ -282,7 +282,6 @@ export default function ProviderBookingsScreen() {
                     ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
                     showsVerticalScrollIndicator={false}
                     ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-                    estimatedItemSize={150}
                 />
             )}
         </View>

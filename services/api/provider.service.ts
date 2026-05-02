@@ -23,10 +23,14 @@ export const providerService = {
     },
 
     // Bookings list (with optional status/date filter)
-    async getBookings(status: string = 'all', date?: string) {
+    async getBookings(status: string = 'all', date?: string, page: number = 1, limit: number = 10, search?: string) {
         const params = new URLSearchParams();
         if (status && status !== 'all') params.append('status', status);
         if (date) params.append('date', date);
+        if (page) params.append('page', page.toString());
+        if (limit) params.append('limit', limit.toString());
+        if (search) params.append('search', search);
+        
         const query = params.toString() ? `?${params.toString()}` : '';
         return apiFetch<ApiResponse<ProviderBooking[]>>(`/service-providers/me/bookings${query}`);
     },
