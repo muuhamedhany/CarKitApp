@@ -93,10 +93,18 @@ export type CartItem = {
   quantity: number;
 };
 
+export type PaginationData = {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type ApiResponse<T> = {
   success: boolean;
   message: string;
   data?: T;
+  pagination?: PaginationData;
 };
 
 export type VendorDashboardStats = {

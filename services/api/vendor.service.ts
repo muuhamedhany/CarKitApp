@@ -11,9 +11,13 @@ export const vendorService = {
         return apiFetch<ApiResponse<VendorAnalyticsResponse>>(`/vendors/me/analytics${query}`);
     },
 
-    async getOrders(status: string = 'all') {
-        const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
-        return apiFetch<ApiResponse<VendorOrder[]>>(`/vendors/me/orders${query}`);
+    async getOrders(status: string = 'all', page: number = 1, pageSize: number = 10, search?: string) {
+        const query = new URLSearchParams();
+        if (status && status !== 'all') query.append('status', status);
+        if (search) query.append('search', search);
+        query.append('page', page.toString());
+        query.append('pageSize', pageSize.toString());
+        return apiFetch<ApiResponse<VendorOrder[]>>(`/vendors/me/orders?${query.toString()}`);
     },
 
     async updateOrderStatus(orderId: number, status: string) {
