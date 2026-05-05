@@ -312,20 +312,16 @@ export default function HomeScreen() {
   };
 
   const handleAdPress = (ad: Ad) => {
-    // Build search params that filter results to the ad's vendor/provider
     const searchParams: Record<string, string> = {};
 
-    if (ad.vendor_id) searchParams.vendor_id = String(ad.vendor_id);
-    if (ad.provider_id) searchParams.provider_id = String(ad.provider_id);
-    if (ad.target_product_ids && ad.target_product_ids.length > 0) {
-      searchParams.product_ids = ad.target_product_ids.join(',');
+    if (ad.vendor_id) {
+      searchParams.vendor_id = String(ad.vendor_id);
+      searchParams.type = 'products';
+    } else if (ad.provider_id) {
+      searchParams.provider_id = String(ad.provider_id);
+      searchParams.type = 'services';
     }
-    if (ad.target_service_ids && ad.target_service_ids.length > 0) {
-      searchParams.service_ids = ad.target_service_ids.join(',');
-    }
-    if (ad.target_category_ids && ad.target_category_ids.length > 0) {
-      searchParams.ad_category_ids = ad.target_category_ids.join(',');
-    }
+
     if (ad.advertiser_name) searchParams.ad_title = ad.advertiser_name;
 
     router.push({ pathname: '/(tabs)/search' as any, params: searchParams });

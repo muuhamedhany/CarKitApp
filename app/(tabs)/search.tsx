@@ -41,6 +41,7 @@ type SearchParams = {
   service_ids?: string;
   ad_category_ids?: string;
   ad_title?: string;
+  type?: ViewMode;
 };
 
 const parseIds = (raw?: string) =>
@@ -56,9 +57,10 @@ export default function SearchScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
+  const params = useLocalSearchParams<SearchParams>();
 
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>((params.type as ViewMode) || 'all');
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState<number[]>([]);
@@ -77,7 +79,6 @@ export default function SearchScreen() {
   } | null>(null);
 
   const queryRef = useRef(query);
-  const params = useLocalSearchParams<SearchParams>();
 
   useEffect(() => {
     queryRef.current = query;
@@ -178,8 +179,12 @@ export default function SearchScreen() {
     const parsedServices = parseIds(rawServices);
     setSelectedProductCategoryIds(parsedProducts);
     setSelectedServiceCategoryIds(parsedServices);
+    if (params.type) {
+      setViewMode(params.type as ViewMode);
+    }
+
     search(queryRef.current, parsedProducts, parsedServices, newAdFilter);
-  }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids]);
+  }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.type]);
 
   const handleOpenCategoryFilter = () => {
     router.push({
