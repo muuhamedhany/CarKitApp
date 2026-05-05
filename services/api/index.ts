@@ -7,4 +7,5 @@ export * from './vendor.service';
 export * from './order.service';
 export * from './payment.service';
 export * from './booking.service';
+export * from './ad.service';
 export * from './client';

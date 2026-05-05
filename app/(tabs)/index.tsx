@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -25,8 +26,132 @@ import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { CategoryPill } from '@/components';
+import { adService, Ad } from '@/services/api/ad.service';
 
 const TAB_BAR_HEIGHT = 65;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const AD_SLIDE_INTERVAL = 4000;
+
+// ─── Ad Slideshow ─────────────────────────────────────────────────────────────
+function AdSlideshow({ ads, colors }: { ads: Ad[]; colors: any }) {
+  const scrollRef = useRef<ScrollView>(null);
+  const indexRef = useRef(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const adWidth = SCREEN_WIDTH - Spacing.md * 2;
+
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const timer = setInterval(() => {
+      indexRef.current = (indexRef.current + 1) % ads.length;
+      scrollRef.current?.scrollTo({ x: indexRef.current * adWidth, animated: true });
+      setActiveIndex(indexRef.current);
+    }, AD_SLIDE_INTERVAL);
+    return () => clearInterval(timer);
+  }, [ads.length, adWidth]);
+
+  if (ads.length === 0) return null;
+
+  return (
+    <View style={adStyles.wrapper}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        scrollEventThrottle={16}
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => {
+          const idx = Math.round(e.nativeEvent.contentOffset.x / adWidth);
+          indexRef.current = idx;
+          setActiveIndex(idx);
+        }}
+      >
+        {ads.map((ad) => (
+          <View key={ad.ad_id} style={[adStyles.slide, { width: adWidth }]}>
+            {ad.banner_image_url ? (
+              <Image source={{ uri: ad.banner_image_url }} style={adStyles.slideImage} resizeMode="cover" />
+            ) : (
+              <LinearGradient
+                colors={['#CD42A8', '#7B2FF7']}
+                style={adStyles.slideImage}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <MaterialCommunityIcons name="bullhorn" size={36} color="#fff" />
+              </LinearGradient>
+            )}
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.55)']}
+              style={adStyles.slideOverlay}
+            />
+            <View style={adStyles.sponsoredBadge}>
+              <Text style={adStyles.sponsoredText}>Sponsored</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Dot indicators */}
+      {ads.length > 1 && (
+        <View style={adStyles.dotsRow}>
+          {ads.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                adStyles.dot,
+                i === activeIndex
+                  ? adStyles.dotActive
+                  : { ...adStyles.dotInactive, backgroundColor: colors.textMuted },
+              ]}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const adStyles = StyleSheet.create({
+  wrapper: { marginBottom: Spacing.md },
+  slide: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    height: 160,
+  },
+  slideImage: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slideOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: BorderRadius.xl,
+  },
+  sponsoredBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  sponsoredText: {
+    color: '#fff',
+    fontFamily: Fonts.medium,
+    fontSize: 10,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: 8,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive: { backgroundColor: '#CD42A8', width: 16 },
+  dotInactive: { opacity: 0.5 },
+});
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
 const SEARCH_PHRASES = [
@@ -133,6 +258,7 @@ export default function HomeScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [productCategories, setProductCategories] = useState<Category[]>([]);
+  const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
@@ -158,6 +284,12 @@ export default function HomeScreen() {
       if (prodData.success) setProducts(prodData.data || []);
       if (servData.success) setServices(servData.data || []);
       if (catData.success) setProductCategories(catData.data || []);
+
+      // Fetch active ads (public, no auth required)
+      try {
+        const adsRes = await adService.getActiveAds();
+        if (adsRes.success && adsRes.data) setActiveAds(adsRes.data);
+      } catch { /* non-blocking */ }
     } catch {
       // silently fail
     } finally {
@@ -288,6 +420,11 @@ export default function HomeScreen() {
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
         <TypewriterSearchBar textColor={colors.textMuted} />
       </Pressable>
+
+      {/* Sponsored Ads Slideshow */}
+      {activeAds.length > 0 && (
+        <AdSlideshow ads={activeAds} colors={colors} />
+      )}
 
       {/* Hero Banner */}
       <Pressable style={styles.heroBanner} onPress={() => router.push('/(tabs)/search')}>
