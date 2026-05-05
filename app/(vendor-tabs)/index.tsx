@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Image, RefreshControl } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -94,25 +95,18 @@ export default function VendorDashboard() {
 
             <View style={styles.quickActions}>
               <Pressable
-                onPress={() => router.push('/(vendor-tabs)/products')}
-                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.primary }]}
-              >
-                <MaterialCommunityIcons name="package-variant" size={20} color={colors.white} />
-                <Text style={[styles.quickActionText, { color: colors.white }]}>Inventory</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => router.push('/(vendor-tabs)/orders')}
-                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.purpleDark }]}
-              >
-                <MaterialCommunityIcons name="receipt-text" size={20} color={colors.white} />
-                <Text style={[styles.quickActionText, { color: colors.white }]}>Orders</Text>
-              </Pressable>
-              <Pressable
                 onPress={() => router.push('/promote' as any)}
-                style={[styles.quickAction, { borderColor: colors.pink, backgroundColor: colors.pink }]}
+                style={{ flex: 1 }}
               >
-                <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
-                <Text style={[styles.quickActionText, { color: colors.white }]}>Promote</Text>
+                <LinearGradient
+                  colors={[colors.pink, '#6366F1']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.quickAction, { borderColor: 'transparent' }]}
+                >
+                  <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
+                  <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Products</Text>
+                </LinearGradient>
               </Pressable>
             </View>
 

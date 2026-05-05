@@ -7,6 +7,7 @@ import {
     Pressable,
     RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -130,25 +131,18 @@ export default function ProviderDashboard() {
 
                         <View style={styles.quickActions}>
                             <Pressable
-                                onPress={() => router.push('/(provider-tabs)/services')}
-                                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.primary }]}
-                            >
-                                <MaterialCommunityIcons name="wrench" size={20} color={colors.white} />
-                                <Text style={[styles.quickActionText, { color: colors.white }]}>Services</Text>
-                            </Pressable>
-                            <Pressable
-                                onPress={() => router.push('/(provider-tabs)/bookings')}
-                                style={[styles.quickAction, { borderColor: colors.cardBorder, backgroundColor: colors.purpleDark }]}
-                            >
-                                <MaterialCommunityIcons name="calendar-check" size={20} color={colors.white} />
-                                <Text style={[styles.quickActionText, { color: colors.white }]}>Bookings</Text>
-                            </Pressable>
-                            <Pressable
                                 onPress={() => router.push('/promote' as any)}
-                                style={[styles.quickAction, { borderColor: colors.pink, backgroundColor: colors.pink }]}
+                                style={{ flex: 1 }}
                             >
-                                <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
-                                <Text style={[styles.quickActionText, { color: colors.white }]}>Promote</Text>
+                                <LinearGradient
+                                    colors={[colors.pink, '#6366F1']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={[styles.quickAction, { borderColor: 'transparent' }]}
+                                >
+                                    <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
+                                    <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Services</Text>
+                                </LinearGradient>
                             </Pressable>
                         </View>
 
