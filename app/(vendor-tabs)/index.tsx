@@ -107,6 +107,13 @@ export default function VendorDashboard() {
                 <MaterialCommunityIcons name="receipt-text" size={20} color={colors.white} />
                 <Text style={[styles.quickActionText, { color: colors.white }]}>Orders</Text>
               </Pressable>
+              <Pressable
+                onPress={() => router.push('/promote' as any)}
+                style={[styles.quickAction, { borderColor: colors.pink, backgroundColor: colors.pink }]}
+              >
+                <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
+                <Text style={[styles.quickActionText, { color: colors.white }]}>Promote</Text>
+              </Pressable>
             </View>
 
             <Pressable
