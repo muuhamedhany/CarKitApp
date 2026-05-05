@@ -84,7 +84,7 @@ function AdSlideshow({ ads, colors, onAdPress }: { ads: Ad[]; colors: any; onAdP
               style={adStyles.slideOverlay}
             />
             <View style={adStyles.sponsoredBadge}>
-              <Text style={adStyles.sponsoredText}>Sponsored</Text>
+              <Text style={adStyles.sponsoredText}>Ad</Text>
             </View>
           </Pressable>
         ))}
@@ -389,15 +389,15 @@ export default function HomeScreen() {
           </View>
         </View>
         {/* Favorite Heart Icon */}
-        <Pressable 
+        <Pressable
           style={styles.favoriteIndexIcon}
           onPress={() => toggleFavorite(product.product_id)}
           hitSlop={8}
         >
-          <MaterialCommunityIcons 
-            name={wishlist[product.product_id] ? "cards-heart" : "cards-heart-outline"} 
-            size={20} 
-            color={wishlist[product.product_id] ? colors.pink : colors.textPrimary} 
+          <MaterialCommunityIcons
+            name={wishlist[product.product_id] ? "cards-heart" : "cards-heart-outline"}
+            size={20}
+            color={wishlist[product.product_id] ? colors.pink : colors.textPrimary}
           />
         </Pressable>
       </Pressable>
@@ -441,21 +441,6 @@ export default function HomeScreen() {
       {activeAds.length > 0 && (
         <AdSlideshow ads={activeAds} colors={colors} onAdPress={handleAdPress} />
       )}
-
-      {/* Hero Banner */}
-      <Pressable style={styles.heroBanner} onPress={() => router.push('/(tabs)/search')}>
-        <Image style={styles.heroImage} source={{ uri: 'https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&q=80&w=1000' }} />
-        <LinearGradient 
-          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']} 
-          style={styles.heroOverlay}
-        >
-          <Text style={styles.heroTitle}>Premium Auto Care</Text>
-          <Text style={styles.heroSubtitle}>Find everything you need for your ride</Text>
-          <View style={[styles.heroBtn, { backgroundColor: colors.pink }]}>
-            <Text style={styles.heroBtnText}>Shop Now</Text>
-          </View>
-        </LinearGradient>
-      </Pressable>
 
       {/* Featured Services */}
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Services</Text>
@@ -609,45 +594,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 12,
     padding: 4,
-  },
-  
-  heroBanner: {
-    marginVertical: Spacing.md,
-    height: 160,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  heroImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: Spacing.md,
-    justifyContent: 'flex-end',
-  },
-  heroTitle: {
-    fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.xl,
-    color: '#FFF',
-    marginBottom: 4,
-  },
-  heroSubtitle: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-    color: '#ECECEC',
-    marginBottom: Spacing.md,
-  },
-  heroBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  heroBtnText: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xs,
-    color: '#000',
   }
 });
