@@ -31,10 +31,22 @@ type Service = {
 
 type ViewMode = 'all' | 'products' | 'services';
 
-type CategoryParams = {
+type SearchParams = {
   product_categories?: string;
   service_categories?: string;
+  // Ad targeting params
+  vendor_id?: string;
+  provider_id?: string;
+  product_ids?: string;
+  service_ids?: string;
+  ad_category_ids?: string;
+  ad_title?: string;
 };
+
+const parseIds = (raw?: string) =>
+  raw && raw.trim().length > 0
+    ? raw.split(',').map(Number).filter((v) => Number.isFinite(v) && v > 0)
+    : [];
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -54,8 +66,18 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  // Ad targeting filter
+  const [adFilter, setAdFilter] = useState<{
+    vendorId?: number;
+    providerId?: number;
+    productIds?: number[];
+    serviceIds?: number[];
+    categoryIds?: number[];
+    title?: string;
+  } | null>(null);
+
   const queryRef = useRef(query);
-  const params = useLocalSearchParams<CategoryParams>();
+  const params = useLocalSearchParams<SearchParams>();
 
   useEffect(() => {
     queryRef.current = query;
@@ -64,7 +86,8 @@ export default function SearchScreen() {
   const search = useCallback(async (
     searchQuery: string,
     productCategoryIds: number[],
-    serviceCategoryIds: number[]
+    serviceCategoryIds: number[],
+    adFilterOverride?: typeof adFilter,
   ) => {
     setLoading(true);
     setSearched(true);
@@ -72,22 +95,40 @@ export default function SearchScreen() {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const params = new URLSearchParams();
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      if (productCategoryIds.length > 0) params.set('category_ids', productCategoryIds.join(','));
-      params.set('page', '1');
-      params.set('pageSize', '20');
+      const af = adFilterOverride !== undefined ? adFilterOverride : adFilter;
 
+      // ── Product query params ──
+      const prodParams = new URLSearchParams();
+      if (searchQuery.trim()) prodParams.set('search', searchQuery.trim());
+      if (af?.vendorId) prodParams.set('vendor_id', String(af.vendorId));
+      if (af?.productIds && af.productIds.length > 0) {
+        prodParams.set('product_ids', af.productIds.join(','));
+      }
+      if (productCategoryIds.length > 0) {
+        prodParams.set('category_ids', productCategoryIds.join(','));
+      } else if (af?.categoryIds && af.categoryIds.length > 0 && af?.vendorId) {
+        prodParams.set('category_ids', af.categoryIds.join(','));
+      }
+      prodParams.set('page', '1');
+      prodParams.set('pageSize', '50');
+
+      // ── Service query params ──
       const serviceParams = new URLSearchParams();
+      if (searchQuery.trim()) serviceParams.set('search', searchQuery.trim());
+      if (af?.providerId) serviceParams.set('provider_id', String(af.providerId));
+      if (af?.serviceIds && af.serviceIds.length > 0) {
+        serviceParams.set('service_ids', af.serviceIds.join(','));
+      }
       if (serviceCategoryIds.length > 0) {
         serviceParams.set('category_ids', serviceCategoryIds.join(','));
+      } else if (af?.categoryIds && af.categoryIds.length > 0 && af?.providerId) {
+        serviceParams.set('category_ids', af.categoryIds.join(','));
       }
-      if (searchQuery.trim()) serviceParams.set('search', searchQuery.trim());
       serviceParams.set('page', '1');
-      serviceParams.set('pageSize', '20');
+      serviceParams.set('pageSize', '50');
 
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products?${params.toString()}`, { headers }),
+        fetch(`${API_URL}/products?${prodParams.toString()}`, { headers }),
         fetch(`${API_URL}/services?${serviceParams.toString()}`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
@@ -103,26 +144,42 @@ export default function SearchScreen() {
   }, [showToast, token]);
 
   useEffect(() => {
+    // Parse ad targeting params
+    const vendorIdRaw = Array.isArray(params.vendor_id) ? params.vendor_id[0] : params.vendor_id;
+    const providerIdRaw = Array.isArray(params.provider_id) ? params.provider_id[0] : params.provider_id;
+    const productIdsRaw = Array.isArray(params.product_ids) ? params.product_ids[0] : params.product_ids;
+    const serviceIdsRaw = Array.isArray(params.service_ids) ? params.service_ids[0] : params.service_ids;
+    const adCategoryIdsRaw = Array.isArray(params.ad_category_ids) ? params.ad_category_ids[0] : params.ad_category_ids;
+    const adTitleRaw = Array.isArray(params.ad_title) ? params.ad_title[0] : params.ad_title;
+
+    const hasAdFilter = vendorIdRaw || providerIdRaw || productIdsRaw || serviceIdsRaw || adCategoryIdsRaw;
+
+    const newAdFilter = hasAdFilter
+      ? {
+          vendorId: vendorIdRaw ? Number(vendorIdRaw) : undefined,
+          providerId: providerIdRaw ? Number(providerIdRaw) : undefined,
+          productIds: parseIds(productIdsRaw),
+          serviceIds: parseIds(serviceIdsRaw),
+          categoryIds: parseIds(adCategoryIdsRaw),
+          title: adTitleRaw || undefined,
+        }
+      : null;
+
+    setAdFilter(newAdFilter);
+
+    // Parse normal category params
     const rawProducts = Array.isArray(params.product_categories)
       ? params.product_categories[0]
       : params.product_categories;
     const rawServices = Array.isArray(params.service_categories)
       ? params.service_categories[0]
       : params.service_categories;
-    const parsedProducts = rawProducts && rawProducts.trim().length > 0
-      ? rawProducts.split(',')
-        .map((value: string) => Number(value))
-        .filter((value: number) => Number.isFinite(value) && value > 0)
-      : [];
-    const parsedServices = rawServices && rawServices.trim().length > 0
-      ? rawServices.split(',')
-        .map((value: string) => Number(value))
-        .filter((value: number) => Number.isFinite(value) && value > 0)
-      : [];
+    const parsedProducts = parseIds(rawProducts);
+    const parsedServices = parseIds(rawServices);
     setSelectedProductCategoryIds(parsedProducts);
     setSelectedServiceCategoryIds(parsedServices);
-    search(queryRef.current, parsedProducts, parsedServices);
-  }, [params.product_categories, params.service_categories, search]);
+    search(queryRef.current, parsedProducts, parsedServices, newAdFilter);
+  }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids]);
 
   const handleOpenCategoryFilter = () => {
     router.push({
@@ -137,7 +194,20 @@ export default function SearchScreen() {
   const handleClearCategories = () => {
     setSelectedProductCategoryIds([]);
     setSelectedServiceCategoryIds([]);
-    search(query, [], []);
+    search(query, [], [], adFilter);
+  };
+
+  const handleClearAdFilter = () => {
+    setAdFilter(null);
+    router.setParams({
+      vendor_id: '',
+      provider_id: '',
+      product_ids: '',
+      service_ids: '',
+      ad_category_ids: '',
+      ad_title: '',
+    });
+    search(query, selectedProductCategoryIds, selectedServiceCategoryIds, null);
   };
 
   const handleAddToCart = async (productId: number) => {
@@ -164,14 +234,14 @@ export default function SearchScreen() {
             placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds)}
+            onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
             returnKeyType="search"
           />
           {query.length > 0 && (
             <Pressable
               onPress={() => {
                 setQuery('');
-                search('', selectedProductCategoryIds, selectedServiceCategoryIds);
+                search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter);
               }}
             >
               <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
@@ -179,6 +249,22 @@ export default function SearchScreen() {
           )}
         </View>
       </View>
+
+      {/* Ad filter banner */}
+      {adFilter && (
+        <View style={[styles.adFilterBanner, { backgroundColor: colors.pinkGlow, borderColor: colors.pink }]}>
+          <MaterialCommunityIcons name="bullhorn-outline" size={18} color={colors.pink} />
+          <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
+            Showing results from{' '}
+            <Text style={{ fontFamily: Fonts.bold, color: colors.pink }}>
+              {adFilter.title || 'Sponsored Ad'}
+            </Text>
+          </Text>
+          <Pressable onPress={handleClearAdFilter} hitSlop={8}>
+            <MaterialCommunityIcons name="close-circle" size={18} color={colors.pink} />
+          </Pressable>
+        </View>
+      )}
 
       {/* Mode toggle */}
       <View style={styles.toggleRow}>
@@ -203,26 +289,28 @@ export default function SearchScreen() {
         ))}
       </View>
 
-      <View style={styles.categorySection}>
-        <View style={styles.categoryRow}>
-          <Pressable
-            style={[styles.categoryButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-            onPress={handleOpenCategoryFilter}
-          >
-            <MaterialCommunityIcons name="filter-variant" size={18} color={colors.textMuted} />
-            <Text style={[styles.categoryButtonText, { color: colors.textPrimary }]}>
-              {selectedProductCategoryIds.length === 0 && selectedServiceCategoryIds.length === 0
-                ? 'All categories'
-                : `Products: ${selectedProductCategoryIds.length} · Services: ${selectedServiceCategoryIds.length}`}
-            </Text>
-          </Pressable>
-          {(selectedProductCategoryIds.length > 0 || selectedServiceCategoryIds.length > 0) && (
-            <Pressable onPress={handleClearCategories} style={styles.clearButton}>
-              <Text style={[styles.clearButtonText, { color: colors.pink }]}>Clear</Text>
+      {!adFilter && (
+        <View style={styles.categorySection}>
+          <View style={styles.categoryRow}>
+            <Pressable
+              style={[styles.categoryButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+              onPress={handleOpenCategoryFilter}
+            >
+              <MaterialCommunityIcons name="filter-variant" size={18} color={colors.textMuted} />
+              <Text style={[styles.categoryButtonText, { color: colors.textPrimary }]}>
+                {selectedProductCategoryIds.length === 0 && selectedServiceCategoryIds.length === 0
+                  ? 'All categories'
+                  : `Products: ${selectedProductCategoryIds.length} · Services: ${selectedServiceCategoryIds.length}`}
+              </Text>
             </Pressable>
-          )}
+            {(selectedProductCategoryIds.length > 0 || selectedServiceCategoryIds.length > 0) && (
+              <Pressable onPress={handleClearCategories} style={styles.clearButton}>
+                <Text style={[styles.clearButtonText, { color: colors.pink }]}>Clear</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       {loading ? (
         <View style={styles.center}>
@@ -299,6 +387,23 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1, fontFamily: Fonts.medium,
     fontSize: FontSizes.sm, marginLeft: Spacing.sm, paddingVertical: 0,
+  },
+
+  adFilterBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  adFilterText: {
+    flex: 1,
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
   },
 
   toggleRow: {
