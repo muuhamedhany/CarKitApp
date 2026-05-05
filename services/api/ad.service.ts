@@ -13,6 +13,11 @@ export interface Ad {
   end_date: string | null;
   created_at: string;
   advertiser_name?: string;
+  vendor_id?: number | null;
+  provider_id?: number | null;
+  target_product_ids?: number[];
+  target_service_ids?: number[];
+  target_category_ids?: number[];
 }
 
 export interface CreateAdPayload {
@@ -21,6 +26,9 @@ export interface CreateAdPayload {
   duration_days: 7 | 14 | 30;
   price: number;
   search_keyword?: string;
+  target_product_ids?: number[];
+  target_service_ids?: number[];
+  target_category_ids?: number[];
 }
 
 export const adService = {

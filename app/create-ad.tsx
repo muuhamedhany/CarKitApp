@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   Image, ActivityIndicator, TextInput,
@@ -10,9 +10,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader } from '@/components';
+import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 // Duration tiers
@@ -23,6 +25,8 @@ const DURATION_TIERS = [
 ] as const;
 
 type DurationDays = 7 | 14 | 30;
+
+type SelectableItem = { id: number; name: string; image_url?: string | null };
 
 async function uploadAdImage(base64File: string): Promise<string> {
   const filename = `ad-${Date.now()}-${Math.floor(Math.random() * 1000)}.jpg`;
@@ -43,7 +47,11 @@ export default function CreateAdScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { showToast } = useToast();
+  const { user, token } = useAuth();
   const insets = useSafeAreaInsets();
+
+  const isVendor = user?.role === 'vendor';
+  const isProvider = user?.role === 'provider';
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -51,7 +59,96 @@ export default function CreateAdScreen() {
   const [selectedDuration, setSelectedDuration] = useState<DurationDays>(14);
   const [uploading, setUploading] = useState(false);
 
+  // Targeting state
+  const [myItems, setMyItems] = useState<SelectableItem[]>([]);
+  const [categories, setCategories] = useState<SelectableItem[]>([]);
+  const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [loadingItems, setLoadingItems] = useState(true);
+
   const selectedTier = DURATION_TIERS.find((t) => t.days === selectedDuration)!;
+
+  // Fetch user's items and categories
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+      setLoadingItems(true);
+      const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+
+      try {
+        if (isVendor && user?.vendor_id) {
+          // Fetch vendor's products
+          const [prodRes, catRes] = await Promise.all([
+            fetch(`${API_URL}/products?vendor_id=${user.vendor_id}&pageSize=100`, { headers }),
+            fetch(`${API_URL}/products/categories`, { headers }),
+          ]);
+          const prodData = await prodRes.json();
+          const catData = await catRes.json();
+
+          if (prodData.success) {
+            setMyItems(
+              (prodData.data || []).map((p: any) => ({
+                id: p.product_id,
+                name: p.name,
+                image_url: p.image_url,
+              }))
+            );
+          }
+          if (catData.success) {
+            setCategories(
+              (catData.data || []).map((c: any) => ({
+                id: c.category_id,
+                name: c.name,
+              }))
+            );
+          }
+        } else if (isProvider) {
+          // Fetch provider's services
+          const [servRes, catRes] = await Promise.all([
+            fetch(`${API_URL}/services/me?pageSize=100`, { headers }),
+            fetch(`${API_URL}/services/categories`, { headers }),
+          ]);
+          const servData = await servRes.json();
+          const catData = await catRes.json();
+
+          if (servData.success) {
+            setMyItems(
+              (servData.data || []).map((s: any) => ({
+                id: s.service_id,
+                name: s.name,
+                image_url: s.image_url,
+              }))
+            );
+          }
+          if (catData.success) {
+            setCategories(
+              (catData.data || []).map((c: any) => ({
+                id: c.service_category_id,
+                name: c.name,
+              }))
+            );
+          }
+        }
+      } catch {
+        // Silently fail — selectors will just be empty
+      } finally {
+        setLoadingItems(false);
+      }
+    };
+    fetchData();
+  }, [token, isVendor, isProvider, user?.vendor_id]);
+
+  const toggleItem = (id: number) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleCategory = (id: number) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -81,11 +178,15 @@ export default function CreateAdScreen() {
         if (!imageBase64) throw new Error("Image base64 data is missing.");
         bannerUrl = await uploadAdImage(imageBase64);
       } catch (error: any) {
-        // If upload fails, continue with local URI — backend will store null
         const msg = error.message || String(error);
         showToast('warning', 'Upload Issue', `Could not upload image: ${msg}`);
         bannerUrl = null;
       }
+
+      // Build targeting params
+      const targetProductIds = isVendor ? selectedItemIds : [];
+      const targetServiceIds = isProvider ? selectedItemIds : [];
+      const targetCategoryIds = selectedCategoryIds;
 
       // Navigate to payment with params
       router.push({
@@ -95,12 +196,17 @@ export default function CreateAdScreen() {
           title: title.trim(),
           duration_days: String(selectedDuration),
           price: String(selectedTier.price),
+          target_product_ids: JSON.stringify(targetProductIds),
+          target_service_ids: JSON.stringify(targetServiceIds),
+          target_category_ids: JSON.stringify(targetCategoryIds),
         },
       });
     } finally {
       setUploading(false);
     }
   };
+
+  const itemLabel = isVendor ? 'Products' : 'Services';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -161,8 +267,120 @@ export default function CreateAdScreen() {
           maxLength={80}
         />
 
-        {/* Step 3 — Duration */}
+        {/* Step 3 — Targeting */}
         <Text style={[styles.stepLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>STEP 3</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Target Audience</Text>
+        <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
+          Choose which {itemLabel.toLowerCase()} or categories appear when a customer taps your ad. You can pick specific {itemLabel.toLowerCase()}, categories, or both.
+        </Text>
+
+        {loadingItems ? (
+          <ActivityIndicator color={colors.pink} style={{ marginVertical: Spacing.md }} />
+        ) : (
+          <>
+            {/* Specific items */}
+            <Text style={[styles.subHeading, { color: colors.textPrimary }]}>
+              My {itemLabel}
+              {selectedItemIds.length > 0 && (
+                <Text style={{ color: colors.pink }}> ({selectedItemIds.length} selected)</Text>
+              )}
+            </Text>
+            {myItems.length === 0 ? (
+              <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+                You have no {itemLabel.toLowerCase()} yet. Create some first!
+              </Text>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                {myItems.map((item) => {
+                  const selected = selectedItemIds.includes(item.id);
+                  return (
+                    <Pressable
+                      key={item.id}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: selected ? colors.pinkGlow : colors.backgroundSecondary,
+                          borderColor: selected ? colors.pink : colors.cardBorder,
+                        },
+                      ]}
+                      onPress={() => toggleItem(item.id)}
+                    >
+                      {selected && (
+                        <MaterialCommunityIcons name="check-circle" size={16} color={colors.pink} />
+                      )}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: selected ? colors.pink : colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+
+            {/* Categories */}
+            <Text style={[styles.subHeading, { color: colors.textPrimary, marginTop: Spacing.md }]}>
+              Categories
+              {selectedCategoryIds.length > 0 && (
+                <Text style={{ color: colors.pink }}> ({selectedCategoryIds.length} selected)</Text>
+              )}
+            </Text>
+            {categories.length === 0 ? (
+              <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+                No categories available.
+              </Text>
+            ) : (
+              <View style={styles.chipWrap}>
+                {categories.map((cat) => {
+                  const selected = selectedCategoryIds.includes(cat.id);
+                  return (
+                    <Pressable
+                      key={cat.id}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: selected ? colors.pinkGlow : colors.backgroundSecondary,
+                          borderColor: selected ? colors.pink : colors.cardBorder,
+                        },
+                      ]}
+                      onPress={() => toggleCategory(cat.id)}
+                    >
+                      {selected && (
+                        <MaterialCommunityIcons name="check-circle" size={16} color={colors.pink} />
+                      )}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: selected ? colors.pink : colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {cat.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {selectedItemIds.length === 0 && selectedCategoryIds.length === 0 && (
+              <View style={[styles.noTargetBanner, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.noTargetText, { color: colors.textMuted }]}>
+                  No targeting selected — customers will see all your {itemLabel.toLowerCase()} when they tap the ad.
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+
+        {/* Step 4 — Duration */}
+        <Text style={[styles.stepLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>STEP 4</Text>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose Duration</Text>
         <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
           Select how long your ad will appear on the home screen after approval.
@@ -213,6 +431,14 @@ export default function CreateAdScreen() {
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Duration</Text>
             <Text style={[styles.summaryVal, { color: colors.textPrimary }]}>{selectedTier.label}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Targeting</Text>
+            <Text style={[styles.summaryVal, { color: colors.textPrimary }]}>
+              {selectedItemIds.length > 0 || selectedCategoryIds.length > 0
+                ? `${selectedItemIds.length} ${itemLabel.toLowerCase()}, ${selectedCategoryIds.length} categories`
+                : `All ${itemLabel.toLowerCase()}`}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Total</Text>
@@ -306,6 +532,51 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm + 2,
     fontFamily: Fonts.medium,
     fontSize: FontSizes.md,
+  },
+
+  // Targeting
+  subHeading: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.md,
+    marginBottom: Spacing.sm,
+  },
+  emptyHint: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    marginBottom: Spacing.sm,
+    fontStyle: 'italic',
+  },
+  chipScroll: { marginBottom: Spacing.sm },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.sm },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: Spacing.xs,
+  },
+  chipText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    maxWidth: 140,
+  },
+  noTargetBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  noTargetText: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    flex: 1,
+    lineHeight: 18,
   },
 
   tiersContainer: {

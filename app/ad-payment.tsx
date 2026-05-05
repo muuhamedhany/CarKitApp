@@ -36,12 +36,20 @@ export default function AdPaymentScreen() {
     title: string;
     duration_days: string;
     price: string;
+    target_product_ids: string;
+    target_service_ids: string;
+    target_category_ids: string;
   }>();
 
   const bannerUrl = params.banner_image_url || '';
   const title = params.title || '';
   const durationDays = Number(params.duration_days) as 7 | 14 | 30;
   const price = Number(params.price);
+
+  // Parse target arrays from JSON strings
+  const targetProductIds: number[] = (() => { try { return JSON.parse(params.target_product_ids || '[]'); } catch { return []; } })();
+  const targetServiceIds: number[] = (() => { try { return JSON.parse(params.target_service_ids || '[]'); } catch { return []; } })();
+  const targetCategoryIds: number[] = (() => { try { return JSON.parse(params.target_category_ids || '[]'); } catch { return []; } })();
 
   const durationLabel =
     durationDays === 7  ? '7 Days'  :
@@ -105,6 +113,9 @@ export default function AdPaymentScreen() {
         title: title || undefined,
         duration_days: durationDays,
         price,
+        target_product_ids: targetProductIds,
+        target_service_ids: targetServiceIds,
+        target_category_ids: targetCategoryIds,
       });
 
       if (!adRes.success || !adRes.data) {

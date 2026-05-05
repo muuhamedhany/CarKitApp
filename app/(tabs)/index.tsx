@@ -33,7 +33,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const AD_SLIDE_INTERVAL = 4000;
 
 // ─── Ad Slideshow ─────────────────────────────────────────────────────────────
-function AdSlideshow({ ads, colors }: { ads: Ad[]; colors: any }) {
+function AdSlideshow({ ads, colors, onAdPress }: { ads: Ad[]; colors: any; onAdPress?: (ad: Ad) => void }) {
   const scrollRef = useRef<ScrollView>(null);
   const indexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -66,7 +66,7 @@ function AdSlideshow({ ads, colors }: { ads: Ad[]; colors: any }) {
         }}
       >
         {ads.map((ad) => (
-          <View key={ad.ad_id} style={[adStyles.slide, { width: adWidth }]}>
+          <Pressable key={ad.ad_id} style={[adStyles.slide, { width: adWidth }]} onPress={() => onAdPress?.(ad)}>
             {ad.banner_image_url ? (
               <Image source={{ uri: ad.banner_image_url }} style={adStyles.slideImage} resizeMode="cover" />
             ) : (
@@ -86,7 +86,7 @@ function AdSlideshow({ ads, colors }: { ads: Ad[]; colors: any }) {
             <View style={adStyles.sponsoredBadge}>
               <Text style={adStyles.sponsoredText}>Sponsored</Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
 
@@ -311,6 +311,26 @@ export default function HomeScreen() {
     }
   };
 
+  const handleAdPress = (ad: Ad) => {
+    // Build search params that filter results to the ad's vendor/provider
+    const searchParams: Record<string, string> = {};
+
+    if (ad.vendor_id) searchParams.vendor_id = String(ad.vendor_id);
+    if (ad.provider_id) searchParams.provider_id = String(ad.provider_id);
+    if (ad.target_product_ids && ad.target_product_ids.length > 0) {
+      searchParams.product_ids = ad.target_product_ids.join(',');
+    }
+    if (ad.target_service_ids && ad.target_service_ids.length > 0) {
+      searchParams.service_ids = ad.target_service_ids.join(',');
+    }
+    if (ad.target_category_ids && ad.target_category_ids.length > 0) {
+      searchParams.ad_category_ids = ad.target_category_ids.join(',');
+    }
+    if (ad.advertiser_name) searchParams.ad_title = ad.advertiser_name;
+
+    router.push({ pathname: '/(tabs)/search' as any, params: searchParams });
+  };
+
   const renderServiceCard = (service: Service) => {
     const hasImage = !!service.image_url;
     return (
@@ -423,7 +443,7 @@ export default function HomeScreen() {
 
       {/* Sponsored Ads Slideshow */}
       {activeAds.length > 0 && (
-        <AdSlideshow ads={activeAds} colors={colors} />
+        <AdSlideshow ads={activeAds} colors={colors} onAdPress={handleAdPress} />
       )}
 
       {/* Hero Banner */}
