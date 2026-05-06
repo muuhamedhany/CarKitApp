@@ -7,77 +7,119 @@ import {
   ActivityIndicator,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  FadeInUp, 
+  FadeInDown, 
+  Layout,
+  FadeOut
+} from 'react-native-reanimated';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { CartItem } from '@/types/api.types';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
-import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
+import { SecondaryButton, CartSkeleton } from '@/components';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
-// ─── Cart row component (needs its own useState for per-image error state) ────
-function CartItemRow({ item, onUpdate, onRemove }: {
+// ─── Cart row component ───────────────────────────────────────────────────────
+function CartItemRow({ item, index, onUpdate, onRemove }: {
   item: ReturnType<typeof useCart>['items'][0];
+  index: number;
   onUpdate: (id: number, qty: number) => void;
   onRemove: (id: number) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [imgError, setImgError] = useState(false);
   const showImage = !!item.image_url && !imgError;
 
   return (
-    <View style={[styles.cartItem, { borderBottomColor: colors.itemSeparator }]}>
-      {/* Product thumbnail */}
-      <View style={[styles.itemImage, { backgroundColor: colors.imagePlaceholder }]}>
-        {showImage ? (
-          <Image
-            source={{ uri: item.image_url! }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <MaterialCommunityIcons name="car-cog" size={28} color={colors.textMuted} />
-        )}
-      </View>
-
-      {/* Name & price */}
-      <View style={styles.itemInfo}>
-        <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>
-          {item.name}
-        </Text>
-        <Text style={[styles.itemPrice, { color: colors.pink }]}>{item.price} EGP</Text>
-      </View>
-
-      {/* Qty controls + delete */}
-      <View style={styles.rightCol}>
-        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onRemove(item.cart_item_id); }} style={styles.deleteBtn} hitSlop={8}>
-          <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.textMuted} />
-        </Pressable>
-
-        <View style={styles.qtyRow}>
-          <Pressable
-            style={[styles.qtyBtn, { backgroundColor: colors.backgroundSecondary }]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity - 1); }}
-          >
-            <MaterialCommunityIcons name="minus" size={16} color={colors.textPrimary} />
-          </Pressable>
-          <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
-          <Pressable
-            style={[styles.qtyBtn, { backgroundColor: colors.backgroundSecondary }]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity + 1); }}
-          >
-            <MaterialCommunityIcons name="plus" size={16} color={colors.textPrimary} />
-          </Pressable>
+    <Animated.View 
+      entering={FadeInUp.delay(index * 100).duration(600)}
+      exiting={FadeOut.duration(300)}
+      layout={Layout.springify()}
+    >
+      <BlurView 
+        intensity={isDark ? 20 : 40} 
+        tint={isDark ? 'dark' : 'light'} 
+        style={[styles.cartItem, { borderColor: colors.cardBorder }]}
+      >
+        {/* Product thumbnail */}
+        <View style={[styles.itemImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+          {showImage ? (
+            <Image
+              source={{ uri: item.image_url! }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <MaterialCommunityIcons name="car-cog" size={28} color={colors.textMuted} />
+          )}
         </View>
-      </View>
-    </View>
+
+        {/* Name & price */}
+        <View style={styles.itemInfo}>
+          <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={[styles.itemPrice, { color: colors.pink }]}>{item.price} EGP</Text>
+          
+          <View style={styles.qtyRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.qtyBtn, 
+                { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  opacity: pressed ? 0.7 : 1
+                }
+              ]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity - 1); }}
+            >
+              <MaterialCommunityIcons name="minus" size={14} color={colors.textPrimary} />
+            </Pressable>
+            <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.qtyBtn, 
+                { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  opacity: pressed ? 0.7 : 1
+                }
+              ]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity + 1); }}
+            >
+              <MaterialCommunityIcons name="plus" size={14} color={colors.textPrimary} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Delete button */}
+        <Pressable 
+          onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); onRemove(item.cart_item_id); }} 
+          style={({ pressed }) => [
+            styles.deleteBtn, 
+            { 
+              backgroundColor: isDark ? 'rgba(255, 77, 77, 0.1)' : 'rgba(255, 77, 77, 0.05)',
+              opacity: pressed ? 0.6 : 1
+            }
+          ]}
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF4D4D" />
+        </Pressable>
+      </BlurView>
+    </Animated.View>
   );
 }
 
@@ -86,7 +128,7 @@ export default function CartScreen() {
   const router = useRouter();
   const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
@@ -97,66 +139,113 @@ export default function CartScreen() {
       showToast('warning', 'Empty Cart', 'Add some products first!');
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/checkout');
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { marginTop: insets.top }]}>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Cart</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>{items.length} items</Text>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <View style={[styles.header, { marginTop: insets.top + 10 }]}>
+        <Animated.View entering={FadeInDown.delay(100).duration(600)}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Cart</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            {items.length} {items.length === 1 ? 'item' : 'items'} saved
+          </Text>
+        </Animated.View>
+        <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.headerAction, 
+              { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                opacity: pressed ? 0.7 : 1
+              }
+            ]}
+            onPress={() => router.push('/(tabs)/search')}
+          >
+            <MaterialCommunityIcons name="plus" size={24} color={colors.pink} />
+          </Pressable>
+        </Animated.View>
       </View>
 
       {loading ? (
-        <View style={{ paddingHorizontal: Spacing.md, paddingTop: 20, gap: 16 }}>
-          {[1, 2, 3].map((skeleton) => (
-             <View key={skeleton} style={{ flexDirection: 'row', gap: 16 }}>
-               <SkeletonBone width={80} height={80} borderRadius={16} />
-               <View style={{ flex: 1, justifyContent: 'center', gap: 12 }}>
-                 <SkeletonBone width="70%" height={16} borderRadius={4} />
-                 <SkeletonBone width="40%" height={16} borderRadius={4} />
-               </View>
-             </View>
-          ))}
-        </View>
+        <CartSkeleton />
       ) : items.length === 0 ? (
-        <View style={styles.center}>
-          <MaterialCommunityIcons name="cart-outline" size={48} color={colors.textMuted} />
+        <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.center}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconCircle}>
+            <MaterialCommunityIcons name="cart-variant" size={48} color={colors.pink} />
+          </BlurView>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
-        </View>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Looks like you haven't added anything to your cart yet.</Text>
+          <View style={{ marginTop: Spacing.xxl, width: 220 }}>
+            <SecondaryButton title="Start Shopping" onPress={() => router.push('/(tabs)/search')} />
+          </View>
+        </Animated.View>
       ) : (
         <FlashList
-          data={items}
-          keyExtractor={(item) => item.cart_item_id.toString()}
-          renderItem={({ item }) => (
-            <CartItemRow
-              item={item}
-              onUpdate={updateQuantity}
-              onRemove={removeItem}
-            />
-          )}
-          contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: androidTabOffset + 130 }}
-          showsVerticalScrollIndicator={false}
+          {...({
+            data: items,
+            estimatedItemSize: 120,
+            keyExtractor: (item: CartItem) => item.cart_item_id.toString(),
+            renderItem: ({ item, index }: any) => (
+              <CartItemRow
+                item={item}
+                index={index}
+                onUpdate={updateQuantity}
+                onRemove={removeItem}
+              />
+            ),
+            contentContainerStyle: { 
+              paddingHorizontal: Spacing.lg, 
+              paddingTop: 10,
+              paddingBottom: androidTabOffset + 220 
+            },
+            showsVerticalScrollIndicator: false,
+          } as any)}
         />
       )}
 
       {items.length > 0 && (
-        <View style={[
-          styles.bottomBar,
-          {
-            backgroundColor: colors.background,
-            borderTopColor: colors.itemSeparator,
-            paddingBottom: insets.bottom + TAB_BAR_HEIGHT,
-          },
-        ]}>
-          <View>
-            <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total</Text>
-            <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{total} EGP</Text>
-          </View>
-          <Pressable onPress={handleCheckout} style={[styles.checkoutBtn, { backgroundColor: colors.pink }]}>
-            <Text style={styles.checkoutText}>Checkout</Text>
-          </Pressable>
-        </View>
+        <Animated.View 
+          entering={FadeInUp.delay(400).duration(800)}
+          style={[styles.bottomContainer, { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 15 }]}
+        >
+          <BlurView 
+            intensity={isDark ? 30 : 50} 
+            tint={isDark ? 'dark' : 'light'}
+            style={styles.bottomBlur}
+          >
+            <View style={styles.bottomBar}>
+              <View>
+                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Amount</Text>
+                <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{total.toLocaleString()} EGP</Text>
+              </View>
+              <Pressable 
+                onPress={handleCheckout} 
+                style={({ pressed }) => [
+                  styles.checkoutBtn, 
+                  { 
+                    backgroundColor: colors.pink,
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }]
+                  }
+                ]}
+              >
+                <Text style={styles.checkoutText}>Checkout</Text>
+                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+              </Pressable>
+            </View>
+          </BlurView>
+        </Animated.View>
       )}
     </View>
   );
@@ -164,55 +253,178 @@ export default function CartScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  orb: {
+    position: 'absolute',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
+  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
 
   header: {
-    paddingTop: Spacing.lg, paddingBottom: Spacing.xl,
-    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  headerTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl, marginBottom: 4 },
-  headerSubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+  headerTitle: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.xxxl, 
+    letterSpacing: -1 
+  },
+  headerSubtitle: { 
+    fontFamily: Fonts.medium, 
+    fontSize: FontSizes.sm, 
+    marginTop: -4,
+    opacity: 0.6
+  },
+  headerAction: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   cartItem: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  itemImage: {
-    width: 64, height: 64, borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: Spacing.md,
+    flexDirection: 'row', 
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    ...Shadows.md,
     overflow: 'hidden',
   },
-  itemInfo: { flex: 1, paddingRight: Spacing.sm },
-  itemName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 4 },
-  itemPrice: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  itemImage: {
+    width: 84, 
+    height: 84, 
+    borderRadius: BorderRadius.xl,
+    justifyContent: 'center', 
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  itemInfo: { 
+    flex: 1, 
+    marginLeft: Spacing.lg,
+    justifyContent: 'center',
+  },
+  itemName: { 
+    fontFamily: Fonts.bold, 
+    fontSize: FontSizes.lg, 
+    marginBottom: 4,
+    letterSpacing: -0.3
+  },
+  itemPrice: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.md,
+    marginBottom: 10,
+  },
 
-  rightCol: { alignItems: 'flex-end', gap: 8 },
-  deleteBtn: { paddingBottom: 2 },
-
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  qtyRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 16 
+  },
   qtyBtn: {
-    width: 30, height: 30, borderRadius: 15,
-    justifyContent: 'center', alignItems: 'center',
+    width: 32, 
+    height: 32, 
+    borderRadius: 10,
+    justifyContent: 'center', 
+    alignItems: 'center',
   },
-  qtyText: { fontFamily: Fonts.bold, fontSize: FontSizes.md, minWidth: 20, textAlign: 'center' },
+  qtyText: { 
+    fontFamily: Fonts.bold, 
+    fontSize: FontSizes.lg, 
+    minWidth: 28, 
+    textAlign: 'center' 
+  },
 
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderTopWidth: 1,
-    paddingHorizontal: Spacing.md, paddingTop: Spacing.lg,
+  deleteBtn: { 
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.sm,
   },
-  totalLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: 2 },
-  totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl },
+
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.lg,
+  },
+  bottomBlur: {
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+    ...Shadows.lg,
+  },
+  bottomBar: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    padding: Spacing.xl,
+  },
+  totalLabel: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: 10, 
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 2,
+    opacity: 0.5
+  },
+  totalValue: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.xxl,
+    letterSpacing: -0.5
+  },
 
   checkoutBtn: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+    flexDirection: 'row',
+    borderRadius: BorderRadius.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.lg,
+    shadowColor: '#CD42A8',
   },
-  checkoutText: { fontFamily: Fonts.bold, fontSize: FontSizes.md, color: '#FFFFFF' },
+  checkoutText: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.md, 
+    color: '#FFFFFF' 
+  },
 
-  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginTop: Spacing.md },
+  emptyIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  emptyTitle: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.xl, 
+    marginTop: Spacing.md,
+    letterSpacing: -0.5
+  },
+  emptySubtitle: { 
+    fontFamily: Fonts.medium, 
+    fontSize: FontSizes.md, 
+    marginTop: 10, 
+    textAlign: 'center',
+    lineHeight: 22,
+    opacity: 0.6,
+  },
 });
+

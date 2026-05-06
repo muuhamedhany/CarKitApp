@@ -1,19 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, Dimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  FadeInDown, 
+  FadeInUp, 
+  Layout, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring 
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader } from '@/components';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Colors } from '@/constants/theme';
 import { Category, ServiceCategory } from '@/types/api.types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function CategoryFilterScreen() {
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const { showToast } = useToast();
     const params = useLocalSearchParams<{ product_categories?: string; service_categories?: string }>();
@@ -77,6 +90,7 @@ export default function CategoryFilterScreen() {
     }, [showToast]);
 
     const toggleProductCategory = useCallback((categoryId: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setSelectedProductIds((prev) => {
             if (prev.includes(categoryId)) {
                 return prev.filter((id) => id !== categoryId);
@@ -86,6 +100,7 @@ export default function CategoryFilterScreen() {
     }, []);
 
     const toggleServiceCategory = useCallback((categoryId: number) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setSelectedServiceIds((prev) => {
             if (prev.includes(categoryId)) {
                 return prev.filter((id) => id !== categoryId);
@@ -99,12 +114,13 @@ export default function CategoryFilterScreen() {
             return 'All categories';
         }
         const parts = [] as string[];
-        if (selectedProductIds.length > 0) parts.push(`Products: ${selectedProductIds.length}`);
-        if (selectedServiceIds.length > 0) parts.push(`Services: ${selectedServiceIds.length}`);
+        if (selectedProductIds.length > 0) parts.push(`${selectedProductIds.length} Products`);
+        if (selectedServiceIds.length > 0) parts.push(`${selectedServiceIds.length} Services`);
         return parts.join(' · ');
     }, [selectedProductIds.length, selectedServiceIds.length]);
 
     const handleApply = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.navigate({
             pathname: '/(tabs)/search',
             params: {
@@ -115,18 +131,30 @@ export default function CategoryFilterScreen() {
     };
 
     const handleClear = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         setSelectedProductIds([]);
         setSelectedServiceIds([]);
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}
-        >
-            <CenteredHeader
-                title="Categories"
-                titleColor={colors.textPrimary}
-                rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
             />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -150, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 100, left: -200, backgroundColor: colors.purple + '10' }]} />
+
+            <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
+                <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                <CenteredHeader
+                    title="Categories"
+                    titleColor={colors.textPrimary}
+                    rowStyle={{ borderBottomWidth: 0 }}
+                />
+            </View>
 
             {loading ? (
                 <View style={styles.center}>
@@ -134,82 +162,129 @@ export default function CategoryFilterScreen() {
                 </View>
             ) : (
                 <>
-                    <View style={styles.summaryRow}>
+                    <Animated.View entering={FadeInDown.delay(100)} style={styles.summaryRow}>
                         <Text style={[styles.summaryText, { color: colors.textSecondary }]}>{selectedLabel}</Text>
                         {(selectedProductIds.length > 0 || selectedServiceIds.length > 0) && (
                             <Pressable onPress={handleClear}>
-                                <Text style={[styles.clearText, { color: colors.pink }]}>Clear</Text>
+                                <Text style={[styles.clearText, { color: colors.pink }]}>Reset All</Text>
                             </Pressable>
                         )}
-                    </View>
+                    </Animated.View>
 
-                    <ScrollView contentContainerStyle={styles.list}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Product Categories</Text>
-                        {productCategories.length === 0 ? (
-                            <Text style={[styles.sectionHint, { color: colors.textMuted }]}>No product categories available.</Text>
-                        ) : (
-                            productCategories.map((category) => {
-                                const isSelected = selectedProductIds.includes(category.category_id);
-                                return (
-                                    <Pressable
-                                        key={category.category_id}
-                                        onPress={() => toggleProductCategory(category.category_id)}
-                                        style={[
-                                            styles.row,
-                                            { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
-                                        ]}
-                                    >
-                                        <View style={styles.rowLeft}>
-                                            <MaterialCommunityIcons
-                                                name={isSelected ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                                                size={22}
-                                                color={isSelected ? colors.pink : colors.textMuted}
-                                            />
-                                            <Text style={[styles.rowText, { color: colors.textPrimary }]}>{category.name}</Text>
-                                        </View>
-                                        {isSelected && (
-                                            <MaterialCommunityIcons name="check" size={18} color={colors.pink} />
-                                        )}
-                                    </Pressable>
-                                );
-                            })
-                        )}
+                    <ScrollView 
+                        contentContainerStyle={[styles.list, { paddingBottom: 140 + insets.bottom }]}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <Animated.View entering={FadeInUp.delay(200)}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shop Products</Text>
+                            {productCategories.length === 0 ? (
+                                <Text style={[styles.sectionHint, { color: colors.textMuted }]}>No product categories available.</Text>
+                            ) : (
+                                productCategories.map((category, idx) => {
+                                    const isSelected = selectedProductIds.includes(category.category_id);
+                                    return (
+                                        <Animated.View key={category.category_id} entering={FadeInUp.delay(200 + idx * 50)}>
+                                            <Pressable
+                                                onPress={() => toggleProductCategory(category.category_id)}
+                                                style={[
+                                                    styles.row,
+                                                    { 
+                                                        backgroundColor: isSelected 
+                                                            ? (isDark ? 'rgba(205, 66, 168, 0.15)' : 'rgba(205, 66, 168, 0.05)') 
+                                                            : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
+                                                        borderColor: isSelected ? colors.pink : colors.cardBorder 
+                                                    },
+                                                ]}
+                                            >
+                                                <View style={styles.rowLeft}>
+                                                    <View style={[styles.checkIcon, isSelected && { backgroundColor: colors.pink }]}>
+                                                        <MaterialCommunityIcons
+                                                            name={isSelected ? 'check' : 'plus'}
+                                                            size={16}
+                                                            color={isSelected ? '#FFF' : colors.textMuted}
+                                                        />
+                                                    </View>
+                                                    <Text style={[
+                                                        styles.rowText, 
+                                                        { color: colors.textPrimary },
+                                                        isSelected && { fontFamily: Fonts.extraBold }
+                                                    ]}>
+                                                        {category.name}
+                                                    </Text>
+                                                </View>
+                                                {isSelected && (
+                                                    <MaterialCommunityIcons name="heart" size={16} color={colors.pink} />
+                                                )}
+                                            </Pressable>
+                                        </Animated.View>
+                                    );
+                                })
+                            )}
+                        </Animated.View>
 
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Categories</Text>
-                        {serviceCategories.length === 0 ? (
-                            <Text style={[styles.sectionHint, { color: colors.textMuted }]}>No service categories available.</Text>
-                        ) : (
-                            serviceCategories.map((category) => {
-                                const isSelected = selectedServiceIds.includes(category.service_category_id);
-                                return (
-                                    <Pressable
-                                        key={category.service_category_id}
-                                        onPress={() => toggleServiceCategory(category.service_category_id)}
-                                        style={[
-                                            styles.row,
-                                            { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
-                                        ]}
-                                    >
-                                        <View style={styles.rowLeft}>
-                                            <MaterialCommunityIcons
-                                                name={isSelected ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                                                size={22}
-                                                color={isSelected ? colors.pink : colors.textMuted}
-                                            />
-                                            <Text style={[styles.rowText, { color: colors.textPrimary }]}>{category.name}</Text>
-                                        </View>
-                                        {isSelected && (
-                                            <MaterialCommunityIcons name="check" size={18} color={colors.pink} />
-                                        )}
-                                    </Pressable>
-                                );
-                            })
-                        )}
+                        <Animated.View entering={FadeInUp.delay(400)} style={{ marginTop: Spacing.xl }}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Book Services</Text>
+                            {serviceCategories.length === 0 ? (
+                                <Text style={[styles.sectionHint, { color: colors.textMuted }]}>No service categories available.</Text>
+                            ) : (
+                                serviceCategories.map((category, idx) => {
+                                    const isSelected = selectedServiceIds.includes(category.service_category_id);
+                                    return (
+                                        <Animated.View key={category.service_category_id} entering={FadeInUp.delay(400 + idx * 50)}>
+                                            <Pressable
+                                                onPress={() => toggleServiceCategory(category.service_category_id)}
+                                                style={[
+                                                    styles.row,
+                                                    { 
+                                                        backgroundColor: isSelected 
+                                                            ? (isDark ? 'rgba(205, 66, 168, 0.15)' : 'rgba(205, 66, 168, 0.05)') 
+                                                            : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
+                                                        borderColor: isSelected ? colors.pink : colors.cardBorder 
+                                                    },
+                                                ]}
+                                            >
+                                                <View style={styles.rowLeft}>
+                                                    <View style={[styles.checkIcon, isSelected && { backgroundColor: colors.pink }]}>
+                                                        <MaterialCommunityIcons
+                                                            name={isSelected ? 'check' : 'plus'}
+                                                            size={16}
+                                                            color={isSelected ? '#FFF' : colors.textMuted}
+                                                        />
+                                                    </View>
+                                                    <Text style={[
+                                                        styles.rowText, 
+                                                        { color: colors.textPrimary },
+                                                        isSelected && { fontFamily: Fonts.extraBold }
+                                                    ]}>
+                                                        {category.name}
+                                                    </Text>
+                                                </View>
+                                                {isSelected && (
+                                                    <MaterialCommunityIcons name="heart" size={16} color={colors.pink} />
+                                                )}
+                                            </Pressable>
+                                        </Animated.View>
+                                    );
+                                })
+                            )}
+                        </Animated.View>
                     </ScrollView>
 
-                    <View style={[styles.footer, { backgroundColor: colors.background }]}>
-                        <Pressable onPress={handleApply} style={[styles.applyButton, { backgroundColor: colors.pink }]}>
-                            <Text style={styles.applyText}>Apply Filters</Text>
+                    <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
+                        <BlurView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                        <Pressable 
+                            onPress={handleApply} 
+                            style={({ pressed }) => [
+                                styles.applyButton, 
+                                { 
+                                    backgroundColor: colors.pink,
+                                    opacity: pressed ? 0.9 : 1,
+                                    transform: [{ scale: pressed ? 0.98 : 1 }]
+                                }
+                            ]}
+                        >
+                            <Text style={styles.applyText}>Apply Selection</Text>
+                            <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
                         </Pressable>
                     </View>
                 </>
@@ -220,45 +295,74 @@ export default function CategoryFilterScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    orb: {
+        position: 'absolute',
+        width: 400,
+        height: 400,
+        borderRadius: 200,
+        opacity: 0.5,
+    },
+    headerContainer: {
+        zIndex: 10,
+        overflow: 'hidden',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+    },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Spacing.md,
-        paddingBottom: Spacing.sm,
+        paddingHorizontal: Spacing.xl,
+        paddingTop: Spacing.xl,
+        paddingBottom: Spacing.md,
     },
-    summaryText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
-    clearText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, textTransform: 'uppercase' },
-    list: { paddingHorizontal: Spacing.md, paddingBottom: 120 },
-    sectionTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, marginTop: Spacing.md, marginBottom: Spacing.sm },
-    sectionHint: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm },
+    summaryText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, letterSpacing: -0.2 },
+    clearText: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+    list: { paddingHorizontal: Spacing.lg },
+    sectionTitle: { fontFamily: Fonts.extraBold, fontSize: 24, marginTop: Spacing.md, marginBottom: Spacing.md, letterSpacing: -0.8 },
+    sectionHint: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm, opacity: 0.5 },
     row: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.md,
-        paddingVertical: 14,
-        borderRadius: BorderRadius.lg,
+        paddingVertical: 16,
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
         marginBottom: Spacing.sm,
+        ...Shadows.sm,
     },
-    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-    rowText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+    checkIcon: {
+        width: 24,
+        height: 24,
+        borderRadius: 8,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    rowText: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: -0.3 },
     footer: {
         position: 'absolute',
         left: 0,
         right: 0,
         bottom: 0,
-        paddingHorizontal: Spacing.md,
-        paddingBottom: Spacing.lg,
-        paddingTop: Spacing.sm,
+        paddingHorizontal: Spacing.xl,
+        paddingTop: Spacing.lg,
+        overflow: 'hidden',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
     },
     applyButton: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.xl,
+        ...Shadows.md,
+        shadowColor: Colors.pink,
     },
-    applyText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    applyText: { color: '#fff', fontFamily: Fonts.extraBold, fontSize: FontSizes.md, letterSpacing: -0.2 },
 });

@@ -1,4 +1,4 @@
-import { View, TextInput, StyleSheet, Pressable } from 'react-native';
+import { View, TextInput, StyleSheet, Pressable, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
@@ -14,6 +14,7 @@ type FormInputProps = {
   keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric' | 'number-pad';
   autoCapitalize?: 'none' | 'words' | 'sentences';
   autoComplete?: 'email' | 'name' | 'tel' | 'off';
+  label?: string;
   maxLength?: number;
 };
 
@@ -28,12 +29,15 @@ export default function FormInput({
   keyboardType = 'default',
   autoCapitalize = 'none',
   autoComplete = 'off',
+  label,
   maxLength,
 }: FormInputProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { borderColor: colors.inputBorder }]}>
+    <View style={styles.outerContainer}>
+      {label && <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>}
+      <View style={[styles.container, { borderColor: colors.inputBorder }]}>
       <MaterialCommunityIcons
         name={icon as any}
         size={20}
@@ -61,6 +65,7 @@ export default function FormInput({
           />
         </Pressable>
       )}
+      </View>
     </View>
   );
 }
@@ -72,8 +77,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     height: 52,
+  },
+  outerContainer: {
+    marginBottom: Spacing.md,
+  },
+  label: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   icon: {
     marginRight: Spacing.sm,

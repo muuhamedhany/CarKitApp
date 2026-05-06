@@ -1,6 +1,6 @@
 export { default as AddButton } from './common/AddButton';
 export { default as AuthFooter } from './common/AuthFooter';
-export { default as CategoryPill } from './common/CategoryPill';
+// export { default as CategoryPill } from './common/CategoryPill';
 export { default as Divider } from './common/Divider';
 export { default as FormInput } from './common/FormInput';
 export { default as GradientButton } from './common/GradientButton';
@@ -19,5 +19,12 @@ export { default as VendorTabBar } from './layout/VendorTabBar';
 export { default as ProviderTabBar } from './layout/ProviderTabBar';
 export { default as ProductCard } from './layout/ProductCard';
 export { default as ServiceCard } from './layout/ServiceCard';
+export { default as CategoryPill } from './layout/CategoryPill';
+export { AdSlideshow } from './layout/AdSlideshow';
+export { HomeSkeleton } from './layout/HomeSkeleton';
+export { SearchSkeleton } from './layout/SearchSkeleton';
+export { CartSkeleton } from './layout/CartSkeleton';
+export { ProductDetailSkeleton } from './layout/ProductDetailSkeleton';
+export { ServiceDetailSkeleton } from './layout/ServiceDetailSkeleton';
 
 export { default as GetDirectionsButton } from './GetDirectionsButton';

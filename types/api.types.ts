@@ -3,11 +3,12 @@ export type User = {
   name: string;
   email: string;
   phone?: string;
-  provider?: 'local' | 'google';
+  provider?: 'local' | 'google' | string;
   role?: string;
   verification_status?: string;
   vendor_id?: number;
   provider_id?: number;
+  picture?: string;
 };
 
 export type Category = {
@@ -87,10 +88,15 @@ export type Booking = {
 };
 
 export type CartItem = {
-  id: string;
-  name: string;
-  price: number;
+  cart_item_id: number;
+  cart_id_fk: number;
+  product_id_fk: number;
   quantity: number;
+  name: string;
+  price: string;
+  stock: number;
+  item_total: string;
+  image_url?: string | null;
 };
 
 export type PaginationData = {

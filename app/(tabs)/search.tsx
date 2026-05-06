@@ -8,19 +8,33 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  Dimensions,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  FadeInUp, 
+  FadeInDown, 
+  useSharedValue, 
+  useAnimatedScrollHandler, 
+  useAnimatedStyle,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { ProductCard, ServiceCard } from '@/components';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { ProductCard, ServiceCard, SearchSkeleton } from '@/components';
 import { Product } from '@/types/api.types';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
 type Service = {
@@ -34,7 +48,6 @@ type ViewMode = 'all' | 'products' | 'services';
 type SearchParams = {
   product_categories?: string;
   service_categories?: string;
-  // Ad targeting params
   vendor_id?: string;
   provider_id?: string;
   product_ids?: string;
@@ -54,7 +67,7 @@ export default function SearchScreen() {
   const { token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
   const params = useLocalSearchParams<SearchParams>();
@@ -68,7 +81,6 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  // Ad targeting filter
   const [adFilter, setAdFilter] = useState<{
     vendorId?: number;
     providerId?: number;
@@ -79,10 +91,23 @@ export default function SearchScreen() {
   } | null>(null);
 
   const queryRef = useRef(query);
+  const scrollY = useSharedValue(0);
 
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
+  const headerStyle = useAnimatedStyle(() => {
+    const borderAlpha = interpolate(scrollY.value, [0, 20], [0, 0.1], Extrapolate.CLAMP);
+    return {
+      borderBottomWidth: 1,
+      borderBottomColor: `rgba(255,255,255,${borderAlpha})`,
+    };
+  });
 
   const search = useCallback(async (
     searchQuery: string,
@@ -98,7 +123,6 @@ export default function SearchScreen() {
 
       const af = adFilterOverride !== undefined ? adFilterOverride : adFilter;
 
-      // ── Product query params ──
       const prodParams = new URLSearchParams();
       if (searchQuery.trim()) prodParams.set('search', searchQuery.trim());
       if (af?.vendorId) prodParams.set('vendor_id', String(af.vendorId));
@@ -113,7 +137,6 @@ export default function SearchScreen() {
       prodParams.set('page', '1');
       prodParams.set('pageSize', '50');
 
-      // ── Service query params ──
       const serviceParams = new URLSearchParams();
       if (searchQuery.trim()) serviceParams.set('search', searchQuery.trim());
       if (af?.providerId) serviceParams.set('provider_id', String(af.providerId));
@@ -134,9 +157,7 @@ export default function SearchScreen() {
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
       if (prodData.success) setProducts(prodData.data || []);
-      if (servData.success) {
-        setServices(servData.data || []);
-      }
+      if (servData.success) setServices(servData.data || []);
     } catch {
       showToast('error', 'Error', 'Could not fetch results.');
     } finally {
@@ -145,7 +166,6 @@ export default function SearchScreen() {
   }, [showToast, token]);
 
   useEffect(() => {
-    // Parse ad targeting params
     const vendorIdRaw = Array.isArray(params.vendor_id) ? params.vendor_id[0] : params.vendor_id;
     const providerIdRaw = Array.isArray(params.provider_id) ? params.provider_id[0] : params.provider_id;
     const productIdsRaw = Array.isArray(params.product_ids) ? params.product_ids[0] : params.product_ids;
@@ -168,41 +188,31 @@ export default function SearchScreen() {
 
     setAdFilter(newAdFilter);
 
-    // Parse normal category params
-    const rawProducts = Array.isArray(params.product_categories)
-      ? params.product_categories[0]
-      : params.product_categories;
-    const rawServices = Array.isArray(params.service_categories)
-      ? params.service_categories[0]
-      : params.service_categories;
+    const rawProducts = Array.isArray(params.product_categories) ? params.product_categories[0] : params.product_categories;
+    const rawServices = Array.isArray(params.service_categories) ? params.service_categories[0] : params.service_categories;
     const parsedProducts = parseIds(rawProducts);
     const parsedServices = parseIds(rawServices);
     setSelectedProductCategoryIds(parsedProducts);
     setSelectedServiceCategoryIds(parsedServices);
-    if (params.type) {
-      setViewMode(params.type as ViewMode);
-    }
+    if (params.type) setViewMode(params.type as ViewMode);
 
     search(queryRef.current, parsedProducts, parsedServices, newAdFilter);
   }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.type]);
 
-  const handleOpenCategoryFilter = () => {
-    router.push({
-      pathname: '/category-filter',
-      params: {
-        product_categories: selectedProductCategoryIds.join(','),
-        service_categories: selectedServiceCategoryIds.join(','),
-      },
-    });
-  };
-
-  const handleClearCategories = () => {
-    setSelectedProductCategoryIds([]);
-    setSelectedServiceCategoryIds([]);
-    search(query, [], [], adFilter);
+  const handleAddToCart = async (productId: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const result = await addToCart(productId);
+    if (result.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('success', 'Added!', 'Product added to your cart.');
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showToast('error', 'Error', result.message);
+    }
   };
 
   const handleClearAdFilter = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setAdFilter(null);
     router.setParams({
       vendor_id: '',
@@ -215,125 +225,125 @@ export default function SearchScreen() {
     search(query, selectedProductCategoryIds, selectedServiceCategoryIds, null);
   };
 
-  const handleAddToCart = async (productId: number) => {
-    const result = await addToCart(productId);
-    if (result.success) {
-      showToast('success', 'Added!', 'Product added to your cart.');
-    } else {
-      showToast('error', 'Error', result.message);
-    }
-  };
-
   const showProducts = viewMode === 'all' || viewMode === 'products';
   const showServices = viewMode === 'all' || viewMode === 'services';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Search Input */}
-      <View style={styles.searchRow}>
-        <View style={[styles.searchInputContainer, { backgroundColor: colors.backgroundSecondary, borderWidth: 2, borderColor: colors.border }]}>
-          <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Search products, services..."
-            placeholderTextColor={colors.textMuted}
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
-            returnKeyType="search"
-          />
-          {query.length > 0 && (
-            <Pressable
-              onPress={() => {
-                setQuery('');
-                search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter);
-              }}
-            >
-              <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
-            </Pressable>
-          )}
-        </View>
-      </View>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {/* Ad filter banner */}
-      {adFilter && (
-        <View style={[styles.adFilterBanner, { backgroundColor: colors.pinkGlow, borderColor: colors.pink }]}>
-          <MaterialCommunityIcons name="bullhorn-outline" size={18} color={colors.pink} />
-          <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
-            Showing results from{' '}
-            <Text style={{ fontFamily: Fonts.bold, color: colors.pink }}>
-              {adFilter.title || 'Sponsored Ad'}
-            </Text>
-          </Text>
-          <Pressable onPress={handleClearAdFilter} hitSlop={8}>
-            <MaterialCommunityIcons name="close-circle" size={18} color={colors.pink} />
-          </Pressable>
-        </View>
-      )}
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      {/* Mode toggle */}
-      <View style={styles.toggleRow}>
-        {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
-          <Pressable
-            key={mode}
-            style={[
-              styles.togglePill,
-              { borderColor: colors.cardBorder },
-              viewMode === mode && { backgroundColor: colors.pink, borderColor: colors.pink },
-            ]}
-            onPress={() => setViewMode(mode)}
-          >
-            <Text style={[
-              styles.toggleText,
-              { color: colors.textSecondary },
-              viewMode === mode && { color: '#FFFFFF' },
-            ]}>
-              {mode === 'all' ? 'All' : mode === 'products' ? 'Products' : 'Services'}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {!adFilter && (
-        <View style={styles.categorySection}>
-          <View style={styles.categoryRow}>
-            <Pressable
-              style={[styles.categoryButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-              onPress={handleOpenCategoryFilter}
-            >
-              <MaterialCommunityIcons name="filter-variant" size={18} color={colors.textMuted} />
-              <Text style={[styles.categoryButtonText, { color: colors.textPrimary }]}>
-                {selectedProductCategoryIds.length === 0 && selectedServiceCategoryIds.length === 0
-                  ? 'All categories'
-                  : `Products: ${selectedProductCategoryIds.length} · Services: ${selectedServiceCategoryIds.length}`}
-              </Text>
-            </Pressable>
-            {(selectedProductCategoryIds.length > 0 || selectedServiceCategoryIds.length > 0) && (
-              <Pressable onPress={handleClearCategories} style={styles.clearButton}>
-                <Text style={[styles.clearButtonText, { color: colors.pink }]}>Clear</Text>
+      <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }, headerStyle]}>
+        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={styles.headerContent}>
+          {/* Search Input */}
+          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, { 
+            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+            borderColor: colors.cardBorder 
+          }]}>
+            <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.textPrimary }]}
+              placeholder="Search for parts or services..."
+              placeholderTextColor={colors.textSecondary}
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
+              returnKeyType="search"
+            />
+            {query.length > 0 && (
+              <Pressable onPress={() => { setQuery(''); search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter); }}>
+                <MaterialCommunityIcons name="close-circle" size={18} color={colors.textSecondary} />
               </Pressable>
             )}
+          </Animated.View>
+
+          {/* Ad filter banner */}
+          {adFilter && (
+            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}>
+              <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
+              <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
+                Results from <Text style={{ fontFamily: Fonts.bold }}>{adFilter.title || 'Sponsored Ad'}</Text>
+              </Text>
+              <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
+                <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
+              </Pressable>
+            </Animated.View>
+          )}
+
+          {/* Mode toggle */}
+          <View style={styles.toggleRow}>
+            <View style={[styles.toggleContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder }]}>
+              {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
+                <Pressable
+                  key={mode}
+                  style={[
+                    styles.togglePill,
+                    viewMode === mode && { backgroundColor: colors.pink },
+                  ]}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setViewMode(mode); }}
+                >
+                  <Text style={[
+                    styles.toggleText,
+                    { color: colors.textSecondary },
+                    viewMode === mode && { color: '#FFFFFF' },
+                  ]}>
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            
+            {/* Category Filter Button */}
+            <Pressable 
+              style={[styles.filterBtn, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({
+                  pathname: '/category-filter',
+                  params: {
+                    product_categories: selectedProductCategoryIds.join(','),
+                    service_categories: selectedServiceCategoryIds.join(','),
+                  },
+                });
+              }}
+            >
+              <MaterialCommunityIcons name="filter-variant" size={20} color={colors.pink} />
+            </Pressable>
           </View>
         </View>
-      )}
+      </Animated.View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.pink} />
-        </View>
+        <SearchSkeleton />
       ) : (
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.results}
+          contentContainerStyle={[styles.results, { paddingTop: 200 + insets.top + (adFilter ? 60 : 0) }]}
         >
           {showProducts && products.length > 0 && (
-            <>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products:</Text>
-              <Text style={[styles.resultCount, { color: colors.textMuted }]}>Showing {products.length} results</Text>
+            <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
+                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>{products.length} found</Text>
+              </View>
               <View style={styles.productGrid}>
-                {products.map((p) => (
-                  <View key={p.product_id} style={styles.productGridItem}>
+                {products.map((p, idx) => (
+                  <Animated.View 
+                    entering={FadeInUp.delay(idx * 50).duration(600)} 
+                    key={p.product_id} 
+                    style={styles.productGridItem}
+                  >
                     <ProductCard
+                      productId={p.product_id}
                       name={p.name}
                       price={p.price}
                       imageUrl={p.image_url}
@@ -341,112 +351,225 @@ export default function SearchScreen() {
                       onAddToCart={() => handleAddToCart(p.product_id)}
                       onPress={() => router.push(`/product/${p.product_id}` as any)}
                     />
-                  </View>
+                  </Animated.View>
                 ))}
               </View>
-            </>
+            </Animated.View>
           )}
 
           {showServices && services.length > 0 && (
-            <>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services:</Text>
-              <Text style={[styles.resultCount, { color: colors.textMuted }]}>Showing {services.length} results</Text>
-              {services.map((s) => (
-                <ServiceCard
+            <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
+                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>{services.length} found</Text>
+              </View>
+              {services.map((s, idx) => (
+                <Animated.View 
+                  entering={FadeInUp.delay(idx * 100).duration(600)}
                   key={s.service_id}
-                  name={s.name}
-                  providerName={s.provider_name}
-                  price={s.price}
-                  imageUrl={s.image_url}
-                  duration={s.duration || undefined}
-                />
+                  style={{ marginBottom: Spacing.md }}
+                >
+                  <ServiceCard
+                    name={s.name}
+                    providerName={s.provider_name}
+                    price={s.price}
+                    imageUrl={s.image_url}
+                    duration={s.duration || undefined}
+                    onView={() => router.push(`/service/${s.service_id}`)}
+                    onBookNow={() => router.push(`/service/${s.service_id}`)}
+                  />
+                </Animated.View>
               ))}
-            </>
+            </Animated.View>
           )}
 
           {searched && products.length === 0 && services.length === 0 && (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="magnify-close" size={48} color={colors.textMuted} />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No results found</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try a different search term</Text>
-            </View>
+            <Animated.View entering={FadeInUp} style={styles.emptyState}>
+              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconBlur}>
+                <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
+              </BlurView>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you're looking for.</Text>
+              
+              <Pressable 
+                style={[styles.resetBtn, { backgroundColor: colors.pink }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setQuery('');
+                  setSelectedProductCategoryIds([]);
+                  setSelectedServiceCategoryIds([]);
+                  handleClearAdFilter();
+                }}
+              >
+                <Text style={styles.resetBtnText}>Clear All Filters</Text>
+              </Pressable>
+            </Animated.View>
           )}
 
-          <View style={{ height: androidTabOffset + Spacing.lg }} />
-        </ScrollView>
+          <View style={{ height: androidTabOffset + Spacing.xl }} />
+        </Animated.ScrollView>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 60 },
+  container: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+  },
+  headerContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  results: { paddingHorizontal: Spacing.md, paddingBottom: 20 },
+  loadingText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: Spacing.md },
+  results: { paddingHorizontal: Spacing.lg },
 
-  searchRow: { paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
   searchInputContainer: {
-    flexDirection: 'row', alignItems: 'center', borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: Spacing.md, paddingVertical: 14,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    borderRadius: BorderRadius.xl, 
+    paddingHorizontal: Spacing.md, 
+    paddingVertical: 12,
+    borderWidth: 1,
+    ...Shadows.md,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
   },
   searchInput: {
-    flex: 1, fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm, marginLeft: Spacing.sm, paddingVertical: 0,
+    flex: 1, 
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md, 
+    marginLeft: Spacing.sm, 
+    paddingVertical: 4,
   },
 
   adFilterBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
   },
-  adFilterText: {
-    flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-  },
+  adFilterText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+  closeAdFilter: { padding: 4 },
 
   toggleRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm, gap: Spacing.sm,
+    flexDirection: 'row', 
+    gap: Spacing.sm,
+    alignItems: 'center',
   },
-  categorySection: {
-    marginBottom: Spacing.xs,
-  },
-  categoryRow: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  categoryButton: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
-    borderRadius: BorderRadius.lg, borderWidth: 1,
+  toggleContainer: {
     flex: 1,
+    flexDirection: 'row',
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    padding: 4,
+    height: 52,
   },
-  categoryButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-  clearButton: { paddingHorizontal: Spacing.xs, paddingVertical: 6 },
-  clearButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, textTransform: 'uppercase' },
   togglePill: {
-    paddingHorizontal: 20, paddingVertical: 10,
-    borderRadius: 20, borderWidth: 1,
-    backgroundColor: 'transparent',
+    flex: 1,
+    borderRadius: BorderRadius.lg, 
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  toggleText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+  toggleText: { 
+    fontFamily: Fonts.bold, 
+    fontSize: 11, 
+    textTransform: 'uppercase', 
+    letterSpacing: 0.5 
+  },
+  filterBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
+  section: { marginBottom: Spacing.xl },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: Spacing.lg,
+  },
   sectionTitle: {
-    fontFamily: Fonts.extraBold, fontSize: FontSizes.xl,
-    marginBottom: 4, marginTop: Spacing.md,
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.xxl,
+    letterSpacing: -1,
   },
-  resultCount: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginBottom: Spacing.lg, opacity: 0.6 },
-  productGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
-  productGridItem: { width: '50%' },
+  resultCount: { 
+    fontFamily: Fonts.medium, 
+    fontSize: FontSizes.xs, 
+    opacity: 0.6 
+  },
+  productGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    marginHorizontal: -8 
+  },
+  productGridItem: { 
+    width: '50%',
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
 
-  emptyState: { alignItems: 'center', marginTop: 80 },
-  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginTop: Spacing.md },
-  emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4, opacity: 0.6 },
+  emptyState: { 
+    alignItems: 'center', 
+    marginTop: 40,
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyIconBlur: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  emptyTitle: { 
+    fontFamily: Fonts.extraBold, 
+    fontSize: FontSizes.xl, 
+    marginBottom: Spacing.sm 
+  },
+  emptySubtitle: { 
+    fontFamily: Fonts.medium, 
+    fontSize: FontSizes.md, 
+    textAlign: 'center', 
+    lineHeight: 22,
+    opacity: 0.7,
+    marginBottom: Spacing.xxl,
+  },
+  resetBtn: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 14,
+    borderRadius: BorderRadius.lg,
+    ...Shadows.md,
+  },
+  resetBtnText: {
+    color: '#fff',
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+  },
 });
+

@@ -1,7 +1,17 @@
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { useRef } from 'react';
+import { 
+  Pressable, 
+  Text, 
+  StyleSheet, 
+  ActivityIndicator, 
+  ViewStyle, 
+  Animated,
+  Platform 
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, BorderRadius, Fonts, Shadows, Animations } from '@/constants/theme';
 
 type GradientButtonProps = {
   title: string;
@@ -9,6 +19,7 @@ type GradientButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  variant?: 'pink' | 'purple';
 };
 
 export default function GradientButton({
@@ -17,40 +28,83 @@ export default function GradientButton({
   loading = false,
   disabled = false,
   style,
+  variant = 'pink',
 }: GradientButtonProps) {
   const { colors } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 50,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 4,
+      tension: 40,
+    }).start();
+  };
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    onPress();
+  };
 
   return (
-    <Pressable onPress={onPress} disabled={disabled || loading} style={[styles.wrapper, style]}>
-      <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.gradient, (disabled || loading) && styles.disabled]}
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, Shadows[variant], style]}>
+      <Pressable 
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading} 
+        style={styles.wrapper}
       >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.text}>{title}</Text>
-        )}
-      </LinearGradient>
-    </Pressable>
+        <LinearGradient
+          colors={[colors.gradientStart, colors.gradientEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.5 }}
+          style={[styles.gradient, (disabled || loading) && styles.disabled]}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.text}>{title}</Text>
+          )}
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {},
+  wrapper: {
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
   gradient: {
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   text: {
     color: '#FFFFFF',
-    fontSize: FontSizes.lg,
-    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.bold,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });
+

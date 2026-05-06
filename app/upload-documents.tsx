@@ -6,16 +6,24 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader, GradientButton } from '@/components';
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
+
+const { height } = Dimensions.get('window');
 
 type DocStatus = {
   name: string | null;
@@ -30,8 +38,7 @@ type DocsState = {
 
 export default function UploadDocumentsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, isDark } = useTheme();
   const { showToast, showAlert } = useToast();
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
@@ -43,6 +50,7 @@ export default function UploadDocumentsScreen() {
 
   const pickDocument = async (key: keyof DocsState) => {
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/*'],
         copyToCacheDirectory: true,
@@ -54,10 +62,11 @@ export default function UploadDocumentsScreen() {
           ...prev,
           [key]: { name: asset.name, uri: asset.uri },
         }));
-        showToast('success', 'Uploaded', `${asset.name} selected.`);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showToast('success', 'Selected', `${asset.name} ready.`);
       }
     } catch {
-      showToast('error', 'Upload Failed', 'Could not pick document.');
+      showToast('error', 'Selection Failed', 'Could not pick document.');
     }
   };
 
@@ -105,12 +114,13 @@ export default function UploadDocumentsScreen() {
   const handleSubmit = async () => {
     if (!docs.businessLicense.uri || !docs.taxId.uri) {
       showToast('warning', 'Missing Documents', 'Please upload all required documents.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
     setLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-
       showToast('info', 'Uploading', 'Uploading documents securely...');
 
       // Upload 1
@@ -129,7 +139,6 @@ export default function UploadDocumentsScreen() {
 
       showToast('info', 'Registering', 'Creating your account...');
 
-      // API Call to register vendor/provider
       const API_URL = process.env.EXPO_PUBLIC_API_URL;
       const endpoint = params.role === 'vendor' ? '/vendors' : '/service-providers';
 
@@ -144,18 +153,18 @@ export default function UploadDocumentsScreen() {
         document_3_url: doc3Url,
       };
 
-      // Depending on if auth registration is combined, we call the endpoint directly for now
-      // Note: Ideally, standard 'users' auth table creation happens here or in the backend controller.
       await axios.post(`${API_URL}${endpoint}`, payload);
 
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showAlert({
-        title: 'Submitted Successfully!',
-        message: 'Your documents will be reviewed within 24-48 hours. We\'ll notify you once approved.',
+        title: 'Success!',
+        message: 'Your documents are under review. We\'ll notify you within 24-48 hours.',
         type: 'success',
-        buttons: [{ text: 'OK', onPress: () => router.replace('/login') }],
+        buttons: [{ text: 'Back to Login', onPress: () => router.replace('/login') }],
       });
     } catch (error) {
       console.error(error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast('error', 'Submission Failed', 'Could not submit documents. Please try again.');
     } finally {
       setLoading(false);
@@ -166,162 +175,209 @@ export default function UploadDocumentsScreen() {
     key: keyof DocsState,
     title: string,
     required: boolean,
+    delay: number
   ) => {
     const doc = docs[key];
     const hasFile = !!doc.uri;
 
     return (
-      <View style={styles.docCard} key={key}>
-        <View style={styles.docHeader}>
-          <MaterialCommunityIcons
-            name="file-document-outline"
-            size={24}
-            color={colors.pink}
-            style={styles.docIcon}
-          />
-          <View>
-            <Text style={styles.docTitle}>{title}</Text>
-            <Text style={[styles.docRequired, !required && styles.docOptional]}>
-              {required ? 'Required' : 'Optional'}
-            </Text>
-          </View>
-        </View>
-
-        {hasFile && (
-          <View style={styles.fileInfo}>
-            <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-            <Text style={styles.fileName} numberOfLines={1}>
-              {'  '}{doc.name}
-            </Text>
-          </View>
-        )}
-
-        <Pressable
-          style={[styles.uploadButton, hasFile && styles.uploadButtonDone]}
-          onPress={() => pickDocument(key)}
+      <Animated.View entering={FadeInDown.delay(delay).duration(600)} style={styles.docCardContainer} key={key}>
+        <BlurView
+          intensity={isDark ? 40 : 60}
+          tint={isDark ? 'dark' : 'light'}
+          style={[
+            styles.docCard,
+            { borderColor: hasFile ? '#4CAF50' : colors.cardBorder },
+            Shadows.md
+          ]}
         >
-          <MaterialCommunityIcons
-            name={hasFile ? 'check' : 'upload'}
-            size={18}
-            color={hasFile ? '#4CAF50' : colors.pink}
-          />
-          <Text style={[styles.uploadText, hasFile && styles.uploadTextDone]}>
-            {'  '}{hasFile ? 'Uploaded' : 'Upload'}
-          </Text>
-        </Pressable>
-      </View>
+          <View style={styles.docHeader}>
+            <View style={[styles.iconBox, { backgroundColor: hasFile ? 'rgba(76, 175, 80, 0.1)' : colors.pink + '15' }]}>
+              <MaterialCommunityIcons
+                name={hasFile ? 'check-decagram' : 'file-document-outline'}
+                size={24}
+                color={hasFile ? '#4CAF50' : colors.pink}
+              />
+            </View>
+            <View style={styles.docInfo}>
+              <Text style={[styles.docTitle, { color: colors.textPrimary }]}>{title}</Text>
+              <Text style={[styles.docRequired, { color: required ? colors.pink : colors.textMuted }]}>
+                {required ? 'Mandatory' : 'Optional'}
+              </Text>
+            </View>
+          </View>
+
+          {hasFile && (
+            <View style={styles.fileLabel}>
+              <Text style={[styles.fileName, { color: colors.textSecondary }]} numberOfLines={1}>
+                {doc.name}
+              </Text>
+            </View>
+          )}
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.uploadButton,
+              { 
+                backgroundColor: hasFile ? 'rgba(76, 175, 80, 0.05)' : colors.pink + '10',
+                borderColor: hasFile ? 'rgba(76, 175, 80, 0.3)' : colors.pink + '30',
+                opacity: pressed ? 0.7 : 1
+              }
+            ]}
+            onPress={() => pickDocument(key)}
+          >
+            <MaterialCommunityIcons
+              name={hasFile ? 'refresh' : 'upload-outline'}
+              size={18}
+              color={hasFile ? '#4CAF50' : colors.pink}
+            />
+            <Text style={[styles.uploadText, { color: hasFile ? '#4CAF50' : colors.pink }]}>
+              {hasFile ? 'Change File' : 'Choose Document'}
+            </Text>
+          </Pressable>
+        </BlurView>
+      </Animated.View>
     );
   };
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, left: -50, backgroundColor: colors.pink + '20' }]} />
+      <View style={[styles.orb, { bottom: -100, right: -50, backgroundColor: colors.purple + '15' }]} />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <CenteredHeader title="Upload Documents" titleColor={colors.pink} />
-        <Text style={styles.subtitle}>
-          Submit required business documents for verification
-        </Text>
+        <Animated.View entering={FadeInUp.delay(200).duration(800)}>
+          <CenteredHeader title="Verify Identity" titleColor={colors.pink} />
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Securely upload your business documents to start your journey
+          </Text>
+        </Animated.View>
 
-        {renderDocCard('businessLicense', 'Business License', true)}
-        {renderDocCard('taxId', 'Tax ID / EIN', true)}
-        {renderDocCard('insurance', 'Insurance Certificate', false)}
+        <View style={styles.cardsWrapper}>
+          {renderDocCard('businessLicense', 'Business License', true, 400)}
+          {renderDocCard('taxId', 'Tax ID / EIN', true, 500)}
+          {renderDocCard('insurance', 'Insurance (Liability)', false, 600)}
+        </View>
 
-        <GradientButton
-          title="Submit for Review"
-          onPress={handleSubmit}
-          loading={loading}
-          style={{ marginTop: Spacing.md }}
-        />
-
-        <Text style={styles.reviewNote}>
-          Documents will be reviewed within 24-48 hours
-        </Text>
+        <Animated.View entering={FadeInDown.delay(700).duration(800)}>
+          <GradientButton
+            title="Complete Registration"
+            onPress={handleSubmit}
+            loading={loading}
+            style={styles.submitBtn}
+          />
+          <Text style={[styles.reviewNote, { color: colors.textMuted }]}>
+            Verification usually takes 24 hours
+          </Text>
+        </Animated.View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.md,
-    paddingTop: 28,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: height * 0.05,
     paddingBottom: 40,
   },
   subtitle: {
-    color: colors.textSecondary,
     fontSize: FontSizes.md,
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.medium,
+    textAlign: 'center',
     marginBottom: Spacing.xl,
-    marginTop: 6,
-    lineHeight: 22,
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  cardsWrapper: {
+    marginBottom: Spacing.xl,
+  },
+  docCardContainer: {
+    marginBottom: Spacing.lg,
   },
   docCard: {
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    backgroundColor: colors.card,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   docHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  docIcon: { marginRight: Spacing.md },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  docInfo: {
+    flex: 1,
+  },
   docTitle: {
-    color: colors.textPrimary,
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md,
     fontFamily: Fonts.bold,
   },
   docRequired: {
-    color: colors.pink,
-    fontSize: FontSizes.xs,
+    fontSize: 10,
     fontFamily: Fonts.medium,
+    textTransform: 'uppercase',
     marginTop: 2,
   },
-  docOptional: { color: colors.textMuted },
-  fileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-    paddingHorizontal: 4,
+  fileLabel: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
   },
   fileName: {
-    color: colors.textSecondary,
-    fontSize: FontSizes.xs,
+    fontSize: 12,
     fontFamily: Fonts.regular,
-    flex: 1,
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: BorderRadius.full,
+    paddingVertical: 14,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.pinkGlow,
-    backgroundColor: colors.pinkGlow,
-  },
-  uploadButtonDone: {
-    borderColor: 'rgba(76, 175, 80, 0.3)',
-    backgroundColor: 'rgba(76, 175, 80, 0.05)',
+    gap: 8,
   },
   uploadText: {
-    color: colors.pink,
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.semiBold,
-  },
-  uploadTextDone: { color: '#4CAF50' },
-  reviewNote: {
-    color: colors.textMuted,
     fontSize: FontSizes.sm,
+    fontFamily: Fonts.bold,
+  },
+  submitBtn: {
+    marginTop: Spacing.md,
+  },
+  reviewNote: {
+    fontSize: 12,
     fontFamily: Fonts.regular,
     textAlign: 'center',
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
+    opacity: 0.6,
   },
 });
