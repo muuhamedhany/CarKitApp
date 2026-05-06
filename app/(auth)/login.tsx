@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -7,23 +7,34 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  FadeInDown, 
+  FadeInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput } from '@/components';
-import { GradientButton } from '@/components';
-import { AuthFooter } from '@/components';
-import { SocialButton } from '@/components';
-import { Divider } from '@/components';
-import { Spacing, FontSizes, Fonts } from '@/constants/theme';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider } from '@/components';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+
+const { height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +44,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       showToast('warning', 'Missing Fields', 'Please fill in all fields.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
@@ -41,36 +53,29 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (result.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const user = result.user;
       const isVendorOrProvider = user?.role === 'vendor' || user?.role === 'provider';
       const status = user?.verification_status;
 
       if (isVendorOrProvider && (status === 'pending' || status === 'rejected')) {
-        const title = status === 'pending' ? 'Under Review' : 'Account Rejected';
-        const msg = status === 'pending' 
-          ? 'Your account is pending admin approval.' 
-          : 'Your application was not approved. Please contact support.';
-        
-        showToast(status === 'pending' ? 'info' : 'error', title, msg);
         router.replace('/pending');
       } else if (user?.role === 'vendor') {
-        showToast('success', 'Welcome Back!', 'Login successful.');
         router.replace('/(vendor-tabs)');
       } else if (user?.role === 'provider') {
-        showToast('success', 'Welcome Back!', 'Login successful.');
         router.replace('/(provider-tabs)');
       } else {
-        showToast('success', 'Welcome Back!', 'Login successful.');
         router.replace('/(tabs)');
       }
     } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast('error', 'Login Failed', result.message);
     }
   };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    showToast('info', 'Google Login', 'Connecting to Google...');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
     setTimeout(async () => {
       const mockUser = {
@@ -84,16 +89,25 @@ export default function LoginScreen() {
       setGoogleLoading(false);
 
       if (result.success) {
-        showToast('success', 'Welcome!', `Signed in as ${mockUser.name}`);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace('/(tabs)');
       } else {
         showToast('error', 'Login Failed', result.message);
       }
-    }, 1500);
+    }, 1000);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '20' }]} />
+      <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -103,55 +117,88 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.welcomeTitle, { color: colors.pink }]}>Welcome Back!</Text>
-          <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>Login to your account</Text>
+          <Animated.View 
+            entering={FadeInUp.delay(200).duration(800)}
+            style={styles.headerSection}
+          >
+            <Text style={[styles.welcomeTitle, { color: colors.pink }]}>Welcome Back!</Text>
+            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
+              Enter your credentials to continue your journey
+            </Text>
+          </Animated.View>
 
-          <Text style={[styles.label, { color: colors.textPrimary }]}>Email:</Text>
-          <FormInput
-            icon="email-outline"
-            placeholder="Your Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoComplete="email"
-          />
+          <Animated.View 
+            entering={FadeInDown.delay(400).duration(800)}
+            style={styles.formWrapper}
+          >
+            <BlurView
+              intensity={isDark ? 40 : 60}
+              tint={isDark ? 'dark' : 'light'}
+              style={[
+                styles.glassCard,
+                { borderColor: colors.cardBorder },
+                Shadows.lg
+              ]}
+            >
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
+              <FormInput
+                icon="email-outline"
+                placeholder="email@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoComplete="email"
+              />
 
-          <Text style={[styles.label, { color: colors.textPrimary }]}>Password:</Text>
-          <FormInput
-            icon="lock-outline"
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            showToggle
-            onToggle={() => setShowPassword(!showPassword)}
-          />
 
-          <Pressable style={styles.forgotContainer} onPress={() => router.push('/forgot-password' as any)}>
-            <Text style={[styles.forgotText, { color: colors.pink }]}>Forgot Password?</Text>
-          </Pressable>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
+              <FormInput
+                icon="lock-outline"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                showToggle
+                onToggle={() => setShowPassword(!showPassword)}
+              />
 
-          <GradientButton
-            title="Login"
-            onPress={handleLogin}
-            loading={loading}
-            style={{ marginBottom: Spacing.sm }}
-          />
+              <Pressable 
+                style={styles.forgotContainer} 
+                onPress={() => router.push('/forgot-password' as any)}
+              >
+                <Text style={[styles.forgotText, { color: colors.pink }]}>Forgot Password?</Text>
+              </Pressable>
 
-          <Divider />
+              <GradientButton
+                title="Login"
+                onPress={handleLogin}
+                loading={loading}
+                style={styles.loginBtn}
+              />
 
-          <SocialButton
-            provider="google"
-            actionText={googleLoading ? 'Signing in...' : 'Login with Google'}
-            onPress={handleGoogleLogin}
-          />
+              <Divider text="OR" />
 
-          <View style={{ height: Spacing.xl }} />
-          <AuthFooter
-            message="Don't have an account?"
-            actionText="Sign up"
-            onPress={() => router.push('/select-account')}
-          />
+              <SocialButton
+                provider="google"
+                actionText={googleLoading ? 'Signing in...' : 'Sign in with Google'}
+                onPress={handleGoogleLogin}
+              />
+            </BlurView>
+          </Animated.View>
+
+          <Animated.View 
+            entering={FadeInDown.delay(600).duration(800)}
+            style={styles.footer}
+          >
+            <AuthFooter
+              message="New to CarKit?"
+              actionText="Create Account"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/select-account');
+              }}
+            />
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -161,27 +208,49 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.md,
-    paddingTop: 80,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: height * 0.12,
     paddingBottom: 40,
-    justifyContent: 'center',
+  },
+  headerSection: {
+    marginBottom: Spacing.xl,
   },
   welcomeTitle: {
-    fontSize: 34,
+    fontSize: 40,
     fontFamily: Fonts.extraBoldItalic,
-    marginBottom: 6,
+    letterSpacing: -1,
   },
   welcomeSubtitle: {
     fontSize: FontSizes.md,
-    fontFamily: Fonts.regular,
-    marginBottom: Spacing.xl + 8,
+    fontFamily: Fonts.medium,
+    lineHeight: 22,
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  formWrapper: {
+    width: '100%',
+  },
+  glassCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   label: {
     fontSize: FontSizes.sm,
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     marginBottom: Spacing.xs,
+    marginLeft: 4,
   },
   forgotContainer: {
     alignItems: 'flex-end',
@@ -190,5 +259,11 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: FontSizes.sm,
     fontFamily: Fonts.semiBold,
+  },
+  loginBtn: {
+  },
+  footer: {
+    marginTop: Spacing.xl,
+    alignItems: 'center',
   },
 });

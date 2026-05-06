@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '@/constants/config';
+import { CartItem } from '@/types/api.types';
 
 // Timeout wrapper — Render free tier can be slow to wake up
 const fetchWithTimeout = (url: string, options: RequestInit = {}, ms = 15000): Promise<Response> => {
@@ -9,17 +10,6 @@ const fetchWithTimeout = (url: string, options: RequestInit = {}, ms = 15000): P
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 };
 
-type CartItem = {
-  cart_item_id: number;
-  cart_id_fk: number;
-  product_id_fk: number;
-  quantity: number;
-  name: string;
-  price: string;
-  stock: number;
-  item_total: string;
-  image_url?: string | null;
-};
 
 type CartContextType = {
   items: CartItem[];

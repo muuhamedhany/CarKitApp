@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useWishlist } from '@/contexts/WishlistContext';
 
@@ -22,10 +24,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { ProductDetailSkeleton } from '@/components';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const IMAGE_HEIGHT = 340;
+const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
 
 type ProductDetail = {
   product_id: number;
@@ -43,7 +46,7 @@ type ProductDetail = {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { token } = useAuth();
   const { addToCart } = useCart();
@@ -54,6 +57,7 @@ export default function ProductDetailScreen() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
 
+  const scrollY = useRef(new Animated.Value(0)).current;
   const isWishlisted = id ? !!wishlist[Number(id)] : false;
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -87,6 +91,7 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = async () => {
     if (!product) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const result = await addToCart(product.product_id);
     if (result.success) {
       showToast('success', 'Added to Cart', `${product.name} added to your cart.`);
@@ -97,61 +102,85 @@ export default function ProductDetailScreen() {
 
   const handleToggleWishlist = () => {
     if (!id) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     contextToggleWishlist(Number(id));
   };
 
-  const handleImagePress = (images: string[], index: number) => {
-    router.push({
-      pathname: '/image-viewer',
-      params: {
-        images: JSON.stringify(images),
-        initialIndex: String(index),
-      },
-    } as any);
-  };
-
   if (loading) {
-    return (
-      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.pink} />
-      </View>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (!product) return null;
 
-  const images: string[] = [];
-  if (product.image_url) images.push(product.image_url);
-  if (product.image_url_2) images.push(product.image_url_2);
-  if (product.image_url_3) images.push(product.image_url_3);
+  const images = [product.image_url, product.image_url_2, product.image_url_3].filter(Boolean) as string[];
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {/* Floating Header — overlaid on image */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        <Pressable onPress={() => router.back()} style={styles.iconBtn}>
-          <MaterialCommunityIcons name="chevron-left" size={32} color="#FFFFFF" />
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+      {/* Dynamic Glassmorphic Header */}
+      <Animated.View style={[
+        styles.stickyHeader,
+        { height: insets.top + 50, opacity: headerOpacity }
+      ]}>
+        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={[styles.headerContent, { marginTop: insets.top }]}>
+           <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{product.name}</Text>
+        </View>
+      </Animated.View>
+
+      {/* Floating Back Button */}
+      <View style={[styles.floatingControls, { top: insets.top + 10 }]}>
+        <Pressable 
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} 
+          style={styles.floatingIconBtn}
+        >
+          <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+             <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
+          </BlurView>
         </Pressable>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Pressable onPress={handleToggleWishlist} style={[styles.iconBtn, { marginRight: 4 }]}>
-            <MaterialCommunityIcons
-              name={isWishlisted ? 'cards-heart' : 'cards-heart-outline'}
-              size={26}
-              color={isWishlisted ? colors.pink : '#FFFFFF'}
-            />
+        
+        <View style={styles.rightFloatingControls}>
+          <Pressable onPress={handleToggleWishlist} style={styles.floatingIconBtn}>
+            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+              <MaterialCommunityIcons
+                name={isWishlisted ? 'cards-heart' : 'cards-heart-outline'}
+                size={22}
+                color={isWishlisted ? colors.pink : '#FFF'}
+              />
+            </BlurView>
           </Pressable>
-          <Pressable onPress={() => router.push('/(tabs)/cart')} style={styles.iconBtn}>
-            <MaterialCommunityIcons name="cart-outline" size={26} color="#FFFFFF" />
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(tabs)/cart'); }} style={[styles.floatingIconBtn, { marginLeft: 10 }]}>
+            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+              <MaterialCommunityIcons name="cart-outline" size={22} color="#FFF" />
+            </BlurView>
           </Pressable>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
-        {/* Image Gallery */}
-        <View style={styles.galleryContainer}>
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+      >
+        {/* Hero Gallery */}
+        <View style={styles.heroContainer}>
           {images.length > 0 ? (
             <FlatList
               data={images}
@@ -161,111 +190,116 @@ export default function ProductDetailScreen() {
               showsHorizontalScrollIndicator={false}
               onViewableItemsChanged={onViewableItemsChanged}
               viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-              renderItem={({ item, index }) => (
-                <Pressable
-                  onPress={() => handleImagePress(images, index)}
-                  style={styles.imageWrapper}
-                >
-                  <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
-                </Pressable>
+              renderItem={({ item }) => (
+                <Image source={{ uri: item }} style={styles.heroImage} resizeMode="cover" />
               )}
             />
           ) : (
-            <View style={[styles.imageWrapper, styles.center]}>
-              <MaterialCommunityIcons name="car-cog" size={80} color="rgba(255,255,255,0.3)" />
+            <View style={[styles.heroImage, styles.center, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="car-cog" size={80} color={colors.textMuted} />
             </View>
           )}
 
-
-
-        </View>
-
-        {/* Pill Pagination Dots */}
-        {images.length > 1 && (
-          <View style={styles.pagination}>
-            {images.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  i === activeImageIndex
-                    ? [styles.dotActive, { backgroundColor: colors.pink }]
-                    : { backgroundColor: colors.textMuted },
-                ]}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Content Section */}
-        <View style={styles.content}>
-
-          {/* Title + Vendor */}
-          <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
-          {product.vendor_name && (
-            <Text style={[styles.vendorLine, { color: colors.pink }]}>
-              By {product.vendor_name}
-            </Text>
-          )}
-
-          {/* Badges */}
-          <View style={styles.badgesRow}>
-            {product.category_name && (
-              <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="tag-outline" size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{product.category_name}</Text>
-              </View>
-            )}
-            <View style={[
-              styles.badge,
-              {
-                backgroundColor: product.stock > 0 ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 71, 87, 0.15)',
-                borderColor: colors.cardBorder,
-              },
-            ]}>
-              <MaterialCommunityIcons
-                name={product.stock > 0 ? 'check-circle' : 'close-circle'}
-                size={13}
-                color={product.stock > 0 ? colors.success : colors.error}
-                style={{ marginRight: 4 }}
-              />
-              <Text style={[styles.badgeText, { color: product.stock > 0 ? colors.success : colors.error }]}>
-                {product.stock > 0 ? 'Available' : 'Not Available'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Description Card */}
-          <View style={[styles.descriptionCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              {product.description || 'No description available for this product.'}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Bottom Sticky Bar */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + Spacing.sm, backgroundColor: colors.background, borderTopColor: colors.dividerLine }]}>
-        <View style={styles.priceBlock}>
-          <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Price</Text>
-          <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{product.price} EGP</Text>
-        </View>
-        <Pressable
-          onPress={handleAddToCart}
-          disabled={product.stock <= 0}
-          style={({ pressed }) => [{ flex: 1, opacity: pressed || product.stock <= 0 ? 0.7 : 1 }]}
-        >
           <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.actionBtn}
-          >
-            <Text style={styles.actionBtnText}>Add to Cart</Text>
-            <MaterialCommunityIcons name="cart-plus" size={20} color="#FFFFFF" />
-          </LinearGradient>
-        </Pressable>
+            colors={['transparent', 'rgba(0,0,0,0.4)', colors.background]}
+            style={styles.heroGradient}
+          />
+          
+          {images.length > 1 && (
+            <View style={styles.paginationDots}>
+              {images.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === activeImageIndex ? { width: 24, backgroundColor: colors.pink } : { backgroundColor: 'rgba(255,255,255,0.5)' }
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Product Info Content */}
+        <View style={styles.mainContent}>
+          <View style={styles.titleRow}>
+            <View style={{ flex: 1 }}>
+               <Text style={[styles.categoryText, { color: colors.pink }]}>{product.category_name?.toUpperCase() || 'GENERAL'}</Text>
+               <Text style={[styles.productTitle, { color: colors.textPrimary }]}>{product.name}</Text>
+            </View>
+            <View style={[styles.stockBadge, { backgroundColor: product.stock > 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
+               <Text style={[styles.stockText, { color: product.stock > 0 ? colors.success : colors.error }]}>
+                 {product.stock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
+               </Text>
+            </View>
+          </View>
+
+          <View style={[styles.vendorCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+             <View style={[styles.vendorAvatar, { backgroundColor: colors.background }]}>
+                <MaterialCommunityIcons name="storefront-outline" size={20} color={colors.pink} />
+             </View>
+             <View style={{ flex: 1 }}>
+                <Text style={[styles.vendorLabel, { color: colors.textSecondary }]}>Vendor</Text>
+                <Text style={[styles.vendorName, { color: colors.textPrimary }]}>{product.vendor_name || 'Official Store'}</Text>
+             </View>
+             <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+          </View>
+
+          <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>About Product</Text>
+          <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
+            {product.description || 'No detailed description available for this item.'}
+          </Text>
+
+          {/* Quick Specs / Features can go here */}
+          <View style={styles.featuresGrid}>
+             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+                <MaterialCommunityIcons name="shield-check-outline" size={22} color={colors.pink} />
+                <Text style={[styles.featureText, { color: colors.textPrimary }]}>Authentic</Text>
+             </View>
+             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+                <MaterialCommunityIcons name="truck-delivery-outline" size={22} color={colors.pink} />
+                <Text style={[styles.featureText, { color: colors.textPrimary }]}>Fast Shipping</Text>
+             </View>
+             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+                <MaterialCommunityIcons name="keyboard-return" size={22} color={colors.pink} />
+                <Text style={[styles.featureText, { color: colors.textPrimary }]}>7 Days Return</Text>
+             </View>
+          </View>
+        </View>
+      </Animated.ScrollView>
+
+      {/* Glassmorphic Bottom Action Bar */}
+      <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 10 }]}>
+         <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
+            <View style={styles.bottomBarContent}>
+               <View style={styles.priceInfo}>
+                  <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Total Price</Text>
+                  <View style={styles.priceRow}>
+                     <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{product.price}</Text>
+                     <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
+                  </View>
+               </View>
+               
+               <Pressable
+                 onPress={handleAddToCart}
+                 disabled={product.stock <= 0}
+                 style={({ pressed }) => [
+                   styles.addBtn,
+                   { opacity: product.stock <= 0 ? 0.5 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }
+                 ]}
+               >
+                 <LinearGradient
+                   colors={[colors.pink, colors.purple]}
+                   start={{ x: 0, y: 0 }}
+                   end={{ x: 1, y: 0 }}
+                   style={styles.addBtnGradient}
+                 >
+                   <MaterialCommunityIcons name="cart-variant" size={20} color="#FFF" />
+                   <Text style={styles.addBtnText}>Add to Cart</Text>
+                 </LinearGradient>
+               </Pressable>
+            </View>
+         </BlurView>
       </View>
     </View>
   );
@@ -273,148 +307,202 @@ export default function ProductDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    opacity: 0.5,
+  },
   center: { justifyContent: 'center', alignItems: 'center' },
 
-  // Floating header overlaid on image
-  header: {
+  stickyHeader: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: 0, left: 0, right: 0,
+    zIndex: 20,
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 70,
+  },
+  headerTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+  },
+
+  floatingControls: {
+    position: 'absolute',
+    left: Spacing.md,
+    right: Spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    zIndex: 10,
+    alignItems: 'center',
+    zIndex: 30,
   },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+  rightFloatingControls: { flexDirection: 'row' },
+  floatingIconBtn: {
+    width: 44, height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  blurWrap: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  // Image Gallery
-  galleryContainer: {
-    width: SCREEN_WIDTH - 40,
+  heroContainer: {
+    width: SCREEN_WIDTH,
     height: IMAGE_HEIGHT,
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    marginBottom: Spacing.xl,
-    marginTop: 105,
-    marginHorizontal: 20
   },
-  imageWrapper: {
-  },
-  image: {
-    width: SCREEN_WIDTH - 40,
+  heroImage: {
+    width: SCREEN_WIDTH,
     height: IMAGE_HEIGHT,
-    borderRadius: BorderRadius.xl,
-    paddingRight: 1
   },
-  pagination: {
+  heroGradient: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: 150,
+  },
+  paginationDots: {
+    position: 'absolute',
+    bottom: 20,
     flexDirection: 'row',
-    bottom: Spacing.md,
-    alignSelf: 'center',
-    left: 0,
-    right: 0,
+    width: '100%',
     justifyContent: 'center',
+    gap: 6,
   },
   dot: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-    marginHorizontal: 3,
-  },
-  dotActive: {
-    width: 24,
-    borderRadius: 4,
+    height: 6, width: 6,
+    borderRadius: 3,
   },
 
-  // Content
-  content: {
+  mainContent: {
     paddingHorizontal: Spacing.lg,
+    marginTop: -20,
   },
-  productName: {
-    fontFamily: Fonts.bold,
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xl,
+  },
+  categoryText: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  productTitle: {
+    fontFamily: Fonts.extraBold,
     fontSize: FontSizes.xxl,
+    lineHeight: 32,
   },
-  vendorLine: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-    marginBottom: Spacing.md,
+  stockBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  badgesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.lg,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    marginRight: Spacing.sm,
-  },
-  badgeText: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
-  },
-  descriptionCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: Spacing.md,
-  },
-  sectionTitle: {
+  stockText: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.md,
-    marginBottom: Spacing.sm,
-  },
-  description: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    lineHeight: 22,
+    fontSize: 9,
   },
 
-  // Bottom Bar
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  vendorCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadows.sm,
   },
-  priceBlock: {
-    justifyContent: 'center',
+  vendorAvatar: {
+    width: 40, height: 40,
+    borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
   },
-  priceLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
-  },
-  priceValue: {
+  vendorLabel: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 2 },
+  vendorName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+
+  sectionHeading: {
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.lg,
+    marginBottom: Spacing.md,
   },
-  actionBtn: {
+  descriptionText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    lineHeight: 22,
+    opacity: 0.8,
+  },
+
+  featuresGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  featureItem: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  featureText: {
+    fontFamily: Fonts.bold,
+    fontSize: 10,
+  },
+
+  bottomBarContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: Spacing.md,
+    right: Spacing.md,
+    zIndex: 40,
+  },
+  bottomBlur: {
+    borderRadius: BorderRadius.xxl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    ...Shadows.lg,
+  },
+  bottomBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    gap: 16,
+  },
+  priceInfo: {
+    flex: 0.45,
+  },
+  priceTag: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 2 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline' },
+  priceValue: { fontFamily: Fonts.extraBold, fontSize: 24, letterSpacing: -1 },
+  currency: { fontFamily: Fonts.bold, fontSize: 12 },
+  
+  addBtn: {
+    flex: 0.55,
+    height: 56,
+  },
+  addBtnGradient: {
+    flex: 1,
+    borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 54,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.sm,
+    gap: 8,
   },
-  actionBtnText: {
-    fontFamily: Fonts.bold,
+  addBtnText: {
+    color: '#FFF',
+    fontFamily: Fonts.extraBold,
     fontSize: FontSizes.md,
-    color: '#FFFFFF',
   },
 });
+

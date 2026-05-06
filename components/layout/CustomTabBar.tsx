@@ -1,23 +1,32 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  interpolate,
+  withTiming,
+  FadeInDown
+} from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
-import { Fonts, Spacing, BorderRadius } from '@/constants/theme';
+import { Fonts, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
 
 type TabItem = {
   name: string;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  iconFilled: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
 };
 
 const TABS: TabItem[] = [
   { name: 'index', label: 'Home', icon: 'home-outline', iconFilled: 'home' },
-  { name: 'search', label: 'Search', icon: 'search-outline', iconFilled: 'search' },
+  { name: 'search', label: 'Search', icon: 'magnify', iconFilled: 'magnify' },
   { name: 'cart', label: 'Cart', icon: 'cart-outline', iconFilled: 'cart' },
-  { name: 'profile', label: 'Profile', icon: 'person-outline', iconFilled: 'person' },
+  { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
 interface CustomTabBarProps {
@@ -35,8 +44,9 @@ function TabButton({
   isFocused: boolean;
   onPress: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const focusProgress = useSharedValue(isFocused ? 1 : 0);
+  const scale = useSharedValue(1);
 
   useEffect(() => {
     focusProgress.value = withSpring(isFocused ? 1 : 0, {
@@ -45,59 +55,93 @@ function TabButton({
     });
   }, [isFocused]);
 
-  const iconAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(focusProgress.value, [0, 1], [1, 1.15]) }],
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { translateY: interpolate(focusProgress.value, [0, 1], [0, -4]) }
+    ],
+    opacity: interpolate(focusProgress.value, [0, 1], [0.6, 1]),
   }));
 
-  const indicatorAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: focusProgress.value,
-    transform: [{ scaleX: focusProgress.value }],
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(focusProgress.value, [0, 1], [0, 1]),
+    transform: [{ scale: interpolate(focusProgress.value, [0, 1], [0.8, 1.2]) }],
   }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
 
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={styles.tab}
-      android_ripple={{ color: 'rgba(233,30,140,0.1)', borderless: true, radius: 28 }}
     >
-      <Animated.View style={iconAnimatedStyle}>
-        <Ionicons
+      <Animated.View style={[styles.glow, animatedGlowStyle, { backgroundColor: colors.pink + '20' }]} />
+      
+      <Animated.View style={animatedIconStyle}>
+        <MaterialCommunityIcons
           name={isFocused ? tab.iconFilled : tab.icon}
-          size={22}
+          size={24}
           color={isFocused ? colors.pink : colors.textSecondary}
         />
       </Animated.View>
+      
       <Text
         style={[
           styles.label,
-          { color: isFocused ? colors.pink : colors.textSecondary },
-          isFocused && styles.labelActive,
+          { 
+            color: isFocused ? colors.pink : colors.textSecondary,
+            fontFamily: isFocused ? Fonts.extraBold : Fonts.bold,
+            opacity: isFocused ? 1 : 0.7
+          },
         ]}
       >
         {tab.label}
       </Text>
-      <Animated.View
-        style={[
-          styles.activeIndicator,
-          { backgroundColor: colors.pink },
-          indicatorAnimatedStyle,
-        ]}
-      />
+      
+      {isFocused && (
+        <Animated.View 
+          entering={FadeInDown.duration(400)}
+          style={[styles.activeDot, { backgroundColor: colors.pink, shadowColor: colors.pink }]} 
+        />
+      )}
     </Pressable>
   );
 }
 
 export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <View style={[styles.container, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+    <Animated.View 
+      entering={FadeInDown.delay(500).duration(1000)}
+      style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 16) }]}
+    >
+      <BlurView
+        intensity={isDark ? 30 : 50}
+        tint={isDark ? 'dark' : 'light'}
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDark ? 'rgba(25, 10, 40, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+          },
+          Shadows.lg,
+        ]}
+      >
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
 
           const onPress = () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             const route = state.routes[index];
             const event = navigation.emit({
               type: 'tabPress',
@@ -119,8 +163,8 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
             />
           );
         })}
-      </View>
-    </View>
+      </BlurView>
+    </Animated.View>
   );
 }
 
@@ -131,35 +175,47 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.xl,
   },
   container: {
     flexDirection: 'row',
-    borderRadius: BorderRadius.xl,
+    borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.md,
     width: '100%',
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...Shadows.lg,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    position: 'relative',
+    height: 54,
+  },
+  glow: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    top: 0,
   },
   label: {
-    fontFamily: Fonts.medium,
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 10,
+    marginTop: 4,
+    letterSpacing: 0.2,
   },
-  labelActive: {
-    fontFamily: Fonts.bold,
-  },
-  activeIndicator: {
+  activeDot: {
     position: 'absolute',
-    bottom: -6,
-    height: 3,
-    borderRadius: 2,
+    bottom: -2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });

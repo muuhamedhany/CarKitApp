@@ -1,20 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, Pressable,
-  ActivityIndicator, FlatList, Dimensions,
+  ActivityIndicator, FlatList, Dimensions, Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { ServiceDetailSkeleton } from '@/components';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const IMAGE_HEIGHT = 340;
+const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
 
 type ServiceDetail = {
   service_id: number;
@@ -35,7 +38,7 @@ type ServiceDetail = {
 export default function ServiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { token } = useAuth();
   const { showToast } = useToast();
@@ -43,6 +46,8 @@ export default function ServiceDetailScreen() {
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchService();
@@ -69,6 +74,7 @@ export default function ServiceDetailScreen() {
 
   const handleBookNow = () => {
     if (!service) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/booking-confirmation',
       params: {
@@ -83,46 +89,72 @@ export default function ServiceDetailScreen() {
     } as any);
   };
 
-  const handleImagePress = (images: string[], index: number) => {
-    router.push({
-      pathname: '/image-viewer',
-      params: {
-        images: JSON.stringify(images),
-        initialIndex: String(index),
-      },
-    } as any);
-  };
-
   if (loading) {
-    return (
-      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.pink} />
-      </View>
-    );
+    return <ServiceDetailSkeleton />;
   }
 
   if (!service) return null;
 
-  const images: string[] = [];
-  if (service.image_url) images.push(service.image_url);
-  if (service.image_url_2) images.push(service.image_url_2);
-  if (service.image_url_3) images.push(service.image_url_3);
+  const images = [service.image_url, service.image_url_2, service.image_url_3].filter(Boolean) as string[];
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Floating Header */}
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        <Pressable onPress={() => router.back()} style={styles.iconBtn}>
-          <MaterialCommunityIcons name="chevron-left" size={32} color="#FFFFFF" />
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+      {/* Dynamic Glassmorphic Header */}
+      <Animated.View style={[
+        styles.stickyHeader,
+        { height: insets.top + 50, opacity: headerOpacity }
+      ]}>
+        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={[styles.headerContent, { marginTop: insets.top }]}>
+           <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{service.name}</Text>
+        </View>
+      </Animated.View>
+
+      {/* Floating Back Button */}
+      <View style={[styles.floatingControls, { top: insets.top + 10 }]}>
+        <Pressable 
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} 
+          style={styles.floatingIconBtn}
+        >
+          <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+             <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
+          </BlurView>
         </Pressable>
-        <Pressable onPress={() => { }} style={styles.iconBtn}>
-          <MaterialCommunityIcons name="share-variant" size={24} color="#FFFFFF" />
-        </Pressable>
+        
+        <View style={styles.rightFloatingControls}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={styles.floatingIconBtn}>
+            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+              <MaterialCommunityIcons name="share-variant" size={20} color="#FFF" />
+            </BlurView>
+          </Pressable>
+        </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Image Gallery */}
-        <View style={styles.galleryContainer}>
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+      >
+        {/* Hero Gallery */}
+        <View style={styles.heroContainer}>
           {images.length > 0 ? (
             <FlatList
               data={images}
@@ -136,89 +168,82 @@ export default function ServiceDetailScreen() {
                 }
               }}
               viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-              renderItem={({ item, index }) => (
-                <Pressable
-                  onPress={() => handleImagePress(images, index)}
-                  style={styles.imageWrapper}
-                >
-                  <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
-                </Pressable>
+              renderItem={({ item }) => (
+                <Image source={{ uri: item }} style={styles.heroImage} resizeMode="cover" />
               )}
             />
           ) : (
-            <View style={[styles.imageWrapper, styles.center]}>
-              <MaterialCommunityIcons name="car-wash" size={80} color="rgba(255,255,255,0.3)" />
+            <View style={[styles.heroImage, styles.center, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="car-wash" size={80} color={colors.textMuted} />
+            </View>
+          )}
+
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)', colors.background]}
+            style={styles.heroGradient}
+          />
+          
+          {images.length > 1 && (
+            <View style={styles.paginationDots}>
+              {images.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === activeImageIndex ? { width: 24, backgroundColor: colors.pink } : { backgroundColor: 'rgba(255,255,255,0.5)' }
+                  ]}
+                />
+              ))}
             </View>
           )}
         </View>
 
-        {/* Pagination Dots */}
-        {images.length > 1 && (
-          <View style={styles.pagination}>
-            {images.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  i === activeImageIndex
-                    ? [styles.dotActive, { backgroundColor: colors.pink }]
-                    : { backgroundColor: colors.textMuted },
-                ]}
-              />
-            ))}
+        {/* Service Info Content */}
+        <View style={styles.mainContent}>
+          <View style={styles.titleRow}>
+            <View style={{ flex: 1 }}>
+               <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name?.toUpperCase() || 'SERVICE'}</Text>
+               <Text style={[styles.serviceTitle, { color: colors.textPrimary }]}>{service.name}</Text>
+            </View>
           </View>
-        )}
 
-        {/* Content Section */}
-        <View style={styles.content}>
-          <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
-          {service.provider_name && (
-            <Text style={[styles.providerLine, { color: colors.textSecondary }]}>
-              By {service.provider_name}
-            </Text>
-          )}
+          <View style={[styles.providerCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+             <View style={[styles.providerAvatar, { backgroundColor: colors.background }]}>
+                <MaterialCommunityIcons name="shield-star-outline" size={20} color={colors.pink} />
+             </View>
+             <View style={{ flex: 1 }}>
+                <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>Service Provider</Text>
+                <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || 'Verified Partner'}</Text>
+             </View>
+             <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+          </View>
 
-          {/* Badges */}
-          <View style={styles.badgesRow}>
-            {service.category_name && (
-              <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="tag-outline" size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{service.category_name}</Text>
-              </View>
-            )}
-            {service.duration && (
-              <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="clock-outline" size={13} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{service.duration} min</Text>
-              </View>
-            )}
-            {service.location_type && (
-              <View style={[styles.badge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons
-                  name={service.location_type === 'mobile' ? 'car' : service.location_type === 'in-shop' ? 'store' : 'map-marker'}
-                  size={13}
-                  color={colors.textSecondary}
-                  style={{ marginRight: 4 }}
+          <View style={styles.statsRow}>
+             <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
+                <MaterialCommunityIcons name="clock-outline" size={22} color={colors.pink} />
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} min</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
+             </View>
+             <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
+                <MaterialCommunityIcons 
+                  name={service.location_type === 'mobile' ? 'car' : 'store'} 
+                  size={22} color={colors.pink} 
                 />
-                <Text style={[styles.badgeText, { color: colors.textSecondary }]}>
-                  {service.location_type === 'mobile' ? 'Mobile' : service.location_type === 'in-shop' ? 'In-Shop' : 'Both'}
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                   {service.location_type === 'mobile' ? 'Mobile' : service.location_type === 'in-shop' ? 'In-Shop' : 'Both'}
                 </Text>
-              </View>
-            )}
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Location</Text>
+             </View>
           </View>
 
-          {/* Description Card */}
-          <View style={[styles.descriptionCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              {service.description || 'No description available for this service.'}
-            </Text>
-          </View>
+          <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>Service Details</Text>
+          <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
+            {service.description || 'Professional car care service provided by our certified experts.'}
+          </Text>
 
-          {/* Available Times (if any) */}
           {service.available_times && service.available_times.length > 0 && (
-            <View style={styles.timesCard}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Times</Text>
+            <>
+              <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Available Slots</Text>
               <View style={styles.timesRow}>
                 {service.available_times.map((time, i) => (
                   <View key={i} style={[styles.timeChip, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
@@ -226,28 +251,42 @@ export default function ServiceDetailScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </>
           )}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
-      {/* Bottom Sticky Bar */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + Spacing.sm, backgroundColor: colors.background, borderTopColor: colors.dividerLine }]}>
-        <View style={styles.priceBlock}>
-          <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Starting at</Text>
-          <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{service.price} EGP</Text>
-        </View>
-        <Pressable onPress={handleBookNow} style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}>
-          <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.actionBtn}
-          >
-            <Text style={styles.actionBtnText}>Book Now</Text>
-            <MaterialCommunityIcons name="calendar-check" size={20} color="#FFFFFF" />
-          </LinearGradient>
-        </Pressable>
+      {/* Glassmorphic Bottom Action Bar */}
+      <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 10 }]}>
+         <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
+            <View style={styles.bottomBarContent}>
+               <View style={styles.priceInfo}>
+                  <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Starting at</Text>
+                  <View style={styles.priceRow}>
+                     <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{service.price}</Text>
+                     <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
+                  </View>
+               </View>
+               
+               <Pressable
+                 onPress={handleBookNow}
+                 style={({ pressed }) => [
+                   styles.bookBtn,
+                   { transform: [{ scale: pressed ? 0.96 : 1 }] }
+                 ]}
+               >
+                 <LinearGradient
+                   colors={[colors.pink, colors.purple]}
+                   start={{ x: 0, y: 0 }}
+                   end={{ x: 1, y: 0 }}
+                   style={styles.bookBtnGradient}
+                 >
+                   <MaterialCommunityIcons name="calendar-check" size={20} color="#FFF" />
+                   <Text style={styles.bookBtnText}>Book Now</Text>
+                 </LinearGradient>
+               </Pressable>
+            </View>
+         </BlurView>
       </View>
     </View>
   );
@@ -255,58 +294,210 @@ export default function ServiceDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    opacity: 0.5,
+  },
   center: { justifyContent: 'center', alignItems: 'center' },
-  header: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm, zIndex: 10,
+
+  stickyHeader: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    zIndex: 20,
+    overflow: 'hidden',
   },
-  iconBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+  headerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 70,
+  },
+  headerTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+  },
+
+  floatingControls: {
+    position: 'absolute',
+    left: Spacing.md,
+    right: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 30,
+  },
+  rightFloatingControls: { flexDirection: 'row' },
+  floatingIconBtn: {
+    width: 44, height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  blurWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  heroContainer: {
+    width: SCREEN_WIDTH,
+    height: IMAGE_HEIGHT,
+  },
+  heroImage: {
+    width: SCREEN_WIDTH,
+    height: IMAGE_HEIGHT,
+  },
+  heroGradient: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: 150,
+  },
+  paginationDots: {
+    position: 'absolute',
+    bottom: 20,
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dot: {
+    height: 6, width: 6,
+    borderRadius: 3,
+  },
+
+  mainContent: {
+    paddingHorizontal: Spacing.lg,
+    marginTop: -20,
+  },
+  titleRow: {
+    marginBottom: Spacing.xl,
+  },
+  categoryText: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  serviceTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xxl,
+    lineHeight: 32,
+  },
+
+  providerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadows.sm,
+  },
+  providerAvatar: {
+    width: 40, height: 40,
+    borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
   },
-  galleryContainer: {
-    width: SCREEN_WIDTH - 40, height: IMAGE_HEIGHT,
-    borderRadius: BorderRadius.xl, overflow: 'hidden',
-    marginBottom: Spacing.xl, marginTop: 105, marginHorizontal: 20,
+  providerLabel: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 2 },
+  providerName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
-  imageWrapper: { width: SCREEN_WIDTH - 40, height: IMAGE_HEIGHT },
-  image: { width: SCREEN_WIDTH - 40, height: IMAGE_HEIGHT, borderRadius: BorderRadius.xl },
-  pagination: {
-    flexDirection: 'row', bottom: Spacing.md, alignSelf: 'center',
-    left: 0, right: 0, justifyContent: 'center',
+  statBox: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    gap: 4,
   },
-  dot: { height: 8, width: 8, borderRadius: 4, marginHorizontal: 3 },
-  dotActive: { width: 24, borderRadius: 4 },
-  content: { paddingHorizontal: Spacing.lg },
-  serviceName: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl, color: '#FFFFFF' },
-  providerLine: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.md },
-  badgesRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: Spacing.lg },
-  badge: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: BorderRadius.full, borderWidth: 1, marginRight: Spacing.sm,
+  statValue: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+    marginTop: 4,
   },
-  badgeText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
-  descriptionCard: { borderRadius: 20, borderWidth: 1, padding: Spacing.md },
-  sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
-  description: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 22 },
-  timesCard: { marginTop: Spacing.lg },
-  timesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  timeChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full, borderWidth: 1 },
-  timeChipText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, borderTopWidth: 1, gap: Spacing.md,
+  statLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: 10,
+    opacity: 0.6,
   },
-  priceBlock: { justifyContent: 'center' },
-  priceLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
-  priceValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
-  actionBtn: {
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    height: 54, borderRadius: BorderRadius.full, gap: Spacing.sm,
+
+  sectionHeading: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.lg,
+    marginBottom: Spacing.md,
   },
-  actionBtnText: { fontFamily: Fonts.bold, fontSize: FontSizes.md, color: '#FFFFFF' },
+  descriptionText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    lineHeight: 22,
+    opacity: 0.8,
+  },
+
+  timesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  timeChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  timeChipText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+  },
+
+  bottomBarContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: Spacing.md,
+    right: Spacing.md,
+    zIndex: 40,
+  },
+  bottomBlur: {
+    borderRadius: BorderRadius.xxl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    ...Shadows.lg,
+  },
+  bottomBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    gap: 16,
+  },
+  priceInfo: {
+    flex: 0.45,
+  },
+  priceTag: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 2 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline' },
+  priceValue: { fontFamily: Fonts.extraBold, fontSize: 24, letterSpacing: -1 },
+  currency: { fontFamily: Fonts.bold, fontSize: 12 },
+  
+  bookBtn: {
+    flex: 0.55,
+    height: 56,
+  },
+  bookBtnGradient: {
+    flex: 1,
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bookBtnText: {
+    color: '#FFF',
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.md,
+  },
 });

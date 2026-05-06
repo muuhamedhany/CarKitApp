@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  FlatList,
   ActivityIndicator,
   RefreshControl,
   Platform,
@@ -20,157 +19,40 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import Animated, { 
+  FadeInDown, 
+  FadeInUp, 
+  useSharedValue, 
+  useAnimatedScrollHandler, 
+  useAnimatedStyle,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { CategoryPill } from '@/components';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Animations } from '@/constants/theme';
+import { 
+  CategoryPill, 
+  ProductCard, 
+  ServiceCard, 
+  AdSlideshow, 
+  HomeSkeleton 
+} from '@/components';
 import { adService, Ad } from '@/services/api/ad.service';
-
-const TAB_BAR_HEIGHT = 65;
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const AD_SLIDE_INTERVAL = 4000;
-
-// ─── Ad Slideshow ─────────────────────────────────────────────────────────────
-function AdSlideshow({ ads, colors, onAdPress }: { ads: Ad[]; colors: any; onAdPress?: (ad: Ad) => void }) {
-  const scrollRef = useRef<ScrollView>(null);
-  const indexRef = useRef(0);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const adWidth = SCREEN_WIDTH - Spacing.md * 2;
-
-  useEffect(() => {
-    if (ads.length <= 1) return;
-    const timer = setInterval(() => {
-      indexRef.current = (indexRef.current + 1) % ads.length;
-      scrollRef.current?.scrollTo({ x: indexRef.current * adWidth, animated: true });
-      setActiveIndex(indexRef.current);
-    }, AD_SLIDE_INTERVAL);
-    return () => clearInterval(timer);
-  }, [ads.length, adWidth]);
-
-  if (ads.length === 0) return null;
-
-  return (
-    <View style={adStyles.wrapper}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        scrollEventThrottle={16}
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / adWidth);
-          indexRef.current = idx;
-          setActiveIndex(idx);
-        }}
-      >
-        {ads.map((ad) => (
-          <Pressable key={ad.ad_id} style={[adStyles.slide, { width: adWidth }]} onPress={() => onAdPress?.(ad)}>
-            {ad.banner_image_url ? (
-              <Image source={{ uri: ad.banner_image_url }} style={adStyles.slideImage} resizeMode="cover" />
-            ) : (
-              <LinearGradient
-                colors={['#CD42A8', '#7B2FF7']}
-                style={adStyles.slideImage}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialCommunityIcons name="bullhorn" size={36} color="#fff" />
-              </LinearGradient>
-            )}
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.55)']}
-              style={adStyles.slideOverlay}
-            />
-            <View style={adStyles.sponsoredBadge}>
-              <Text style={adStyles.sponsoredText}>Ad</Text>
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {/* Dot indicators */}
-      {ads.length > 1 && (
-        <View style={adStyles.dotsRow}>
-          {ads.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                adStyles.dot,
-                i === activeIndex
-                  ? adStyles.dotActive
-                  : { ...adStyles.dotInactive, backgroundColor: colors.textMuted },
-              ]}
-            />
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
-const adStyles = StyleSheet.create({
-  wrapper: { marginBottom: Spacing.md },
-  slide: {
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    height: 160,
-  },
-  slideImage: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slideOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: BorderRadius.xl,
-  },
-  sponsoredBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  sponsoredText: {
-    color: '#fff',
-    fontFamily: Fonts.medium,
-    fontSize: 10,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 5,
-    marginTop: 8,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  dotActive: { backgroundColor: '#CD42A8', width: 16 },
-  dotInactive: { opacity: 0.5 },
-});
-// ──────────────────────────────────────────────────────────────────────────────
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
 const SEARCH_PHRASES = [
-  'Engine oil & filters...',
-  'Brake pads & rotors...',
-  'Car wash & detailing...',
-  'Tire rotation & balance...',
-  'Battery replacement...',
-  'AC service & recharge...',
+  'Premium engine oils...',
+  'High-performance brake pads...',
+  'Professional detailing...',
+  'Tire rotation experts...',
+  'Quick battery replacement...',
+  'Advanced AC recharge...',
   'Spark plugs & ignition...',
-  'Oil change near you...',
-  'Suspension & steering...',
-  'Windshield wipers...',
+  'Best oil change nearby...',
 ];
-
-const TYPING_SPEED = 60;    // ms per character typed
-const ERASING_SPEED = 30;   // ms per character erased
-const PAUSE_AFTER_TYPE = 1800; // ms to hold the full phrase
-const PAUSE_AFTER_ERASE = 300; // ms before starting the next phrase
 
 function useTypewriter(phrases: string[]) {
   const [displayed, setDisplayed] = useState('');
@@ -180,43 +62,36 @@ function useTypewriter(phrases: string[]) {
   const isErasing = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Blinking cursor
   useEffect(() => {
-    const cursor = setInterval(() => setShowCursor(v => !v), 500);
+    const cursor = setInterval(() => setShowCursor(v => !v), 530);
     return () => clearInterval(cursor);
   }, []);
 
   useEffect(() => {
     const tick = () => {
       const phrase = phrases[phraseIdx.current];
-
       if (!isErasing.current) {
-        // Typing forward
         if (charIdx.current < phrase.length) {
           charIdx.current++;
           setDisplayed(phrase.slice(0, charIdx.current));
-          timeoutRef.current = setTimeout(tick, TYPING_SPEED);
+          timeoutRef.current = setTimeout(tick, 60);
         } else {
-          // Pause at full phrase, then start erasing
           isErasing.current = true;
-          timeoutRef.current = setTimeout(tick, PAUSE_AFTER_TYPE);
+          timeoutRef.current = setTimeout(tick, 2000);
         }
       } else {
-        // Erasing backward
         if (charIdx.current > 0) {
           charIdx.current--;
           setDisplayed(phrase.slice(0, charIdx.current));
-          timeoutRef.current = setTimeout(tick, ERASING_SPEED);
+          timeoutRef.current = setTimeout(tick, 30);
         } else {
-          // Move to next phrase
           isErasing.current = false;
           phraseIdx.current = (phraseIdx.current + 1) % phrases.length;
-          timeoutRef.current = setTimeout(tick, PAUSE_AFTER_ERASE);
+          timeoutRef.current = setTimeout(tick, 500);
         }
       }
     };
-
-    timeoutRef.current = setTimeout(tick, PAUSE_AFTER_ERASE);
+    timeoutRef.current = setTimeout(tick, 500);
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   }, [phrases]);
 
@@ -228,12 +103,12 @@ function TypewriterSearchBar({ textColor }: { textColor: string }) {
   return (
     <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm, color: textColor, flex: 1 }}>
       {displayed}
-      <Text style={{ opacity: showCursor ? 1 : 0 }}>|</Text>
+      <Text style={{ opacity: showCursor ? 1 : 0, color: '#CD42A8' }}>|</Text>
     </Text>
   );
 }
-// ──────────────────────────────────────────────────────────────────────────────
 
+// ─── HomeScreen Component ───────────────────────────────────────────────────────
 type Category = { category_id: number; name: string; description?: string };
 type Product = {
   product_id: number; name: string; price: string; description?: string;
@@ -246,12 +121,15 @@ type Service = {
   image_url?: string | null;
 };
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const TAB_BAR_HEIGHT = 90;
+
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
   const { addToCart } = useCart();
   const { showToast } = useToast();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
@@ -261,12 +139,20 @@ export default function HomeScreen() {
   const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
+  
+  const scrollY = useSharedValue(0);
 
-  const toggleFavorite = (productId: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    contextToggleWishlist(productId);
-  };
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
+  const headerStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(scrollY.value, [0, 80], [0, 1], Extrapolate.CLAMP);
+    return {
+      opacity,
+      backgroundColor: isDark ? 'rgba(5,5,5,0.85)' : 'rgba(255,255,255,0.85)',
+    };
+  });
 
   const fetchData = useCallback(async () => {
     try {
@@ -285,7 +171,6 @@ export default function HomeScreen() {
       if (servData.success) setServices(servData.data || []);
       if (catData.success) setProductCategories(catData.data || []);
 
-      // Fetch active ads (public, no auth required)
       try {
         const adsRes = await adService.getActiveAds();
         if (adsRes.success && adsRes.data) setActiveAds(adsRes.data);
@@ -305,15 +190,16 @@ export default function HomeScreen() {
   const handleAddToCart = async (productId: number) => {
     const result = await addToCart(productId);
     if (result.success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast('success', 'Added!', 'Product added to your cart.');
     } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast('error', 'Error', result.message);
     }
   };
 
   const handleAdPress = (ad: Ad) => {
     const searchParams: Record<string, string> = {};
-
     if (ad.vendor_id) {
       searchParams.vendor_id = String(ad.vendor_id);
       searchParams.type = 'products';
@@ -321,278 +207,371 @@ export default function HomeScreen() {
       searchParams.provider_id = String(ad.provider_id);
       searchParams.type = 'services';
     }
-
     if (ad.advertiser_name) searchParams.ad_title = ad.advertiser_name;
-
     router.push({ pathname: '/(tabs)/search' as any, params: searchParams });
-  };
-
-  const renderServiceCard = (service: Service) => {
-    const hasImage = !!service.image_url;
-    return (
-      <Pressable
-        key={service.service_id}
-        style={[styles.serviceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-        onPress={() => router.push(`/service/${service.service_id}`)}
-      >
-        {/* Image or gradient placeholder */}
-        <View style={[styles.serviceCardImage, { backgroundColor: colors.imagePlaceholder }]}>
-          {hasImage ? (
-            <Image
-              source={{ uri: service.image_url! }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
-          ) : (
-            <MaterialCommunityIcons name="car-wash" size={28} color={colors.textMuted} />
-          )}
-        </View>
-        <View style={styles.serviceCardContent}>
-          <Text style={[styles.serviceCardName, { color: colors.textPrimary }]} numberOfLines={2}>{service.name}</Text>
-          <View>
-            <Text style={[styles.serviceCardPrice, { color: colors.textPrimary }]}>Starting at {service.price} EGP</Text>
-            <View style={styles.serviceCardArrow}>
-              <MaterialCommunityIcons name="arrow-right" size={20} color={colors.textPrimary} />
-            </View>
-          </View>
-        </View>
-      </Pressable>
-    );
-  };
-
-  const renderProductCard = (product: Product) => {
-    const hasImage = !!product.image_url;
-    return (
-      <Pressable
-        key={product.product_id}
-        style={[styles.productCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-        onPress={() => router.push(`/product/${product.product_id}`)}
-      >
-        <View style={[styles.productImage, { backgroundColor: colors.imagePlaceholder }]}>
-          {hasImage ? (
-            <Image
-              source={{ uri: product.image_url! }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
-          ) : (
-            <MaterialCommunityIcons name="car-cog" size={32} color={colors.textMuted} />
-          )}
-        </View>
-        <View style={styles.productInfo}>
-          <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>{product.name}</Text>
-          <View style={styles.productMeta}>
-            <Text style={[styles.productPrice, { color: colors.textPrimary }]}>{product.price} EGP</Text>
-            <Pressable onPress={() => handleAddToCart(product.product_id)} style={styles.addIconBtn}>
-              <MaterialCommunityIcons name="plus-circle" size={24} color={colors.pink} />
-            </Pressable>
-          </View>
-        </View>
-        {/* Favorite Heart Icon */}
-        <Pressable
-          style={styles.favoriteIndexIcon}
-          onPress={() => toggleFavorite(product.product_id)}
-          hitSlop={8}
-        >
-          <MaterialCommunityIcons
-            name={wishlist[product.product_id] ? "cards-heart" : "cards-heart-outline"}
-            size={20}
-            color={wishlist[product.product_id] ? colors.pink : colors.textPrimary}
-          />
-        </Pressable>
-      </Pressable>
-    );
   };
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.pink} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <LinearGradient
+          colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+          style={StyleSheet.absoluteFill}
+        />
+        <HomeSkeleton />
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
-    >
-      {/* Header */}
-      <View style={[styles.header, { marginTop: insets.top }]}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.greetingLabel, { color: colors.textSecondary }]}>Welcome back,</Text>
-          <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+      {/* Sticky Header Blur */}
+      <Animated.View style={[styles.headerBlurContainer, { paddingTop: insets.top }, headerStyle]}>
+        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={styles.headerInner}>
+          <Text style={[styles.headerCompactTitle, { color: colors.textPrimary }]}>CarKit</Text>
+          <Pressable 
+            style={[styles.notificationBtnSmall, { backgroundColor: colors.backgroundSecondary }]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <MaterialCommunityIcons name="bell-outline" size={20} color={colors.textPrimary} />
+          </Pressable>
         </View>
-        <Pressable style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary }]}>
-          <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
-          <View style={[styles.notificationDot, { backgroundColor: colors.pink }]} />
-        </Pressable>
-      </View>
+      </Animated.View>
 
-      {/* Quick Search — typewriter placeholder */}
-      <Pressable style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]} onPress={() => router.push('/(tabs)/search')}>
-        <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-        <TypewriterSearchBar textColor={colors.textMuted} />
-      </Pressable>
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
+      >
+        {/* Main Header */}
+        <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.greetingLabel, { color: colors.textSecondary }]}>Welcome back,</Text>
+            <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
+          </View>
+          <Pressable 
+            style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
+            <View style={[styles.notificationDot, { backgroundColor: colors.pink }]} />
+          </Pressable>
+        </Animated.View>
 
-      {/* Sponsored Ads Slideshow */}
-      {activeAds.length > 0 && (
-        <AdSlideshow ads={activeAds} colors={colors} onAdPress={handleAdPress} />
-      )}
+        {/* Search — premium glass design */}
+        <Animated.View entering={FadeInDown.delay(400).duration(800)}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.searchBar, 
+              { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                borderColor: colors.cardBorder,
+                opacity: pressed ? 0.8 : 1
+              }
+            ]} 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/search');
+            }}
+          >
+            <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
+            <TypewriterSearchBar textColor={colors.textSecondary} />
+            <View style={[styles.searchFilterIcon, { backgroundColor: colors.pink + '20' }]}>
+               <MaterialCommunityIcons name="tune-variant" size={16} color={colors.pink} />
+            </View>
+          </Pressable>
+        </Animated.View>
 
-      {/* Featured Services */}
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Services</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-        {services.map(renderServiceCard)}
-        {services.length === 0 && (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet</Text>
+        {/* Sponsored Ads */}
+        {activeAds.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+            <AdSlideshow ads={activeAds} onAdPress={handleAdPress} />
+          </Animated.View>
         )}
-      </ScrollView>
 
-      {/* Featured Products */}
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Products</Text>
-      {productCategories.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
-          {productCategories.slice(0, 5).map((cat) => (
-            <CategoryPill key={cat.category_id} label={cat.name} />
-          ))}
-        </ScrollView>
-      )}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-        {products.map(renderProductCard)}
-        {products.length === 0 && (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet</Text>
-        )}
-      </ScrollView>
+        {/* Featured Services */}
+        <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Services</Text>
+            <Pressable onPress={() => router.push('/(tabs)/search?type=services')}>
+              <Text style={[styles.seeAllText, { color: colors.pink }]}>See All</Text>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
+            {services.map((service) => (
+              <View key={service.service_id} style={{ width: 290, marginRight: Spacing.md }}>
+                <ServiceCard 
+                  name={service.name}
+                  providerName={service.provider_name}
+                  price={service.price}
+                  imageUrl={service.image_url}
+                  onView={() => router.push(`/service/${service.service_id}`)}
+                  onBookNow={() => router.push(`/service/${service.service_id}`)}
+                />
+              </View>
+            ))}
+            {services.length === 0 && (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet</Text>
+            )}
+          </ScrollView>
+        </Animated.View>
 
-      {/* Recent Activity */}
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
-      <View style={[styles.activityCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-        <View style={[styles.activityIcon, { backgroundColor: colors.pinkGlow }]}>
-          <MaterialCommunityIcons name="package-variant" size={20} color={colors.pink} />
-        </View>
-        <View style={styles.activityInfo}>
-          <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>Welcome to CarKit!</Text>
-          <Text style={[styles.activitySub, { color: colors.textMuted }]}>Browse products and services to get started</Text>
-        </View>
-      </View>
+        {/* Featured Products */}
+        <Animated.View entering={FadeInDown.delay(700).duration(800)}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shop Parts</Text>
+            <Pressable onPress={() => router.push('/(tabs)/search?type=products')}>
+              <Text style={[styles.seeAllText, { color: colors.pink }]}>See All</Text>
+            </Pressable>
+          </View>
+          {productCategories.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow} contentContainerStyle={{ paddingLeft: Spacing.md, gap: Spacing.sm }}>
+              {productCategories.slice(0, 5).map((cat) => (
+                <CategoryPill key={cat.category_id} label={cat.name} />
+              ))}
+            </ScrollView>
+          )}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
+            {products.map((product) => (
+              <View key={product.product_id} style={{ width: 190, marginRight: Spacing.md }}>
+                <ProductCard 
+                  productId={product.product_id}
+                  name={product.name}
+                  price={product.price}
+                  imageUrl={product.image_url}
+                  vendorName={product.vendor_name}
+                  onPress={() => router.push(`/product/${product.product_id}`)}
+                  onAddToCart={() => handleAddToCart(product.product_id)}
+                />
+              </View>
+            ))}
+            {products.length === 0 && (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet</Text>
+            )}
+          </ScrollView>
+        </Animated.View>
 
-      <View style={{ height: androidTabOffset + Spacing.lg }} />
-    </ScrollView>
+        {/* Promotional Banner — modernized glass design */}
+        <Animated.View entering={FadeInDown.delay(800).duration(800)}>
+          <Pressable 
+            style={[
+              styles.promoBanner, 
+              { 
+                backgroundColor: isDark ? 'rgba(205, 66, 168, 0.1)' : 'rgba(205, 66, 168, 0.03)',
+                borderColor: colors.pink + '40'
+              }
+            ]}
+          >
+            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+            <View style={styles.promoContent}>
+              <View style={styles.promoTextGroup}>
+                <Text style={[styles.promoTitle, { color: colors.textPrimary }]}>20% OFF FIRST SERVICE</Text>
+                <Text style={[styles.promoSub, { color: colors.pink }]}>Use code: CARKITNEON</Text>
+              </View>
+              <View style={[styles.promoIconContainer, { backgroundColor: colors.pink + '20' }]}>
+                <MaterialCommunityIcons name="ticket-percent" size={28} color={colors.pink} />
+              </View>
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        {/* Recent Activity */}
+        <Animated.View entering={FadeInDown.delay(900).duration(800)}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.lg, marginBottom: Spacing.md }]}>Updates</Text>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.activityCard, 
+              { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', 
+                borderColor: colors.cardBorder,
+                opacity: pressed ? 0.8 : 1
+              }
+            ]}
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          >
+            <View style={[styles.activityIcon, { backgroundColor: colors.pink + '20' }]}>
+              <MaterialCommunityIcons name={"sparkles" as any} size={24} color={colors.pink} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>Neon Redesign Live!</Text>
+              <Text style={[styles.activitySub, { color: colors.textSecondary }]}>Explore our premium new look across the entire app.</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
+        </Animated.View>
+
+        <View style={{ height: androidTabOffset + Spacing.xl * 2 }} />
+      </Animated.ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
+    opacity: 0.6,
+  },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
-
+  content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  headerBlurContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 110,
+    zIndex: 100,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  headerInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 12,
+  },
+  headerCompactTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.lg,
+    letterSpacing: -0.5,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
     paddingTop: 10,
   },
   headerLeft: { flex: 1 },
-  greetingLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
-  greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4 },
+  greetingLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.7 },
+  greetingName: { fontFamily: Fonts.extraBold, fontSize: 32, marginTop: -4, letterSpacing: -1 },
   notificationBtn: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 52, height: 52, borderRadius: 18,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1,
+  },
+  notificationBtnSmall: {
+    width: 40, height: 40, borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
   },
   notificationDot: {
-    position: 'absolute', top: 12, right: 12,
+    position: 'absolute', top: 16, right: 16,
     width: 8, height: 8, borderRadius: 4,
-    borderWidth: 2, borderColor: '#050505',
+    borderWidth: 1.5, borderColor: '#050505',
   },
-
-  statusCardContainer: { marginBottom: Spacing.xl },
-  statusCard: {
-    borderRadius: 24, borderWidth: 1,
-    overflow: 'hidden', padding: Spacing.lg,
-  },
-  statusGradient: { ...StyleSheet.absoluteFillObject },
-  statusHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xl },
-  carName: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
-  carStatus: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2 },
-
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  statItem: { flex: 1 },
-  statValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-  statUnit: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, opacity: 0.6 },
-  statLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
-  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: Spacing.lg },
-
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: 16, borderWidth: 1,
+    borderRadius: BorderRadius.xl, borderWidth: 1,
     paddingHorizontal: Spacing.md, paddingVertical: 14,
     marginBottom: Spacing.xl,
+    ...Shadows.md,
   },
-  searchPlaceholder: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm },
-
-  sectionTitle: {
-    fontFamily: Fonts.extraBold, fontSize: FontSizes.lg,
-    marginBottom: Spacing.md, letterSpacing: -0.5,
-  },
-  horizontalScroll: { marginBottom: Spacing.xl, marginHorizontal: -Spacing.lg, paddingHorizontal: Spacing.lg },
-  pillRow: { marginBottom: Spacing.md },
-  emptyText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-
-  serviceCard: {
-    width: 200, borderRadius: 20,
-    borderWidth: 1, marginRight: Spacing.md,
-    overflow: 'hidden',
-  },
-  serviceCardImage: {
-    height: 90, width: '100%',
+  searchFilterIcon: {
+    width: 34, height: 34, borderRadius: 10,
     justifyContent: 'center', alignItems: 'center',
-    overflow: 'hidden',
+    marginLeft: 8,
   },
-  serviceCardContent: {
-    padding: Spacing.sm,
+  sectionHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    flex: 1,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
-  serviceCardName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, lineHeight: 18 },
-  serviceCardPrice: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.8 },
-  serviceCardArrow: { alignSelf: 'flex-start', marginTop: 4 },
-
-  productCard: {
-    width: 170, borderRadius: 20,
-    borderWidth: 1, marginRight: Spacing.md,
+  sectionTitle: {
+    fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl,
+    letterSpacing: -1,
+  },
+  seeAllText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+  },
+  horizontalScroll: { 
+    marginBottom: Spacing.xxl, 
+    marginHorizontal: -Spacing.lg,
+  },
+  horizontalScrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 8,
+  },
+  pillRow: { 
+    marginBottom: Spacing.lg,
+    marginHorizontal: -Spacing.lg,
+  },
+  promoBanner: {
+    borderRadius: BorderRadius.xxl,
     overflow: 'hidden',
+    borderWidth: 1,
+    marginBottom: Spacing.xxl,
+    ...Shadows.md,
   },
-  productImage: { height: 110, justifyContent: 'center', alignItems: 'center' },
-  productInfo: { padding: Spacing.md },
-  productName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 2 },
-  productMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  productPrice: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  addIconBtn: { padding: 4 },
-
+  promoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.xl,
+  },
+  promoTextGroup: { flex: 1 },
+  promoTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 20,
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  promoSub: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    letterSpacing: 0.5,
+  },
+  promoIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.md,
+  },
   activityCard: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 20, borderWidth: 1,
-    padding: Spacing.md, marginBottom: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    ...Shadows.sm,
   },
   activityIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: Spacing.md,
   },
   activityInfo: { flex: 1 },
-  activityTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-  activitySub: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
-
-  favoriteIndexIcon: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: 12,
-    padding: 4,
-  }
+  activityTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
+  activitySub: { fontFamily: Fonts.medium, fontSize: 13, opacity: 0.8 },
+  emptyText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+    opacity: 0.5,
+  },
 });
