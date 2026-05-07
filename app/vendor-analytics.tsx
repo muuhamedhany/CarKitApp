@@ -21,7 +21,11 @@ import {
   VendorAnalyticsResponse,
   VendorAnalyticsTrendPoint,
 } from '@/types/api.types';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 const RANGE_OPTIONS: Array<{ label: string; value: VendorAnalyticsRange }> = [
   { label: 'Weekly', value: 'weekly' },
@@ -98,6 +102,8 @@ export default function VendorAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const isDark = colors.background === '#000000' || colors.background === '#121212';
+
   const chartWidth = Math.max(240, width - Spacing.md * 2 - 32);
   const chartHeight = 160;
 
@@ -164,24 +170,39 @@ export default function VendorAnalyticsScreen() {
           />
         }
       >
-        <View style={styles.headerRow}>
-          <Pressable
-            onPress={() => router.back()}
-            style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
-          >
-            <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
-        </View>
+      <ExpoLinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
 
-        <View style={[styles.rangeToggle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <View style={[styles.headerRow, { paddingTop: 60 }]}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+        >
+          <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
+      </View>
+
+        <Animated.View entering={FadeInDown.delay(100).duration(800)} style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
         >
           {RANGE_OPTIONS.map((option) => {
             const isActive = option.value === range;
             return (
               <Pressable
                 key={option.value}
-                onPress={() => setRange(option.value)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setRange(option.value);
+                }}
                 style={[
                   styles.rangePill,
                   { backgroundColor: isActive ? colors.purple : 'transparent' },
@@ -190,7 +211,7 @@ export default function VendorAnalyticsScreen() {
                 <Text
                   style={[
                     styles.rangeLabel,
-                    { color: isActive ? '#E9DEF8' : colors.textMuted },
+                    { color: isActive ? '#E9DEF8' : colors.textSecondary },
                   ]}
                 >
                   {option.label}
@@ -198,7 +219,7 @@ export default function VendorAnalyticsScreen() {
               </Pressable>
             );
           })}
-        </View>
+        </Animated.View>
 
         {loading ? (
           <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -212,202 +233,217 @@ export default function VendorAnalyticsScreen() {
           </View>
         ) : (
           <>
-            <View style={[styles.revenueCard, { backgroundColor: colors.purple, borderColor: colors.purpleDark }]}>
-              <View>
-                <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
-                <Text
-                  selectable
-                  style={[styles.revenueValue, { color: '#E9DEF8', fontVariant: ['tabular-nums'] }]}
-                >
-                  {formatCurrency(analytics.revenue.total)} EGP
-                </Text>
-              </View>
-              <View style={[styles.changePill, { backgroundColor: colors.purpleDark }]}>
-                <MaterialCommunityIcons
-                  name={analytics.revenue.change_pct >= 0 ? 'trending-up' : 'trending-down'}
-                  size={16}
-                  color={'#E9DEF8'}
-                />
-                <Text selectable style={[styles.changeText, { color: '#E9DEF8' }]}>
-                  {formatPercent(analytics.revenue.change_pct)}
-                </Text>
-              </View>
-            </View>
+            <Animated.View entering={FadeInDown.delay(200).duration(800)}>
+              <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '90' }]}>
+                <View>
+                  <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
+                  <Text
+                    selectable
+                    style={[styles.revenueValue, { color: '#E9DEF8', fontVariant: ['tabular-nums'] }]}
+                  >
+                    {formatCurrency(analytics.revenue.total)} EGP
+                  </Text>
+                </View>
+                <View style={[styles.changePill, { backgroundColor: colors.purpleDark }]}>
+                  <MaterialCommunityIcons
+                    name={analytics.revenue.change_pct >= 0 ? 'trending-up' : 'trending-down'}
+                    size={16}
+                    color={'#E9DEF8'}
+                  />
+                  <Text selectable style={[styles.changeText, { color: '#E9DEF8' }]}>
+                    {formatPercent(analytics.revenue.change_pct)}
+                  </Text>
+                </View>
+              </BlurView>
+            </Animated.View>
 
             <View style={styles.statGrid}>
-              <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>total Orders</Text>
-                <Text
-                  selectable
-                  style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                >
-                  {analytics.orders.total}
-                </Text>
-                <Text
-                  selectable
-                  style={[styles.statDelta, { color: getChangeColor(analytics.orders.change_pct, colors) }]}
-                >
-                  {formatPercent(analytics.orders.change_pct)}
-                </Text>
-              </View>
+              <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ flex: 1 }}>
+                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>total Orders</Text>
+                  <Text
+                    selectable
+                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
+                  >
+                    {analytics.orders.total}
+                  </Text>
+                  <Text
+                    selectable
+                    style={[styles.statDelta, { color: getChangeColor(analytics.orders.change_pct, colors) }]}
+                  >
+                    {formatPercent(analytics.orders.change_pct)}
+                  </Text>
+                </BlurView>
+              </Animated.View>
 
-              <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg Order Value</Text>
-                <Text
-                  selectable
-                  style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                >
-                  {formatCurrency(analytics.order_value.total)}
-                </Text>
-                <Text
-                  selectable
-                  style={[styles.statDelta, { color: getChangeColor(analytics.order_value.change_pct, colors) }]}
-                >
-                  {formatPercent(analytics.order_value.change_pct)}
-                </Text>
-              </View>
+              <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ flex: 1 }}>
+                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Order Value</Text>
+                  <Text
+                    selectable
+                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
+                  >
+                    {formatCurrency(analytics.order_value.total)}
+                  </Text>
+                  <Text
+                    selectable
+                    style={[styles.statDelta, { color: getChangeColor(analytics.order_value.change_pct, colors) }]}
+                  >
+                    {formatPercent(analytics.order_value.change_pct)}
+                  </Text>
+                </BlurView>
+              </Animated.View>
             </View>
 
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
-                  <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>{analytics.trend.subtitle}</Text>
-                </View>
-                <View style={styles.cardSummary}>
-                  <Text style={[styles.cardSummaryValue, { color: colors.textPrimary }]}>
-                    {formatCurrency(analytics.trend.summary_value)} EGP
-                  </Text>
-                  <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label}</Text>
-                </View>
-              </View>
-
-              <Svg width={chartWidth} height={chartHeight}>
-                <Defs>
-                  <LinearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor={colors.pink} stopOpacity={0.35} />
-                    <Stop offset="100%" stopColor={colors.pink} stopOpacity={0.05} />
-                  </LinearGradient>
-                </Defs>
-                {lineChart.areaPath ? (
-                  <Path d={lineChart.areaPath} fill="url(#trendFill)" />
-                ) : null}
-                {lineChart.linePath ? (
-                  <Path d={lineChart.linePath} stroke={colors.pink} strokeWidth={3} fill="none" />
-                ) : null}
-              </Svg>
-
-              <View style={styles.trendLabels}>
-                {trendPoints.map((point) => (
-                  <Text key={point.label} style={[styles.trendLabel, { color: colors.textMuted }]}>
-                    {point.label}
-                  </Text>
-                ))}
-              </View>
-            </View>
-
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
-              <View style={styles.categoryRow}>
-                <View style={styles.donutWrap}>
-                  <Svg width={donutSize} height={donutSize}>
-                    <Circle
-                      cx={donutSize / 2}
-                      cy={donutSize / 2}
-                      r={donutRadius}
-                      stroke={colors.cardBorder}
-                      strokeWidth={donutStroke}
-                      fill="none"
-                    />
-                    {categorySeries.map((segment, index) => {
-                      const dash = (segment.percentage / 100) * circumference;
-                      const strokeDasharray = `${dash} ${circumference - dash}`;
-                      const strokeDashoffset = -donutOffset;
-                      donutOffset += dash;
-
-                      return (
-                        <Circle
-                          key={segment.name}
-                          cx={donutSize / 2}
-                          cy={donutSize / 2}
-                          r={donutRadius}
-                          stroke={categoryColors[index % categoryColors.length]}
-                          strokeWidth={donutStroke}
-                          strokeDasharray={strokeDasharray}
-                          strokeDashoffset={strokeDashoffset}
-                          strokeLinecap="round"
-                          fill="none"
-                          transform={`rotate(-90 ${donutSize / 2} ${donutSize / 2})`}
-                        />
-                      );
-                    })}
-                  </Svg>
-                  <View style={styles.donutCenter}>
-                    <Text selectable style={[styles.donutValue, { color: colors.textPrimary }]}>
-                      {primaryCategory ? `${Math.round(primaryCategory.percentage)}%` : '0%'}
+            <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+                <View style={styles.cardHeader}>
+                  <View>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
+                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle}</Text>
+                  </View>
+                  <View style={styles.cardSummary}>
+                    <Text style={[styles.cardSummaryValue, { color: colors.textPrimary }]}>
+                      {formatCurrency(analytics.trend.summary_value)} EGP
                     </Text>
+                    <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label}</Text>
                   </View>
                 </View>
-                <View style={styles.categoryLegend}>
-                  {categorySeries.map((segment, index) => (
-                    <View key={segment.name} style={styles.categoryItem}>
-                      <View
-                        style={[
-                          styles.categoryDot,
-                          { backgroundColor: categoryColors[index % categoryColors.length] },
-                        ]}
-                      />
-                      <Text style={[styles.categoryName, { color: colors.textSecondary }]}>{segment.name}</Text>
-                      <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>
-                        {Math.round(segment.percentage)}%
-                      </Text>
-                    </View>
+
+                <Svg width={chartWidth} height={chartHeight}>
+                  <Defs>
+                    <LinearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0%" stopColor={colors.pink} stopOpacity={0.35} />
+                      <Stop offset="100%" stopColor={colors.pink} stopOpacity={0.05} />
+                    </LinearGradient>
+                  </Defs>
+                  {lineChart.areaPath ? (
+                    <Path d={lineChart.areaPath} fill="url(#trendFill)" />
+                  ) : null}
+                  {lineChart.linePath ? (
+                    <Path d={lineChart.linePath} stroke={colors.pink} strokeWidth={3} fill="none" />
+                  ) : null}
+                </Svg>
+
+                <View style={styles.trendLabels}>
+                  {trendPoints.map((point) => (
+                    <Text key={point.label} style={[styles.trendLabel, { color: colors.textSecondary }]}>
+                      {point.label}
+                    </Text>
                   ))}
                 </View>
-              </View>
-            </View>
+              </BlurView>
+            </Animated.View>
 
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.cardHeader}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
-                <Pressable
-                  onPress={() => router.push('/(vendor-tabs)/products')}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.cardLink, { color: colors.pink }]}>Manage</Text>
-                </Pressable>
-              </View>
-              {analytics.top_products.length ? (
-                analytics.top_products.map((product) => (
-                  <View key={product.product_id} style={[styles.productRow, { borderBottomColor: colors.cardBorder }]}>
-                    <View style={styles.productInfo}>
-                      <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
-                      <Text style={[styles.productMeta, { color: colors.textMuted }]}>
-                        {product.sold_units} sold
-                      </Text>
-                    </View>
-                    <View style={styles.productStats}>
-                      <Text style={[styles.productRevenue, { color: colors.textPrimary }]}
-                        selectable
-                      >
-                        {formatCurrency(product.revenue)} EGP
-                      </Text>
-                      <Text
-                        selectable
-                        style={[styles.productDelta, { color: getChangeColor(product.change_pct, colors) }]}
-                      >
-                        {formatPercent(product.change_pct)}
+            <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                <View style={styles.categoryRow}>
+                  <View style={styles.donutWrap}>
+                    <Svg width={donutSize} height={donutSize}>
+                      <Circle
+                        cx={donutSize / 2}
+                        cy={donutSize / 2}
+                        r={donutRadius}
+                        stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}
+                        strokeWidth={donutStroke}
+                        fill="none"
+                      />
+                      {categorySeries.map((segment, index) => {
+                        const dash = (segment.percentage / 100) * circumference;
+                        const strokeDasharray = `${dash} ${circumference - dash}`;
+                        const strokeDashoffset = -donutOffset;
+                        donutOffset += dash;
+
+                        return (
+                          <Circle
+                            key={segment.name}
+                            cx={donutSize / 2}
+                            cy={donutSize / 2}
+                            r={donutRadius}
+                            stroke={categoryColors[index % categoryColors.length]}
+                            strokeWidth={donutStroke}
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            fill="none"
+                            transform={`rotate(-90 ${donutSize / 2} ${donutSize / 2})`}
+                          />
+                        );
+                      })}
+                    </Svg>
+                    <View style={styles.donutCenter}>
+                      <Text selectable style={[styles.donutValue, { color: colors.textPrimary }]}>
+                        {primaryCategory ? `${Math.round(primaryCategory.percentage)}%` : '0%'}
                       </Text>
                     </View>
                   </View>
-                ))
-              ) : (
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet.</Text>
-              )}
-            </View>
+                  <View style={styles.categoryLegend}>
+                    {categorySeries.map((segment, index) => (
+                      <View key={segment.name} style={styles.categoryItem}>
+                        <View
+                          style={[
+                            styles.categoryDot,
+                            { backgroundColor: categoryColors[index % categoryColors.length] },
+                          ]}
+                        />
+                        <Text style={[styles.categoryName, { color: colors.textSecondary }]}>{segment.name}</Text>
+                        <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>
+                          {Math.round(segment.percentage)}%
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </BlurView>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push('/(vendor-tabs)/products');
+                    }}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.cardLink, { color: colors.pink }]}>Manage</Text>
+                  </Pressable>
+                </View>
+                {analytics.top_products.length ? (
+                  analytics.top_products.map((product) => (
+                    <View key={product.product_id} style={[styles.productRow, { borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                      <View style={styles.productInfo}>
+                        <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
+                        <Text style={[styles.productMeta, { color: colors.textSecondary }]}>
+                          {product.sold_units} sold
+                        </Text>
+                      </View>
+                      <View style={styles.productStats}>
+                        <Text style={[styles.productRevenue, { color: colors.textPrimary }]}
+                          selectable
+                        >
+                          {formatCurrency(product.revenue)} EGP
+                        </Text>
+                        <Text
+                          selectable
+                          style={[styles.productDelta, { color: getChangeColor(product.change_pct, colors) }]}
+                        >
+                          {formatPercent(product.change_pct)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No products yet.</Text>
+                )}
+              </BlurView>
+            </Animated.View>
           </>
         )}
       </ScrollView>
@@ -419,26 +455,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   scrollContent: {
     padding: Spacing.md,
+    paddingBottom: 100,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
+    fontFamily: Fonts.extraBold,
+    fontSize: 28,
+    letterSpacing: -0.5,
   },
   rangeToggle: {
     flexDirection: 'row',
@@ -476,6 +522,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   revenueLabel: {
     fontFamily: Fonts.medium,
@@ -511,6 +559,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.md,
     gap: 6,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   statLabel: {
     fontFamily: Fonts.medium,
@@ -530,6 +580,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   cardHeader: {
     flexDirection: 'row',

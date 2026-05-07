@@ -9,12 +9,15 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 
 export default function VendorDashboard() {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { showToast } = useToast();
@@ -66,65 +69,94 @@ export default function VendorDashboard() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={[styles.greeting, { color: colors.textMuted }]}>Hello, {user?.name}</Text>
+        <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello, {user?.name}</Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
-        </View>
+        </Animated.View>
 
         {loading ? (
           <DashboardSkeleton />
         ) : (
           <>
             <View style={styles.statsContainer}>
-              {stats.map((stat) => (
-                <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
-                    <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
-                  </View>
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
-                  <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
-                </View>
+              {stats.map((stat, index) => (
+                <Animated.View 
+                  key={stat.label} 
+                  entering={FadeInUp.delay(200 + index * 100).duration(800)}
+                  style={styles.statCardWrapper}
+                >
+                  <BlurView 
+                    intensity={isDark ? 20 : 40} 
+                    tint={isDark ? 'dark' : 'light'} 
+                    style={[styles.statCard, { borderColor: colors.cardBorder }]}
+                  >
+                    <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
+                      <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
+                    </View>
+                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+                    <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
+                  </BlurView>
+                </Animated.View>
               ))}
             </View>
 
-            <View style={styles.quickActions}>
+            <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.quickActions}>
               <Pressable
-                onPress={() => router.push('/promote' as any)}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/promote' as any); }}
                 style={{ flex: 1 }}
               >
                 <LinearGradient
-                  colors={[colors.pink, '#6366F1']}
+                  colors={[colors.pink, colors.purple]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={[styles.quickAction, { borderColor: 'transparent' }]}
+                  style={[styles.quickAction]}
                 >
                   <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
                   <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Products</Text>
                 </LinearGradient>
               </Pressable>
-            </View>
+            </Animated.View>
 
-            <Pressable
-              onPress={() => router.push('/vendor-analytics')}
-              style={[styles.analyticsCard, { borderColor: colors.pink }]}
-            >
-              <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
-                <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
-                <Text style={[styles.analyticsSubtitle, { color: colors.textMuted }]}>Track product performance</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
-            </Pressable>
+            <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+              <Pressable
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/vendor-analytics'); }}
+                style={({ pressed }) => [
+                  styles.analyticsCard, 
+                  { 
+                    borderColor: colors.pink,
+                    backgroundColor: colors.pink + '05',
+                    opacity: pressed ? 0.8 : 1
+                  }
+                ]}
+              >
+                <View style={[styles.analyticsIcon, { backgroundColor: colors.pink + '15' }]}>
+                  <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
+                  <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>Track product performance</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
+              </Pressable>
+            </Animated.View>
 
-            <View style={styles.section}>
+            <Animated.View entering={FadeInUp.delay(800).duration(800)} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Orders</Text>
                 <Pressable onPress={() => router.push('/(vendor-tabs)/orders')}>
@@ -133,32 +165,37 @@ export default function VendorDashboard() {
               </View>
 
               {dashboard?.recent_orders.length ? (
-                dashboard.recent_orders.map((order) => (
-                  <View key={order.order_id} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                dashboard.recent_orders.map((order, idx) => (
+                  <BlurView 
+                    key={order.order_id} 
+                    intensity={isDark ? 20 : 40} 
+                    tint={isDark ? 'dark' : 'light'} 
+                    style={[styles.orderCard, { borderColor: colors.cardBorder }]}
+                  >
                     <View style={styles.orderTopRow}>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.orderCustomer, { color: colors.textPrimary }]}>{order.customer_name}</Text>
-                        <Text style={[styles.orderMeta, { color: colors.textMuted }]}>Order #{order.order_id} · {formatDate(order.order_date)}</Text>
+                        <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>Order #{order.order_id} · {formatDate(order.order_date)}</Text>
                       </View>
                       <View style={[styles.statusBadge, { backgroundColor: getStatusTint(order.status, colors).bg }]}>
                         <Text style={[styles.statusBadgeText, { color: getStatusTint(order.status, colors).fg }]}>{order.status}</Text>
                       </View>
                     </View>
                     <View style={styles.orderBottomRow}>
-                      <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.item_count} items</Text>
+                      <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{order.item_count} items</Text>
                       <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
                     </View>
-                  </View>
+                  </BlurView>
                 ))
               ) : (
-                <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="clipboard-text-outline" size={48} color={colors.textMuted} />
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>No orders yet.</Text>
-                </View>
+                </BlurView>
               )}
-            </View>
+            </Animated.View>
 
-            <View style={styles.section}>
+            <Animated.View entering={FadeInUp.delay(900).duration(800)} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Top Products</Text>
                 <Pressable onPress={() => router.push('/(vendor-tabs)/products')}>
@@ -168,25 +205,30 @@ export default function VendorDashboard() {
 
               {dashboard?.top_products.length ? (
                 dashboard.top_products.map((product) => (
-                  <View key={product.product_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                  <BlurView 
+                    key={product.product_id} 
+                    intensity={isDark ? 20 : 40} 
+                    tint={isDark ? 'dark' : 'light'} 
+                    style={[styles.productRow, { borderColor: colors.cardBorder }]}
+                  >
                     <Image
                       source={{ uri: product.image_url || 'https://via.placeholder.com/40' }}
                       style={styles.productThumb}
                     />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
-                      <Text style={[styles.productMeta, { color: colors.textMuted }]}>{product.sold_units} sold · {product.stock} left</Text>
+                      <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{product.sold_units} sold · {product.stock} left</Text>
                     </View>
                     <Text style={[styles.productRevenue, { color: colors.pink }]}>{Number(product.price).toLocaleString('en-EG')} EGP</Text>
-                  </View>
+                  </BlurView>
                 ))
               ) : (
-                <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet.</Text>
-                </View>
+                </BlurView>
               )}
-            </View>
+            </Animated.View>
           </>
         )}
       </ScrollView>
@@ -206,9 +248,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   scrollContent: {
     padding: Spacing.md,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: Spacing.md,
@@ -216,11 +265,13 @@ const styles = StyleSheet.create({
   greeting: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.md,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
+    opacity: 0.8,
   },
   title: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xxl,
+    fontFamily: Fonts.extraBold,
+    fontSize: 32,
+    letterSpacing: -1,
   },
   quickActions: {
     flexDirection: 'row',
@@ -229,14 +280,14 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     flex: 1,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: 16,
     paddingHorizontal: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
+    ...Shadows.md,
   },
   quickActionText: {
     fontFamily: Fonts.semiBold,
@@ -273,12 +324,16 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
+  statCardWrapper: {
+    width: '48.5%',
+  },
   statCard: {
     flex: 1,
-    minWidth: '45%',
     padding: Spacing.md,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   iconContainer: {
     width: 48,
@@ -322,10 +377,12 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
   },
   orderCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   orderTopRow: {
     flexDirection: 'row',
@@ -362,13 +419,15 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   productRow: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   productThumb: {
     width: 40,

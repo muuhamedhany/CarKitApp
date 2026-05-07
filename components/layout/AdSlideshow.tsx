@@ -11,8 +11,8 @@ import {
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { 
-  useSharedValue, 
+import Animated, {
+  useSharedValue,
   useAnimatedStyle,
   withSpring,
   interpolate,
@@ -38,7 +38,7 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
   const indexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useSharedValue(0);
-  
+
   const adWidth = SCREEN_WIDTH - Spacing.lg * 2;
 
   useEffect(() => {
@@ -71,13 +71,13 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
         }}
       >
         {ads.map((ad, index) => (
-          <AdSlide 
-            key={ad.ad_id} 
-            ad={ad} 
-            width={adWidth} 
-            colors={colors} 
-            isDark={isDark} 
-            onPress={() => onAdPress?.(ad)} 
+          <AdSlide
+            key={ad.ad_id}
+            ad={ad}
+            width={adWidth}
+            colors={colors}
+            isDark={isDark}
+            onPress={() => onAdPress?.(ad)}
           />
         ))}
       </ScrollView>
@@ -110,7 +110,7 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
 
   return (
     <Animated.View style={[adStyles.slideContainer, { width }, animatedStyle]}>
-      <Pressable 
+      <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onPress();
@@ -131,25 +131,18 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
             <MaterialCommunityIcons name="bullhorn" size={42} color="#fff" style={{ opacity: 0.9 }} />
           </LinearGradient>
         )}
-        
+
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.7)']}
+          colors={['transparent', 'rgba(0, 0, 0, 0.32)']}
           style={adStyles.slideOverlay}
         />
 
         <View style={adStyles.adBadgeWrapper}>
           <BlurView intensity={20} tint="dark" style={adStyles.adBadgeBlur}>
-             <Text style={adStyles.adBadgeText}>PROMOTED</Text>
+            <Text style={adStyles.adBadgeText}>Ad</Text>
           </BlurView>
         </View>
 
-        <View style={adStyles.slideContent}>
-           <Text style={adStyles.advertiserName}>{ad.advertiser_name || 'Featured Vendor'}</Text>
-           <View style={[adStyles.exploreBadge, { backgroundColor: colors.pink + '20' }]}>
-              <Text style={[adStyles.exploreText, { color: colors.pink }]}>Explore Now</Text>
-              <MaterialCommunityIcons name="chevron-right" size={14} color={colors.pink} />
-           </View>
-        </View>
       </Pressable>
     </Animated.View>
   );
@@ -190,8 +183,6 @@ const adStyles = StyleSheet.create({
     flex: 1,
     borderRadius: BorderRadius.xxl,
     overflow: 'hidden',
-    ...Shadows.lg,
-    backgroundColor: '#000',
   },
   slideImage: {
     width: '100%',
@@ -227,37 +218,12 @@ const adStyles = StyleSheet.create({
     left: 20,
     right: 20,
   },
-  advertiserName: {
-    color: '#fff',
-    fontFamily: Fonts.extraBold,
-    fontSize: 24,
-    letterSpacing: -0.5,
-    marginBottom: 6,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  exploreBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  exploreText: {
-    fontFamily: Fonts.bold,
-    fontSize: 11,
-    marginRight: 2,
-    textTransform: 'uppercase',
-  },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 6,
-    marginTop: 12,
+    marginTop: -20,
+    marginBottom: 20,
   },
   dot: { height: 6, borderRadius: 3 },
 });

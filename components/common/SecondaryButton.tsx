@@ -6,11 +6,13 @@ import {
   ActivityIndicator, 
   ViewStyle, 
   Animated,
-  Platform 
+  Platform,
+  View 
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Spacing, FontSizes, BorderRadius, Fonts, Animations } from '@/constants/theme';
 
 type SecondaryButtonProps = {
@@ -19,6 +21,8 @@ type SecondaryButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconSize?: number;
 };
 
 export default function SecondaryButton({
@@ -27,6 +31,8 @@ export default function SecondaryButton({
   loading = false,
   disabled = false,
   style,
+  icon,
+  iconSize = 20,
 }: SecondaryButtonProps) {
   const { colors, isDark } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -66,7 +72,10 @@ export default function SecondaryButton({
       {loading ? (
         <ActivityIndicator color={colors.textPrimary} size="small" />
       ) : (
-        <Text style={[styles.text, { color: colors.textPrimary }]}>{title}</Text>
+        <View style={styles.content}>
+          {icon && <MaterialCommunityIcons name={icon} size={iconSize} color={colors.textPrimary} style={styles.icon} />}
+          <Text style={[styles.text, { color: colors.textPrimary }]}>{title}</Text>
+        </View>
       )}
     </View>
   );
@@ -92,8 +101,6 @@ export default function SecondaryButton({
   );
 }
 
-import { View } from 'react-native';
-
 const styles = StyleSheet.create({
   wrapper: {
     borderRadius: BorderRadius.full,
@@ -118,6 +125,14 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     fontFamily: Fonts.semiBold,
     letterSpacing: 0.3,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    marginRight: Spacing.sm,
   },
 });
 

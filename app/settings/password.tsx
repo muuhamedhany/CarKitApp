@@ -1,19 +1,34 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Platform } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  Pressable, 
+  ActivityIndicator, 
+  Platform, 
+  Dimensions, 
+  ScrollView 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
 import { userService } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
+const { width, height } = Dimensions.get('window');
+
 export default function PasswordScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
 
@@ -25,21 +40,26 @@ export default function PasswordScreen() {
 
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return showToast('error', 'Missing fields', 'Please fill out all fields.');
     }
 
     if (newPassword !== confirmPassword) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return showToast('error', 'Passwords do not match', 'New password and confirm password must match.');
     }
 
     if (newPassword.length < 6) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return showToast('error', 'Weak Password', 'New password must be at least 6 characters.');
     }
 
     setLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const res = await userService.changePassword({ oldPassword: currentPassword, newPassword });
       if (res.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Password Updated', 'Your password has been changed successfully.');
         router.back();
       } else {
@@ -53,91 +73,164 @@ export default function PasswordScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
       <CenteredHeader
         title="Change Password"
         titleColor={colors.textPrimary}
         rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
       />
 
-      <View style={styles.content}>
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>Current Password</Text>
-          <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Enter current password"
-              placeholderTextColor={colors.textMuted}
-              secureTextEntry={!showPassword}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-            />
-            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color={colors.textMuted} />
-            </Pressable>
-          </View>
-        </View>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+            <View style={styles.headerInfo}>
+              <View style={[styles.iconWrap, { backgroundColor: colors.pink + '20' }]}>
+                <MaterialCommunityIcons name="shield-lock-outline" size={28} color={colors.pink} />
+              </View>
+              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Secure Your Account</Text>
+              <Text style={[styles.headerDesc, { color: colors.textMuted }]}>Choose a strong password to keep your data safe.</Text>
+            </View>
 
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>New Password</Text>
-          <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Enter new password"
-              placeholderTextColor={colors.textMuted}
-              secureTextEntry={!showPassword}
-              value={newPassword}
-              onChangeText={setNewPassword}
-            />
-          </View>
-        </View>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Current Password</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                <MaterialCommunityIcons name="lock-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="Enter current password"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                />
+                <Pressable onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowPassword(!showPassword);
+                }} style={styles.eyeIcon}>
+                  <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color={colors.textMuted} />
+                </Pressable>
+              </View>
+            </View>
 
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password</Text>
-          <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Confirm new password"
-              placeholderTextColor={colors.textMuted}
-              secureTextEntry={!showPassword}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          </View>
-        </View>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>New Password</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                <MaterialCommunityIcons name="lock-plus-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="Enter new password"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                />
+              </View>
+            </View>
 
-        <Pressable onPress={handleUpdatePassword} disabled={loading} style={{ marginTop: Spacing.xl }}>
-          <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            style={[styles.saveBtn, loading && { opacity: 0.7 }]}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Update Password</Text>}
-          </LinearGradient>
-        </Pressable>
-      </View>
+            <View style={styles.formGroup}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                <MaterialCommunityIcons name="lock-check-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+              </View>
+            </View>
+          </BlurView>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <GradientButton 
+            title="Update Password" 
+            onPress={handleUpdatePassword} 
+            loading={loading}
+            style={{ marginTop: Spacing.xl }}
+            icon="key-change"
+          />
+          <OutlinedButton 
+            title="Cancel" 
+            onPress={() => router.back()} 
+            style={{ marginTop: Spacing.md }}
+            textColor={colors.textMuted}
+          />
+        </Animated.View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.lg },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 40 },
+  
+  orb: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    opacity: 0.12,
+  },
+  orb1: { top: -width * 0.2, right: -width * 0.1 },
+  orb2: { bottom: height * 0.2, left: -width * 0.3 },
+
+  glassCard: {
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+  },
+
+  headerInfo: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    paddingTop: Spacing.md,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  headerTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+    marginBottom: 8,
+  },
+  headerDesc: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    textAlign: 'center',
+    opacity: 0.6,
+    paddingHorizontal: Spacing.lg,
+  },
 
   formGroup: { marginBottom: Spacing.lg },
-  label: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm },
+  label: { fontFamily: Fonts.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm, opacity: 0.6 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md, height: 50,
+    borderWidth: 1, borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md, height: 54,
   },
-  input: { flex: 1, fontFamily: Fonts.regular, fontSize: FontSizes.md },
-  eyeIcon: { padding: Spacing.sm, marginRight: -Spacing.sm },
-
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center', gap: Spacing.xs,
-    paddingVertical: 16, borderRadius: BorderRadius.lg,
-  },
-  saveBtnText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  inputIcon: { marginRight: Spacing.sm },
+  input: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.md },
+  eyeIcon: { padding: Spacing.sm, marginRight: -Spacing.xs },
 });

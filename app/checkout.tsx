@@ -9,16 +9,20 @@ import {
     TextInput,
     View,
 } from 'react-native';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { useCart } from '@/contexts/CartContext';
-import { addressService, orderService, paymentService, PaymentMethod } from '@/services/api';
+import { PaymentMethod } from '@/services/api/payment.service';
+import * as ImagePicker from 'expo-image-picker';
+import { addressService, orderService, paymentService } from '@/services/api';
 import { CenteredHeader } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type Address = {
     address_id: number;
@@ -63,6 +67,7 @@ export default function CheckoutScreen() {
     const { colors } = useTheme();
     const { showToast } = useToast();
     const { items, total, fetchCart } = useCart();
+    const isDark = colors.background === '#000000' || colors.background === '#121212';
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -221,205 +226,267 @@ export default function CheckoutScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <ExpoLinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
             <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Animated.Text>
 
                 {loadingAddresses ? (
                     <ActivityIndicator size="small" color={colors.pink} />
                 ) : addresses.length === 0 ? (
-                    <Pressable
-                        style={[styles.infoCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-                        onPress={() => router.push('/profile/addresses')}
-                    >
-                        <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
-                    </Pressable>
+                    <Animated.View entering={FadeInDown.delay(200)}>
+                        <Pressable
+                            style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                router.push('/profile/addresses');
+                            }}
+                        >
+                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
+                                <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
+                            </BlurView>
+                        </Pressable>
+                    </Animated.View>
                 ) : (
-                    addresses.map((address) => {
+                    addresses.map((address, idx) => {
                         const active = selectedAddressId === address.address_id;
                         return (
-                            <Pressable
-                                key={address.address_id}
-                                style={[
-                                    styles.addressCard,
-                                    {
-                                        backgroundColor: colors.backgroundSecondary,
-                                        borderColor: active ? colors.pink : colors.cardBorder,
-                                    },
-                                ]}
-                                onPress={() => setSelectedAddressId(address.address_id)}
-                            >
-                                <View style={styles.addressHeader}>
-                                    <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
-                                        {address.title || 'Address'}
-                                    </Text>
-                                    {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
-                                </View>
-                                <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                                    {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
-                                </Text>
-                            </Pressable>
+                            <Animated.View key={address.address_id} entering={FadeInDown.delay(200 + idx * 50)}>
+                                <Pressable
+                                    style={[
+                                        styles.addressCard,
+                                        {
+                                            backgroundColor: active ? colors.pink + '15' : 'transparent',
+                                            borderColor: active ? colors.pink : colors.cardBorder,
+                                        },
+                                    ]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setSelectedAddressId(address.address_id);
+                                    }}
+                                >
+                                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                        <View style={styles.addressHeader}>
+                                            <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
+                                                {address.title || 'Address'}
+                                            </Text>
+                                            {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
+                                        </View>
+                                        <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                                            {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
+                                        </Text>
+                                    </BlurView>
+                                </Pressable>
+                            </Animated.View>
                         );
                     })
                 )}
 
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Text>
+                <Animated.Text entering={FadeInDown.delay(400)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Animated.Text>
 
-                {paymentMethods.map((method) => {
+                {paymentMethods.map((method, idx) => {
                     const active = paymentMethod === method.value;
                     return (
-                        <Pressable
-                            key={method.value}
-                            style={[
-                                styles.methodCard,
-                                {
-                                    backgroundColor: colors.backgroundSecondary,
-                                    borderColor: active ? colors.pink : colors.cardBorder,
-                                },
-                            ]}
-                            onPress={() => setPaymentMethod(method.value)}
-                        >
-                            <View style={styles.methodLeft}>
-                                <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textMuted} />
-                                <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
-                            </View>
-                            {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textMuted} />}
-                        </Pressable>
+                        <Animated.View key={method.value} entering={FadeInDown.delay(450 + idx * 50)}>
+                            <Pressable
+                                style={[
+                                    styles.methodCard,
+                                    {
+                                        backgroundColor: active ? colors.pink + '15' : 'transparent',
+                                        borderColor: active ? colors.pink : colors.cardBorder,
+                                    },
+                                ]}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setPaymentMethod(method.value);
+                                }}
+                            >
+                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
+                                    <View style={styles.methodLeft}>
+                                        <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textSecondary} />
+                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
+                                    </View>
+                                    {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
+                                </BlurView>
+                            </Pressable>
+                        </Animated.View>
                     );
                 })}
 
                 {(paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') ? (
-                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
-                        <Text style={[styles.paymentDetailsText, { color: colors.textSecondary }]}>Send to: {paymentMethod === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}</Text>
+                    <Animated.View entering={FadeInUp}>
+                        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
+                            <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
+                            <Text style={[styles.paymentDetailsText, { color: colors.textSecondary }]}>Send to: {paymentMethod === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}</Text>
 
-                        <Pressable
-                            style={[styles.uploadButton, { borderColor: colors.pink }]}
-                            onPress={handlePickTransferScreenshot}
-                        >
-                            <MaterialCommunityIcons name="image-plus" size={18} color={colors.pink} />
-                            <Text style={[styles.uploadButtonText, { color: colors.pink }]}>Upload payment screenshot</Text>
-                        </Pressable>
+                            <Pressable
+                                style={[styles.uploadButton, { borderColor: colors.pink }]}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    handlePickTransferScreenshot();
+                                }}
+                            >
+                                <MaterialCommunityIcons name="image-plus" size={18} color={colors.pink} />
+                                <Text style={[styles.uploadButtonText, { color: colors.pink }]}>Upload payment screenshot</Text>
+                            </Pressable>
 
-                        {transferScreenshotUri ? (
-                            <View style={styles.uploadPreviewWrap}>
-                                <Image source={{ uri: transferScreenshotUri }} style={styles.uploadPreview} />
-                                <Text style={[styles.uploadSuccess, { color: colors.textSecondary }]}>Screenshot uploaded</Text>
-                            </View>
-                        ) : (
-                            <Text style={[styles.uploadHint, { color: colors.textMuted }]}>Required to unlock Place Order.</Text>
-                        )}
-                    </View>
+                            {transferScreenshotUri ? (
+                                <View style={styles.uploadPreviewWrap}>
+                                    <Image source={{ uri: transferScreenshotUri }} style={styles.uploadPreview} />
+                                    <Text style={[styles.uploadSuccess, { color: colors.textSecondary }]}>Screenshot uploaded</Text>
+                                </View>
+                            ) : (
+                                <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Required to unlock Place Order.</Text>
+                            )}
+                        </BlurView>
+                    </Animated.View>
                 ) : null}
 
                 {paymentMethod === 'credit_card' ? (
-                    <View style={[styles.paymentDetailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
-                        <TextInput
-                            value={cardHolderName}
-                            onChangeText={setCardHolderName}
-                            placeholder="Card holder name"
-                            placeholderTextColor={colors.textMuted}
-                            style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.background }]}
-                        />
-                        <TextInput
-                            value={cardNumber}
-                            onChangeText={setCardNumber}
-                            placeholder="Card number"
-                            placeholderTextColor={colors.textMuted}
-                            keyboardType="number-pad"
-                            style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.background }]}
-                        />
-                        <View style={styles.rowInputs}>
+                    <Animated.View entering={FadeInUp}>
+                        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
+                            <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
                             <TextInput
-                                value={cardExpiry}
-                                onChangeText={setCardExpiry}
-                                placeholder="MM/YY"
-                                placeholderTextColor={colors.textMuted}
-                                style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.background }]}
+                                value={cardHolderName}
+                                onChangeText={setCardHolderName}
+                                placeholder="Card holder name"
+                                placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
+                                style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
                             />
                             <TextInput
-                                value={cardCvv}
-                                onChangeText={setCardCvv}
-                                placeholder="CVV"
-                                placeholderTextColor={colors.textMuted}
+                                value={cardNumber}
+                                onChangeText={setCardNumber}
+                                placeholder="Card number"
+                                placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
                                 keyboardType="number-pad"
-                                secureTextEntry
-                                style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.background }]}
+                                style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
                             />
-                        </View>
-                        <Text style={[styles.uploadHint, { color: colors.textMuted }]}>Complete all fields to unlock Place Order.</Text>
-                    </View>
+                            <View style={styles.rowInputs}>
+                                <TextInput
+                                    value={cardExpiry}
+                                    onChangeText={setCardExpiry}
+                                    placeholder="MM/YY"
+                                    placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
+                                    style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+                                />
+                                <TextInput
+                                    value={cardCvv}
+                                    onChangeText={setCardCvv}
+                                    placeholder="CVV"
+                                    placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
+                                    keyboardType="number-pad"
+                                    secureTextEntry
+                                    style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+                                />
+                            </View>
+                            <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Complete all fields to unlock Place Order.</Text>
+                        </BlurView>
+                    </Animated.View>
                 ) : null}
 
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Arrival Date</Text>
-                <View style={[styles.estimatedCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Window</Text>
-                    <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>From {formatReadableDate(formatDateValue(estimatedStartDate))} to {formatReadableDate(formatDateValue(estimatedEndDate))}</Text>
-                </View>
+                <Animated.Text entering={FadeInDown.delay(700)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Arrival Date</Animated.Text>
+                <Animated.View entering={FadeInDown.delay(750)}>
+                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
+                        <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Window</Text>
+                        <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>From {formatReadableDate(formatDateValue(estimatedStartDate))} to {formatReadableDate(formatDateValue(estimatedEndDate))}</Text>
+                    </BlurView>
+                </Animated.View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
-                    {deliveryChoices.map((dateValue) => {
+                    {deliveryChoices.map((dateValue, idx) => {
                         const selected = preferredDeliveryDate === dateValue;
                         return (
-                            <Pressable
-                                key={dateValue}
-                                style={[
-                                    styles.dateChip,
-                                    {
-                                        backgroundColor: colors.backgroundSecondary,
-                                        borderColor: selected ? colors.pink : colors.cardBorder,
-                                    },
-                                ]}
-                                onPress={() => setPreferredDeliveryDate(dateValue)}
-                            >
-                                <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>Preferred</Text>
-                                <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
-                            </Pressable>
+                            <Animated.View key={dateValue} entering={FadeInDown.delay(800 + idx * 50)}>
+                                <Pressable
+                                    style={[
+                                        styles.dateChip,
+                                        {
+                                            backgroundColor: selected ? colors.pink + '15' : 'transparent',
+                                            borderColor: selected ? colors.pink : colors.cardBorder,
+                                        },
+                                    ]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setPreferredDeliveryDate(dateValue);
+                                    }}
+                                >
+                                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
+                                        <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>Preferred</Text>
+                                        <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
+                                    </BlurView>
+                                </Pressable>
+                            </Animated.View>
                         );
                     })}
                 </ScrollView>
 
-                <View style={[styles.summaryCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
-                    <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Items: {items.length}</Text>
-                    <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Preferred arrival: {formatReadableDate(preferredDeliveryDate)}</Text>
-                    <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Subtotal: {totalNumber.toFixed(2)} EGP</Text>
-                    <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Shipping: {SHIPPING_FEE.toFixed(2)} EGP</Text>
-                    <Text style={[styles.summaryTotal, { color: colors.textPrimary }]}>Total: {totalWithShipping.toFixed(2)} EGP</Text>
-                </View>
+                <Animated.View entering={FadeInUp.delay(1000)}>
+                    <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+                        <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
+                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Items: {items.length}</Text>
+                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Preferred arrival: {formatReadableDate(preferredDeliveryDate)}</Text>
+                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Subtotal: {totalNumber.toFixed(2)} EGP</Text>
+                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Shipping: {SHIPPING_FEE.toFixed(2)} EGP</Text>
+                        <Text style={[styles.summaryTotal, { color: colors.textPrimary }]}>Total: {totalWithShipping.toFixed(2)} EGP</Text>
+                    </BlurView>
+                </Animated.View>
             </ScrollView>
 
-            <View style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: colors.background }]}>
-                <Pressable
-                    onPress={handlePlaceOrder}
-                    disabled={!canPlaceOrder}
-                    style={[styles.placeButton, { backgroundColor: colors.pink, opacity: canPlaceOrder ? 1 : 0.45 }]}
-                >
-                    {placingOrder ? (
-                        <ActivityIndicator color={colors.white} />
-                    ) : (
-                        <Text style={styles.placeButtonText}>Place Order</Text>
-                    )}
-                </Pressable>
-            </View>
+            <Animated.View entering={FadeInUp.delay(1200)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
+                <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+                    <Pressable
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            handlePlaceOrder();
+                        }}
+                        disabled={!canPlaceOrder}
+                        style={[styles.placeButton, { backgroundColor: colors.pink, opacity: canPlaceOrder ? 1 : 0.45 }]}
+                    >
+                        {placingOrder ? (
+                            <ActivityIndicator color={colors.white} />
+                        ) : (
+                            <Text style={styles.placeButtonText}>Place Order</Text>
+                        )}
+                    </Pressable>
+                </BlurView>
+            </Animated.View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    content: { paddingHorizontal: Spacing.md, paddingBottom: 140 },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
+    content: { paddingHorizontal: Spacing.md, paddingBottom: 180 },
     sectionTitle: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.md,
+        fontFamily: Fonts.extraBold,
+        fontSize: 22,
         marginBottom: Spacing.sm,
+        letterSpacing: -0.5,
     },
     infoCard: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    blurWrap: {
         padding: Spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
@@ -430,10 +497,11 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
     },
     addressCard: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        padding: Spacing.md,
         marginBottom: Spacing.sm,
+        overflow: 'hidden',
+        ...Shadows.sm,
     },
     addressHeader: {
         flexDirection: 'row',
@@ -444,11 +512,15 @@ const styles = StyleSheet.create({
     addressTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
     addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
     methodCard: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
         marginBottom: Spacing.sm,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    methodBlur: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -464,9 +536,11 @@ const styles = StyleSheet.create({
     },
     paymentDetailsCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg,
         marginTop: Spacing.xs,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     paymentDetailsTitle: {
         fontFamily: Fonts.semiBold,
@@ -479,14 +553,15 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.sm,
     },
     uploadButton: {
-        borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingVertical: Spacing.sm,
+        borderWidth: 1.5,
+        borderRadius: BorderRadius.full,
+        paddingVertical: 14,
         paddingHorizontal: Spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: Spacing.xs,
+        gap: Spacing.sm,
+        marginTop: Spacing.sm,
     },
     uploadButtonText: {
         fontFamily: Fonts.medium,
@@ -513,12 +588,12 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.lg,
+        paddingVertical: 14,
         paddingHorizontal: Spacing.md,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.md,
         fontFamily: Fonts.medium,
-        fontSize: FontSizes.sm,
+        fontSize: FontSizes.md,
     },
     rowInputs: {
         flexDirection: 'row',
@@ -529,14 +604,17 @@ const styles = StyleSheet.create({
     },
     summaryCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        padding: Spacing.md,
-        marginTop: Spacing.lg,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.xl,
+        marginTop: Spacing.xl,
+        overflow: 'hidden',
+        ...Shadows.lg,
     },
     estimatedCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg,
+        overflow: 'hidden',
     },
     estimatedTitle: {
         fontFamily: Fonts.semiBold,
@@ -553,11 +631,15 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.xs,
     },
     dateChip: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderRadius: BorderRadius.md,
-        paddingVertical: Spacing.sm,
-        paddingHorizontal: Spacing.md,
-        minWidth: 120,
+        minWidth: 130,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    dateBlur: {
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
     },
     dateChipLabel: {
         fontFamily: Fonts.medium,
@@ -569,15 +651,17 @@ const styles = StyleSheet.create({
         fontSize: FontSizes.sm,
     },
     summaryTitle: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.md,
-        marginBottom: Spacing.sm,
+        fontFamily: Fonts.extraBold,
+        fontSize: 20,
+        marginBottom: Spacing.md,
+        letterSpacing: -0.5,
     },
-    summaryLine: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
+    summaryLine: { fontFamily: Fonts.medium, fontSize: FontSizes.md, marginBottom: 4 },
     summaryTotal: {
-        marginTop: Spacing.sm,
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.lg,
+        marginTop: Spacing.lg,
+        fontFamily: Fonts.extraBold,
+        fontSize: 24,
+        letterSpacing: -1,
     },
     bottomBar: {
         position: 'absolute',
@@ -585,15 +669,19 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         borderTopWidth: 1,
-        paddingHorizontal: Spacing.md,
+        overflow: 'hidden',
+    },
+    buttonBlur: {
+        paddingHorizontal: Spacing.lg,
         paddingTop: Spacing.md,
-        paddingBottom: Spacing.lg,
+        paddingBottom: 40,
     },
     placeButton: {
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.full,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: 48,
+        minHeight: 56,
+        ...Shadows.md,
     },
     placeButtonText: {
         color: '#FFFFFF',

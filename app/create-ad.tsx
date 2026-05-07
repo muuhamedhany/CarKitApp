@@ -6,39 +6,31 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader } from '@/components';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
-// Duration tiers
-const DURATION_TIERS = [
-  { days: 7,  label: '7 Days',  price: 250,  desc: 'Short campaign' },
-  { days: 14, label: '14 Days', price: 500,  desc: 'Most popular' },
-  { days: 30, label: '30 Days', price: 1000, desc: 'Best value' },
-] as const;
-
-type DurationDays = 7 | 14 | 30;
-
-type SelectableItem = { id: number; name: string; image_url?: string | null };
+const AD_TIERS = [
+  { id: 1, name: 'Basic', duration: '7 Days', price: 250 },
+  { id: 2, name: 'Pro', duration: '14 Days', price: 500 },
+  { id: 3, name: 'Elite', duration: '30 Days', price: 1000 },
+];
 
 async function uploadAdImage(base64File: string): Promise<string> {
   const filename = `ad-${Date.now()}-${Math.floor(Math.random() * 1000)}.jpg`;
-  
   const { error } = await supabase.storage
     .from('ad-images')
     .upload(filename, decode(base64File), { contentType: 'image/jpeg' });
-
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   const { data } = supabase.storage.from('ad-images').getPublicUrl(filename);
   return data.publicUrl;
 }
@@ -47,367 +39,169 @@ export default function CreateAdScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { showToast } = useToast();
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const isDark = colors.background === '#000000' || colors.background === '#121212';
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [title, setTitle] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState<DurationDays>(14);
-  const [uploading, setUploading] = useState(false);
+  const [selectedTier, setSelectedTier] = useState(AD_TIERS[1]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const selectedTier = DURATION_TIERS.find((t) => t.days === selectedDuration)!;
-
-  const pickImage = async () => {
+  const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: false,
       quality: 0.85,
-      aspect: [16, 9],
+      aspect: [3, 1],
       base64: true,
     });
-    if (!result.canceled && result.assets.length > 0) {
+    if (!result.canceled) {
       setImageUri(result.assets[0].uri);
       setImageBase64(result.assets[0].base64 || null);
     }
   };
 
-  const handleConfirm = async () => {
-    if (!imageUri) {
-      showToast('warning', 'Image Required', 'Please upload a banner image for your ad.');
-      return;
-    }
-
+  const handleCreateAd = async () => {
+    if (!imageUri || !imageBase64) return;
+    setSubmitting(true);
     try {
-      setUploading(true);
-      let bannerUrl: string | null = null;
-
-      try {
-        if (!imageBase64) throw new Error("Image base64 data is missing.");
-        bannerUrl = await uploadAdImage(imageBase64);
-      } catch (error: any) {
-        const msg = error.message || String(error);
-        showToast('warning', 'Upload Issue', `Could not upload image: ${msg}`);
-        bannerUrl = null;
-      }
-
-      // Navigate to payment with params
+      const bannerUrl = await uploadAdImage(imageBase64);
       router.push({
         pathname: '/ad-payment' as any,
         params: {
-          banner_image_url: bannerUrl || '',
-          title: title.trim(),
-          duration_days: String(selectedDuration),
-          price: String(selectedTier.price),
+          banner_image_url: bannerUrl,
+          title,
+          duration_days: selectedTier.duration,
+          price: selectedTier.price,
         },
       });
+    } catch (e) {
+      showToast('error', 'Upload failed', 'Please try again');
     } finally {
-      setUploading(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ExpoLinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
       <CenteredHeader title="Create Ad" titleColor={colors.textPrimary} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
-        {/* Step 1 — Banner Image */}
-        <Text style={[styles.stepLabel, { color: colors.textMuted }]}>STEP 1</Text>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Banner Image</Text>
-        <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
-          This image will be shown in the slideshow on the home screen (16:9 ratio recommended).
-        </Text>
-
-        <Pressable
-          style={[styles.imagePicker, {
-            backgroundColor: colors.backgroundSecondary,
-            borderColor: imageUri ? colors.pink : colors.cardBorder,
-          }]}
-          onPress={pickImage}
-        >
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
-          ) : (
-            <View style={styles.imagePickerEmpty}>
-              <MaterialCommunityIcons name="image-plus" size={40} color={colors.textMuted} />
-              <Text style={[styles.imagePickerText, { color: colors.textMuted }]}>
-                Tap to upload banner
-              </Text>
-            </View>
-          )}
-          {imageUri && (
-            <View style={[styles.changeImageOverlay]}>
-              <MaterialCommunityIcons name="pencil" size={18} color="#fff" />
-              <Text style={styles.changeImageText}>Change</Text>
-            </View>
-          )}
-        </Pressable>
-
-        {/* Step 2 — Title (optional) */}
-        <Text style={[styles.stepLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>STEP 2</Text>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          Title <Text style={[styles.optional, { color: colors.textMuted }]}>(Optional)</Text>
-        </Text>
-        <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
-          A label to help you identify this ad in your promotions list.
-        </Text>
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g., Summer Oil Change Promo"
-          placeholderTextColor={colors.textMuted}
-          style={[styles.input, {
-            backgroundColor: colors.backgroundSecondary,
-            borderColor: colors.cardBorder,
-            color: colors.textPrimary,
-          }]}
-          maxLength={80}
-        />
-
-        {/* Step 3 — Duration */}
-        <Text style={[styles.stepLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>STEP 3</Text>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose Duration</Text>
-        <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
-          Select how long your ad will appear on the home screen after approval.
-        </Text>
-
-        <View style={styles.tiersContainer}>
-          {DURATION_TIERS.map((tier) => {
-            const isSelected = selectedDuration === tier.days;
-            const isPopular = tier.days === 14;
+        <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose a Tier</Animated.Text>
+        
+        <View style={styles.tierGrid}>
+          {AD_TIERS.map((tier, idx) => {
+            const selected = selectedTier?.id === tier.id;
             return (
-              <Pressable
-                key={tier.days}
-                style={[
-                  styles.tierCard,
-                  {
-                    backgroundColor: isSelected ? colors.pinkGlow : colors.backgroundSecondary,
-                    borderColor: isSelected ? colors.pink : colors.cardBorder,
-                    borderWidth: isSelected ? 2 : 1,
-                  },
-                ]}
-                onPress={() => setSelectedDuration(tier.days)}
-              >
-                {isPopular && (
-                  <View style={[styles.popularBadge, { backgroundColor: colors.pink }]}>
-                    <Text style={styles.popularText}>Most Popular</Text>
-                  </View>
-                )}
-                <View style={styles.tierRadio}>
-                  <MaterialCommunityIcons
-                    name={isSelected ? 'radiobox-marked' : 'radiobox-blank'}
-                    size={20}
-                    color={isSelected ? colors.pink : colors.textMuted}
-                  />
-                </View>
-                <Text style={[styles.tierLabel, { color: colors.textPrimary }]}>{tier.label}</Text>
-                <Text style={[styles.tierDesc, { color: colors.textMuted }]}>{tier.desc}</Text>
-                <Text style={[styles.tierPrice, { color: isSelected ? colors.pink : colors.textPrimary }]}>
-                  {tier.price.toLocaleString('en-EG')} EGP
-                </Text>
-              </Pressable>
+              <Animated.View key={tier.id} entering={FadeInDown.delay(200 + idx * 100)} style={styles.tierItem}>
+                <Pressable
+                  style={[styles.tierCard, { borderColor: selected ? colors.pink : colors.cardBorder, borderWidth: selected ? 2 : 1 }]}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedTier(tier); }}
+                >
+                  <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.tierBlur}>
+                    {selected && <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} style={styles.checkIcon} />}
+                    <Text style={[styles.tierName, { color: colors.textPrimary }]}>{tier.name}</Text>
+                    <Text style={[styles.tierDuration, { color: colors.textSecondary }]}>{tier.duration}</Text>
+                    <Text style={[styles.tierPrice, { color: colors.pink }]}>{tier.price} EGP</Text>
+                  </BlurView>
+                </Pressable>
+              </Animated.View>
             );
           })}
         </View>
 
-        {/* Summary card */}
-        <View style={[styles.summaryCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Ad Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Duration</Text>
-            <Text style={[styles.summaryVal, { color: colors.textPrimary }]}>{selectedTier.label}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Total</Text>
-            <Text style={[styles.summaryVal, { color: colors.pink }]}>
-              {selectedTier.price.toLocaleString('en-EG')} EGP
-            </Text>
-          </View>
-        </View>
+        <Animated.View entering={FadeInDown.delay(500)}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.formCard, { borderColor: colors.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Ad Details</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Ad Title</Text>
+            <TextInput
+              placeholder="e.g. Summer Tire Sale"
+              placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
+              value={title}
+              onChangeText={setTitle}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md, marginBottom: Spacing.sm }]}>Banner Asset</Text>
+            <Text style={[styles.helperText, { color: colors.textSecondary, opacity: 0.7 }]}>Recommended size: 1200x400 (3:1 aspect ratio)</Text>
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickImage(); }}
+              style={[styles.imageUpload, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder, borderStyle: 'dashed' }]}
+            >
+              {imageUri ? <Image source={{ uri: imageUri }} style={styles.previewImage} /> : (
+                <View style={styles.uploadPlaceholder}>
+                  <MaterialCommunityIcons name="image-plus" size={40} color={colors.pink} />
+                  <Text style={[styles.uploadText, { color: colors.textSecondary }]}>Upload Banner</Text>
+                </View>
+              )}
+            </Pressable>
+          </BlurView>
+        </Animated.View>
 
-        <View style={{ height: 100 }} />
+        <Animated.View entering={FadeInUp.delay(700)}>
+          <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+            <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
+            <View style={styles.summaryRow}><Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Ad Plan:</Text><Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedTier?.name || 'None'}</Text></View>
+            <View style={styles.summaryRow}><Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Duration:</Text><Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedTier?.duration || '-'}</Text></View>
+            <View style={styles.divider} />
+            <View style={styles.summaryRow}><Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total:</Text><Text style={[styles.totalValue, { color: colors.pink }]}>{selectedTier?.price || 0} EGP</Text></View>
+          </BlurView>
+        </Animated.View>
       </ScrollView>
 
-      {/* Bottom CTA */}
-      <View style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: colors.background }]}>
-        <Pressable
-          onPress={handleConfirm}
-          disabled={uploading}
-          style={styles.confirmBtn}
-        >
-          <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.confirmGradient, uploading && { opacity: 0.6 }]}
+      <Animated.View entering={FadeInUp.delay(900)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
+        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleCreateAd(); }}
+            disabled={submitting || !title || !selectedTier || !imageUri}
+            style={[styles.createButton, { backgroundColor: colors.pink, opacity: (submitting || !title || !selectedTier || !imageUri) ? 0.5 : 1 }]}
           >
-            {uploading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Text style={styles.confirmText}>Confirm & Pay</Text>
-                <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
-              </>
-            )}
-          </LinearGradient>
-        </Pressable>
-      </View>
+            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.createButtonText}>Proceed to Payment</Text>}
+          </Pressable>
+        </BlurView>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
-
-  stepLabel: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.xs,
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-    marginBottom: 4,
-  },
-  optional: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  sectionDesc: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    marginBottom: Spacing.md,
-    lineHeight: 20,
-  },
-
-  imagePicker: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    height: 180,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
+  orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.5 },
+  content: { padding: Spacing.md, paddingBottom: 160 },
+  sectionTitle: { fontFamily: Fonts.extraBold, fontSize: 22, marginBottom: Spacing.md, letterSpacing: -0.5 },
+  tierGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.xl },
+  tierItem: { width: '31%' },
+  tierCard: { borderRadius: BorderRadius.xl, overflow: 'hidden', ...Shadows.sm },
+  tierBlur: { padding: Spacing.md, alignItems: 'center' },
+  checkIcon: { position: 'absolute', top: 4, right: 4 },
+  tierName: { fontFamily: Fonts.bold, fontSize: 14, marginBottom: 2 },
+  tierDuration: { fontFamily: Fonts.medium, fontSize: 11, marginBottom: 4 },
+  tierPrice: { fontFamily: Fonts.extraBold, fontSize: 13 },
+  formCard: { borderRadius: BorderRadius.xxl, borderWidth: 1, padding: Spacing.xl, marginBottom: Spacing.xl, overflow: 'hidden', ...Shadows.md },
+  inputLabel: { fontFamily: Fonts.semiBold, fontSize: 14, marginBottom: 8 },
+  input: { borderWidth: 1, borderRadius: BorderRadius.lg, padding: 14, fontFamily: Fonts.medium, fontSize: 16 },
+  helperText: { fontFamily: Fonts.medium, fontSize: 12, marginBottom: Spacing.md },
+  imageUpload: { width: '100%', aspectRatio: 3, borderRadius: BorderRadius.xl, borderWidth: 2, overflow: 'hidden' },
+  uploadPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  uploadText: { fontFamily: Fonts.semiBold, fontSize: 14 },
   previewImage: { width: '100%', height: '100%' },
-  imagePickerEmpty: { alignItems: 'center', gap: Spacing.sm },
-  imagePickerText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
-  changeImageOverlay: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-  },
-  changeImageText: { color: '#fff', fontFamily: Fonts.medium, fontSize: FontSizes.sm },
-
-  input: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
-  },
-
-  // Targeting
-  subHeading: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
-    marginBottom: Spacing.sm,
-  },
-  emptyHint: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    marginBottom: Spacing.sm,
-    fontStyle: 'italic',
-  },
-  chipScroll: { marginBottom: Spacing.sm },
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.sm },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: Spacing.xs,
-  },
-  chipText: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
-    maxWidth: 140,
-  },
-  noTargetBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  noTargetText: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    flex: 1,
-    lineHeight: 18,
-  },
-
-  tiersContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  tierCard: {
-    flex: 1,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.sm,
-    alignItems: 'center',
-    position: 'relative',
-    paddingTop: Spacing.lg,
-  },
-  tierRadio: { marginBottom: Spacing.xs },
-  tierLabel: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
-  tierDesc: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginBottom: Spacing.xs },
-  tierPrice: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
-  popularBadge: {
-    position: 'absolute',
-    top: -10,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: BorderRadius.full,
-  },
-  popularText: { color: '#fff', fontFamily: Fonts.semiBold, fontSize: 10 },
-
-  summaryCard: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.md,
-    marginTop: Spacing.sm,
-  },
-  summaryTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  summaryKey: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  summaryVal: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    borderTopWidth: 1,
-    padding: Spacing.md,
-    paddingBottom: Spacing.lg,
-  },
-  confirmBtn: { borderRadius: BorderRadius.full, overflow: 'hidden' },
-  confirmGradient: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-  },
-  confirmText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  summaryCard: { borderRadius: BorderRadius.xxl, borderWidth: 1, padding: Spacing.xl, overflow: 'hidden', ...Shadows.lg },
+  summaryTitle: { fontFamily: Fonts.extraBold, fontSize: 20, marginBottom: Spacing.lg, letterSpacing: -0.5 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm },
+  summaryLabel: { fontFamily: Fonts.medium, fontSize: 15 },
+  summaryValue: { fontFamily: Fonts.semiBold, fontSize: 15 },
+  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: Spacing.md },
+  totalLabel: { fontFamily: Fonts.extraBold, fontSize: 18 },
+  totalValue: { fontFamily: Fonts.extraBold, fontSize: 22 },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, overflow: 'hidden' },
+  buttonBlur: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40 },
+  createButton: { borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center', height: 56, ...Shadows.md },
+  createButtonText: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: 16 },
 });

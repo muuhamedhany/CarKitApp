@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Image,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -28,7 +29,7 @@ import { CenteredHeader, FormInput, PickerModal, GradientButton } from '@/compon
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
-const { height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 type Make = { make_id: number; name: string };
 type Model = { model_id: number; name: string };
@@ -131,7 +132,6 @@ export default function AddVehicleSignupScreen() {
       });
 
       if (response.status < 200 || response.status >= 300) {
-        console.error('Upload error:', response.body);
         throw new Error(`Upload failed: ${response.status}`);
       }
 
@@ -155,7 +155,6 @@ export default function AddVehicleSignupScreen() {
     try {
       let photoUrl: string | null = null;
       if (photoUri) {
-        showToast('info', 'Uploading', 'Uploading photo...');
         photoUrl = await uploadPhotoToSupabase(photoUri);
         if (!photoUrl) {
           showToast('error', 'Error', 'Photo upload failed.');
@@ -198,8 +197,16 @@ export default function AddVehicleSignupScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
         style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <CenteredHeader 
+        title="Add Your Vehicle" 
+        titleColor={colors.textPrimary} 
       />
 
       <KeyboardAvoidingView
@@ -211,18 +218,17 @@ export default function AddVehicleSignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <CenteredHeader title="Add Your Vehicle" titleColor={colors.pink} />
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Customize your experience with your car details
             </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(400).duration(800)}>
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
             <BlurView
-              intensity={isDark ? 40 : 60}
+              intensity={isDark ? 30 : 50}
               tint={isDark ? 'dark' : 'light'}
-              style={[styles.glassCard, Shadows.lg]}
+              style={[styles.glassCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
             >
               {/* Car Photo */}
               <View style={styles.section}>
@@ -230,20 +236,20 @@ export default function AddVehicleSignupScreen() {
                 <Pressable
                   style={({ pressed }) => [
                     photoUri ? styles.photoPreview : styles.photoBox,
-                    { borderColor: photoUri ? colors.pink : colors.cardBorder, opacity: pressed ? 0.8 : 1 }
+                    { borderColor: photoUri ? colors.pink : 'rgba(255,255,255,0.1)', opacity: pressed ? 0.8 : 1 }
                   ]}
                   onPress={pickImage}
                 >
                   {photoUri ? (
                     <>
                       <Image source={{ uri: photoUri }} style={styles.photoImg} />
-                      <View style={styles.photoOverlay}>
-                        <MaterialCommunityIcons name="camera" size={20} color={colors.white} />
+                      <View style={[styles.photoOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                        <MaterialCommunityIcons name="camera" size={20} color="white" />
                       </View>
                     </>
                   ) : (
                     <>
-                      <View style={[styles.iconCircle, { backgroundColor: colors.pink + '15' }]}>
+                      <View style={[styles.iconCircle, { backgroundColor: colors.pink + '20' }]}>
                         <MaterialCommunityIcons name="camera-plus" size={28} color={colors.pink} />
                       </View>
                       <Text style={[styles.photoText, { color: colors.textMuted }]}>Add a photo of your car</Text>
@@ -254,13 +260,19 @@ export default function AddVehicleSignupScreen() {
 
               {/* Form Fields */}
               <View style={styles.formContainer}>
-                <FormInput
-                  label="Nickname"
-                  icon="tag-outline"
-                  placeholder="e.g. My Fast Rider"
-                  value={nickname}
-                  onChangeText={setNickname}
-                />
+                <View style={styles.pickerGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
+                  <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <MaterialCommunityIcons name="tag-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
+                    <TextInput 
+                      placeholder="e.g. My Fast Rider"
+                      placeholderTextColor={colors.textMuted}
+                      style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                      value={nickname}
+                      onChangeText={setNickname}
+                    />
+                  </View>
+                </View>
 
                 <View style={styles.pickerGroup}>
                   <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Make</Text>
@@ -268,7 +280,7 @@ export default function AddVehicleSignupScreen() {
                     <ActivityIndicator color={colors.pink} style={styles.loader} />
                   ) : (
                     <Pressable
-                      style={[styles.pickerBtn, { backgroundColor: colors.backgroundSecondary + '80', borderColor: colors.border }]}
+                      style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}
                       onPress={() => setShowMakePicker(true)}
                     >
                       <Text style={[styles.pickerBtnText, { color: selectedMake ? colors.textPrimary : colors.textMuted }]}>
@@ -284,7 +296,7 @@ export default function AddVehicleSignupScreen() {
                   <Pressable
                     style={[
                       styles.pickerBtn,
-                      { backgroundColor: colors.backgroundSecondary + '80', borderColor: colors.border },
+                      { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
                       !selectedMake && styles.pickerBtnDisabled
                     ]}
                     onPress={() => { if (selectedMake) setShowModelPicker(true); }}
@@ -298,32 +310,40 @@ export default function AddVehicleSignupScreen() {
 
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
-                    <FormInput
-                      label="Year"
-                      icon="calendar"
-                      placeholder="2024"
-                      value={year}
-                      onChangeText={setYear}
-                      keyboardType="numeric"
-                    />
+                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
+                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                        <TextInput 
+                          placeholder="2024"
+                          placeholderTextColor={colors.textMuted}
+                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                          value={year}
+                          onChangeText={setYear}
+                          keyboardType="numeric"
+                          maxLength={4}
+                        />
+                    </View>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <FormInput
-                      label="Color"
-                      icon="palette-outline"
-                      placeholder="Black"
-                      value={color}
-                      onChangeText={setColor}
-                    />
+                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Color</Text>
+                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                        <TextInput 
+                          placeholder="Black"
+                          placeholderTextColor={colors.textMuted}
+                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                          value={color}
+                          onChangeText={setColor}
+                        />
+                    </View>
                   </View>
                 </View>
               </View>
 
               <GradientButton
-                title={saving ? "Saving..." : "Save Vehicle"}
+                title={saving ? "Saving Vehicle..." : "Save Vehicle"}
                 onPress={handleSave}
                 loading={saving}
                 style={styles.saveBtn}
+                icon="check"
               />
 
               <Pressable
@@ -338,7 +358,7 @@ export default function AddVehicleSignupScreen() {
             </BlurView>
           </Animated.View>
 
-          <View style={{ height: 40 }} />
+          <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -365,10 +385,20 @@ export default function AddVehicleSignupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
+  orb: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    opacity: 0.12,
+  },
+  orb1: { top: -width * 0.2, right: -width * 0.1 },
+  orb2: { bottom: height * 0.2, left: -width * 0.3 },
+
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: height * 0.05,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: 40
   },
   subtitle: {
@@ -382,7 +412,6 @@ const styles = StyleSheet.create({
   glassCard: {
     borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
     padding: Spacing.xl,
     overflow: 'hidden',
   },
@@ -391,18 +420,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   label: {
-    fontSize: FontSizes.md,
+    fontSize: 11,
     fontFamily: Fonts.bold,
-    marginBottom: Spacing.md
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: Spacing.md,
+    opacity: 0.6
   },
   photoBox: {
     width: '100%',
-    height: 160,
+    height: 180,
     borderRadius: BorderRadius.xl,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   photoPreview: {
@@ -418,7 +449,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -434,21 +464,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   photoText: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
+    opacity: 0.6
   },
   formContainer: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: Fonts.bold,
-    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
     marginLeft: 4,
-    opacity: 0.8,
+    opacity: 0.6
   },
   pickerGroup: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   pickerBtn: {
     flexDirection: 'row',
@@ -457,12 +490,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
+    height: 54,
   },
-  pickerBtnDisabled: { opacity: 0.4 },
+  pickerBtnDisabled: { opacity: 0.3 },
   pickerBtnText: {
     fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm
+    fontSize: FontSizes.md
   },
   loader: {
     marginVertical: 10,

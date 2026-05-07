@@ -16,8 +16,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { ProviderDashboardResponse } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 function getStatusTint(status: string, colors: any) {
     const s = (status || '').toLowerCase();
@@ -29,7 +32,7 @@ function getStatusTint(status: string, colors: any) {
 
 export default function ProviderDashboard() {
     const { user } = useAuth();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showToast } = useToast();
@@ -99,17 +102,26 @@ export default function ProviderDashboard() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
-                <View style={styles.header}>
-                    <Text style={[styles.greeting, { color: colors.textMuted }]}>Hello, {user?.name}</Text>
+                <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+                    <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello, {user?.name}</Text>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
-                </View>
+                </Animated.View>
 
                 {loading ? (
                     <DashboardSkeleton />
@@ -117,21 +129,34 @@ export default function ProviderDashboard() {
                     <>
                         {/* Stats Grid */}
                         <View style={styles.statsContainer}>
-                            {stats.map((stat) => (
-                                <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                                    <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
-                                        <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
-                                    </View>
-                                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
-                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
-                                    <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
-                                </View>
+                            {stats.map((stat, index) => (
+                                <Animated.View 
+                                    key={stat.label} 
+                                    entering={FadeInDown.delay(100 * index).duration(600)}
+                                    style={{ flex: 1, minWidth: '45%' }}
+                                >
+                                    <BlurView 
+                                        intensity={isDark ? 20 : 40} 
+                                        tint={isDark ? 'dark' : 'light'} 
+                                        style={[styles.statCard, { borderColor: colors.cardBorder }]}
+                                    >
+                                        <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
+                                            <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
+                                        </View>
+                                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                                        <Text style={[styles.statLabel, { color: colors.textPrimary }]}>{stat.label}</Text>
+                                        <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{stat.subtitle}</Text>
+                                    </BlurView>
+                                </Animated.View>
                             ))}
                         </View>
 
-                        <View style={styles.quickActions}>
+                        <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.quickActions}>
                             <Pressable
-                                onPress={() => router.push('/promote' as any)}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    router.push('/promote' as any);
+                                }}
                                 style={{ flex: 1 }}
                             >
                                 <LinearGradient
@@ -144,23 +169,32 @@ export default function ProviderDashboard() {
                                     <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Services</Text>
                                 </LinearGradient>
                             </Pressable>
-                        </View>
+                        </Animated.View>
 
-                        <Pressable
-                            onPress={() => router.push('/provider-analytics')}
-                            style={[styles.analyticsCard, { borderColor: colors.pink }]}
-                        >
-                            <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
-                                <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
-                                <Text style={[styles.analyticsSubtitle, { color: colors.textMuted }]}>Track service performance</Text>
-                            </View>
-                            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
-                        </Pressable>
+                        <Animated.View entering={FadeInUp.delay(500).duration(800)}>
+                            <Pressable
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push('/provider-analytics');
+                                }}
+                                style={({ pressed }) => [
+                                    styles.analyticsCard,
+                                    { borderColor: colors.pink, transform: [{ scale: pressed ? 0.98 : 1 }] }
+                                ]}
+                            >
+                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                                <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
+                                    <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
+                                    <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>Track service performance</Text>
+                                </View>
+                                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
+                            </Pressable>
+                        </Animated.View>
 
-                        <View style={styles.section}>
+                        <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Appointments</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/bookings')}>
@@ -172,34 +206,46 @@ export default function ProviderDashboard() {
                                 dashboard.todays_appointments.map((appointment) => (
                                     <Pressable
                                         key={appointment.booking_id}
-                                        onPress={() => router.push(`/provider-booking/${appointment.booking_id}`)}
-                                        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            router.push(`/provider-booking/${appointment.booking_id}`);
+                                        }}
+                                        style={({ pressed }) => [
+                                            styles.orderCardWrapper,
+                                            { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                                        ]}
                                     >
-                                        <View style={styles.orderTopRow}>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={[styles.orderCustomer, { color: colors.textPrimary }]}>{appointment.customer_name}</Text>
-                                                <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{appointment.service_name} · {formatTime(appointment.start_time)}</Text>
+                                        <BlurView 
+                                            intensity={isDark ? 20 : 40} 
+                                            tint={isDark ? 'dark' : 'light'} 
+                                            style={[styles.orderCard, { borderColor: colors.cardBorder }]}
+                                        >
+                                            <View style={styles.orderTopRow}>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={[styles.orderCustomer, { color: colors.textPrimary }]}>{appointment.customer_name}</Text>
+                                                    <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{appointment.service_name} · {formatTime(appointment.start_time)}</Text>
+                                                </View>
+                                                <View style={[styles.statusBadge, { backgroundColor: getStatusTint(appointment.status, colors).bg }]}>
+                                                    <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>{appointment.status}</Text>
+                                                </View>
                                             </View>
-                                            <View style={[styles.statusBadge, { backgroundColor: getStatusTint(appointment.status, colors).bg }]}>
-                                                <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>{appointment.status}</Text>
+                                            <View style={styles.orderBottomRow}>
+                                                <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>Booking #{appointment.booking_id}</Text>
+                                                <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} EGP</Text>
                                             </View>
-                                        </View>
-                                        <View style={styles.orderBottomRow}>
-                                            <Text style={[styles.orderMeta, { color: colors.textMuted }]}>Booking #{appointment.booking_id}</Text>
-                                            <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} EGP</Text>
-                                        </View>
+                                        </BlurView>
                                     </Pressable>
                                 ))
                             ) : (
-                                <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="calendar-blank-outline" size={44} color={colors.textMuted} />
                                     <Text style={[styles.emptyText, { color: colors.textMuted }]}>No appointments today.</Text>
-                                </View>
+                                </BlurView>
                             )}
-                        </View>
+                        </Animated.View>
 
                         {/* Popular Services */}
-                        <View style={styles.section}>
+                        <Animated.View entering={FadeInUp.delay(700).duration(800)} style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Popular Services</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/services')}>
@@ -209,26 +255,26 @@ export default function ProviderDashboard() {
 
                             {dashboard?.popular_services.length ? (
                                 dashboard.popular_services.map((service) => (
-                                    <View key={service.service_id} style={[styles.productRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                                    <BlurView key={service.service_id} intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
                                         <View style={styles.productThumbPlaceholder}>
                                             <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
                                         </View>
                                         <View style={{ flex: 1 }}>
                                             <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
-                                            <Text style={[styles.productMeta, { color: colors.textMuted }]}>{service.booking_count} bookings</Text>
+                                            <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{service.booking_count} bookings</Text>
                                         </View>
                                         <Text style={[styles.productRevenue, { color: colors.pink }]}>
                                             {Number(service.revenue).toLocaleString('en-EG')} EGP
                                         </Text>
-                                    </View>
+                                    </BlurView>
                                 ))
                             ) : (
-                                <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="wrench-outline" size={44} color={colors.textMuted} />
                                     <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet. Add your first service!</Text>
-                                </View>
+                                </BlurView>
                             )}
-                        </View>
+                        </Animated.View>
                     </>
                 )}
             </ScrollView>
@@ -240,6 +286,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
     scrollContent: {
         padding: Spacing.md,
         paddingBottom: 100,
@@ -250,11 +303,12 @@ const styles = StyleSheet.create({
     greeting: {
         fontFamily: Fonts.medium,
         fontSize: FontSizes.md,
-        marginBottom: Spacing.xs,
+        opacity: 0.8,
     },
     title: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.xxl,
+        fontFamily: Fonts.extraBold,
+        fontSize: 32,
+        letterSpacing: -1,
     },
     statsContainer: {
         flexDirection: 'row',
@@ -263,11 +317,11 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
     },
     statCard: {
-        flex: 1,
-        minWidth: '45%',
         padding: Spacing.md,
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     iconContainer: {
         width: 48,
@@ -317,9 +371,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.md,
         padding: Spacing.md,
-        borderRadius: BorderRadius.full,
-        borderWidth: 2,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
         marginBottom: Spacing.lg,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     analyticsIcon: {
         width: 44,
@@ -354,11 +410,15 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.semiBold,
         fontSize: FontSizes.sm,
     },
+    orderCardWrapper: {
+        marginBottom: Spacing.sm,
+    },
     orderCard: {
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         padding: Spacing.md,
-        marginBottom: Spacing.sm,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     orderTopRow: {
         flexDirection: 'row',
@@ -398,11 +458,13 @@ const styles = StyleSheet.create({
     productRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: BorderRadius.lg,
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        padding: Spacing.sm,
+        padding: Spacing.md,
         marginBottom: Spacing.sm,
-        gap: Spacing.sm,
+        gap: Spacing.md,
+        overflow: 'hidden',
+        ...Shadows.sm,
     },
     productThumbPlaceholder: {
         width: 40,
@@ -431,6 +493,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     emptyText: {
         fontFamily: Fonts.medium,

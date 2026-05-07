@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList, RefreshControl, Animated, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, FlatList, RefreshControl, TextInput } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,13 +10,16 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorOrder } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ORDER_FILTERS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 type OrderFilter = (typeof ORDER_FILTERS)[number];
 
 export default function VendorOrdersScreen() {
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const insets = useSafeAreaInsets();
     const router = useRouter();
@@ -153,17 +156,17 @@ export default function VendorOrdersScreen() {
     const filteredOrders = orders;
 
     const renderHeader = () => (
-        <>
+        <Animated.View entering={FadeInDown.duration(800)}>
             <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Orders</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>Track current vendor order flow.</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Track current vendor order flow.</Text>
             </View>
 
-            <View style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+            <View style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder }]}>
                 <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
                 <TextInput
                     style={[styles.searchInput, { color: colors.textPrimary }]}
-                    placeholder="Search by order #, customer, status..."
+                    placeholder="Search orders, customers..."
                     placeholderTextColor={colors.textMuted}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -194,7 +197,7 @@ export default function VendorOrdersScreen() {
                             style={[
                                 styles.filterChip,
                                 {
-                                    backgroundColor: isActive ? colors.pink : colors.backgroundSecondary,
+                                    backgroundColor: isActive ? colors.pink : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
                                     borderColor: isActive ? colors.pink : colors.cardBorder,
                                 },
                             ]}
@@ -206,60 +209,76 @@ export default function VendorOrdersScreen() {
                     );
                 })}
             </ScrollView>
-        </>
+        </Animated.View>
     );
 
-    const renderOrder = ({ item: order }: { item: VendorOrder }) => {
+    const renderOrder = ({ item: order, index }: { item: VendorOrder, index: number }) => {
         const palette = getStatusPalette(order.status);
-        const scaleAnim = new Animated.Value(1);
         const initial = (order.customer_name || '?').charAt(0).toUpperCase();
 
-        const onPressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
-        const onPressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-
         return (
-            <Pressable
-                onPress={() => router.push({ pathname: '/order/[id]', params: { id: String(order.order_id), role: 'vendor' } })}
-                onPressIn={onPressIn}
-                onPressOut={onPressOut}
-            >
-                <Animated.View style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: palette.fg, borderLeftWidth: 3, transform: [{ scale: scaleAnim }] }]}>
-                    <View style={styles.orderTopRow}>
-                        <View style={[styles.customerAvatar, { backgroundColor: palette.bg }]}>
-                            <Text style={[styles.customerAvatarText, { color: palette.fg }]}>{initial}</Text>
+            <Animated.View entering={FadeInUp.delay(index * 50).duration(600)}>
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.push({ pathname: '/order/[id]', params: { id: String(order.order_id), role: 'vendor' } });
+                    }}
+                    style={({ pressed }) => [
+                        styles.orderCardWrapper,
+                        { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                    ]}
+                >
+                    <BlurView 
+                        intensity={isDark ? 20 : 40} 
+                        tint={isDark ? 'dark' : 'light'} 
+                        style={[styles.orderCard, { borderColor: colors.cardBorder, borderLeftColor: palette.fg, borderLeftWidth: 3 }]}
+                    >
+                        <View style={styles.orderTopRow}>
+                            <View style={[styles.customerAvatar, { backgroundColor: palette.bg }]}>
+                                <Text style={[styles.customerAvatarText, { color: palette.fg }]}>{initial}</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.orderNumber, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
+                                <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{order.customer_name} · {getRelativeTime(order.order_date)}</Text>
+                            </View>
+                            <View style={[styles.statusBadge, { backgroundColor: palette.bg }]}>
+                                <Text style={[styles.statusBadgeText, { color: palette.fg }]}>{order.status}</Text>
+                            </View>
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.orderNumber, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
-                            <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.customer_name} · {getRelativeTime(order.order_date)}</Text>
-                        </View>
-                        <View style={[styles.statusBadge, { backgroundColor: palette.bg }]}>
-                            <Text style={[styles.statusBadgeText, { color: palette.fg }]}>{order.status}</Text>
-                        </View>
-                    </View>
 
-                    <View style={styles.orderStatsRow}>
-                        <Text style={[styles.orderMeta, { color: colors.textMuted }]}>{order.item_count} items</Text>
-                        <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
-                    </View>
+                        <View style={styles.orderStatsRow}>
+                            <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{order.item_count} items</Text>
+                            <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
+                        </View>
 
-                    <View style={styles.chevronRow}>
-                        <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
-                        <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
-                    </View>
-                </Animated.View>
-            </Pressable>
+                        <View style={styles.chevronRow}>
+                            <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
+                        </View>
+                    </BlurView>
+                </Pressable>
+            </Animated.View>
         );
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
             <FlatList
                 data={loading ? [] : filteredOrders}
                 keyExtractor={(item) => item.order_id.toString()}
                 renderItem={renderOrder}
                 ListHeaderComponent={renderHeader()}
                 ItemSeparatorComponent={() => <View style={styles.orderSeparator} />}
-                contentContainerStyle={styles.screenContent}
+                contentContainerStyle={[styles.screenContent, { paddingTop: insets.top + Spacing.md }]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                 onEndReached={handleLoadMore}
@@ -269,7 +288,7 @@ export default function VendorOrdersScreen() {
                     loading && !refreshing ? (
                         <View style={{ padding: Spacing.md, gap: Spacing.md }}>
                             {[1, 2, 3].map(i => (
-                                <View key={i} style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border, padding: Spacing.md }]}>
+                                <View key={i} style={[styles.orderCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder, padding: Spacing.md }]}>
                                     <View style={styles.orderTopRow}>
                                         <SkeletonBone width={40} height={40} borderRadius={20} />
                                         <View style={{ flex: 1, marginLeft: 12 }}>
@@ -286,10 +305,10 @@ export default function VendorOrdersScreen() {
                             ))}
                         </View>
                     ) : (
-                        <View style={[styles.emptyState]}>
+                        <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
                             <MaterialCommunityIcons name="receipt-text-outline" size={48} color={colors.textMuted} />
                             <Text style={[styles.emptyText, { color: colors.textMuted }]}>No orders found.</Text>
-                        </View>
+                        </BlurView>
                     )
                 }
             />
@@ -301,18 +320,27 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
     header: {
         paddingHorizontal: Spacing.md,
         paddingBottom: Spacing.md,
     },
     title: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.xxl,
+        fontFamily: Fonts.extraBold,
+        fontSize: 32,
+        letterSpacing: -1,
     },
     subtitle: {
         fontFamily: Fonts.medium,
         fontSize: FontSizes.sm,
-        marginTop: 2,
+        marginTop: 4,
+        opacity: 0.8,
     },
     controlsScroll: {
         flexGrow: 0,
@@ -327,14 +355,15 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.sm,
     },
     filterChip: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 7,
-        minHeight: 40,
+        paddingHorizontal: 20,
+        paddingVertical: 8,
+        minHeight: 44,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
         alignSelf: 'flex-start',
         alignItems: 'center',
         justifyContent: 'center',
+        ...Shadows.sm,
     },
     filterText: {
         fontFamily: Fonts.semiBold,
@@ -346,11 +375,15 @@ const styles = StyleSheet.create({
     loadingState: {
         marginTop: 50,
     },
+    orderCardWrapper: {
+        marginHorizontal: Spacing.md,
+    },
     orderCard: {
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         padding: Spacing.md,
-        marginHorizontal: Spacing.md,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     orderSeparator: {
         height: Spacing.md,
@@ -407,7 +440,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         padding: Spacing.xl,
         alignItems: 'center',
+        justifyContent: 'center',
         marginTop: Spacing.md,
+        overflow: 'hidden',
     },
     emptyText: {
         fontFamily: Fonts.medium,
@@ -419,12 +454,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: Spacing.md,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.md,
         paddingHorizontal: Spacing.md,
-        height: 44,
+        height: 48,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
         gap: 8,
+        ...Shadows.sm,
     },
     searchInput: {
         flex: 1,

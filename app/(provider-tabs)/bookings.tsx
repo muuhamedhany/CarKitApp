@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -10,7 +10,12 @@ import { GradientButton, OutlinedButton } from '@/components';
 import { providerService } from '@/services/api/provider.service';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+
+const TypedFlashList = FlashList as any;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -62,11 +67,15 @@ function BookingCard({
     colors,
     onPressDetails,
     onQuickConfirm,
+    index,
+    isDark
 }: {
     item: ProviderBooking;
     colors: any;
     onPressDetails: () => void;
     onQuickConfirm: () => void;
+    index: number;
+    isDark: boolean;
 }) {
     const scale = useSharedValue(1);
     const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -75,73 +84,99 @@ function BookingCard({
     const isPending = statusKey === 'pending';
 
     return (
-        <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeader}>
-                <View style={styles.cardTextBlock}>
-                    <Text style={[styles.cardService, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {item.service_name}
-                    </Text>
-                    <Text style={[styles.cardCustomer, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {item.customer_name}
-                    </Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
-                    <Text style={[styles.statusText, { color: tint.fg }]}>{item.status}</Text>
-                </View>
-            </View>
-
-            <View style={styles.metaRow}>
-                <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(item.booking_date)}</Text>
-                <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} style={{ marginLeft: 8 }} />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                    {formatTime(item.start_time)} {item.end_time ? `- ${formatTime(item.end_time)}` : ''}
-                </Text>
-            </View>
-
-            {getMetaLine(item) ? (
-                <View style={styles.metaRow}>
-                    <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textMuted} />
-                    <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {getMetaLine(item)}
-                    </Text>
-                </View>
-            ) : null}
-
-            <View style={styles.footerRow}>
-                <Text style={[styles.priceLabel, { color: colors.textMuted }]}>Total</Text>
-                <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{formatMoney(item.booking_price)}</Text>
-            </View>
-
-            <View style={styles.actionsRow}>
-                {isPending ? (
-                    <OutlinedButton
-                        title="Confirm"
-                        onPress={onQuickConfirm}
-                        style={{ flex: 1 }}
-                    />
-                ) : null}
-                <AnimatedPressable
-                    style={[styles.detailsButton, animatedStyle]}
-                    onPressIn={() => {
-                        scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
-                    }}
-                    onPressOut={() => {
-                        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-                    }}
-                    onPress={onPressDetails}
+        <Animated.View entering={FadeInUp.delay(index * 100).duration(600)}>
+            <AnimatedPressable
+                style={[styles.cardWrapper, animatedStyle]}
+                onPressIn={() => {
+                    scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+                }}
+                onPressOut={() => {
+                    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+                }}
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onPressDetails();
+                }}
+            >
+                <BlurView 
+                    intensity={isDark ? 20 : 40} 
+                    tint={isDark ? 'dark' : 'light'} 
+                    style={[styles.card, { borderColor: colors.cardBorder }]}
                 >
-                    <View pointerEvents="none" style={{ flex: 1 }}>
-                        <GradientButton title="View Details" onPress={() => { }} style={{ flex: 1 }} />
+                    <View style={styles.cardHeader}>
+                        <View style={styles.cardTextBlock}>
+                            <Text style={[styles.cardService, { color: colors.textPrimary }]} numberOfLines={1}>
+                                {item.service_name}
+                            </Text>
+                            <Text style={[styles.cardCustomer, { color: colors.textSecondary }]} numberOfLines={1}>
+                                {item.customer_name}
+                            </Text>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
+                            <Text style={[styles.statusText, { color: tint.fg }]}>{item.status}</Text>
+                        </View>
                     </View>
-                </AnimatedPressable>
-            </View>
-        </View>
+
+                    <View style={styles.metaRow}>
+                        <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textSecondary} />
+                        <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(item.booking_date)}</Text>
+                        <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textSecondary} style={{ marginLeft: 8 }} />
+                        <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                            {formatTime(item.start_time)} {item.end_time ? `- ${formatTime(item.end_time)}` : ''}
+                        </Text>
+                    </View>
+
+                    {getMetaLine(item) ? (
+                        <View style={styles.metaRow}>
+                            <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textSecondary} />
+                            <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
+                                {getMetaLine(item)}
+                            </Text>
+                        </View>
+                    ) : null}
+
+                    <View style={styles.footerRow}>
+                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Total</Text>
+                        <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{formatMoney(item.booking_price)}</Text>
+                    </View>
+
+                    <View style={styles.actionsRow}>
+                        {isPending ? (
+                            <Pressable 
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    onQuickConfirm();
+                                }}
+                                style={{ flex: 1 }}
+                            >
+                                <View pointerEvents="none" style={{ flex: 1 }}>
+                                    <OutlinedButton
+                                        title="Confirm"
+                                        onPress={() => {}}
+                                        style={{ flex: 1 }}
+                                    />
+                                </View>
+                            </Pressable>
+                        ) : null}
+                        <View style={{ flex: 1 }}>
+                            <GradientButton 
+                                title="View Details" 
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    onPressDetails();
+                                }} 
+                                style={{ flex: 1 }} 
+                            />
+                        </View>
+                    </View>
+                </BlurView>
+            </AnimatedPressable>
+        </Animated.View>
     );
 }
 
 export default function ProviderBookingsScreen() {
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const router = useRouter();
 
@@ -227,30 +262,53 @@ export default function ProviderBookingsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
             <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
 
-            <View style={styles.filterRow}>
-                {STATUS_FILTERS.map((status) => {
-                    const active = filter === status;
-                    const label = status === 'all' ? 'All' : status.replace('-', ' ');
-                    return (
-                        <Pressable
-                            key={status}
-                            style={[
-                                styles.filterChip,
-                                {
-                                    backgroundColor: active ? colors.pink : colors.backgroundSecondary,
-                                    borderColor: active ? colors.pink : colors.cardBorder,
-                                },
-                            ]}
-                            onPress={() => setFilter(status)}
-                        >
-                            <Text style={[styles.filterLabel, { color: active ? colors.white : colors.textSecondary }]}>
-                                {label}
-                            </Text>
-                        </Pressable>
-                    );
-                })}
+            <View>
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterRow}
+                >
+                    {STATUS_FILTERS.map((status) => {
+                        const active = filter === status;
+                        const label = status === 'all' ? 'All' : status.replace('-', ' ');
+                        return (
+                            <Pressable
+                                key={status}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setFilter(status);
+                                }}
+                            >
+                                <BlurView
+                                    intensity={active ? 100 : (isDark ? 20 : 40)}
+                                    tint={isDark ? 'dark' : 'light'}
+                                    style={[
+                                        styles.filterChip,
+                                        {
+                                            backgroundColor: active ? colors.pink : 'transparent',
+                                            borderColor: active ? colors.pink : colors.cardBorder,
+                                        },
+                                    ]}
+                                >
+                                    <Text style={[styles.filterLabel, { color: active ? colors.white : colors.textSecondary }]}>
+                                        {label}
+                                    </Text>
+                                </BlurView>
+                            </Pressable>
+                        );
+                    })}
+                </ScrollView>
             </View>
 
             {loading && !refreshing ? (
@@ -264,17 +322,20 @@ export default function ProviderBookingsScreen() {
                     <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
                 </View>
             ) : (
-                <FlashList
+                <TypedFlashList
                     data={visibleBookings}
-                    keyExtractor={(item) => String(item.booking_id)}
-                    renderItem={({ item }) => (
+                    keyExtractor={(item: any) => String(item.booking_id)}
+                    renderItem={({ item, index }: any) => (
                         <BookingCard
                             item={item}
                             colors={colors}
                             onPressDetails={() => router.push(`/provider-booking/${item.booking_id}`)}
                             onQuickConfirm={() => handleConfirm(item.booking_id)}
+                            index={index}
+                            isDark={isDark}
                         />
                     )}
+                    estimatedItemSize={200}
                     contentContainerStyle={styles.list}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                     onEndReached={handleLoadMore}
@@ -290,12 +351,19 @@ export default function ProviderBookingsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.lg },
     filterRow: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
         gap: Spacing.sm,
         paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
         marginBottom: Spacing.md,
     },
     filterChip: {
@@ -303,13 +371,19 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.full,
         paddingHorizontal: Spacing.md,
         paddingVertical: 8,
+        overflow: 'hidden',
     },
     filterLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
     list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+    cardWrapper: {
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+    },
     card: {
         borderWidth: 1,
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
+        ...Shadows.md,
     },
     cardHeader: {
         flexDirection: 'row',
