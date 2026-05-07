@@ -6,64 +6,45 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService, Ad } from '@/services/api/ad.service';
 import { CenteredHeader } from '@/components';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string; icon: string }> = {
-  pending: { label: 'Pending Review', bg: 'rgba(249,115,22,0.15)', fg: '#F97316', icon: 'clock-outline' },
-  active:  { label: 'Active',         bg: 'rgba(16,185,129,0.15)',  fg: '#10B981', icon: 'check-circle-outline' },
-  expired: { label: 'Expired',        bg: 'rgba(107,107,128,0.15)', fg: '#6B6B80', icon: 'calendar-remove-outline' },
-  rejected:{ label: 'Rejected',       bg: 'rgba(239,68,68,0.15)',   fg: '#EF4444', icon: 'close-circle-outline' },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string; icon: string; border: string }> = {
+  pending: { label: 'Pending Review', bg: 'rgba(249,115,22,0.15)', fg: '#F97316', icon: 'clock-outline', border: 'rgba(249,115,22,0.3)' },
+  active:  { label: 'Active',         bg: 'rgba(16,185,129,0.15)',  fg: '#10B981', icon: 'check-circle-outline', border: 'rgba(16,185,129,0.3)' },
+  expired: { label: 'Expired',        bg: 'rgba(107,107,128,0.15)', fg: '#6B6B80', icon: 'calendar-remove-outline', border: 'rgba(107,107,128,0.3)' },
+  rejected:{ label: 'Rejected',       bg: 'rgba(239,68,68,0.15)',   fg: '#EF4444', icon: 'close-circle-outline', border: 'rgba(239,68,68,0.3)' },
 };
 
-function AdCard({ ad, colors }: { ad: Ad; colors: any }) {
+function AdCard({ ad, colors, index }: { ad: Ad; colors: any; index: number }) {
   const cfg = STATUS_CONFIG[ad.status] ?? STATUS_CONFIG.pending;
-  const durationLabel =
-    ad.duration_days === 7  ? '7 Days'  :
-    ad.duration_days === 14 ? '14 Days' : '30 Days';
-
+  
   return (
-    <View style={[styles.adCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-      {/* Banner thumbnail */}
-      <View style={[styles.thumbnail, { backgroundColor: colors.imagePlaceholder }]}>
-        {ad.banner_image_url ? (
-          <Image source={{ uri: ad.banner_image_url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        ) : (
-          <MaterialCommunityIcons name="image-outline" size={32} color={colors.textMuted} />
-        )}
+    <Animated.View entering={FadeInDown.delay(index * 100)}>
+      <View style={[styles.adCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+        <View style={styles.adCardContent}>
+          <Image source={{ uri: ad.banner_image_url || undefined }} style={styles.adImage} />
+          <View style={styles.adInfo}>
+            <View style={styles.adHeader}>
+              <Text style={[styles.adTitle, { color: colors.textPrimary }]} numberOfLines={1}>{ad.title || 'Untitled Ad'}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+                <Text style={[styles.statusText, { color: cfg.fg }]}>{cfg.label.toUpperCase()}</Text>
+              </View>
+            </View>
+            <Text style={[styles.adStats, { color: colors.textMuted }]}>
+              {new Date(ad.created_at).toLocaleDateString('en-EG')} · {Number((ad as any).price || 0).toLocaleString()} EGP
+            </Text>
+          </View>
+        </View>
       </View>
-
-      {/* Info */}
-      <View style={styles.adInfo}>
-        <Text style={[styles.adTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {ad.title || 'Untitled Ad'}
-        </Text>
-        <Text style={[styles.adMeta, { color: colors.textMuted }]}>
-          {durationLabel} · {Number(ad.price).toLocaleString('en-EG')} EGP
-        </Text>
-        {ad.start_date && ad.end_date ? (
-          <Text style={[styles.adDates, { color: colors.textMuted }]}>
-            {new Date(ad.start_date).toLocaleDateString('en-EG', { month: 'short', day: 'numeric' })}
-            {' – '}
-            {new Date(ad.end_date).toLocaleDateString('en-EG', { month: 'short', day: 'numeric' })}
-          </Text>
-        ) : (
-          <Text style={[styles.adDates, { color: colors.textMuted }]}>
-            {new Date(ad.created_at).toLocaleDateString('en-EG', { month: 'short', day: 'numeric', year: 'numeric' })}
-          </Text>
-        )}
-      </View>
-
-      {/* Status badge */}
-      <View style={[styles.statusBadge, { backgroundColor: cfg.bg }]}>
-        <MaterialCommunityIcons name={cfg.icon as any} size={14} color={cfg.fg} />
-        <Text style={[styles.statusText, { color: cfg.fg }]}>{cfg.label}</Text>
-      </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -71,6 +52,7 @@ export default function PromoteScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { showToast } = useToast();
+  const isDark = colors.background === '#000000' || colors.background === '#121212';
   const insets = useSafeAreaInsets();
 
   const [ads, setAds] = useState<Ad[]>([]);
@@ -91,72 +73,48 @@ export default function PromoteScreen() {
 
   useFocusEffect(useCallback(() => { loadAds(); }, [loadAds]));
 
-  const onRefresh = () => { setRefreshing(true); loadAds(); };
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <CenteredHeader title="My Promotions" titleColor={colors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ExpoLinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <CenteredHeader title="Promote" titleColor={colors.textPrimary} />
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.pink} />
-        </View>
+        <View style={styles.center}><ActivityIndicator size="large" color={colors.pink} /></View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Info card */}
-          <View style={[styles.infoCard, { backgroundColor: colors.pinkGlow, borderColor: colors.pink }]}>
-            <MaterialCommunityIcons name="bullhorn-outline" size={22} color={colors.pink} />
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              Promote your business on the CarKit home screen. Ads are reviewed before going live.
-            </Text>
-          </View>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInDown.delay(100)} style={styles.createAdSection}>
+            <Pressable
+              style={[styles.createCard, { borderColor: colors.pink }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push('/create-ad' as any);
+              }}
+            >
+              <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.createBlur} {...{} as any}>
+                <View style={[styles.iconBox, { backgroundColor: colors.pink }]}>
+                  <MaterialCommunityIcons name="rocket-launch" size={28} color="#FFFFFF" />
+                </View>
+                <View style={styles.createTexts}>
+                  <Text style={[styles.createTitle, { color: colors.textPrimary }]}>Create New Ad</Text>
+                  <Text style={[styles.createSub, { color: colors.textSecondary }]}>Boost your visibility & reach more customers</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.pink} />
+              </BlurView>
+            </Pressable>
+          </Animated.View>
 
-          {ads.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <LinearGradient
-                colors={[colors.gradientStart + '20', colors.gradientEnd + '20']}
-                style={styles.emptyGlow}
-              />
-              <MaterialCommunityIcons name="bullhorn-variant-outline" size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Promotions Yet</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                Create your first ad and reach thousands of car owners.
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.adList}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Your Ads ({ads.length})
-              </Text>
-              {ads.map((ad) => (
-                <AdCard key={ad.ad_id} ad={ad} colors={colors} />
-              ))}
-            </View>
-          )}
-
-          <View style={{ height: 120 }} />
+          <Animated.Text entering={FadeInDown.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Existing Ads</Animated.Text>
+          {ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} index={index} />)}
+          
+          <View style={{ height: 100 }} />
         </ScrollView>
       )}
-
-      {/* FAB: Add an Ad */}
-      <Pressable
-        style={[styles.fab]}
-        onPress={() => router.push('/create-ad' as any)}
-      >
-        <LinearGradient
-          colors={[colors.gradientStart, colors.gradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.fabGradient}
-        >
-          <MaterialCommunityIcons name="plus" size={20} color="#fff" />
-          <Text style={styles.fabText}>Add an Ad</Text>
-        </LinearGradient>
-      </Pressable>
     </View>
   );
 }
@@ -164,93 +122,41 @@ export default function PromoteScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md },
-
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginBottom: Spacing.lg,
-  },
-  infoText: {
-    flex: 1,
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    lineHeight: 20,
-  },
-
-  sectionTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-    marginBottom: Spacing.md,
-  },
-  adList: { marginBottom: Spacing.md },
-
-  adCard: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-    overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  thumbnail: {
-    width: 70,
-    height: 70,
-    borderRadius: BorderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    flexShrink: 0,
-  },
-  adInfo: { flex: 1 },
-  adTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginBottom: 2 },
-  adMeta: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: 2 },
-  adDates: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
-
+  orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.5 },
+  content: { padding: Spacing.md, paddingBottom: 100 },
+  
+  createAdSection: { marginBottom: Spacing.xl },
+  createCard: { borderRadius: BorderRadius.xxl, borderWidth: 1, overflow: 'hidden', ...Shadows.md },
+  createBlur: { flexDirection: 'row', alignItems: 'center', padding: Spacing.lg },
+  iconBox: { width: 56, height: 56, borderRadius: BorderRadius.xl, alignItems: 'center', justifyContent: 'center', marginRight: Spacing.md },
+  createTexts: { flex: 1 },
+  createTitle: { fontFamily: Fonts.extraBold, fontSize: 18, marginBottom: 2 },
+  createSub: { fontFamily: Fonts.medium, fontSize: 13, opacity: 0.8 },
+  
+  sectionTitle: { fontFamily: Fonts.extraBold, fontSize: 20, marginBottom: Spacing.lg, letterSpacing: -0.5 },
+  
+  adCard: { borderRadius: BorderRadius.xl, borderWidth: 1, marginBottom: Spacing.md, overflow: 'hidden', ...Shadows.sm },
+  adCardContent: { flexDirection: 'row', padding: Spacing.md },
+  adImage: { width: 80, height: 80, borderRadius: BorderRadius.lg, marginRight: Spacing.md },
+  adInfo: { flex: 1, justifyContent: 'center' },
+  adHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  adTitle: { fontFamily: Fonts.bold, fontSize: 16, flex: 1, marginRight: 8 },
+  adStats: { fontFamily: Fonts.medium, fontSize: 13 },
+  
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: 8,
     paddingVertical: 4,
+    borderWidth: 1,
     borderRadius: BorderRadius.full,
     alignSelf: 'flex-start',
     flexShrink: 0,
   },
   statusText: { fontFamily: Fonts.semiBold, fontSize: 11 },
 
-  emptyContainer: {
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 40,
-    position: 'relative',
-  },
-  emptyGlow: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    top: 20,
-  },
-  emptyTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  emptySubtitle: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.xl,
-    lineHeight: 22,
-  },
+  emptyContainer: { alignItems: 'center', paddingTop: 60, paddingBottom: 40, position: 'relative' },
+  emptyGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, top: 20 },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginTop: Spacing.lg, marginBottom: Spacing.sm },
+  emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, textAlign: 'center', paddingHorizontal: Spacing.xl, lineHeight: 22 },
 
   fab: {
     position: 'absolute',

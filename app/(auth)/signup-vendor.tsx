@@ -188,9 +188,9 @@ export default function SignUpVendorScreen() {
               />
 
               <GradientButton 
-                title="Continue to Verification" 
+                title="Register Business" 
                 onPress={handleContinue} 
-                style={styles.continueBtn} 
+                style={{...styles.continueBtn,  width: '100%'}}
               />
             </BlurView>
           </Animated.View>

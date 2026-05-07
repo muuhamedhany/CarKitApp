@@ -1,11 +1,18 @@
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Dimensions, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp, FadeInLeft } from 'react-native-reanimated';
+
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { BackButton } from '@/components';
+import { CenteredHeader } from '@/components';
 import { ThemeMode } from '@/contexts/ThemeContext';
+
+const { width, height } = Dimensions.get('window');
 
 const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string; description: string }[] = [
   { mode: 'light', label: 'Light', icon: 'white-balance-sunny', description: 'Always use light theme' },
@@ -18,120 +25,173 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark, themeMode, setThemeMode } = useTheme();
 
+  const handleThemeChange = (mode: ThemeMode) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setThemeMode(mode);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <BackButton />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
-      <View style={[styles.content, { paddingTop: Platform.OS === 'ios' ? 12 : 24 }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
+      <CenteredHeader
+        title="Settings"
+        titleColor={colors.textPrimary}
+        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+      />
 
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Appearance Section */}
-        <Text style={[styles.sectionLabel, { color: colors.pink }]}>APPEARANCE</Text>
-        <View style={[styles.section, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          {THEME_OPTIONS.map((option, index) => {
-            const isSelected = themeMode === option.mode;
-            return (
-              <Pressable
-                key={option.mode}
-                style={[
-                  styles.themeOption,
-                  index < THEME_OPTIONS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.itemSeparator },
-                  isSelected && { backgroundColor: colors.pinkGlow },
-                ]}
-                onPress={() => setThemeMode(option.mode)}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: colors.purpleGlow }]}>
-                  <MaterialCommunityIcons name={option.icon as any} size={22} color={isSelected ? colors.pink : colors.textMuted} />
-                </View>
-                <View style={styles.optionText}>
-                  <Text style={[styles.optionLabel, { color: colors.textPrimary }, isSelected && { color: colors.pink }]}>
-                    {option.label}
-                  </Text>
-                  <Text style={[styles.optionDesc, { color: colors.textMuted }]}>{option.description}</Text>
-                </View>
-                {isSelected && (
-                  <MaterialCommunityIcons name="check-circle" size={22} color={colors.pink} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <Text style={[styles.sectionLabel, { color: colors.pink }]}>APPEARANCE</Text>
+          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+            {THEME_OPTIONS.map((option, index) => {
+              const isSelected = themeMode === option.mode;
+              return (
+                <Pressable
+                  key={option.mode}
+                  style={[
+                    styles.optionRow,
+                    index < THEME_OPTIONS.length - 1 && { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+                    isSelected && { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.05)' },
+                  ]}
+                  onPress={() => handleThemeChange(option.mode)}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.1)' }]}>
+                    <MaterialCommunityIcons name={option.icon as any} size={22} color={isSelected ? colors.pink : colors.textMuted} />
+                  </View>
+                  <View style={styles.optionText}>
+                    <Text style={[styles.optionLabel, { color: colors.textPrimary }, isSelected && { color: colors.pink, fontFamily: Fonts.bold }]}>
+                      {option.label}
+                    </Text>
+                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>{option.description}</Text>
+                  </View>
+                  {isSelected && (
+                    <Animated.View entering={FadeInLeft}>
+                      <MaterialCommunityIcons name="check-circle" size={24} color={colors.pink} />
+                    </Animated.View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </BlurView>
+        </Animated.View>
 
         {/* Current mode indicator */}
-        <View style={[styles.infoCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <MaterialCommunityIcons
-            name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'}
-            size={20}
-            color={colors.purpleLight}
-          />
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Currently using <Text style={{ color: colors.pink, fontFamily: Fonts.bold }}>{isDark ? 'Dark' : 'Light'}</Text> mode
-          </Text>
-        </View>
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
+            <View style={[styles.infoIconWrap, { backgroundColor: colors.purple + '20' }]}>
+              <MaterialCommunityIcons
+                name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'}
+                size={20}
+                color={colors.purple}
+              />
+            </View>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+              Currently using <Text style={{ color: colors.pink, fontFamily: Fonts.bold }}>{isDark ? 'Dark' : 'Light'}</Text> mode
+            </Text>
+          </BlurView>
+        </Animated.View>
 
         {/* Security Section */}
-        <Text style={[styles.sectionLabel, { color: colors.pink }]}>SECURITY</Text>
-        <View style={[styles.section, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <Pressable
-            style={styles.themeOption}
-            onPress={() => router.push('/settings/password')}
-          >
-            <View style={[styles.optionIcon, { backgroundColor: colors.purpleGlow }]}>
-              <MaterialCommunityIcons name="lock-reset" size={22} color={colors.pink} />
-            </View>
-            <View style={styles.optionText}>
-              <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Change Password</Text>
-              <Text style={[styles.optionDesc, { color: colors.textMuted }]}>Update your account password</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
-          </Pressable>
-        </View>
+        <Animated.View entering={FadeInDown.delay(300).springify()}>
+          <Text style={[styles.sectionLabel, { color: colors.pink }]}>SECURITY</Text>
+          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+            <Pressable
+              style={styles.optionRow}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/settings/password');
+              }}
+            >
+              <View style={[styles.optionIcon, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.1)' }]}>
+                <MaterialCommunityIcons name="lock-reset" size={22} color={colors.pink} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Change Password</Text>
+                <Text style={[styles.optionDesc, { color: colors.textMuted }]}>Update your account password</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </Pressable>
+          </BlurView>
+        </Animated.View>
 
         {/* About Section */}
-        <Text style={[styles.sectionLabel, { color: colors.pink }]}>ABOUT</Text>
-        <View style={[styles.section, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <View style={styles.aboutRow}>
-            <Text style={[styles.aboutLabel, { color: colors.textSecondary }]}>Version</Text>
-            <Text style={[styles.aboutValue, { color: colors.textPrimary }]}>1.0.0</Text>
-          </View>
-        </View>
-      </View>
+        <Animated.View entering={FadeInDown.delay(400).springify()}>
+          <Text style={[styles.sectionLabel, { color: colors.pink }]}>ABOUT</Text>
+          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+            <View style={styles.aboutRow}>
+              <View style={styles.aboutInfo}>
+                <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Version</Text>
+                <Text style={[styles.optionDesc, { color: colors.textMuted }]}>Latest stable release</Text>
+              </View>
+              <View style={[styles.versionBadge, { backgroundColor: colors.pink + '20' }]}>
+                <Text style={[styles.versionText, { color: colors.pink }]}>1.0.0</Text>
+              </View>
+            </View>
+            <View style={[styles.aboutRow, { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }]}>
+              <View style={styles.aboutInfo}>
+                <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Build Number</Text>
+                <Text style={[styles.optionDesc, { color: colors.textMuted }]}>Internal reference</Text>
+              </View>
+              <Text style={[styles.aboutValue, { color: colors.textSecondary }]}>#20240507.1</Text>
+            </View>
+          </BlurView>
+        </Animated.View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.md, flex: 1 },
-  title: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
+  
+  orb: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    opacity: 0.12,
   },
+  orb1: { top: -width * 0.2, right: -width * 0.1 },
+  orb2: { bottom: height * 0.2, left: -width * 0.3 },
+
   sectionLabel: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.xs,
-    letterSpacing: 1,
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    letterSpacing: 1.5,
     marginBottom: Spacing.sm,
-    marginTop: Spacing.md,
+    marginTop: Spacing.xl,
+    marginLeft: 8,
+    textTransform: 'uppercase',
+    opacity: 0.8,
   },
-  section: {
-    borderRadius: BorderRadius.lg,
+  sectionCard: {
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
     marginBottom: Spacing.md,
   },
-  themeOption: {
+  optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: 16,
+    paddingHorizontal: Spacing.lg,
   },
   optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -140,37 +200,59 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
+    letterSpacing: 0.5,
   },
   optionDesc: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    marginTop: 2,
+    fontFamily: Fonts.medium,
+    fontSize: 11,
+    marginTop: 4,
+    opacity: 0.6,
   },
+
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     padding: Spacing.md,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+    overflow: 'hidden',
+  },
+  infoIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   infoText: {
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
+    opacity: 0.9,
   },
+
   aboutRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: Spacing.lg,
   },
-  aboutLabel: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.md,
+  aboutInfo: { flex: 1 },
+  versionBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+  },
+  versionText: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
   },
   aboutValue: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    opacity: 0.6,
   },
 });

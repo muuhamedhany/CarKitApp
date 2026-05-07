@@ -7,15 +7,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function VendorProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await logout();
     router.replace('/login');
   };
@@ -38,91 +43,131 @@ export default function VendorProfileScreen() {
     : { label: 'Pending Review', bg: 'rgba(249,115,22,0.1)', fg: '#F97316', icon: 'shield-half-full' as const };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Vendor Profile</Text>
-        </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
 
-        <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
-            <Text style={[styles.avatarText, { color: colors.pink }]}>
-              {user?.name?.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
-            <Text style={[styles.email, { color: colors.textMuted }]}>{user?.email}</Text>
-            <View style={[styles.badge, { backgroundColor: verificationBadge.bg }]}>
-              <MaterialCommunityIcons name={verificationBadge.icon} size={14} color={verificationBadge.fg} />
-              <Text style={[styles.badgeText, { color: verificationBadge.fg }]}>{verificationBadge.label}</Text>
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <ScrollView 
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Vendor Profile</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your business presence</Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.delay(200).duration(800)}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
+              <Text style={[styles.avatarText, { color: colors.pink }]}>
+                {user?.name?.charAt(0).toUpperCase()}
+              </Text>
             </View>
-          </View>
-        </View>
+            <View style={styles.userInfo}>
+              <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
+              <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
+              <View style={[styles.badge, { backgroundColor: verificationBadge.bg }]}>
+                <MaterialCommunityIcons name={verificationBadge.icon} size={14} color={verificationBadge.fg} />
+                <Text style={[styles.badgeText, { color: verificationBadge.fg }]}>{verificationBadge.label}</Text>
+              </View>
+            </View>
+          </BlurView>
+        </Animated.View>
 
         {/* Store Stats Summary */}
-        <View style={styles.storeStatsRow}>
-          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.storeStatsRow}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="package-variant" size={22} color="#6366F1" />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_products ?? '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Products</Text>
-          </View>
-          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Products</Text>
+          </BlurView>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="receipt-text" size={22} color="#10B981" />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_orders ?? '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Orders</Text>
-          </View>
-          <View style={[styles.storeStat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Orders</Text>
+          </BlurView>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="cash-multiple" size={22} color={colors.pink} />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard ? Number(dashboard.stats.revenue).toLocaleString('en-EG') : '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textMuted }]}>Revenue</Text>
-          </View>
-        </View>
+            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Revenue</Text>
+          </BlurView>
+        </Animated.View>
 
-        <View style={[styles.infoGrid, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.infoItem}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Role</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Vendor ID</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
-          </View>
-        </View>
-
-        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/profile/edit')}>
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(233, 30, 140, 0.1)' }]}>
-              <MaterialCommunityIcons name="account-edit" size={22} color={colors.pink} />
+        <Animated.View entering={FadeInUp.delay(500).duration(800)}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
+            <View style={styles.infoItem}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Role</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
             </View>
-            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Edit Personal Info</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-          </Pressable>
-
-          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/settings')}>
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-              <MaterialCommunityIcons name="storefront" size={22} color="#6366F1" />
+            <View style={styles.infoItem}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Vendor ID</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
             </View>
-            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Store Settings</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-          </Pressable>
+          </BlurView>
+        </Animated.View>
 
-          <Pressable style={[styles.menuItem, { borderBottomColor: colors.itemSeparator }]} onPress={() => router.push('/support')}>
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <MaterialCommunityIcons name="lifebuoy" size={22} color="#10B981" />
-            </View>
-            <Text style={[styles.menuText, { color: colors.textPrimary }]}>Support</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-          </Pressable>
+        <Animated.View entering={FadeInUp.delay(600).duration(800)}>
+          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
+            <Pressable 
+              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/profile/edit');
+              }}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: colors.pink + '15' }]}>
+                <MaterialCommunityIcons name="account-edit" size={22} color={colors.pink} />
+              </View>
+              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Edit Personal Info</Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </Pressable>
 
-          <Pressable style={styles.menuItemLast} onPress={handleLogout}>
-            <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <MaterialCommunityIcons name="logout" size={22} color="#EF4444" />
-            </View>
-            <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-          </Pressable>
-        </View>
+            <Pressable 
+              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/settings');
+              }}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                <MaterialCommunityIcons name="storefront" size={22} color="#6366F1" />
+              </View>
+              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Store Settings</Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </Pressable>
+
+            <Pressable 
+              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/support');
+              }}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                <MaterialCommunityIcons name="lifebuoy" size={22} color="#10B981" />
+              </View>
+              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Support</Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </Pressable>
+
+            <Pressable 
+              style={({ pressed }) => [styles.menuItemLast, { backgroundColor: pressed ? 'rgba(239,68,68,0.05)' : 'transparent' }]} 
+              onPress={handleLogout}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                <MaterialCommunityIcons name="logout" size={22} color="#EF4444" />
+              </View>
+              <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </Pressable>
+          </BlurView>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -132,6 +177,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   scrollContent: {
     padding: Spacing.md,
     paddingBottom: 150,
@@ -140,8 +192,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xxl,
+    fontFamily: Fonts.extraBold,
+    fontSize: 32,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    marginTop: 4,
+    opacity: 0.8,
   },
   profileCard: {
     flexDirection: 'row',
@@ -150,6 +209,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     marginBottom: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   infoGrid: {
     flexDirection: 'row',
@@ -158,6 +219,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.md,
     gap: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   infoItem: {
     flex: 1,
@@ -215,6 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',
+    ...Shadows.md,
   },
   menuItem: {
     flexDirection: 'row',
@@ -252,6 +316,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     gap: 4,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   storeStatValue: {
     fontFamily: Fonts.bold,

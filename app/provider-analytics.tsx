@@ -15,7 +15,11 @@ import {
     ProviderAnalyticsResponse,
     ProviderAnalyticsTrendPoint,
 } from '@/types/api.types';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 const RANGE_OPTIONS: Array<{ label: string; value: ProviderAnalyticsRange }> = [
     { label: 'Weekly', value: 'weekly' },
@@ -61,6 +65,8 @@ export default function ProviderAnalyticsScreen() {
     const [analytics, setAnalytics] = useState<ProviderAnalyticsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    const isDark = colors.background === '#000000' || colors.background === '#121212';
 
     const load = useCallback(async (r: ProviderAnalyticsRange) => {
         try {
@@ -120,11 +126,23 @@ export default function ProviderAnalyticsScreen() {
         : 1;
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
             {/* Header */}
-            <View style={styles.headerRow}>
+            <View style={[styles.headerRow, { paddingTop: insets.top + Spacing.sm }]}>
                 <Pressable
-                    onPress={() => router.back()}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        router.back();
+                    }}
                     style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
                 >
                     <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
@@ -133,11 +151,14 @@ export default function ProviderAnalyticsScreen() {
             </View>
 
             {/* Range selector */}
-            <View style={[styles.rangeToggle, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+            <Animated.View entering={FadeInDown.delay(100).duration(800)} style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}>
                 {RANGE_OPTIONS.map(opt => (
                     <Pressable
                         key={opt.value}
-                        onPress={() => setRange(opt.value)}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setRange(opt.value);
+                        }}
                         style={[
                             styles.rangePill,
                             { backgroundColor: range === opt.value ? colors.purple : 'transparent' },
@@ -145,11 +166,11 @@ export default function ProviderAnalyticsScreen() {
                     >
                         <Text style={[
                             styles.rangeLabel,
-                            { color: range === opt.value ? '#E9DEF8' : colors.textMuted },
+                            { color: range === opt.value ? '#E9DEF8' : colors.textSecondary },
                         ]}>{opt.label}</Text>
                     </Pressable>
                 ))}
-            </View>
+            </Animated.View>
 
             {loading ? (
                 <View style={styles.centered}>
@@ -163,94 +184,106 @@ export default function ProviderAnalyticsScreen() {
                 >
                     {/* Summary Cards */}
                     <View style={styles.cardsRow}>
-                        {summaryCards.map(card => (
-                            <View key={card.label} style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                                <MaterialCommunityIcons name={card.icon as any} size={22} color={card.color} />
-                                <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{card.value}</Text>
-                                <Text style={[styles.cardLabel, { color: colors.textMuted }]}>{card.label}</Text>
-                                <Text style={[styles.cardChange, { color: getChangeColor(card.change, colors) }]}>
-                                    {formatPercent(card.change)}
-                                </Text>
-                            </View>
+                        {summaryCards.map((card, index) => (
+                            <Animated.View 
+                                key={card.label} 
+                                entering={FadeInDown.delay(200 + index * 100).duration(800)}
+                                style={{ flex: 1 }}
+                            >
+                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+                                    <MaterialCommunityIcons name={card.icon as any} size={22} color={card.color} />
+                                    <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{card.value}</Text>
+                                    <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>{card.label}</Text>
+                                    <Text style={[styles.cardChange, { color: getChangeColor(card.change, colors) }]}>
+                                        {formatPercent(card.change)}
+                                    </Text>
+                                </BlurView>
+                            </Animated.View>
                         ))}
                     </View>
 
                     {/* Revenue Trend Chart */}
                     {analytics?.trend?.points?.length ? (
-                        <View style={[styles.chartCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                                Revenue Trend
-                            </Text>
-                            <Text style={[styles.sectionSub, { color: colors.textMuted }]}>
-                                {analytics.trend.subtitle}
-                            </Text>
-                            <Svg width={chartW} height={chartH}>
-                                <Defs>
-                                    <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <Stop offset="0" stopColor={colors.pink} stopOpacity="0.3" />
-                                        <Stop offset="1" stopColor={colors.pink} stopOpacity="0" />
-                                    </SvgGradient>
-                                </Defs>
-                                {areaPath ? (
-                                    <Path d={areaPath} fill="url(#areaGrad)" />
-                                ) : null}
-                                {linePath ? (
-                                    <Path d={linePath} stroke={colors.pink} strokeWidth={2} fill="none" />
-                                ) : null}
-                            </Svg>
-                            <View style={styles.chartXLabels}>
-                                {analytics.trend.points.map((p, i) => (
-                                    <Text key={i} style={[styles.chartLabel, { color: colors.textMuted }]}>
-                                        {p.label}
-                                    </Text>
-                                ))}
-                            </View>
-                        </View>
+                        <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.chartCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                                    Revenue Trend
+                                </Text>
+                                <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+                                    {analytics.trend.subtitle}
+                                </Text>
+                                <Svg width={chartW} height={chartH}>
+                                    <Defs>
+                                        <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <Stop offset="0" stopColor={colors.pink} stopOpacity="0.3" />
+                                            <Stop offset="1" stopColor={colors.pink} stopOpacity="0" />
+                                        </SvgGradient>
+                                    </Defs>
+                                    {areaPath ? (
+                                        <Path d={areaPath} fill="url(#areaGrad)" />
+                                    ) : null}
+                                    {linePath ? (
+                                        <Path d={linePath} stroke={colors.pink} strokeWidth={2} fill="none" />
+                                    ) : null}
+                                </Svg>
+                                <View style={styles.chartXLabels}>
+                                    {analytics.trend.points.map((p, i) => (
+                                        <Text key={i} style={[styles.chartLabel, { color: colors.textSecondary }]}>
+                                            {p.label}
+                                        </Text>
+                                    ))}
+                                </View>
+                            </BlurView>
+                        </Animated.View>
                     ) : null}
 
                     {/* Customer Mix */}
                     {analytics?.customer_mix && (
-                        <View style={[styles.mixCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Mix</Text>
-                            <View style={styles.mixRow}>
-                                {[
-                                    { label: 'Total', value: analytics.customer_mix.total, color: colors.pink },
-                                    { label: 'Returning', value: analytics.customer_mix.returning, color: '#818CF8' },
-                                    { label: 'New', value: analytics.customer_mix.new, color: '#10B981' },
-                                ].map(item => (
-                                    <View key={item.label} style={styles.mixItem}>
-                                        <View style={[styles.mixDot, { backgroundColor: item.color }]} />
-                                        <Text style={[styles.mixValue, { color: colors.textPrimary }]}>{item.value}</Text>
-                                        <Text style={[styles.mixLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
+                        <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.mixCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Mix</Text>
+                                <View style={styles.mixRow}>
+                                    {[
+                                        { label: 'Total', value: analytics.customer_mix.total, color: colors.pink },
+                                        { label: 'Returning', value: analytics.customer_mix.returning, color: '#818CF8' },
+                                        { label: 'New', value: analytics.customer_mix.new, color: '#10B981' },
+                                    ].map(item => (
+                                        <View key={item.label} style={styles.mixItem}>
+                                            <View style={[styles.mixDot, { backgroundColor: item.color }]} />
+                                            <Text style={[styles.mixValue, { color: colors.textPrimary }]}>{item.value}</Text>
+                                            <Text style={[styles.mixLabel, { color: colors.textSecondary }]}>{item.label}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </BlurView>
+                        </Animated.View>
                     )}
 
                     {/* Service Revenue breakdown */}
                     {analytics?.service_revenue?.length ? (
-                        <View style={[styles.breakdownCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Revenue by Service</Text>
-                            {analytics.service_revenue.map((svc, i) => {
-                                const pct = (svc.revenue / maxSvcRevenue) * 100;
-                                return (
-                                    <View key={i} style={styles.svcItem}>
-                                        <View style={styles.svcTopRow}>
-                                            <Text style={[styles.svcName, { color: colors.textPrimary }]} numberOfLines={1}>
-                                                {svc.name}
-                                            </Text>
-                                            <Text style={[styles.svcRevenue, { color: colors.pink }]}>
-                                                {formatCurrency(svc.revenue)} EGP
-                                            </Text>
+                        <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.breakdownCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Revenue by Service</Text>
+                                {analytics.service_revenue.map((svc, i) => {
+                                    const pct = (svc.revenue / maxSvcRevenue) * 100;
+                                    return (
+                                        <View key={i} style={styles.svcItem}>
+                                            <View style={styles.svcTopRow}>
+                                                <Text style={[styles.svcName, { color: colors.textPrimary }]} numberOfLines={1}>
+                                                    {svc.name}
+                                                </Text>
+                                                <Text style={[styles.svcRevenue, { color: colors.pink }]}>
+                                                    {formatCurrency(svc.revenue)} EGP
+                                                </Text>
+                                            </View>
+                                            <View style={[styles.barTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                                                <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: colors.pink }]} />
+                                            </View>
                                         </View>
-                                        <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
-                                            <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: colors.pink }]} />
-                                        </View>
-                                    </View>
-                                );
-                            })}
-                        </View>
+                                    );
+                                })}
+                            </BlurView>
+                        </Animated.View>
                     ) : null}
                 </ScrollView>
             )}
@@ -260,6 +293,13 @@ export default function ProviderAnalyticsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -275,14 +315,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+    headerTitle: { fontFamily: Fonts.extraBold, fontSize: 28, letterSpacing: -0.5 },
     rangeToggle: {
         flexDirection: 'row',
         marginHorizontal: Spacing.md,
-        borderRadius: BorderRadius.xl,
+        borderRadius: BorderRadius.full,
         borderWidth: 1,
         padding: 4,
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.lg,
     },
     rangePill: {
         flex: 1,
@@ -297,13 +337,17 @@ const styles = StyleSheet.create({
     summaryCard: {
         flex: 1, borderRadius: BorderRadius.xl, borderWidth: 1,
         padding: Spacing.sm, alignItems: 'center', gap: 4,
+        overflow: 'hidden',
+        ...Shadows.sm,
     },
     cardValue: { fontFamily: Fonts.bold, fontSize: FontSizes.md, textAlign: 'center' },
-    cardLabel: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, textAlign: 'center' },
+    cardLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, textAlign: 'center' },
     cardChange: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
     chartCard: {
         borderRadius: BorderRadius.xl, borderWidth: 1,
         padding: Spacing.md, marginBottom: Spacing.md,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 2 },
     sectionSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: Spacing.md },
@@ -312,6 +356,8 @@ const styles = StyleSheet.create({
     mixCard: {
         borderRadius: BorderRadius.xl, borderWidth: 1,
         padding: Spacing.md, marginBottom: Spacing.md,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     mixRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: Spacing.md },
     mixItem: { alignItems: 'center', gap: 4 },
@@ -321,6 +367,8 @@ const styles = StyleSheet.create({
     breakdownCard: {
         borderRadius: BorderRadius.xl, borderWidth: 1,
         padding: Spacing.md, marginBottom: Spacing.md, gap: Spacing.sm,
+        overflow: 'hidden',
+        ...Shadows.md,
     },
     svcItem: { marginTop: Spacing.xs },
     svcTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },

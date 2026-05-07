@@ -6,16 +6,27 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+const TypedFlashList = FlashList as any;
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
+import Animated, { 
+  FadeInUp, 
+  FadeInDown,
+  withSpring,
+  LinearTransition,
+} from 'react-native-reanimated';
 import { useAuth } from '@/contexts/AuthContext';
 import { bookingService } from '@/services/api/booking.service';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { CenteredHeader } from '@/components';
+
+const { width, height } = Dimensions.get('window');
 
 type Booking = {
   booking_id: number;
@@ -40,8 +51,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function MyBookingsScreen() {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('upcoming');
@@ -121,81 +131,114 @@ export default function MyBookingsScreen() {
     }
   };
 
-  const renderBooking = ({ item }: { item: Booking }) => (
-    <View style={styles.bookingCard}>
-      <View style={styles.bookingHeader}>
-        <View style={styles.bookingLeft}>
-          <Text style={styles.bookingName} numberOfLines={1}>{item.service_name}</Text>
-          {item.provider_name && (
-            <Text style={styles.providerName}>{item.provider_name}</Text>
-          )}
+  const renderBooking = ({ item, index }: { item: Booking; index: number }) => (
+    <Animated.View 
+      entering={FadeInUp.delay(index * 100).springify()}
+      style={styles.cardContainer}
+    >
+      <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.bookingCard}>
+        <View style={styles.bookingHeader}>
+          <View style={styles.bookingLeft}>
+            <Text style={[styles.bookingName, { color: colors.textPrimary }]} numberOfLines={1}>{item.service_name}</Text>
+            {item.provider_name && (
+              <Text style={[styles.providerName, { color: colors.pink }]}>{item.provider_name}</Text>
+            )}
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '20' }]}>
+            <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
+              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            </Text>
+          </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '30' }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+
+        <View style={styles.infoRow}>
+          <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textSecondary} />
+          <Text style={[styles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
+            {item.location || 'No location selected'}
           </Text>
         </View>
-      </View>
 
-      <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
-        {item.provider_name ? `Provider: ${item.provider_name}` : 'Provider details unavailable'}
-      </Text>
-      <Text style={[styles.serviceText, { color: colors.textSecondary }]} numberOfLines={1}>
-        {item.location || 'No location selected'}
-      </Text>
-
-      <View style={styles.metaRow}>
-        <View style={styles.metaItem}>
-          <MaterialCommunityIcons name="calendar" size={14} color={colors.textMuted} />
-          <Text style={styles.metaText}>{formatDate(item.booking_date)}</Text>
-        </View>
-        {item.start_time && (
+        <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-            <Text style={styles.metaText}>{formatTime(item.start_time)}</Text>
+            <MaterialCommunityIcons name="calendar" size={14} color={colors.textMuted} />
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>{formatDate(item.booking_date)}</Text>
           </View>
-        )}
-      </View>
+          {item.start_time && (
+            <View style={styles.metaItem}>
+              <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textMuted }]}>{formatTime(item.start_time)}</Text>
+            </View>
+          )}
+        </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{formatMoney(item.booking_price)}</Text>
-      </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-      <Pressable
-        style={styles.viewDetailsBtn}
-        onPress={() => router.push({ pathname: '/booking/[id]' as any, params: { id: String(item.booking_id) } })}
-      >
-        <LinearGradient
-          colors={[colors.gradientStart, colors.gradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.viewDetailsGradient}
-        >
-          <Text style={styles.viewDetailsText}>View Details</Text>
-        </LinearGradient>
-      </Pressable>
-    </View>
+        <View style={styles.footer}>
+          <View>
+            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total Amount</Text>
+            <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{formatMoney(item.booking_price)}</Text>
+          </View>
+          
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({ pathname: '/booking/[id]' as any, params: { id: String(item.booking_id) } });
+            }}
+          >
+            <LinearGradient
+              colors={[colors.pink, colors.purple]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.viewDetailsBtn}
+            >
+              <Text style={styles.viewDetailsText}>Details</Text>
+              <MaterialCommunityIcons name="chevron-right" size={18} color="white" />
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </BlurView>
+    </Animated.View>
   );
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
       <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
 
-      {/* Tabs */}
-      <View style={styles.tabRow}>
-        <Pressable
-          style={[styles.tab, tab === 'upcoming' && styles.tabActive]}
-          onPress={() => setTab('upcoming')}
-        >
-          <Text style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>Upcoming</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, tab === 'completed' && styles.tabActive]}
-          onPress={() => setTab('completed')}
-        >
-          <Text style={[styles.tabText, tab === 'completed' && styles.tabTextActive]}>Completed</Text>
-        </Pressable>
+      <View style={styles.tabContainer}>
+        <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+          <Pressable
+            style={[styles.tab]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setTab('upcoming');
+            }}
+          >
+            {tab === 'upcoming' && (
+              <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
+            )}
+            <Text style={[styles.tabText, { color: tab === 'upcoming' ? 'white' : colors.textSecondary }]}>Upcoming</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.tab]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setTab('completed');
+            }}
+          >
+            {tab === 'completed' && (
+              <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
+            )}
+            <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>Completed</Text>
+          </Pressable>
+        </BlurView>
       </View>
 
       {loading && !refreshing ? (
@@ -203,16 +246,20 @@ export default function MyBookingsScreen() {
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : bookings.length === 0 ? (
-        <View style={styles.center}>
-          <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyTitle}>No {tab} bookings</Text>
-        </View>
+        <Animated.View entering={FadeInDown} style={styles.center}>
+          <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+            <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
+          </BlurView>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} bookings</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} service bookings will appear here.</Text>
+        </Animated.View>
       ) : (
-        <FlashList
+        <TypedFlashList
           data={bookings}
-          keyExtractor={(item) => item.booking_id.toString()}
+          keyExtractor={(item: any) => item.booking_id.toString()}
           renderItem={renderBooking}
           contentContainerStyle={styles.list}
+          estimatedItemSize={200}
           showsVerticalScrollIndicator={false}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
@@ -225,51 +272,54 @@ export default function MyBookingsScreen() {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { paddingHorizontal: Spacing.md, paddingBottom: 40 },
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 40, paddingTop: Spacing.sm },
 
-  tabRow: {
-    flexDirection: 'row', marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md, gap: Spacing.sm,
+  orb: {
+    position: 'absolute',
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: (width * 0.8) / 2,
+    opacity: 0.12,
   },
-  tab: {
-    flex: 1, paddingVertical: 10, borderRadius: BorderRadius.lg,
-    alignItems: 'center', backgroundColor: colors.backgroundSecondary,
-    borderWidth: 1, borderColor: colors.cardBorder,
-  },
-  tabActive: {
-    backgroundColor: colors.gradientStart,
-    borderColor: colors.gradientStart,
-  },
-  tabText: { color: colors.textSecondary, fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  tabTextActive: { color: colors.white },
+  orb1: { top: -width * 0.2, right: -width * 0.2 },
+  orb2: { bottom: height * 0.1, left: -width * 0.3 },
 
+  tabContainer: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+  tabRow: { flexDirection: 'row', borderRadius: BorderRadius.full, padding: 4, overflow: 'hidden', borderWidth: 1 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderRadius: BorderRadius.full },
+  tabHighlight: { borderRadius: BorderRadius.full },
+  tabText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, zIndex: 1 },
+
+  cardContainer: { marginBottom: Spacing.md },
   bookingCard: {
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: colors.cardBorder,
-    padding: Spacing.md, marginBottom: Spacing.md,
+    borderRadius: BorderRadius.xxl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: Spacing.xl,
   },
-  bookingHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    marginBottom: 6,
-  },
+  bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   bookingLeft: { flex: 1, marginRight: Spacing.sm },
-  bookingName: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.md },
-  providerName: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
-  serviceText: { color: colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 4 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.sm },
-  statusText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs },
-  metaRow: { flexDirection: 'row', gap: 12, marginBottom: Spacing.sm },
+  bookingName: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, letterSpacing: 0.3 },
+  providerName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: BorderRadius.full },
+  statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  infoText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.8 },
+  metaRow: { flexDirection: 'row', gap: 16, marginBottom: Spacing.sm },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { color: colors.textSecondary, fontFamily: Fonts.regular, fontSize: FontSizes.xs },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  totalLabel: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  totalValue: { color: colors.textPrimary, fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-  viewDetailsBtn: { borderRadius: BorderRadius.lg, overflow: 'hidden' },
-  viewDetailsGradient: { paddingVertical: 12, alignItems: 'center', borderRadius: BorderRadius.lg },
-  viewDetailsText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  metaText: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, opacity: 0.6 },
+  divider: { height: 1, marginVertical: Spacing.lg, opacity: 0.1 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  totalLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6 },
+  totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: 2 },
+  viewDetailsBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: BorderRadius.full, gap: 6 },
+  viewDetailsText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.sm },
 
-  emptyTitle: { color: colors.textMuted, fontFamily: Fonts.semiBold, fontSize: FontSizes.md, marginTop: Spacing.md },
+  emptyIconContainer: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.lg, overflow: 'hidden', borderWidth: 1 },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginBottom: 8 },
+  emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, textAlign: 'center', opacity: 0.6, paddingHorizontal: Spacing.xl },
 });

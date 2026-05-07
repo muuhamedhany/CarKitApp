@@ -10,32 +10,32 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Dimensions,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, FormInput, PickerModal } from '@/components';
+import { CenteredHeader, FormInput, PickerModal, GradientButton } from '@/components';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
-const TAB_BAR_HEIGHT = 65;
-
-type Make = { make_id: number; name: string };
-type Model = { model_id: number; name: string };
+const { width, height } = Dimensions.get('window');
 
 export default function AddVehicleScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, isDark } = useTheme();
   const { token } = useAuth();
   const { showToast } = useToast();
-  const insets = useSafeAreaInsets();
 
   const [makes, setMakes] = useState<Make[]>([]);
   const [models, setModels] = useState<Model[]>([]);
@@ -49,8 +49,6 @@ export default function AddVehicleScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingMakes, setLoadingMakes] = useState(true);
-
-  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   useEffect(() => {
     fetchMakes();
@@ -79,6 +77,7 @@ export default function AddVehicleScreen() {
   };
 
   const handleSelectMake = (item: { id: number; label: string }) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const make = makes.find((m) => m.make_id === item.id)!;
     setSelectedMake(make);
     setSelectedModel(null);
@@ -88,12 +87,14 @@ export default function AddVehicleScreen() {
   };
 
   const handleSelectModel = (item: { id: number; label: string }) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const model = models.find((m) => m.model_id === item.id)!;
     setSelectedModel(model);
     setShowModelPicker(false);
   };
 
   const pickImage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -110,11 +111,9 @@ export default function AddVehicleScreen() {
       const fileExt = uri.split('.').pop() || 'jpg';
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `photos/${fileName}`;
-
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !anonKey) throw new Error('Supabase config missing');
-
       const uploadUrl = `${supabaseUrl}/storage/v1/object/vehicle-photos/${filePath}`;
 
       const response = await FileSystem.uploadAsync(uploadUrl, uri, {
@@ -126,11 +125,7 @@ export default function AddVehicleScreen() {
         },
       });
 
-      if (response.status < 200 || response.status >= 300) {
-        console.error('Upload error:', response.body);
-        throw new Error(`Upload failed: ${response.status}`);
-      }
-
+      if (response.status < 200 || response.status >= 300) throw new Error('Upload failed');
       const { data } = supabase.storage.from('vehicle-photos').getPublicUrl(filePath);
       return data.publicUrl;
     } catch (e) {
@@ -141,15 +136,15 @@ export default function AddVehicleScreen() {
 
   const handleSave = async () => {
     if (!selectedModel) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast('warning', 'Missing Info', 'Please select a make and model.');
       return;
     }
-
     setSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       let photoUrl: string | null = null;
       if (photoUri) {
-        showToast('info', 'Uploading', 'Uploading photo...');
         photoUrl = await uploadPhotoToSupabase(photoUri);
         if (!photoUrl) {
           showToast('error', 'Error', 'Photo upload failed.');
@@ -157,7 +152,6 @@ export default function AddVehicleScreen() {
           return;
         }
       }
-
       const res = await fetch(`${API_URL}/vehicles`, {
         method: 'POST',
         headers: {
@@ -174,6 +168,7 @@ export default function AddVehicleScreen() {
       });
       const data = await res.json();
       if (data.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Vehicle Added!', 'Your vehicle has been saved.');
         router.back();
       } else {
@@ -188,6 +183,19 @@ export default function AddVehicleScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <CenteredHeader 
+        title="Add New Vehicle" 
+        titleColor={colors.textPrimary} 
+      />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -197,131 +205,202 @@ export default function AddVehicleScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <CenteredHeader title="Add New Vehicle" titleColor={colors.textPrimary} />
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+              {/* Photo */}
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Vehicle Photo</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    photoUri ? styles.photoPreview : styles.photoBox,
+                    { borderColor: photoUri ? colors.pink : 'rgba(255,255,255,0.1)', opacity: pressed ? 0.8 : 1 }
+                  ]}
+                  onPress={pickImage}
+                >
+                  {photoUri ? (
+                    <>
+                      <Image source={{ uri: photoUri }} style={styles.photoImg} />
+                      <View style={[styles.photoOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                        <MaterialCommunityIcons name="camera" size={20} color="white" />
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={[styles.iconCircle, { backgroundColor: colors.pink + '20' }]}>
+                        <MaterialCommunityIcons name="camera-plus" size={28} color={colors.pink} />
+                      </View>
+                      <Text style={[styles.photoText, { color: colors.textMuted }]}>Add Photo</Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
 
-          {/* Photo */}
-          <Text style={styles.label}>Vehicle Photo:</Text>
-          <View style={styles.photoBoxWrapper}>
-            <Pressable style={photoUri ? styles.photoPreview : styles.photoBox} onPress={pickImage}>
-              {photoUri ? (
-                <>
-                  <Image source={{ uri: photoUri }} style={styles.photoImg} />
-                  <View style={styles.photoOverlay}>
-                    <MaterialCommunityIcons name="camera-outline" size={20} color={colors.white} />
+              {/* Form */}
+              <View style={styles.formContainer}>
+                <View style={styles.pickerGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Car Make</Text>
+                  {loadingMakes ? (
+                    <ActivityIndicator color={colors.pink} style={styles.loader} />
+                  ) : (
+                    <Pressable
+                      style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}
+                      onPress={() => setShowMakePicker(true)}
+                    >
+                      <Text style={[styles.pickerBtnText, { color: selectedMake ? colors.textPrimary : colors.textMuted }]}>
+                        {selectedMake ? selectedMake.name : 'Select Make'}
+                      </Text>
+                      <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
+                    </Pressable>
+                  )}
+                </View>
+
+                <View style={styles.pickerGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Model</Text>
+                  <Pressable
+                    style={[
+                      styles.pickerBtn,
+                      { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
+                      !selectedMake && styles.pickerBtnDisabled
+                    ]}
+                    onPress={() => { if (selectedMake) setShowModelPicker(true); }}
+                  >
+                    <Text style={[styles.pickerBtnText, { color: selectedModel ? colors.textPrimary : colors.textMuted }]}>
+                      {selectedModel ? selectedModel.name : 'Select Model'}
+                    </Text>
+                    <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.pickerGroup}>
+                   <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Vehicle Color</Text>
+                   <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                      <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
+                      <TextInput 
+                        placeholder="e.g. Metallic Silver"
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                        value={color}
+                        onChangeText={setColor}
+                      />
+                   </View>
+                </View>
+
+                <View style={styles.rowInputs}>
+                  <View style={{ flex: 1, marginRight: Spacing.md }}>
+                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
+                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                        <TextInput 
+                          placeholder="YYYY"
+                          placeholderTextColor={colors.textMuted}
+                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                          value={year}
+                          onChangeText={setYear}
+                          keyboardType="numeric"
+                          maxLength={4}
+                        />
+                    </View>
                   </View>
-                </>
-              ) : (
-                <>
-                  <MaterialCommunityIcons name="plus-circle-outline" size={24} color={colors.purpleLight} />
-                  <Text style={styles.photoText}>Add Photo</Text>
-                </>
-              )}
-            </Pressable>
-          </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
+                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                        <TextInput 
+                          placeholder="e.g. My Ride"
+                          placeholderTextColor={colors.textMuted}
+                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                          value={nickname}
+                          onChangeText={setNickname}
+                        />
+                    </View>
+                  </View>
+                </View>
+              </View>
 
-          {/* Make Picker */}
-          <Text style={styles.label}>Make:</Text>
-          {loadingMakes ? (
-            <ActivityIndicator color={colors.pink} style={{ marginBottom: Spacing.md }} />
-          ) : (
-            <Pressable style={styles.pickerBtn} onPress={() => setShowMakePicker(true)}>
-              <Text style={[styles.pickerBtnText, selectedMake && styles.pickerBtnTextSelected]}>
-                {selectedMake ? selectedMake.name : 'Select Make'}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
-            </Pressable>
-          )}
+              <GradientButton
+                title={saving ? "Saving Vehicle..." : "Save Vehicle"}
+                onPress={handleSave}
+                loading={saving}
+                style={styles.saveBtn}
+                icon="check"
+              />
+            </BlurView>
+          </Animated.View>
 
-          {/* Model Picker */}
-          <Text style={styles.label}>Model:</Text>
-          <Pressable
-            style={[styles.pickerBtn, !selectedMake && styles.pickerBtnDisabled]}
-            onPress={() => { if (selectedMake) setShowModelPicker(true); }}
-          >
-            <Text style={[styles.pickerBtnText, selectedModel && styles.pickerBtnTextSelected]}>
-              {selectedModel ? selectedModel.name : 'Select Model'}
-            </Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
-          </Pressable>
-
-          {/* Color */}
-          <Text style={styles.label}>Color:</Text>
-          <FormInput icon="palette-outline" placeholder="Red" value={color} onChangeText={setColor} />
-
-          {/* Year & Nickname */}
-          <View style={styles.row}>
-            <View style={styles.halfCol}>
-              <Text style={styles.label}>Year:</Text>
-              <FormInput icon="calendar" placeholder="YYYY" value={year} onChangeText={setYear} keyboardType="numeric" />
-            </View>
-            <View style={styles.halfCol}>
-              <Text style={styles.label}>Nickname:</Text>
-              <FormInput icon="tag-outline" placeholder="Nickname" value={nickname} onChangeText={setNickname} />
-            </View>
-          </View>
-
-          {/* Save Button */}
-          <Pressable onPress={handleSave} disabled={saving} style={{ marginTop: Spacing.md }}>
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.saveBtn}
-            >
-              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveBtnText}>Save Vehicle</Text>}
-            </LinearGradient>
-          </Pressable>
-
-          <View style={{ height: androidTabOffset + 40 }} />
+          <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <PickerModal visible={showMakePicker} title="Select Make" items={makes.map((m) => ({ id: m.make_id, label: m.name }))} selectedId={selectedMake?.make_id} onSelect={handleSelectMake} onClose={() => setShowMakePicker(false)} />
-      <PickerModal visible={showModelPicker} title="Select Model" items={models.map((m) => ({ id: m.model_id, label: m.name }))} selectedId={selectedModel?.model_id} onSelect={handleSelectModel} onClose={() => setShowModelPicker(false)} />
+      <PickerModal 
+        visible={showMakePicker} 
+        title="Select Make" 
+        items={makes.map((m) => ({ id: m.make_id, label: m.name }))} 
+        selectedId={selectedMake?.make_id} 
+        onSelect={handleSelectMake} 
+        onClose={() => setShowMakePicker(false)} 
+      />
+      <PickerModal 
+        visible={showModelPicker} 
+        title="Select Model" 
+        items={models.map((m) => ({ id: m.model_id, label: m.name }))} 
+        selectedId={selectedModel?.model_id} 
+        onSelect={handleSelectModel} 
+        onClose={() => setShowModelPicker(false)} 
+      />
     </View>
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const styles = StyleSheet.create({
+  container: { flex: 1 },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 20 },
-
-  label: { color: colors.textPrimary, fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginBottom: Spacing.xs, marginTop: Spacing.sm },
-
-  // Photo
-  photoBoxWrapper: { alignItems: 'center', marginBottom: Spacing.md },
-  photoBox: {
-    width: 180, height: 130, borderRadius: BorderRadius.md,
-    borderWidth: 2, borderStyle: 'dashed', borderColor: colors.cardBorder,
-    justifyContent: 'center', alignItems: 'center',
+  orb: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    opacity: 0.12,
   },
-  photoPreview: {
-    width: 180, height: 130, borderRadius: BorderRadius.md,
-    overflow: 'hidden', position: 'relative',
-  },
-  photoImg: { width: '100%', height: '100%', borderRadius: BorderRadius.md },
-  photoOverlay: {
-    position: 'absolute', bottom: 6, right: 6,
-    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 14, padding: 4,
-  },
-  photoText: { color: colors.purpleLight, fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4 },
+  orb1: { top: -width * 0.2, right: -width * 0.1 },
+  orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
-  // Row
-  row: { flexDirection: 'row', gap: Spacing.md },
-  halfCol: { flex: 1 },
-
-  // Picker
-  pickerBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.backgroundSecondary, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: colors.border,
-    paddingHorizontal: Spacing.md, paddingVertical: 14, marginBottom: Spacing.xs,
+  scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 40 },
+  glassCard: { 
+    borderRadius: BorderRadius.xxl, 
+    borderWidth: 1, 
+    padding: Spacing.xl, 
+    overflow: 'hidden',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  pickerBtnDisabled: { opacity: 0.5 },
-  pickerBtnText: { color: colors.textMuted, fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  pickerBtnTextSelected: { color: colors.textPrimary },
-
-  // Save
-  saveBtn: { paddingVertical: 16, borderRadius: BorderRadius.lg, alignItems: 'center' },
-  saveBtnText: { color: colors.white, fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  section: { alignItems: 'center', marginBottom: Spacing.xl },
+  label: { fontSize: 11, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.md, opacity: 0.6 },
+  photoBox: { 
+    width: '100%', height: 160, borderRadius: BorderRadius.xl, 
+    borderWidth: 1.5, borderStyle: 'dashed', 
+    justifyContent: 'center', alignItems: 'center', 
+    backgroundColor: 'rgba(255,255,255,0.03)' 
+  },
+  photoPreview: { 
+    width: '100%', height: 160, borderRadius: BorderRadius.xl, 
+    overflow: 'hidden', position: 'relative', borderWidth: 1 
+  },
+  photoImg: { width: '100%', height: '100%' },
+  photoOverlay: { position: 'absolute', bottom: 12, right: 12, borderRadius: 20, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  iconCircle: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  photoText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, opacity: 0.6 },
+  
+  formContainer: { gap: Spacing.md },
+  inputLabel: { fontSize: 11, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4, opacity: 0.6 },
+  pickerGroup: { marginBottom: Spacing.xs },
+  pickerBtn: { 
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
+    borderRadius: BorderRadius.lg, borderWidth: 1, 
+    paddingHorizontal: Spacing.md, height: 54 
+  },
+  pickerBtnDisabled: { opacity: 0.3 },
+  pickerBtnText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
+  loader: { marginVertical: 10, alignSelf: 'flex-start' },
+  rowInputs: { flexDirection: 'row', alignItems: 'center' },
+  saveBtn: { marginTop: Spacing.xl },
 });
+
+type Make = { make_id: number; name: string };
+type Model = { model_id: number; name: string };

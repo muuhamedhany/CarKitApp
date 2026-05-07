@@ -6,11 +6,13 @@ import {
   ActivityIndicator, 
   ViewStyle, 
   Animated,
-  Platform 
+  Platform,
+  View 
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows, Animations } from '@/constants/theme';
 
 type GradientButtonProps = {
@@ -20,6 +22,8 @@ type GradientButtonProps = {
   disabled?: boolean;
   style?: ViewStyle;
   variant?: 'pink' | 'purple';
+  icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconSize?: number;
 };
 
 export default function GradientButton({
@@ -29,6 +33,8 @@ export default function GradientButton({
   disabled = false,
   style,
   variant = 'pink',
+  icon,
+  iconSize = 20,
 }: GradientButtonProps) {
   const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -75,7 +81,10 @@ export default function GradientButton({
           {loading ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.text}>{title}</Text>
+            <View style={styles.content}>
+              {icon && <MaterialCommunityIcons name={icon} size={iconSize} color="#FFFFFF" style={styles.icon} />}
+              <Text style={styles.text}>{title}</Text>
+            </View>
           )}
         </LinearGradient>
       </Pressable>
@@ -105,6 +114,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    marginRight: Spacing.sm,
   },
 });
 

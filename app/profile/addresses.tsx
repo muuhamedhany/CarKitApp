@@ -1,20 +1,35 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  Pressable, 
+  Platform, 
+  ScrollView, 
+  ActivityIndicator, 
+  Dimensions 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp, FadeInLeft, Layout } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
 import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
 import { addressService, AddressData } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
+const { width, height } = Dimensions.get('window');
+
 export default function AddressesScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
 
@@ -60,10 +75,12 @@ export default function AddressesScreen() {
 
   const handleSave = async () => {
     if (!title.trim() || !street.trim() || !city.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return showToast('error', 'Missing Fields', 'Please complete all fields.');
     }
 
     setSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const addressData: AddressData = {
         title,
@@ -76,6 +93,7 @@ export default function AddressesScreen() {
       };
       const res = await addressService.addAddress(addressData);
       if (res.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Address Saved', 'New address added successfully.');
         setIsAdding(false);
         setTitle(''); setStreet(''); setCity('');
@@ -93,9 +111,11 @@ export default function AddressesScreen() {
   };
 
   const handleDelete = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       const res = await addressService.deleteAddress(id);
       if (res.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Deleted', 'Address removed.');
         fetchAddresses();
       }
@@ -105,7 +125,15 @@ export default function AddressesScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
       <CenteredHeader
         title={isAdding ? 'Add Address' : 'Addresses'}
         titleColor={colors.textPrimary}
@@ -117,170 +145,200 @@ export default function AddressesScreen() {
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : isAdding ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {/* Pick from Map button */}
-          <Pressable
-            onPress={() => setShowMapPicker(true)}
-            style={[styles.mapPickerBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.pink }]}
-          >
-            <View style={styles.mapPickerInner}>
-              <View style={[styles.mapPickerIconWrap, { backgroundColor: colors.pink + '18' }]}>
-                <MaterialCommunityIcons name="map-marker-radius" size={24} color={colors.pink} />
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowMapPicker(true);
+                }}
+                style={styles.mapPickerBtn}
+              >
+                <View style={styles.mapPickerInner}>
+                  <View style={[styles.mapPickerIconWrap, { backgroundColor: colors.pink + '20' }]}>
+                    <MaterialCommunityIcons name="map-marker-radius" size={24} color={colors.pink} />
+                  </View>
+                  <View style={styles.mapPickerTextWrap}>
+                    <Text style={[styles.mapPickerTitle, { color: colors.textPrimary }]}>Pick from Map</Text>
+                    <Text style={[styles.mapPickerSubtitle, { color: colors.textMuted }]}>
+                      {latitude != null ? 'Location selected ✓  Tap to change' : 'Tap to open the map and pin your location'}
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+                </View>
+              </Pressable>
+
+              {latitude != null && longitude != null && (
+                <View style={[styles.coordsBadge, { backgroundColor: colors.pink + '15' }]}>
+                  <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.pink} />
+                  <Text style={[styles.coordsBadgeText, { color: colors.pink }]}>
+                    {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                  </Text>
+                </View>
+              )}
+            </BlurView>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Title (e.g. Home, Work)</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <MaterialCommunityIcons name="label-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="Ex. Home"
+                    placeholderTextColor={colors.textMuted}
+                    value={title}
+                    onChangeText={setTitle}
+                  />
+                </View>
               </View>
-              <View style={styles.mapPickerTextWrap}>
-                <Text style={[styles.mapPickerTitle, { color: colors.textPrimary }]}>Pick from Map</Text>
-                <Text style={[styles.mapPickerSubtitle, { color: colors.textMuted }]}>
-                  {latitude != null ? 'Location selected ✓  Tap to change' : 'Tap to open the map and pin your location'}
-                </Text>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Street Address</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="123 Main St, Apt 4B"
+                    placeholderTextColor={colors.textMuted}
+                    value={street}
+                    onChangeText={setStreet}
+                  />
+                </View>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
-            </View>
-          </Pressable>
 
-          {latitude != null && longitude != null && (
-            <View style={[styles.coordsBadge, { backgroundColor: colors.pink + '12' }]}>
-              <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.pink} />
-              <Text style={[styles.coordsBadgeText, { color: colors.pink }]}>
-                {latitude.toFixed(5)}, {longitude.toFixed(5)}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Title (e.g. Home, Work)</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-              <MaterialCommunityIcons name="label-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Ex. Home"
-                placeholderTextColor={colors.textMuted}
-                value={title}
-                onChangeText={setTitle}
-              />
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Street Address</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="123 Main St, Apt 4B"
-                placeholderTextColor={colors.textMuted}
-                value={street}
-                onChangeText={setStreet}
-              />
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>City</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Ex. Cairo"
-                placeholderTextColor={colors.textMuted}
-                value={city}
-                onChangeText={setCity}
-              />
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Building</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="Ex. 42"
-                  placeholderTextColor={colors.textMuted}
-                  value={building}
-                  onChangeText={setBuilding}
-                />
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>City</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="Ex. Cairo"
+                    placeholderTextColor={colors.textMuted}
+                    value={city}
+                    onChangeText={setCity}
+                  />
+                </View>
               </View>
-            </View>
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Apt / Floor</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="Ex. Apt 4, Floor 2"
-                  placeholderTextColor={colors.textMuted}
-                  value={apartmentFloor}
-                  onChangeText={setApartmentFloor}
-                />
+
+              <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={[styles.label, { color: colors.textPrimary }]}>Building</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <TextInput
+                      style={[styles.input, { color: colors.textPrimary }]}
+                      placeholder="Ex. 42"
+                      placeholderTextColor={colors.textMuted}
+                      value={building}
+                      onChangeText={setBuilding}
+                    />
+                  </View>
+                </View>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={[styles.label, { color: colors.textPrimary }]}>Apt / Floor</Text>
+                  <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <TextInput
+                      style={[styles.input, { color: colors.textPrimary }]}
+                      placeholder="Ex. Apt 4, Floor 2"
+                      placeholderTextColor={colors.textMuted}
+                      value={apartmentFloor}
+                      onChangeText={setApartmentFloor}
+                    />
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
 
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Delivery Notes (Optional)</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder, height: 80, alignItems: 'flex-start', paddingTop: 10 }]}>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, textAlignVertical: 'top' }]}
-                placeholder="Ex. Gate code, ring bell twice..."
-                placeholderTextColor={colors.textMuted}
-                multiline
-                numberOfLines={3}
-                value={notes}
-                onChangeText={setNotes}
-              />
-            </View>
-          </View>
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Delivery Notes (Optional)</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', height: 80, alignItems: 'flex-start', paddingTop: 10 }]}>
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary, textAlignVertical: 'top' }]}
+                    placeholder="Ex. Gate code, ring bell twice..."
+                    placeholderTextColor={colors.textMuted}
+                    multiline
+                    numberOfLines={3}
+                    value={notes}
+                    onChangeText={setNotes}
+                  />
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
 
-          <Pressable onPress={handleSave} disabled={saving} style={{ marginTop: Spacing.xl }}>
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={[styles.saveBtn, saving && { opacity: 0.7 }]}
-            >
-              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveBtnText}>Save Address</Text>}
-            </LinearGradient>
-          </Pressable>
+          <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <GradientButton 
+              title="Save Address" 
+              onPress={handleSave} 
+              loading={saving}
+              style={{ marginTop: Spacing.xl }}
+              icon="content-save-outline"
+            />
+            <OutlinedButton 
+              title="Cancel" 
+              onPress={() => setIsAdding(false)} 
+              style={{ marginTop: Spacing.md }}
+              textColor={colors.textMuted}
+            />
+          </Animated.View>
         </ScrollView>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {addresses.length === 0 ? (
-            <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="map-marker-off" size={64} color={colors.textMuted} />
+            <Animated.View entering={FadeInDown} style={styles.emptyState}>
+              <View style={[styles.emptyIconWrap, { backgroundColor: colors.pink + '10' }]}>
+                <MaterialCommunityIcons name="map-marker-off" size={64} color={colors.pink} />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No addresses yet</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Add a shipping address to make checkout faster.</Text>
-            </View>
+            </Animated.View>
           ) : (
-            addresses.map(addr => (
-              <View key={addr.address_id || addr.id} style={[styles.addressCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                <View style={styles.cardInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
-                    <MaterialCommunityIcons name="map-marker" size={20} color={colors.pink} />
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{addr.title || 'Address'}</Text>
-                  </View>
-                  <Text style={[styles.cardAddress, { color: colors.textSecondary }]}>
-                    {addr.building ? `Bldg ${addr.building}, ` : ''}
-                    {addr.street}, {addr.city}
-                  </Text>
-                  {addr.apartment_floor && (
-                    <Text style={[styles.cardSubText, { color: colors.textMuted }]}>
-                      Apartment/Floor: {addr.apartment_floor}
+            addresses.map((addr, index) => (
+              <Animated.View 
+                key={addr.address_id || addr.id} 
+                entering={FadeInLeft.delay(index * 100).springify()}
+                layout={Layout.springify()}
+              >
+                <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.addressCard}>
+                  <View style={styles.cardInfo}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+                      <MaterialCommunityIcons name="map-marker" size={20} color={colors.pink} />
+                      <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{addr.title || 'Address'}</Text>
+                    </View>
+                    <Text style={[styles.cardAddress, { color: colors.textSecondary }]}>
+                      {addr.building ? `Bldg ${addr.building}, ` : ''}
+                      {addr.street}, {addr.city}
                     </Text>
-                  )}
-                </View>
-                <Pressable onPress={() => handleDelete(addr.address_id || addr.id)} style={styles.deleteBtn}>
-                  <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.error} />
-                </Pressable>
-              </View>
+                    {addr.apartment_floor && (
+                      <Text style={[styles.cardSubText, { color: colors.textMuted }]}>
+                        Apartment/Floor: {addr.apartment_floor}
+                      </Text>
+                    )}
+                  </View>
+                  <Pressable 
+                    onPress={() => handleDelete(addr.address_id || addr.id)} 
+                    style={styles.deleteBtn}
+                  >
+                    <View style={[styles.deleteIconWrap, { backgroundColor: colors.error + '15' }]}>
+                      <MaterialCommunityIcons name="trash-can-outline" size={20} color={colors.error} />
+                    </View>
+                  </Pressable>
+                </BlurView>
+              </Animated.View>
             ))
           )}
 
-          <Pressable onPress={() => setIsAdding(true)} style={{ marginTop: Spacing.xl }}>
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.saveBtn}
-            >
-              <MaterialCommunityIcons name="plus" size={20} color={colors.white} />
-              <Text style={styles.saveBtnText}>Add New Address</Text>
-            </LinearGradient>
-          </Pressable>
+          <Animated.View entering={FadeInDown.delay(addresses.length * 100).springify()}>
+            <GradientButton 
+              title="Add New Address" 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsAdding(true);
+              }}
+              style={{ marginTop: Spacing.xl }}
+              icon="plus"
+            />
+          </Animated.View>
         </ScrollView>
       )}
 
@@ -297,46 +355,57 @@ export default function AddressesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.lg, paddingBottom: 40 },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 100 },
+  
+  orb: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    opacity: 0.12,
+  },
+  orb1: { top: -width * 0.2, right: -width * 0.1 },
+  orb2: { bottom: height * 0.2, left: -width * 0.3 },
+
+  glassCard: {
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+  },
 
   formGroup: { marginBottom: Spacing.lg },
-  label: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginBottom: Spacing.sm },
+  label: { fontFamily: Fonts.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm, opacity: 0.6 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md, height: 50,
+    borderWidth: 1, borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md, height: 54,
   },
   inputIcon: { marginRight: Spacing.sm },
-  input: { flex: 1, fontFamily: Fonts.regular, fontSize: FontSizes.md },
-
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center', gap: Spacing.xs,
-    paddingVertical: 16, borderRadius: BorderRadius.lg,
-  },
-  saveBtnText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  input: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.md },
 
   addressCard: {
     flexDirection: 'row', alignItems: 'center',
-    padding: Spacing.lg, borderWidth: 1, borderRadius: BorderRadius.lg,
+    padding: Spacing.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: BorderRadius.xl,
     marginBottom: Spacing.md,
+    overflow: 'hidden',
   },
   cardInfo: { flex: 1 },
-  cardTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-  cardAddress: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4 },
-  cardSubText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs, marginTop: 2 },
+  cardTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5 },
+  cardAddress: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4, opacity: 0.8 },
+  cardSubText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.6 },
   deleteBtn: { padding: Spacing.xs },
+  deleteIconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
 
   emptyState: { alignItems: 'center', marginTop: 80 },
-  emptyTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.lg, marginTop: Spacing.md },
-  emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center' },
+  emptyIconWrap: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.lg },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginTop: Spacing.md },
+  emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 8, textAlign: 'center', opacity: 0.6, maxWidth: 260 },
 
   mapPickerBtn: {
-    borderWidth: 1.5,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    borderStyle: 'dashed',
+    padding: Spacing.sm,
   },
   mapPickerInner: {
     flexDirection: 'row',
@@ -344,9 +413,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   mapPickerIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -354,26 +423,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mapPickerTitle: {
-    fontFamily: Fonts.semiBold,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
+    letterSpacing: 0.5,
   },
   mapPickerSubtitle: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    marginTop: 2,
+    fontFamily: Fonts.medium,
+    fontSize: 11,
+    marginTop: 4,
+    opacity: 0.6,
   },
   coordsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.md,
     alignSelf: 'flex-start',
   },
   coordsBadgeText: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.bold,
+    fontSize: 10,
+    letterSpacing: 0.5,
   },
 });

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image, ScrollView, RefreshControl, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image, ScrollView, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,15 +8,19 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { apiFetch } from '@/services/api/client';
 import { Product } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { FormInput } from '@/components';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 type SortMode = 'latest' | 'price-desc' | 'stock-asc';
 
 export default function VendorProductsScreen() {
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -109,80 +113,90 @@ export default function VendorProductsScreen() {
     return { label: 'Active', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
   };
 
-  const renderProduct = ({ item }: { item: Product }) => {
-    const scaleAnim = new Animated.Value(1);
-
-    const onPressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start();
-    const onPressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-
+  const renderProduct = ({ item, index }: { item: Product, index: number }) => {
     return (
-      <Pressable
-        onPress={() => router.push(`/vendor-product/${item.product_id}`)}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        style={[styles.productPressable, styles.productListItem]}
-      >
-        <Animated.View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border, transform: [{ scale: scaleAnim }] }]}>
-          <Image
-            source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
-            style={styles.productImage}
-          />
-          <View style={styles.productInfo}>
-            <View style={styles.productHeaderRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={[styles.productCategory, { color: colors.textMuted }]} numberOfLines={1}>
-                  {item.category_name || 'Uncategorized'}
-                </Text>
+      <Animated.View entering={FadeInUp.delay(index * 50).duration(600)}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/vendor-product/${item.product_id}`);
+          }}
+          style={({ pressed }) => [
+            styles.productPressable,
+            styles.productListItem,
+            { transform: [{ scale: pressed ? 0.98 : 1 }] }
+          ]}
+        >
+          <BlurView 
+            intensity={isDark ? 20 : 40} 
+            tint={isDark ? 'dark' : 'light'} 
+            style={[styles.productCard, { borderColor: colors.cardBorder }]}
+          >
+            <Image
+              source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
+              style={styles.productImage}
+            />
+            <View style={styles.productInfo}>
+              <View style={styles.productHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.productCategory, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {item.category_name || 'Uncategorized'}
+                  </Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
+                  <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
+                    {getStockBadge(item).label}
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
-                <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
-                  {getStockBadge(item).label}
-                </Text>
-              </View>
+              <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
+              <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
             </View>
-            <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
-            <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
-          </View>
-        </Animated.View>
-      </Pressable>
+          </BlurView>
+        </Pressable>
+      </Animated.View>
     );
   };
 
   const hasLowStock = normalizedProducts.some((product) => Number(product.stock ?? 0) <= 5);
 
   const renderHeader = () => (
-    <>
-      <View style={styles.header}>
+    <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+      <View style={styles.headerTop}>
         <View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Inventory</Text>
-        </View>
-
-        <View style={styles.statsRow}>
-          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
-            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Total Items</Text>
-          </View>
-          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
-            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Low Stock</Text>
-          </View>
-          <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
-            <Text style={[styles.statsLabel, { color: colors.textMuted }]}>Out</Text>
-          </View>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your product catalog</Text>
         </View>
 
         <Pressable
-          onPress={() => router.push(`/add-product`)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push(`/add-product`);
+          }}
           hitSlop={8}
           style={[styles.headerAction, { backgroundColor: colors.pink }]}
         >
-          <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
-          <Text style={[styles.headerActionText, { color: colors.white }]}>Add Product</Text>
+          <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
+          <Text style={[styles.headerActionText, { color: colors.white }]}>Add</Text>
         </Pressable>
+      </View>
+
+      <View style={styles.statsRow}>
+        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
+          <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total Items</Text>
+        </BlurView>
+        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
+          <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Low Stock</Text>
+        </BlurView>
+        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
+          <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Out</Text>
+        </BlurView>
       </View>
 
       <View style={styles.searchWrap}>
@@ -205,10 +219,13 @@ export default function VendorProductsScreen() {
           return (
             <Pressable
               key={filter}
-              onPress={() => setStockFilter(filter)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setStockFilter(filter);
+              }}
               style={[
                 styles.filterChip,
-                { backgroundColor: isActive ? colors.pink : colors.backgroundSecondary, borderColor: isActive ? colors.pink : colors.cardBorder },
+                { backgroundColor: isActive ? colors.pink : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'), borderColor: isActive ? colors.pink : colors.cardBorder },
               ]}
             >
               <Text style={[styles.filterText, { color: isActive ? colors.white : colors.textPrimary }]}>
@@ -234,10 +251,13 @@ export default function VendorProductsScreen() {
           return (
             <Pressable
               key={option.key}
-              onPress={() => setSortMode(option.key)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSortMode(option.key);
+              }}
               style={[
                 styles.sortChip,
-                { backgroundColor: isActive ? colors.backgroundSecondary : colors.card, borderColor: isActive ? colors.pink : colors.border },
+                { backgroundColor: isActive ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') : 'transparent', borderColor: isActive ? colors.pink : colors.cardBorder },
               ]}
             >
               <MaterialCommunityIcons name="sort" size={14} color={isActive ? colors.pink : colors.textMuted} />
@@ -248,35 +268,45 @@ export default function VendorProductsScreen() {
       </ScrollView>
 
       {hasLowStock && (
-        <View style={[styles.alertBox, { backgroundColor: 'rgba(249,115,22,0.12)', borderColor: 'rgba(249,115,22,0.6)' }]}>
+        <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.alertBox, { borderColor: 'rgba(249,115,22,0.5)' }]}>
           <MaterialCommunityIcons name="alert-outline" size={22} color="#F97316" />
           <View style={{ flex: 1 }}>
             <Text style={styles.alertTitle}>Low Stock Alert</Text>
             <Text style={styles.alertText}>Some products are reaching critical stock levels. Restock soon.</Text>
           </View>
-        </View>
+        </BlurView>
       )}
-    </>
+    </Animated.View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Decorative Orbs */}
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
       <FlatList
         data={loading ? [] : normalizedProducts}
         keyExtractor={(item) => item.product_id?.toString() || Math.random().toString()}
         renderItem={renderProduct}
         ListHeaderComponent={renderHeader}
         ItemSeparatorComponent={() => <View style={styles.productSeparator} />}
-        contentContainerStyle={styles.screenContent}
+        contentContainerStyle={[styles.screenContent, { paddingTop: insets.top + Spacing.md }]}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
         ListEmptyComponent={
           loading ? (
             <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
           ) : (
-            <View style={[styles.emptyState]}>
+            <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
               <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products found.</Text>
-            </View>
+            </BlurView>
           )
         }
       />
@@ -288,32 +318,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  orb: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.5,
+  },
   header: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
+    gap: Spacing.md,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xxl,
+    fontFamily: Fonts.extraBold,
+    fontSize: 32,
+    letterSpacing: -1,
   },
   subtitle: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
-    marginTop: Spacing.sm,
+    marginTop: 4,
+    opacity: 0.8,
   },
   headerAction: {
-    paddingHorizontal: Spacing.md,
-    minHeight: 42,
+    paddingHorizontal: 20,
+    height: 44,
     borderRadius: BorderRadius.full,
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.md,
   },
   headerActionText: {
-    fontFamily: Fonts.semiBold,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
   },
   searchWrap: {
@@ -326,9 +370,11 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     flex: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     padding: Spacing.md,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   statsValue: {
     fontFamily: Fonts.bold,
@@ -352,17 +398,18 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
   },
   filterChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
-    minHeight: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    minHeight: 44,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.sm,
   },
   filterText: {
-    fontFamily: Fonts.semiBold,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
   },
   sortRow: {
@@ -373,9 +420,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sortChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
-    minHeight: 40,
+    paddingHorizontal: 16,
+    height: 38,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
@@ -383,20 +429,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    ...Shadows.sm,
   },
   sortText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xs,
   },
   alertBox: {
     marginHorizontal: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     flexDirection: 'row',
     gap: Spacing.sm,
     alignItems: 'flex-start',
+    overflow: 'hidden',
   },
   alertTitle: {
     fontFamily: Fonts.bold,
@@ -427,8 +475,10 @@ const styles = StyleSheet.create({
   productCard: {
     flexDirection: 'row',
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   productImage: {
     width: 80,
@@ -493,9 +543,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   emptyText: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
     marginTop: Spacing.md,
   },

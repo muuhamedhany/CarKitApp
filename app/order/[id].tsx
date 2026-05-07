@@ -7,11 +7,16 @@ import {
     StyleSheet,
     Text,
     View,
+    Dimensions,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GetDirectionsButton } from '@/components';
+import { CenteredHeader, GetDirectionsButton, GradientButton, OutlinedButton } from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
@@ -20,6 +25,7 @@ import { vendorService } from '@/services/api/vendor.service';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { OrderDetail } from '@/types/api.types';
 
+const { width, height } = Dimensions.get('window');
 const SHIPPING_FEE = 50;
 
 type OrderRole = 'customer' | 'vendor';
@@ -47,14 +53,14 @@ const getStatusPalette = (status: string, colors: any) => {
     if (value === 'shipped') return { bg: 'rgba(249,115,22,0.2)', fg: '#F97316' };
     if (value === 'processing') return { bg: 'rgba(99,102,241,0.2)', fg: '#818CF8' };
     if (value === 'cancelled') return { bg: 'rgba(239,83,80,0.2)', fg: colors.error };
-    return { bg: colors.pinkGlow, fg: colors.pink };
+    return { bg: colors.pink + '20', fg: colors.pink };
 };
 
 const getVendorPrimaryAction = (status: string) => {
     const normalized = normalizeStatus(status);
-    if (normalized === 'pending') return { label: 'Mark as Processing', nextStatus: 'processing' };
-    if (normalized === 'processing') return { label: 'Mark as Shipped', nextStatus: 'shipped' };
-    if (normalized === 'shipped') return { label: 'Mark as Delivered', nextStatus: 'delivered' };
+    if (normalized === 'pending') return { label: 'Mark as Processing', nextStatus: 'processing', icon: 'progress-clock' };
+    if (normalized === 'processing') return { label: 'Mark as Shipped', nextStatus: 'shipped', icon: 'truck-delivery-outline' };
+    if (normalized === 'shipped') return { label: 'Mark as Delivered', nextStatus: 'delivered', icon: 'check-circle-outline' };
     return null;
 };
 
@@ -70,7 +76,7 @@ const canCustomerCancel = (status: string) => {
 
 export default function OrderDetailScreen() {
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { user } = useAuth();
     const params = useLocalSearchParams<{ id?: string; role?: string }>();
@@ -115,6 +121,7 @@ export default function OrderDetailScreen() {
 
     const handleVendorStatusUpdate = async (status: string) => {
         if (!order) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
             setUpdatingStatus(true);
@@ -123,6 +130,7 @@ export default function OrderDetailScreen() {
                 showToast('error', 'Status Update', response.message || 'Could not update order status.');
                 return;
             }
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             showToast('success', 'Status Updated', `Order status changed to ${status}.`);
             await loadOrder();
         } catch {
@@ -134,6 +142,7 @@ export default function OrderDetailScreen() {
 
     const handleCustomerCancelOrder = () => {
         if (!order) return;
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
         Alert.alert(
             'Cancel Order',
@@ -151,6 +160,7 @@ export default function OrderDetailScreen() {
                                 showToast('error', 'Cancel Failed', response.message || 'Could not cancel order.');
                                 return;
                             }
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                             showToast('success', 'Order Cancelled', 'Your order has been cancelled successfully.');
                             await loadOrder();
                         } catch {
@@ -168,10 +178,10 @@ export default function OrderDetailScreen() {
     const primaryAction = getVendorPrimaryAction(order?.status || '');
 
     const timelineSteps = [
-        { key: 'pending', label: 'Order Placed' },
-        { key: 'processing', label: 'Processing' },
-        { key: 'shipped', label: 'Shipped' },
-        { key: 'delivered', label: 'Delivered' },
+        { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
+        { key: 'processing', label: 'Processing', icon: 'cog-outline' },
+        { key: 'shipped', label: 'Shipped', icon: 'truck-fast-outline' },
+        { key: 'delivered', label: 'Delivered', icon: 'check-all' },
     ];
 
     const statusPosition: Record<string, number> = {
@@ -183,465 +193,358 @@ export default function OrderDetailScreen() {
 
     const currentPosition = statusPosition[normalizeStatus(order?.status)] ?? 0;
 
-    if (loading) {
-        return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.pink} />
-            </View>
-        );
-    }
-
-    if (!order) {
-        return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Order not found.</Text>
-            </View>
-        );
-    }
-
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.container}>
+            <LinearGradient
+                colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+                style={StyleSheet.absoluteFill}
+            />
+            
+            <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
+            <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
             <CenteredHeader title="Order Details" titleColor={colors.textPrimary} />
 
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <View style={styles.headerRow}>
-                        <View>
-                            <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
-                            <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
-                        </View>
-                        <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
-                            <Text style={[styles.statusText, { color: statusPalette.fg }]}>{order.status}</Text>
-                        </View>
-                    </View>
-
-                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>Preferred arrival: {formatDate(order.preferred_delivery_date)}</Text>
-                    <Text style={[styles.deliveryText, { color: colors.textMuted }]}>Estimated: {formatDate(order.estimated_delivery_start)} - {formatDate(order.estimated_delivery_end)}</Text>
+            {loading ? (
+                <View style={styles.center}>
+                    <ActivityIndicator size="large" color={colors.pink} />
                 </View>
-
-                {role === 'customer' ? (
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tracking</Text>
-                        {timelineSteps.map((step, index) => {
-                            const reached = currentPosition >= index;
-                            const active = currentPosition === index;
-                            return (
-                                <View key={step.key} style={styles.timelineRow}>
-                                    <View style={styles.timelineRailCol}>
-                                        <View
-                                            style={[
-                                                styles.timelineDot,
-                                                {
-                                                    backgroundColor: reached ? colors.pink : colors.border,
-                                                    borderColor: reached ? colors.pink : colors.border,
-                                                },
-                                            ]}
-                                        >
-                                            {reached ? <MaterialCommunityIcons name="check" size={13} color={colors.white} /> : null}
-                                        </View>
-                                        {index < timelineSteps.length - 1 ? (
-                                            <View style={[styles.timelineLine, { backgroundColor: reached ? colors.pink : colors.border }]} />
-                                        ) : null}
-                                    </View>
-                                    <View style={styles.timelineLabelCol}>
-                                        <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : colors.textSecondary }]}>{step.label}</Text>
-                                        <Text style={[styles.timelineDate, { color: colors.textMuted }]}>{reached ? formatDate(order.order_date) : 'Pending'}</Text>
-                                    </View>
+            ) : !order ? (
+                <View style={styles.center}>
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Order not found.</Text>
+                </View>
+            ) : (
+                <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <Animated.View entering={FadeInDown.delay(100).springify()}>
+                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <View style={styles.headerRow}>
+                                <View>
+                                    <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
+                                    <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
                                 </View>
-                            );
-                        })}
-                    </View>
-                ) : (
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer</Text>
-                        <View style={styles.vendorCustomerRow}>
-                            <View style={styles.vendorCustomerText}>
-                                <Text style={[styles.customerName, { color: colors.textPrimary }]}>Customer Order</Text>
-                                <Text style={[styles.customerHint, { color: colors.textSecondary }]}>Manage status and fulfillment from this view.</Text>
-                            </View>
-                            <View style={styles.iconGroup}>
-                                <View style={[styles.iconBubble, { backgroundColor: colors.purpleGlow }]}>
-                                    <MaterialCommunityIcons name="phone-outline" size={18} color={colors.textSecondary} />
-                                </View>
-                                <View style={[styles.iconBubble, { backgroundColor: colors.purpleGlow }]}>
-                                    <MaterialCommunityIcons name="message-text-outline" size={18} color={colors.textSecondary} />
+                                <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
+                                    <Text style={[styles.statusText, { color: statusPalette.fg }]}>{order.status}</Text>
                                 </View>
                             </View>
-                        </View>
-                    </View>
-                )}
 
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
-                    <View style={{ gap: 2 }}>
-                        <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Shipping'}</Text>
-                        <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                            {order.shipping_street || 'No street address'}{order.shipping_street && order.shipping_city ? ', ' : ''}{order.shipping_city || ''}
-                        </Text>
-                        {(order.shipping_building || order.shipping_apartment_floor) && (
-                            <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
-                                {order.shipping_building ? `Building: ${order.shipping_building}` : ''}
-                                {order.shipping_building && order.shipping_apartment_floor ? ' | ' : ''}
-                                {order.shipping_apartment_floor ? `Apt/Floor: ${order.shipping_apartment_floor}` : ''}
+                            <View style={[styles.deliveryInfo, { borderTopColor: colors.cardBorder }]}>
+                                <View style={styles.infoRow}>
+                                    <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>Preferred arrival: {formatDate(order.preferred_delivery_date)}</Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <MaterialCommunityIcons name="calendar-range" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.deliveryText, { color: colors.textMuted }]}>Estimated: {formatDate(order.estimated_delivery_start)} - {formatDate(order.estimated_delivery_end)}</Text>
+                                </View>
+                            </View>
+                        </BlurView>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(200).springify()}>
+                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                                {role === 'customer' ? 'Tracking' : 'Fulfillment Status'}
                             </Text>
-                        )}
-                        {order.shipping_notes && (
-                            <View style={[styles.notesContainer, { borderTopColor: colors.border }]}>
-                                <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Notes:</Text>
-                                <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.shipping_notes}</Text>
+                            <View style={styles.timelineContainer}>
+                                {timelineSteps.map((step, index) => {
+                                    const reached = currentPosition >= index;
+                                    const active = currentPosition === index;
+                                    return (
+                                        <View key={step.key} style={styles.timelineRow}>
+                                            <View style={styles.timelineRailCol}>
+                                                <View style={[
+                                                    styles.timelineDot,
+                                                    {
+                                                        backgroundColor: reached ? colors.pink : colors.cardBorder,
+                                                        borderColor: reached ? colors.pink : colors.cardBorder,
+                                                    },
+                                                ]}>
+                                                    <MaterialCommunityIcons 
+                                                        name={step.icon as any} 
+                                                        size={12} 
+                                                        color={reached ? colors.white : colors.textMuted} 
+                                                    />
+                                                </View>
+                                                {index < timelineSteps.length - 1 ? (
+                                                    <View style={[
+                                                        styles.timelineLine, 
+                                                        { backgroundColor: reached ? colors.pink : colors.cardBorder, opacity: reached ? 1 : 0.3 }
+                                                    ]} />
+                                                ) : null}
+                                            </View>
+                                            <View style={styles.timelineLabelCol}>
+                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{step.label}</Text>
+                                                <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
+                                                    {reached ? (index === 0 ? formatDate(order.order_date) : 'Completed') : 'Pending'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
                             </View>
-                        )}
-                        {order.shipping_latitude && order.shipping_longitude ? (
-                            <GetDirectionsButton
-                                latitude={order.shipping_latitude}
-                                longitude={order.shipping_longitude}
-                                label={order.shipping_street || undefined}
+                        </BlurView>
+                    </Animated.View>
+
+                    {role === 'vendor' && (
+                        <Animated.View entering={FadeInDown.delay(300).springify()}>
+                            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Details</Text>
+                                <View style={styles.vendorCustomerRow}>
+                                    <View style={styles.vendorCustomerText}>
+                                        <Text style={[styles.customerName, { color: colors.textPrimary }]}>{order.shipping_title || 'Customer Name'}</Text>
+                                        <Text style={[styles.customerHint, { color: colors.textSecondary }]}>Standard fulfillment requested.</Text>
+                                    </View>
+                                    <View style={styles.iconGroup}>
+                                        <Pressable style={[styles.iconBubble, { backgroundColor: colors.pink + '15' }]} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+                                            <MaterialCommunityIcons name="phone-outline" size={20} color={colors.pink} />
+                                        </Pressable>
+                                        <Pressable style={[styles.iconBubble, { backgroundColor: colors.purple + '15' }]} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+                                            <MaterialCommunityIcons name="message-text-outline" size={20} color={colors.purple} />
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </BlurView>
+                        </Animated.View>
+                    )}
+
+                    <Animated.View entering={FadeInDown.delay(400).springify()}>
+                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <View style={styles.sectionHeader}>
+                                <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Shipping Address</Text>
+                            </View>
+                            <View style={{ gap: Spacing.xs, marginTop: Spacing.sm }}>
+                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Default Address'}</Text>
+                                <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                                    {order.shipping_street || 'No street address'}{order.shipping_street && order.shipping_city ? ', ' : ''}{order.shipping_city || ''}
+                                </Text>
+                                {(order.shipping_building || order.shipping_apartment_floor) && (
+                                    <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
+                                        {order.shipping_building ? `Building: ${order.shipping_building}` : ''}
+                                        {order.shipping_building && order.shipping_apartment_floor ? ' | ' : ''}
+                                        {order.shipping_apartment_floor ? `Apt/Floor: ${order.shipping_apartment_floor}` : ''}
+                                    </Text>
+                                )}
+                                {order.shipping_notes && (
+                                    <View style={[styles.notesContainer, { borderTopColor: colors.cardBorder }]}>
+                                        <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Delivery Instructions:</Text>
+                                        <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.shipping_notes}</Text>
+                                    </View>
+                                )}
+                                {order.shipping_latitude && order.shipping_longitude ? (
+                                    <View style={{ marginTop: Spacing.md }}>
+                                        <GetDirectionsButton
+                                            latitude={order.shipping_latitude}
+                                            longitude={order.shipping_longitude}
+                                            label={order.shipping_street || undefined}
+                                        />
+                                    </View>
+                                ) : null}
+                            </View>
+                        </BlurView>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(500).springify()}>
+                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <View style={styles.sectionHeader}>
+                                <MaterialCommunityIcons name="basket-outline" size={20} color={colors.pink} />
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Order Items ({order.items.length})</Text>
+                            </View>
+
+                            <View style={{ marginTop: Spacing.md }}>
+                                {order.items.map((item, idx) => (
+                                    <View key={item.order_item_id} style={[
+                                        styles.itemRow, 
+                                        idx < order.items.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.cardBorder, paddingBottom: Spacing.md }
+                                    ]}>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.product_name}</Text>
+                                            <View style={styles.qtyContainer}>
+                                                <Text style={[styles.itemQty, { color: colors.textSecondary }]}>Qty: {item.quantity}</Text>
+                                                <View style={styles.dot} />
+                                                <Text style={[styles.itemPriceEach, { color: colors.textMuted }]}>{formatMoney(item.price_each)} / unit</Text>
+                                            </View>
+                                        </View>
+                                        <Text style={[styles.itemPrice, { color: colors.pink }]}>{formatMoney(Number(item.price_each) * item.quantity)}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            <View style={[styles.summaryBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)' }]}>
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(subtotal)}</Text>
+                                </View>
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(SHIPPING_FEE)}</Text>
+                                </View>
+                                <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Grand Total</Text>
+                                    <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(totalWithShipping)}</Text>
+                                </View>
+                            </View>
+                        </BlurView>
+                    </Animated.View>
+
+                    <View style={styles.spacer} />
+                </ScrollView>
+            )}
+
+            <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.footerContainer} {...{} as any}>
+                {order && (role === 'vendor' ? (
+                    <View style={styles.actionsContainer}>
+                        {primaryAction ? (
+                            <GradientButton
+                                title={primaryAction.label}
+                                onPress={() => handleVendorStatusUpdate(primaryAction.nextStatus)}
+                                loading={updatingStatus}
+                                style={{ flex: 1 }}
+                                icon={primaryAction.icon as any}
+                            />
+                        ) : null}
+                        {canVendorCancel(order.status) ? (
+                            <OutlinedButton
+                                title="Cancel Order"
+                                onPress={() => handleVendorStatusUpdate('cancelled')}
+                                disabled={updatingStatus}
+                                textColor={colors.error}
+                                borderColor={colors.error}
+                                style={{ flex: 1 }}
                             />
                         ) : null}
                     </View>
-                </View>
-
-                <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Order Items ({order.items.length})</Text>
-
-                    {order.items.map((item) => (
-                        <View key={item.order_item_id} style={styles.itemRow}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.product_name}</Text>
-                                <Text style={[styles.itemQty, { color: colors.textSecondary }]}>Quantity: {item.quantity}</Text>
-                            </View>
-                            <Text style={[styles.itemPrice, { color: colors.pink }]}>{formatMoney(item.price_each)}</Text>
-                        </View>
-                    ))}
-
-                    <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-
-                    <View style={styles.summaryRow}>
-                        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-                        <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(subtotal)}</Text>
+                ) : (
+                    <View style={styles.actionsContainer}>
+                        <GradientButton
+                            title="Contact Support"
+                            onPress={() => router.push('/support' as any)}
+                            style={{ flex: 1 }}
+                            icon="chat-question-outline"
+                        />
+                        {canCustomerCancel(order.status) ? (
+                            <OutlinedButton
+                                title="Cancel Order"
+                                onPress={handleCustomerCancelOrder}
+                                disabled={updatingStatus}
+                                textColor={colors.error}
+                                borderColor={colors.error}
+                                style={{ flex: 1 }}
+                            />
+                        ) : null}
+                        {normalizeStatus(order.status) === 'delivered' ? (
+                            <GradientButton 
+                                title="Rate Products" 
+                                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                                style={{ flex: 1 }}
+                                icon="star-outline"
+                            />
+                        ) : null}
                     </View>
-                    <View style={styles.summaryRow}>
-                        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
-                        <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(SHIPPING_FEE)}</Text>
-                    </View>
-
-                    <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-
-                    <View style={styles.summaryRow}>
-                        <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total</Text>
-                        <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(totalWithShipping)}</Text>
-                    </View>
-                </View>
-            </ScrollView>
-
-            {role === 'vendor' ? (
-                <View style={[styles.footer, { backgroundColor: colors.background }]}>
-                    {primaryAction ? (
-                        <Pressable
-                            style={[styles.primaryButton, { backgroundColor: colors.pink, opacity: updatingStatus ? 0.7 : 1 }]}
-                            onPress={() => handleVendorStatusUpdate(primaryAction.nextStatus)}
-                            disabled={updatingStatus}
-                        >
-                            <Text style={styles.primaryButtonText}>{primaryAction.label}</Text>
-                        </Pressable>
-                    ) : null}
-
-                    {canVendorCancel(order.status) ? (
-                        <Pressable
-                            style={[styles.secondaryButton, { borderColor: colors.error }]}
-                            onPress={() => handleVendorStatusUpdate('cancelled')}
-                            disabled={updatingStatus}
-                        >
-                            <Text style={[styles.secondaryButtonText, { color: colors.error }]}>Cancel Order</Text>
-                        </Pressable>
-                    ) : null}
-                </View>
-            ) : (
-                <View style={[styles.footerRow, { backgroundColor: colors.background }]}>
-                    <Pressable
-                        style={[
-                            styles.dualButton,
-                            { backgroundColor: colors.gradientStart, opacity: updatingStatus ? 0.65 : 1 },
-                        ]}
-                        onPress={() => router.push('/support' as any)}
-                        disabled={updatingStatus}
-                    >
-                        <Text style={styles.dualButtonText}>Support</Text>
-                    </Pressable>
-                    {canCustomerCancel(order.status) ? (
-                        <Pressable
-                            style={[
-                                styles.dualButton,
-                                { backgroundColor: colors.error, opacity: updatingStatus ? 0.65 : 1 },
-                            ]}
-                            onPress={handleCustomerCancelOrder}
-                            disabled={updatingStatus}
-                        >
-                            <Text style={styles.dualButtonText}>Cancel Order</Text>
-                        </Pressable>
-                    ) : null}
-                    {normalizeStatus(order.status) === 'delivered' ? (
-                        <Pressable style={[styles.dualButton, { backgroundColor: colors.gradientEnd }]}>
-                            <Text style={styles.dualButtonText}>Review</Text>
-                        </Pressable>
-                    ) : null}
-                </View>
-            )}
+                ))}
+            </BlurView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
+    container: { flex: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
+    content: { padding: Spacing.md, paddingBottom: 180 },
+    spacer: { height: 40 },
+    
+    orb: {
+        position: 'absolute',
+        width: width * 0.7,
+        height: width * 0.7,
+        borderRadius: (width * 0.7) / 2,
+        opacity: 0.12,
     },
-    loadingContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    emptyText: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.md,
-    },
-    content: {
-        padding: Spacing.md,
-        paddingBottom: 180,
-        gap: Spacing.md,
-    },
+    orb1: { top: -width * 0.2, right: -width * 0.1 },
+    orb2: { bottom: height * 0.2, left: -width * 0.3 },
+
     card: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
+        borderColor: 'rgba(255,255,255,0.1)',
+        padding: Spacing.lg,
+        marginBottom: Spacing.md,
+        overflow: 'hidden',
     },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: Spacing.xs,
-    },
-    orderId: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.lg,
-    },
-    orderDate: {
-        marginTop: 2,
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
-    },
-    statusBadge: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 6,
-        borderRadius: BorderRadius.full,
-    },
-    statusText: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.xs,
-        textTransform: 'capitalize',
-    },
-    deliveryText: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
-        marginTop: 2,
-    },
-    sectionTitle: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.lg,
-        marginBottom: Spacing.sm,
-    },
-    timelineRow: {
-        flexDirection: 'row',
-        gap: Spacing.sm,
-    },
-    timelineRailCol: {
-        alignItems: 'center',
-        width: 24,
-    },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    orderId: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, letterSpacing: 0.5 },
+    orderDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 4, opacity: 0.7 },
+    statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
+    statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+    
+    deliveryInfo: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, gap: 6 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    deliveryText: { fontFamily: Fonts.medium, fontSize: 11 },
+    
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
+    sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5, marginBottom: Spacing.md },
+    
+    timelineContainer: { marginTop: Spacing.xs },
+    timelineRow: { flexDirection: 'row', gap: Spacing.md },
+    timelineRailCol: { alignItems: 'center', width: 24 },
     timelineDot: {
         width: 24,
         height: 24,
         borderRadius: 12,
         borderWidth: 1,
-        alignItems: 'center',
         justifyContent: 'center',
-    },
-    timelineLine: {
-        width: 2,
-        height: 28,
-        marginVertical: 3,
-    },
-    timelineLabelCol: {
-        flex: 1,
-        paddingBottom: Spacing.sm,
-    },
-    timelineLabel: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-    },
-    timelineDate: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
-        marginTop: 1,
-    },
-    vendorCustomerRow: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: Spacing.md,
+        zIndex: 2,
     },
-    vendorCustomerText: {
-        flex: 1,
-    },
-    customerName: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-    },
-    customerHint: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.sm,
-        marginTop: 2,
-    },
-    iconGroup: {
-        flexDirection: 'row',
-        gap: Spacing.sm,
-    },
-    iconBubble: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    addressTitle: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-        marginBottom: 2,
-    },
-    addressText: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.sm,
-    },
-    addressSubtext: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
-        opacity: 0.8,
-    },
-    notesContainer: {
-        marginTop: Spacing.xs,
-        paddingTop: Spacing.xs,
-        borderTopWidth: StyleSheet.hairlineWidth,
-    },
-    notesLabel: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.xs,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        marginBottom: 2,
-    },
-    notesText: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.sm,
-        lineHeight: 20,
-    },
-    itemRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: Spacing.sm,
-        marginBottom: Spacing.md,
-    },
-    itemName: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-        marginBottom: 2,
-    },
-    itemQty: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.sm,
-    },
-    itemPrice: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.md,
-    },
-    summaryDivider: {
-        height: 1,
-        marginBottom: Spacing.sm,
-    },
-    summaryRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: Spacing.sm,
-    },
-    summaryLabel: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.md,
-    },
-    summaryValue: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-    },
-    totalLabel: {
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.xl,
-    },
-    totalValue: {
-        fontFamily: Fonts.extraBold,
-        fontSize: FontSizes.xxl,
-    },
-    footer: {
+    timelineLine: { width: 2, flex: 1, marginVertical: -2, borderRadius: 999 },
+    timelineLabelCol: { flex: 1, paddingBottom: Spacing.lg },
+    timelineLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+    timelineDate: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 2, opacity: 0.6 },
+    
+    vendorCustomerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md },
+    vendorCustomerText: { flex: 1 },
+    customerName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    customerHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
+    iconGroup: { flexDirection: 'row', gap: Spacing.sm },
+    iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    
+    addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
+    addressSubtext: { fontFamily: Fonts.medium, fontSize: 11, opacity: 0.6 },
+    
+    notesContainer: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1 },
+    notesLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+    notesText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 20, opacity: 0.8 },
+    
+    itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+    itemName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 4 },
+    qtyContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    itemQty: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+    dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.2)' },
+    itemPriceEach: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+    itemPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    
+    summaryBox: { borderRadius: BorderRadius.lg, padding: Spacing.md, marginTop: Spacing.sm },
+    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    summaryLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.8 },
+    summaryValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    summaryDivider: { height: 1, marginVertical: Spacing.sm, opacity: 0.1 },
+    totalLabel: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
+    
+    footerContainer: {
         position: 'absolute',
+        bottom: 0,
         left: 0,
         right: 0,
-        bottom: 0,
         paddingHorizontal: Spacing.md,
-        paddingTop: Spacing.sm,
-        paddingBottom: Spacing.lg,
-        gap: Spacing.sm,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.xl,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
     },
-    footerRow: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        flexDirection: 'row',
-        gap: Spacing.sm,
-        paddingHorizontal: Spacing.md,
-        paddingTop: Spacing.sm,
-        paddingBottom: Spacing.lg,
-    },
-    primaryButton: {
-        minHeight: 48,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    primaryButtonText: {
-        fontFamily: Fonts.bold,
-        color: '#FFFFFF',
-        fontSize: FontSizes.md,
-    },
-    secondaryButton: {
-        minHeight: 46,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-    },
-    secondaryButtonText: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.md,
-    },
-    dualButton: {
-        flex: 1,
-        minHeight: 48,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    dualButtonText: {
-        fontFamily: Fonts.semiBold,
-        color: '#FFFFFF',
-        fontSize: FontSizes.md,
-    },
+    actionsContainer: { flexDirection: 'row', gap: Spacing.md },
 });

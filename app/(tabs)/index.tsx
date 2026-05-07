@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flex: 1 },
   greetingLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.7 },
-  greetingName: { fontFamily: Fonts.extraBold, fontSize: 32, marginTop: -4, letterSpacing: -1 },
+  greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4, letterSpacing: -1 },
   notificationBtn: {
     width: 52, height: 52, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center',
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl,
+    fontFamily: Fonts.extraBold, fontSize: FontSizes.xl,
     letterSpacing: -1,
   },
   seeAllText: {
