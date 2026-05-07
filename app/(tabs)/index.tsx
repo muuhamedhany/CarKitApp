@@ -287,9 +287,7 @@ export default function HomeScreen() {
           >
             <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
             <TypewriterSearchBar textColor={colors.textSecondary} />
-            <View style={[styles.searchFilterIcon, { backgroundColor: colors.pink + '20' }]}>
-              <MaterialCommunityIcons name="tune-variant" size={16} color={colors.pink} />
-            </View>
+            
           </Pressable>
         </Animated.View>
 
@@ -471,7 +469,7 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: BorderRadius.xl, borderWidth: 1,
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
     marginBottom: Spacing.md,
     ...Shadows.md,
   },
