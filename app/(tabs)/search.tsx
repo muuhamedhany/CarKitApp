@@ -16,11 +16,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  FadeInUp, 
-  FadeInDown, 
-  useSharedValue, 
-  useAnimatedScrollHandler, 
+import Animated, {
+  FadeInUp,
+  FadeInDown,
+  useSharedValue,
+  useAnimatedScrollHandler,
   useAnimatedStyle,
   interpolate,
   Extrapolate
@@ -177,13 +177,13 @@ export default function SearchScreen() {
 
     const newAdFilter = hasAdFilter
       ? {
-          vendorId: vendorIdRaw ? Number(vendorIdRaw) : undefined,
-          providerId: providerIdRaw ? Number(providerIdRaw) : undefined,
-          productIds: parseIds(productIdsRaw),
-          serviceIds: parseIds(serviceIdsRaw),
-          categoryIds: parseIds(adCategoryIdsRaw),
-          title: adTitleRaw || undefined,
-        }
+        vendorId: vendorIdRaw ? Number(vendorIdRaw) : undefined,
+        providerId: providerIdRaw ? Number(providerIdRaw) : undefined,
+        productIds: parseIds(productIdsRaw),
+        serviceIds: parseIds(serviceIdsRaw),
+        categoryIds: parseIds(adCategoryIdsRaw),
+        title: adTitleRaw || undefined,
+      }
       : null;
 
     setAdFilter(newAdFilter);
@@ -230,10 +230,7 @@ export default function SearchScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
-        style={StyleSheet.absoluteFill}
-      />
+     
 
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
@@ -243,9 +240,9 @@ export default function SearchScreen() {
         <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={styles.headerContent}>
           {/* Search Input */}
-          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, { 
+          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, {
             backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-            borderColor: colors.cardBorder 
+            borderColor: colors.cardBorder
           }]}>
             <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
             <TextInput
@@ -299,9 +296,9 @@ export default function SearchScreen() {
                 </Pressable>
               ))}
             </View>
-            
+
             {/* Category Filter Button */}
-            <Pressable 
+            <Pressable
               style={[styles.filterBtn, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -327,19 +324,19 @@ export default function SearchScreen() {
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.results, { paddingTop: 200 + insets.top + (adFilter ? 60 : 0) }]}
+          contentContainerStyle={[styles.results, { paddingTop: 170 + insets.top + (adFilter ? 60 : 0) }]}
         >
           {showProducts && products.length > 0 && (
             <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
-                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>{products.length} found</Text>
+                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {products.length} product(s)</Text>
               </View>
               <View style={styles.productGrid}>
                 {products.map((p, idx) => (
-                  <Animated.View 
-                    entering={FadeInUp.delay(idx * 50).duration(600)} 
-                    key={p.product_id} 
+                  <Animated.View
+                    entering={FadeInUp.delay(idx * 50).duration(600)}
+                    key={p.product_id}
                     style={styles.productGridItem}
                   >
                     <ProductCard
@@ -361,10 +358,10 @@ export default function SearchScreen() {
             <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
-                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>{services.length} found</Text>
+                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {services.length} service(s)</Text>
               </View>
               {services.map((s, idx) => (
-                <Animated.View 
+                <Animated.View
                   entering={FadeInUp.delay(idx * 100).duration(600)}
                   key={s.service_id}
                   style={{ marginBottom: Spacing.md }}
@@ -390,8 +387,8 @@ export default function SearchScreen() {
               </BlurView>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you're looking for.</Text>
-              
-              <Pressable 
+
+              <Pressable
                 style={[styles.resetBtn, { backgroundColor: colors.pink }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -430,18 +427,18 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   headerContent: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.lg,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: Spacing.md },
-  results: { paddingHorizontal: Spacing.lg },
+  results: { paddingHorizontal: Spacing.md },
 
   searchInputContainer: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    borderRadius: BorderRadius.xl, 
-    paddingHorizontal: Spacing.md, 
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 12,
     borderWidth: 1,
     ...Shadows.md,
@@ -449,10 +446,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   searchInput: {
-    flex: 1, 
+    flex: 1,
     fontFamily: Fonts.medium,
-    fontSize: FontSizes.md, 
-    marginLeft: Spacing.sm, 
+    fontSize: FontSizes.md,
+    marginLeft: Spacing.sm,
     paddingVertical: 4,
   },
 
@@ -470,7 +467,7 @@ const styles = StyleSheet.create({
   closeAdFilter: { padding: 4 },
 
   toggleRow: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     gap: Spacing.sm,
     alignItems: 'center',
   },
@@ -484,15 +481,15 @@ const styles = StyleSheet.create({
   },
   togglePill: {
     flex: 1,
-    borderRadius: BorderRadius.lg, 
+    borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toggleText: { 
-    fontFamily: Fonts.bold, 
-    fontSize: 11, 
-    textTransform: 'uppercase', 
-    letterSpacing: 0.5 
+  toggleText: {
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
   filterBtn: {
     width: 52,
@@ -503,36 +500,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  section: { marginBottom: Spacing.xl },
+  section: { marginBottom: Spacing.md },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   sectionTitle: {
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.xxl,
-    letterSpacing: -1,
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.xl,
   },
-  resultCount: { 
-    fontFamily: Fonts.medium, 
-    fontSize: FontSizes.xs, 
-    opacity: 0.6 
+  resultCount: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    opacity: 0.6
   },
-  productGrid: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    marginHorizontal: -8 
+  productGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -8
   },
-  productGridItem: { 
+  productGridItem: {
     width: '50%',
-    paddingHorizontal: 8,
-    marginBottom: 16,
+    paddingHorizontal: 2,
+    marginBottom: 4,
   },
 
-  emptyState: { 
-    alignItems: 'center', 
+  emptyState: {
+    alignItems: 'center',
     marginTop: 40,
     paddingHorizontal: Spacing.xl,
   },
@@ -547,15 +543,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  emptyTitle: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.xl, 
-    marginBottom: Spacing.sm 
+  emptyTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xl,
+    marginBottom: Spacing.sm
   },
-  emptySubtitle: { 
-    fontFamily: Fonts.medium, 
-    fontSize: FontSizes.md, 
-    textAlign: 'center', 
+  emptySubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md,
+    textAlign: 'center',
     lineHeight: 22,
     opacity: 0.7,
     marginBottom: Spacing.xxl,
