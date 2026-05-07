@@ -174,7 +174,7 @@ function Dot({ index, scrollX, width, activeColor }: { index: number; scrollX: S
 }
 
 const adStyles = StyleSheet.create({
-  wrapper: { marginBottom: Spacing.xl },
+  wrapper: { marginBottom: Spacing.md },
   slideContainer: {
     paddingHorizontal: 0,
     height: 200,
