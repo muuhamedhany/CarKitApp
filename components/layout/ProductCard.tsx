@@ -179,11 +179,11 @@ export default function ProductCard({
 const styles = StyleSheet.create({
   animatedWrapper: {
     flex: 1,
-    margin: 6,
+    margin: 3,
   },
   card: {
     flex: 1,
-    borderRadius: BorderRadius.xxl,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
   info: { padding: Spacing.md },
-  name: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: -0.3 },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: -0.3 },
   vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.6 },
   bottomRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center',
-    marginTop: 2 
+    marginTop: Spacing.md 
   },
   price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, letterSpacing: -0.5 },
   currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.7 },

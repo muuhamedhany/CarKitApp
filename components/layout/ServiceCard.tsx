@@ -3,10 +3,10 @@ import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator } from 'rea
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring
 } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
@@ -37,7 +37,7 @@ export default function ServiceCard({
   const { colors, isDark } = useTheme();
   const [imgError, setImgError] = useState(false);
   const [imgLoading, setImgLoading] = useState(!!imageUrl);
-  
+
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -56,12 +56,12 @@ export default function ServiceCard({
 
   return (
     <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
-      <Pressable 
+      <Pressable
         style={[
-          styles.card, 
-          { 
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,1)', 
-            borderColor: colors.cardBorder 
+          styles.card,
+          {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,1)',
+            borderColor: colors.cardBorder
           },
           Shadows.md
         ]}
@@ -97,9 +97,9 @@ export default function ServiceCard({
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-               <View style={styles.placeholderInner}>
+              <View style={styles.placeholderInner}>
                 <MaterialCommunityIcons name="car-wash" size={44} color={colors.pink + '40'} />
-               </View>
+              </View>
             </LinearGradient>
           )}
 
@@ -147,14 +147,14 @@ export default function ServiceCard({
 
           <View style={styles.actions}>
             {onBookNow && (
-              <Pressable 
+              <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                   onBookNow();
-                }} 
+                }}
                 style={({ pressed }) => [
-                  styles.bookButton, 
-                  { 
+                  styles.bookButton,
+                  {
                     backgroundColor: colors.pink,
                     opacity: pressed ? 0.85 : 1,
                     transform: [{ scale: pressed ? 0.96 : 1 }]
@@ -165,15 +165,15 @@ export default function ServiceCard({
               </Pressable>
             )}
             {onView && (
-              <Pressable 
+              <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onView();
-                }} 
+                }}
                 style={({ pressed }) => [
-                  styles.viewButton, 
-                  { 
-                    borderColor: colors.cardBorder, 
+                  styles.viewButton,
+                  {
+                    borderColor: colors.cardBorder,
                     backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
                     opacity: pressed ? 0.8 : 1,
                     transform: [{ scale: pressed ? 0.96 : 1 }]
@@ -192,11 +192,10 @@ export default function ServiceCard({
 
 const styles = StyleSheet.create({
   animatedWrapper: {
-    marginBottom: Spacing.md,
     paddingHorizontal: 2,
   },
   card: {
-    borderRadius: BorderRadius.xxl,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -231,36 +230,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.3,
   },
-  body: { padding: Spacing.lg },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 4 },
-  name: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md + 2, letterSpacing: -0.5 },
-  provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.6, marginTop: 1 },
-  ratingBadge: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 8, 
-    paddingVertical: 4, 
-    borderRadius: 8 
+  body: { padding: Spacing.md },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md + 2, letterSpacing: -0.5 },
+  provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.6, marginTop: 3 },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8
   },
   ratingText: { fontFamily: Fonts.bold, fontSize: 12, marginLeft: 3 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: Spacing.xl },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: Spacing.md },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaText: { fontFamily: Fonts.bold, fontSize: 12, opacity: 0.7 },
   actions: { flexDirection: 'row', gap: 12 },
   bookButton: {
-    borderRadius: BorderRadius.xl, 
+    borderRadius: BorderRadius.xl,
     flex: 2,
-    paddingVertical: 14, 
+    paddingVertical: 14,
     alignItems: 'center',
     ...Shadows.sm,
     shadowColor: Colors.pink,
   },
   bookButtonText: { fontFamily: Fonts.extraBold, fontSize: FontSizes.sm, color: '#FFFFFF' },
   viewButton: {
-    flex: 1, 
-    paddingVertical: 14, 
+    flex: 1,
+    paddingVertical: 14,
     alignItems: 'center',
-    borderRadius: BorderRadius.xl, 
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
   },
   viewButtonText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },

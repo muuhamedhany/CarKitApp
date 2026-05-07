@@ -19,11 +19,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { 
-  FadeInDown, 
-  FadeInUp, 
-  useSharedValue, 
-  useAnimatedScrollHandler, 
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  useSharedValue,
+  useAnimatedScrollHandler,
   useAnimatedStyle,
   interpolate,
   Extrapolate
@@ -33,24 +33,22 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Animations } from '@/constants/theme';
-import { 
-  CategoryPill, 
-  ProductCard, 
-  ServiceCard, 
-  AdSlideshow, 
-  HomeSkeleton 
+import {
+  CategoryPill,
+  ProductCard,
+  ServiceCard,
+  AdSlideshow,
+  HomeSkeleton
 } from '@/components';
 import { adService, Ad } from '@/services/api/ad.service';
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
 const SEARCH_PHRASES = [
   'Premium engine oils...',
-  'High-performance brake pads...',
   'Professional detailing...',
   'Tire rotation experts...',
   'Quick battery replacement...',
   'Advanced AC recharge...',
-  'Spark plugs & ignition...',
   'Best oil change nearby...',
 ];
 
@@ -139,7 +137,7 @@ export default function HomeScreen() {
   const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const scrollY = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -229,7 +227,7 @@ export default function HomeScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
@@ -239,7 +237,7 @@ export default function HomeScreen() {
         <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={styles.headerInner}>
           <Text style={[styles.headerCompactTitle, { color: colors.textPrimary }]}>CarKit</Text>
-          <Pressable 
+          <Pressable
             style={[styles.notificationBtnSmall, { backgroundColor: colors.backgroundSecondary }]}
             onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           >
@@ -262,7 +260,7 @@ export default function HomeScreen() {
             <Text style={[styles.greetingLabel, { color: colors.textSecondary }]}>Welcome back,</Text>
             <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
           </View>
-          <Pressable 
+          <Pressable
             style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
             onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           >
@@ -273,15 +271,15 @@ export default function HomeScreen() {
 
         {/* Search — premium glass design */}
         <Animated.View entering={FadeInDown.delay(400).duration(800)}>
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
-              styles.searchBar, 
-              { 
+              styles.searchBar,
+              {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 borderColor: colors.cardBorder,
                 opacity: pressed ? 0.8 : 1
               }
-            ]} 
+            ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push('/(tabs)/search');
@@ -290,7 +288,7 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
             <TypewriterSearchBar textColor={colors.textSecondary} />
             <View style={[styles.searchFilterIcon, { backgroundColor: colors.pink + '20' }]}>
-               <MaterialCommunityIcons name="tune-variant" size={16} color={colors.pink} />
+              <MaterialCommunityIcons name="tune-variant" size={16} color={colors.pink} />
             </View>
           </Pressable>
         </Animated.View>
@@ -312,8 +310,8 @@ export default function HomeScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
             {services.map((service) => (
-              <View key={service.service_id} style={{ width: 290, marginRight: Spacing.md }}>
-                <ServiceCard 
+              <View key={service.service_id} style={{ width: 290, marginRight: Spacing.sm }}>
+                <ServiceCard
                   name={service.name}
                   providerName={service.provider_name}
                   price={service.price}
@@ -337,17 +335,11 @@ export default function HomeScreen() {
               <Text style={[styles.seeAllText, { color: colors.pink }]}>See All</Text>
             </Pressable>
           </View>
-          {productCategories.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow} contentContainerStyle={{ paddingLeft: Spacing.md, gap: Spacing.sm }}>
-              {productCategories.slice(0, 5).map((cat) => (
-                <CategoryPill key={cat.category_id} label={cat.name} />
-              ))}
-            </ScrollView>
-          )}
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
             {products.map((product) => (
-              <View key={product.product_id} style={{ width: 190, marginRight: Spacing.md }}>
-                <ProductCard 
+              <View key={product.product_id} style={{ width: 190, marginRight: Spacing.xs }}>
+                <ProductCard
                   productId={product.product_id}
                   name={product.name}
                   price={product.price}
@@ -366,10 +358,10 @@ export default function HomeScreen() {
 
         {/* Promotional Banner — modernized glass design */}
         <Animated.View entering={FadeInDown.delay(800).duration(800)}>
-          <Pressable 
+          <Pressable
             style={[
-              styles.promoBanner, 
-              { 
+              styles.promoBanner,
+              {
                 backgroundColor: isDark ? 'rgba(205, 66, 168, 0.1)' : 'rgba(205, 66, 168, 0.03)',
                 borderColor: colors.pink + '40'
               }
@@ -391,11 +383,11 @@ export default function HomeScreen() {
         {/* Recent Activity */}
         <Animated.View entering={FadeInDown.delay(900).duration(800)}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.lg, marginBottom: Spacing.md }]}>Updates</Text>
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
-              styles.activityCard, 
-              { 
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', 
+              styles.activityCard,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 borderColor: colors.cardBorder,
                 opacity: pressed ? 0.8 : 1
               }
@@ -403,13 +395,12 @@ export default function HomeScreen() {
             onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           >
             <View style={[styles.activityIcon, { backgroundColor: colors.pink + '20' }]}>
-              <MaterialCommunityIcons name={"sparkles" as any} size={24} color={colors.pink} />
+              <MaterialCommunityIcons name="alert-decagram-outline" size={24} color={colors.pink} />
             </View>
             <View style={styles.activityInfo}>
               <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>Neon Redesign Live!</Text>
               <Text style={[styles.activitySub, { color: colors.textSecondary }]}>Explore our premium new look across the entire app.</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
         </Animated.View>
 
@@ -480,8 +471,8 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: BorderRadius.xl, borderWidth: 1,
-    paddingHorizontal: Spacing.md, paddingVertical: 14,
-    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.md, paddingVertical: 12,
+    marginBottom: Spacing.md,
     ...Shadows.md,
   },
   searchFilterIcon: {
@@ -496,22 +487,21 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontFamily: Fonts.extraBold, fontSize: FontSizes.xl,
+    fontFamily: Fonts.bold, fontSize: FontSizes.xl,
     letterSpacing: -1,
   },
   seeAllText: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
   },
-  horizontalScroll: { 
-    marginBottom: Spacing.xxl, 
+  horizontalScroll: {
+    marginBottom: Spacing.xl,
     marginHorizontal: -Spacing.lg,
   },
   horizontalScrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 8,
   },
-  pillRow: { 
+  pillRow: {
     marginBottom: Spacing.lg,
     marginHorizontal: -Spacing.lg,
   },
@@ -519,14 +509,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xxl,
     overflow: 'hidden',
     borderWidth: 1,
-    marginBottom: Spacing.xxl,
     ...Shadows.md,
   },
   promoContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.xl,
+    padding: Spacing.lg,
   },
   promoTextGroup: { flex: 1 },
   promoTitle: {
@@ -541,12 +530,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   promoIconContainer: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: Spacing.md,
   },
   activityCard: {
     flexDirection: 'row',
