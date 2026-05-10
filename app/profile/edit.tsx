@@ -14,10 +14,10 @@ import {
   TextInput,
   View
 } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, GradientButton, OutlinedButton, GlassView} from '@/components';
+import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -101,9 +101,9 @@ export default function EditProfileScreen() {
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : (
-        <ScrollView 
-          contentContainerStyle={styles.content} 
-          keyboardShouldPersistTaps="handled" 
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Avatar Section */}
@@ -131,7 +131,7 @@ export default function EditProfileScreen() {
                     </View>
                   </LinearGradient>
                 </View>
-                <Pressable 
+                <Pressable
                   style={[styles.editBadge, { backgroundColor: colors.pink, borderColor: isDark ? '#1A0B2E' : '#F8F0FF' }]}
                   onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 >

@@ -46,6 +46,7 @@ export default function AddressesScreen() {
   const [notes, setNotes] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   const fetchAddresses = useCallback(async () => {
@@ -90,23 +91,45 @@ export default function AddressesScreen() {
         notes,
         ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
       };
-      const res = await addressService.addAddress(addressData);
+
+      let res;
+      if (editingId) {
+        res = await addressService.updateAddress(editingId.toString(), addressData);
+      } else {
+        res = await addressService.addAddress(addressData);
+      }
+
       if (res.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        showToast('success', 'Address Saved', 'New address added successfully.');
+        showToast('success', editingId ? 'Address Updated' : 'Address Saved', editingId ? 'Address updated successfully.' : 'New address added successfully.');
         setIsAdding(false);
+        setEditingId(null);
         setTitle(''); setStreet(''); setCity('');
         setApartmentFloor(''); setBuilding(''); setNotes('');
         setLatitude(null); setLongitude(null);
         fetchAddresses();
       } else {
-        showToast('error', 'Failed', res.message || 'Could not add address.');
+        showToast('error', 'Failed', res.message || 'Could not save address.');
       }
     } catch (e: any) {
       showToast('error', 'Error', e.message || 'Something went wrong.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (addr: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEditingId(addr.address_id || addr.id);
+    setTitle(addr.title || '');
+    setStreet(addr.street || '');
+    setCity(addr.city || '');
+    setApartmentFloor(addr.apartment_floor || '');
+    setBuilding(addr.building || '');
+    setNotes(addr.notes || '');
+    setLatitude(addr.latitude || null);
+    setLongitude(addr.longitude || null);
+    setIsAdding(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -134,7 +157,7 @@ export default function AddressesScreen() {
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <CenteredHeader
-        title={isAdding ? 'Add Address' : 'Addresses'}
+        title={isAdding ? (editingId ? 'Edit Address' : 'Add Address') : 'Addresses'}
         titleColor={colors.textPrimary}
         rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
       />
@@ -275,7 +298,13 @@ export default function AddressesScreen() {
             />
             <OutlinedButton
               title="Cancel"
-              onPress={() => setIsAdding(false)}
+              onPress={() => {
+                setIsAdding(false);
+                setEditingId(null);
+                setTitle(''); setStreet(''); setCity('');
+                setApartmentFloor(''); setBuilding(''); setNotes('');
+                setLatitude(null); setLongitude(null);
+              }}
               style={{ marginTop: Spacing.md }}
               textColor={colors.textMuted}
             />
@@ -315,6 +344,14 @@ export default function AddressesScreen() {
                     )}
                   </View>
                   <Pressable
+                    onPress={() => handleEdit(addr)}
+                    style={styles.editBtn}
+                  >
+                    <View style={[styles.editIconWrap, { backgroundColor: colors.pink + '15' }]}>
+                      <MaterialCommunityIcons name="pencil-outline" size={20} color={colors.pink} />
+                    </View>
+                  </Pressable>
+                  <Pressable
                     onPress={() => handleDelete(addr.address_id || addr.id)}
                     style={styles.deleteBtn}
                   >
@@ -332,6 +369,10 @@ export default function AddressesScreen() {
               title="Add New Address"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEditingId(null);
+                setTitle(''); setStreet(''); setCity('');
+                setApartmentFloor(''); setBuilding(''); setNotes('');
+                setLatitude(null); setLongitude(null);
                 setIsAdding(true);
               }}
               style={{ marginTop: Spacing.xl }}
@@ -393,6 +434,8 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5 },
   cardAddress: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4, opacity: 0.8 },
   cardSubText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.6 },
+  editBtn: { padding: Spacing.xs },
+  editIconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   deleteBtn: { padding: Spacing.xs },
   deleteIconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
 

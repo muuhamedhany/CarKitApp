@@ -68,11 +68,14 @@ function IOSTabLayout() {
 
 // Android: Custom floating tab bar matching the design
 function AndroidTabLayout() {
+  const { isDark } = useTheme();
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: isDark ? '#050505' : '#F8F9FD' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />

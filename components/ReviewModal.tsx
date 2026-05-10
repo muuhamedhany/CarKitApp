@@ -17,7 +17,7 @@ import {
   View
 } from 'react-native';
 import GlassView from './common/GlassView';
-import { GradientButton } from './common/GradientButton';
+import GradientButton from './common/GradientButton';
 import { StarRating } from './common/StarRating';
 
 const { height } = Dimensions.get('window');

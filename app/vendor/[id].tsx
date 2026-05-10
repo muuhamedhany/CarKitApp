@@ -1,27 +1,25 @@
-import { useEffect, useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Pressable, 
-  ActivityIndicator, 
-  Dimensions 
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
-import { vendorService } from '@/services/api/vendor.service';
-import { reviewService } from '@/services/api/review.service';
-import { VendorPublicProfile, Review } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ProductCard, GlassView, BackButton, StarRating } from '@/components';
+import { BackButton, GlassView, ProductCard, StarRating } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { reviewService } from '@/services/api/review.service';
+import { vendorService } from '@/services/api/vendor.service';
+import { Review, VendorPublicProfile } from '@/types/api.types';
 
 const { width } = Dimensions.get('window');
 
@@ -45,13 +43,13 @@ export default function VendorPublicProfileScreen() {
     try {
       setLoading(true);
       console.log('[VendorProfile] Fetching profile for ID:', id);
-      
+
       // Fetch profile first
       const profileRes = await vendorService.getVendorById(Number(id));
-      
+
       if (profileRes.success && profileRes.data) {
         setVendor(profileRes.data);
-        
+
         // Fetch reviews separately so failures don't block the profile
         try {
           const reviewsRes = await reviewService.getVendorReviews(Number(id));
@@ -93,11 +91,11 @@ export default function VendorPublicProfileScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
@@ -144,10 +142,10 @@ export default function VendorPublicProfileScreen() {
 
           {vendor.contact_info && (
             <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-               <GlassView intensity={isDark ? 15 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.infoBox, { borderColor: colors.cardBorder }]}>
-                  <MaterialCommunityIcons name="information-outline" size={20} color={colors.pink} />
-                  <Text style={[styles.infoText, { color: colors.textSecondary }]}>{vendor.contact_info}</Text>
-               </GlassView>
+              <GlassView intensity={isDark ? 15 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.infoBox, { borderColor: colors.cardBorder }]}>
+                <MaterialCommunityIcons name="information-outline" size={20} color={colors.pink} />
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{vendor.contact_info}</Text>
+              </GlassView>
             </Animated.View>
           )}
 
@@ -155,7 +153,7 @@ export default function VendorPublicProfileScreen() {
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>All Products</Text>
               <View style={[styles.countBadge, { backgroundColor: colors.pink + '20' }]}>
-                 <Text style={[styles.countText, { color: colors.pink }]}>{vendor.products?.length || 0}</Text>
+                <Text style={[styles.countText, { color: colors.pink }]}>{vendor.products?.length || 0}</Text>
               </View>
             </View>
 
@@ -174,7 +172,7 @@ export default function VendorPublicProfileScreen() {
                 </View>
               ))}
             </View>
-            
+
             {(!vendor.products || vendor.products.length === 0) && (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
@@ -187,10 +185,10 @@ export default function VendorPublicProfileScreen() {
             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Reviews</Text>
             {reviews.length > 0 ? (
               reviews.map((review, idx) => (
-                <GlassView 
-                  key={review.review_id || idx} 
-                  intensity={isDark ? 10 : 20} 
-                  tint={isDark ? 'dark' : 'light'} 
+                <GlassView
+                  key={review.review_id || idx}
+                  intensity={isDark ? 10 : 20}
+                  tint={isDark ? 'dark' : 'light'}
                   style={[styles.reviewItem, { borderColor: colors.cardBorder }]}
                 >
                   <View style={styles.reviewHeader}>

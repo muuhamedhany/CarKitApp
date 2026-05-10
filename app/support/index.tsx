@@ -1,27 +1,26 @@
-import { useState, useCallback, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  Pressable, 
-  Platform, 
-  ScrollView, 
-  ActivityIndicator, 
-  Dimensions 
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, Layout } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
+import Animated, { FadeInDown, FadeInLeft, FadeInUp, Layout } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
+import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton, OutlinedButton, GlassView} from '@/components';
+import { useTheme } from '@/hooks/useTheme';
 import { supportService } from '@/services/api';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -96,7 +95,7 @@ export default function SupportScreen() {
         colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
       <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
@@ -155,15 +154,15 @@ export default function SupportScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <GradientButton 
-              title="Submit Ticket" 
-              onPress={handleSubmit} 
+            <GradientButton
+              title="Submit Ticket"
+              onPress={handleSubmit}
               loading={submitting}
               style={{ marginTop: Spacing.xl }}
               icon="send-outline"
             />
-            <OutlinedButton 
-              title="Cancel" 
+            <OutlinedButton
+              title="Cancel"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setIsCreating(false);
@@ -187,8 +186,8 @@ export default function SupportScreen() {
             </Animated.View>
           ) : (
             tickets.map((ticket, index) => (
-              <Animated.View 
-                key={ticket.ticket_id || ticket.id} 
+              <Animated.View
+                key={ticket.ticket_id || ticket.id}
                 entering={FadeInLeft.delay(index * 100).springify()}
                 layout={Layout.springify()}
               >
@@ -218,8 +217,8 @@ export default function SupportScreen() {
           )}
 
           <Animated.View entering={FadeInDown.delay(tickets.length * 100).springify()}>
-            <GradientButton 
-              title="Create Ticket" 
+            <GradientButton
+              title="Create Ticket"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setIsCreating(true);
@@ -240,7 +239,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 40 },
-  
+
   orb: {
     position: 'absolute',
     width: width * 0.7,

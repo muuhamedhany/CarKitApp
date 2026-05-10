@@ -63,10 +63,9 @@ const formatReadableDate = (isoDate: string) => {
 
 export default function CheckoutScreen() {
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { items, total, fetchCart } = useCart();
-    const isDark = colors.background === '#000000' || colors.background === '#121212';
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -136,7 +135,7 @@ export default function CheckoutScreen() {
             const res = await addressService.getAddresses();
             if (res.success && Array.isArray(res.data)) {
                 // Ensure every address has an address_id even if it came as 'id'
-                const normalized = res.data.map(addr => ({
+                const normalized = res.data.map((addr: any) => ({
                     ...addr,
                     address_id: addr.address_id || addr.id
                 }));
@@ -238,8 +237,8 @@ export default function CheckoutScreen() {
             />
 
             {/* Decorative Orbs */}
-            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
             <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
 
@@ -474,10 +473,10 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     orb: {
         position: 'absolute',
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        opacity: 0.5,
+        width: 400,
+        height: 400,
+        borderRadius: 200,
+        opacity: 0.4,
     },
     content: { paddingHorizontal: Spacing.md, paddingBottom: 180 },
     sectionTitle: {

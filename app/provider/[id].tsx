@@ -1,26 +1,25 @@
-import { useEffect, useState, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  ActivityIndicator, 
-  Dimensions 
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BackButton, GlassView, ServiceCard, StarRating } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { providerService } from '@/services/api/provider.service';
 import { reviewService } from '@/services/api/review.service';
 import { ProviderPublicProfile, Review } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ServiceCard, GlassView, BackButton, StarRating } from '@/components';
-import { useToast } from '@/contexts/ToastContext';
 
 const { width } = Dimensions.get('window');
 
@@ -47,10 +46,10 @@ export default function ProviderPublicProfileScreen() {
 
       // Fetch profile first
       const profileRes = await providerService.getProviderById(Number(id));
-      
+
       if (profileRes.success && profileRes.data) {
         setProvider(profileRes.data);
-        
+
         // Fetch reviews separately
         try {
           const reviewsRes = await reviewService.getProviderReviews(Number(id));
@@ -92,11 +91,11 @@ export default function ProviderPublicProfileScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
@@ -141,10 +140,10 @@ export default function ProviderPublicProfileScreen() {
 
           {provider.contact_info && (
             <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-               <GlassView intensity={isDark ? 15 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.infoBox, { borderColor: colors.cardBorder }]}>
-                  <MaterialCommunityIcons name="map-marker-outline" size={20} color={colors.purple} />
-                  <Text style={[styles.infoText, { color: colors.textSecondary }]}>{provider.contact_info}</Text>
-               </GlassView>
+              <GlassView intensity={isDark ? 15 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.infoBox, { borderColor: colors.cardBorder }]}>
+                <MaterialCommunityIcons name="map-marker-outline" size={20} color={colors.purple} />
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{provider.contact_info}</Text>
+              </GlassView>
             </Animated.View>
           )}
 
@@ -152,14 +151,14 @@ export default function ProviderPublicProfileScreen() {
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Our Services</Text>
               <View style={[styles.countBadge, { backgroundColor: colors.purple + '20' }]}>
-                 <Text style={[styles.countText, { color: colors.purple }]}>{provider.services?.length || 0}</Text>
+                <Text style={[styles.countText, { color: colors.purple }]}>{provider.services?.length || 0}</Text>
               </View>
             </View>
 
             <View style={styles.servicesList}>
               {provider.services?.map((service, idx) => (
-                <Animated.View 
-                  key={service.service_id} 
+                <Animated.View
+                  key={service.service_id}
                   entering={FadeInUp.delay(500 + idx * 100).duration(600)}
                   style={styles.serviceItem}
                 >
@@ -176,7 +175,7 @@ export default function ProviderPublicProfileScreen() {
                 </Animated.View>
               ))}
             </View>
-            
+
             {(!provider.services || provider.services.length === 0) && (
               <View style={styles.emptyState}>
                 <MaterialCommunityIcons name="tools" size={48} color={colors.textMuted} />
@@ -189,10 +188,10 @@ export default function ProviderPublicProfileScreen() {
             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Reviews</Text>
             {reviews.length > 0 ? (
               reviews.map((review, idx) => (
-                <GlassView 
-                  key={review.review_id || idx} 
-                  intensity={isDark ? 10 : 20} 
-                  tint={isDark ? 'dark' : 'light'} 
+                <GlassView
+                  key={review.review_id || idx}
+                  intensity={isDark ? 10 : 20}
+                  tint={isDark ? 'dark' : 'light'}
                   style={[styles.reviewItem, { borderColor: colors.cardBorder }]}
                 >
                   <View style={styles.reviewHeader}>

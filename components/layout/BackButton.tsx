@@ -1,5 +1,5 @@
-import { View } from 'react-native';
 import { Stack } from 'expo-router';
+import { View } from 'react-native';
 
 type BackButtonProps = {
   // OS natively handles the back action when using the native header

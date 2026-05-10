@@ -1,27 +1,26 @@
-import { useCallback, useMemo, useState } from 'react';
-import { 
-  Alert, 
-  ActivityIndicator, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  View, 
-  Dimensions,
-  Pressable 
-} from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView} from '@/components';
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { bookingService, type Booking } from '@/services/api/booking.service';
-import { reviewService } from '@/services/api/review.service';
+import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { bookingService, type Booking } from '@/services/api/booking.service';
+import { reviewService } from '@/services/api/review.service';
 
 const { width, height } = Dimensions.get('window');
 
@@ -163,12 +162,12 @@ export default function BookingDetailScreen() {
         <View style={styles.container}>
             {/* Background */}
             <LinearGradient
-              colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
-              style={StyleSheet.absoluteFill}
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                style={StyleSheet.absoluteFill}
             />
-            
-            <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-            <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
             <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
 
@@ -207,16 +206,16 @@ export default function BookingDetailScreen() {
                                         <View key={step.key} style={styles.timelineRow}>
                                             <View style={styles.timelineRailCol}>
                                                 <View style={[
-                                                    styles.timelineDot, 
-                                                    { 
-                                                        backgroundColor: reached ? colors.pink : colors.cardBorder, 
-                                                        borderColor: reached ? colors.pink : colors.cardBorder 
+                                                    styles.timelineDot,
+                                                    {
+                                                        backgroundColor: reached ? colors.pink : colors.cardBorder,
+                                                        borderColor: reached ? colors.pink : colors.cardBorder
                                                     }
                                                 ]}>
-                                                    <MaterialCommunityIcons 
-                                                        name={step.icon as any} 
-                                                        size={12} 
-                                                        color={reached ? colors.white : colors.textMuted} 
+                                                    <MaterialCommunityIcons
+                                                        name={step.icon as any}
+                                                        size={12}
+                                                        color={reached ? colors.white : colors.textMuted}
                                                     />
                                                 </View>
                                                 {index < timelineSteps.length - 1 ? (
@@ -288,7 +287,7 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.scheduleValue, { color: colors.textPrimary }]}>{booking.start_time}</Text>
                                 </View>
                             </View>
-                            
+
                             <View style={styles.addressContainer}>
                                 <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{booking.address_title || 'Service Address'}</Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
@@ -336,30 +335,30 @@ export default function BookingDetailScreen() {
                     </Animated.View>
 
                     <View style={styles.actionsRow}>
-                        <GradientButton 
-                            title="Contact Support" 
-                            onPress={() => router.push('/support' as any)} 
-                            style={{ flex: 1 }} 
+                        <GradientButton
+                            title="Contact Support"
+                            onPress={() => router.push('/support' as any)}
+                            style={{ flex: 1 }}
                             icon="chat-processing-outline"
                         />
                         {canCancel(booking.status) ? (
-                            <OutlinedButton 
-                                title="Cancel" 
-                                onPress={handleCancel} 
-                                style={{ flex: 1 }} 
+                            <OutlinedButton
+                                title="Cancel"
+                                onPress={handleCancel}
+                                style={{ flex: 1 }}
                                 textColor={colors.error}
                                 borderColor={colors.error}
                             />
                         ) : null}
                         {booking.status?.toLowerCase() === 'completed' && !isReviewed ? (
-                            <GradientButton 
-                                title="Rate Service" 
-                                onPress={() => setReviewModalVisible(true)} 
-                                style={{ flex: 1 }} 
+                            <GradientButton
+                                title="Rate Service"
+                                onPress={() => setReviewModalVisible(true)}
+                                style={{ flex: 1 }}
                                 icon="star-outline"
                             />
                         ) : isReviewed ? (
-                             <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
+                            <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
                                 <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
                                 <Text style={[styles.reviewedText, { color: colors.success }]}>Reviewed</Text>
                             </View>
@@ -377,7 +376,7 @@ export default function BookingDetailScreen() {
                     entityType="provider"
                     bookingId={booking.booking_id}
                     items={[{
-                        id: booking.service_id_fk,
+                        id: booking.service_id_fk || 0,
                         name: booking.service_name,
                         type: 'service',
                         rating: 0,
@@ -398,16 +397,14 @@ const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
     content: { paddingHorizontal: Spacing.md, paddingBottom: 120, paddingTop: Spacing.sm },
-    
+
     orb: {
         position: 'absolute',
-        width: width * 0.7,
-        height: width * 0.7,
-        borderRadius: (width * 0.7) / 2,
-        opacity: 0.12,
+        width: 400,
+        height: 400,
+        borderRadius: 200,
+        opacity: 0.4,
     },
-    orb1: { top: -width * 0.2, right: -width * 0.1 },
-    orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
     card: {
         borderRadius: BorderRadius.xl,
@@ -422,10 +419,10 @@ const styles = StyleSheet.create({
     bookingDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 4, opacity: 0.7 },
     statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
     statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
-    
+
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md },
     sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5 },
-    
+
     timelineContainer: { marginTop: Spacing.xs },
     timelineRow: { flexDirection: 'row', gap: Spacing.md },
     timelineRailCol: { alignItems: 'center', width: 24 },
@@ -442,13 +439,13 @@ const styles = StyleSheet.create({
     timelineLabelCol: { flex: 1, paddingBottom: Spacing.lg },
     timelineLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
     timelineDate: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 2, opacity: 0.6 },
-    
+
     cardValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 6 },
     cardSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 8, lineHeight: 20 },
-    
-    scheduleRow: { 
-        flexDirection: 'row', 
-        backgroundColor: 'rgba(255,255,255,0.05)', 
+
+    scheduleRow: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255,255,255,0.05)',
         borderRadius: BorderRadius.lg,
         padding: Spacing.md,
         marginBottom: Spacing.md,
@@ -458,12 +455,12 @@ const styles = StyleSheet.create({
     scheduleDivider: { width: 1, height: '60%', backgroundColor: 'rgba(255,255,255,0.1)' },
     scheduleLabel: { fontFamily: Fonts.medium, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: 4 },
     scheduleValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-    
+
     addressContainer: { gap: 4 },
     addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
     addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
     addressSubtext: { fontFamily: Fonts.medium, fontSize: 11, opacity: 0.6 },
-    
+
     notesContainer: {
         marginTop: Spacing.md,
         paddingTop: Spacing.md,
@@ -471,10 +468,10 @@ const styles = StyleSheet.create({
     },
     notesLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
     notesText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 20, opacity: 0.8 },
-    
+
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
     metaText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.8 },
-    
+
     priceCard: {
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
@@ -488,17 +485,17 @@ const styles = StyleSheet.create({
     },
     totalLabel: { fontFamily: Fonts.medium, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1 },
     priceValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl, marginTop: 2 },
-    paymentBadge: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        gap: 6, 
-        backgroundColor: '#10B981', 
-        paddingHorizontal: 12, 
-        paddingVertical: 6, 
-        borderRadius: BorderRadius.full 
+    paymentBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#10B981',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: BorderRadius.full
     },
     paymentText: { fontFamily: Fonts.bold, fontSize: 10, color: '#FFF', textTransform: 'uppercase' },
-    
+
     actionsRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md, paddingHorizontal: Spacing.md, alignItems: 'center' },
     reviewedBadge: {
         flex: 1,

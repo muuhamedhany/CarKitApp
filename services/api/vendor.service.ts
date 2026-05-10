@@ -1,4 +1,4 @@
-import { ApiResponse, VendorAnalyticsRange, VendorAnalyticsResponse, VendorDashboardResponse, VendorOrder, VendorPublicProfile, Product } from '@/types/api.types';
+import { ApiResponse, Product, VendorAnalyticsRange, VendorAnalyticsResponse, VendorDashboardResponse, VendorOrder, VendorPublicProfile } from '@/types/api.types';
 import { apiFetch } from './client';
 
 export const vendorService = {
@@ -37,14 +37,14 @@ export const vendorService = {
             ]);
 
             const profile = profileRes?.success ? profileRes.data : null;
-            
+
             // Combine products and strictly verify they belong to this vendor (checking all possible ID fields)
             const isMatch = (p: any, id: any) => {
                 const sId = String(id);
-                return String(p.vendor_id) === sId || 
-                       String(p.vendor_id_fk) === sId || 
-                       String(p.user_id) === sId || 
-                       String(p.user_id_fk) === sId;
+                return String(p.vendor_id) === sId ||
+                    String(p.vendor_id_fk) === sId ||
+                    String(p.user_id) === sId ||
+                    String(p.user_id_fk) === sId;
             };
 
             let allProducts: Product[] = [];
@@ -62,9 +62,9 @@ export const vendorService = {
             if (profile) {
                 const profileProducts = Array.isArray(profile.products) ? profile.products : [];
                 const mergedProducts = [...allProducts, ...profileProducts];
-                
+
                 // Deduplicate and filter by ID (string or number)
-                const finalProducts = mergedProducts.filter((p, index, self) => 
+                const finalProducts = mergedProducts.filter((p, index, self) =>
                     isMatch(p, vendorId) &&
                     self.findIndex(t => t.product_id === p.product_id) === index
                 );
