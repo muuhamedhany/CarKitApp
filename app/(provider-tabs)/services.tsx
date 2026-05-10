@@ -15,8 +15,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { Service } from '@/types/api.types';
-import { FormInput, GradientButton } from '@/components';
-import { BlurView } from 'expo-blur';
+import { FormInput, GradientButton, GlassView} from '@/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
@@ -48,7 +47,7 @@ function ServiceCard({ item, colors, router, onToggle, index, isDark }: {
 
     return (
         <Animated.View entering={FadeInUp.delay(index * 100).duration(600)}>
-            <BlurView 
+            <GlassView 
                 intensity={isDark ? 20 : 40} 
                 tint={isDark ? 'dark' : 'light'} 
                 style={[styles.card, { borderColor: colors.cardBorder }]}
@@ -84,7 +83,7 @@ function ServiceCard({ item, colors, router, onToggle, index, isDark }: {
                     }}
                     style={{ marginTop: Spacing.md }}
                 />
-            </BlurView>
+            </GlassView>
         </Animated.View>
     );
 }
@@ -182,18 +181,18 @@ export default function ServicesScreen() {
                 <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
 
                 <View style={styles.statsRow}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total</Text>
-                    </BlurView>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                    </GlassView>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                         <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Enabled</Text>
-                    </BlurView>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                    </GlassView>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                         <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
                         <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Disabled</Text>
-                    </BlurView>
+                    </GlassView>
                 </View>
 
                 <Pressable
@@ -236,7 +235,7 @@ export default function ServicesScreen() {
                                     setFilter(f.key);
                                 }}
                             >
-                                <BlurView
+                                <GlassView
                                     intensity={active ? 100 : (isDark ? 20 : 40)}
                                     tint={isDark ? 'dark' : 'light'}
                                     style={[
@@ -253,7 +252,7 @@ export default function ServicesScreen() {
                                     ]}>
                                         {f.label}
                                     </Text>
-                                </BlurView>
+                                </GlassView>
                             </Pressable>
                         );
                     })}
@@ -280,7 +279,7 @@ export default function ServicesScreen() {
                                     setSortMode(option.key);
                                 }}
                             >
-                                <BlurView
+                                <GlassView
                                     intensity={active ? 100 : (isDark ? 20 : 40)}
                                     tint={isDark ? 'dark' : 'light'}
                                     style={[
@@ -293,7 +292,7 @@ export default function ServicesScreen() {
                                 >
                                     <MaterialCommunityIcons name="sort" size={14} color={active ? colors.pink : colors.textSecondary} />
                                     <Text style={[styles.sortText, { color: active ? colors.pink : colors.textSecondary }]}>{option.label}</Text>
-                                </BlurView>
+                                </GlassView>
                             </Pressable>
                         );
                     })}
@@ -312,12 +311,12 @@ export default function ServicesScreen() {
                 )}
                 ListEmptyComponent={
                     !loading ? (
-                        <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.empty, { borderColor: colors.cardBorder }]}>
+                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.empty, { borderColor: colors.cardBorder }]}>
                             <MaterialCommunityIcons name="wrench-outline" size={52} color={colors.textMuted} />
                             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                                 {query ? 'No services match your search.' : 'No services yet. Tap + to add one.'}
                             </Text>
-                        </BlurView>
+                        </GlassView>
                     ) : null
                 }
             />

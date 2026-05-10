@@ -1,38 +1,34 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
-  Dimensions,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  FadeInUp,
-  FadeInDown,
-  useSharedValue,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
+import { GlassView, ProductCard, SearchSkeleton, ServiceCard } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ProductCard, ServiceCard, SearchSkeleton } from '@/components';
 import { Product } from '@/types/api.types';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
+import Animated, {
+  Extrapolate,
+  FadeInDown,
+  FadeInUp,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
@@ -41,6 +37,8 @@ type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
   image_url?: string | null;
+  rating?: number;
+  review_count?: number;
 };
 
 type ViewMode = 'all' | 'products' | 'services';
@@ -230,14 +228,14 @@ export default function SearchScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-     
+
 
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }, headerStyle]}>
-        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={styles.headerContent}>
           {/* Search Input */}
           <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, {
@@ -345,6 +343,8 @@ export default function SearchScreen() {
                       price={p.price}
                       imageUrl={p.image_url}
                       vendorName={p.vendor_name}
+                      rating={p.rating}
+                      reviewCount={p.review_count}
                       onAddToCart={() => handleAddToCart(p.product_id)}
                       onPress={() => router.push(`/product/${p.product_id}` as any)}
                     />
@@ -372,6 +372,8 @@ export default function SearchScreen() {
                     price={s.price}
                     imageUrl={s.image_url}
                     duration={s.duration || undefined}
+                    rating={s.rating}
+                    reviewCount={s.review_count}
                     onView={() => router.push(`/service/${s.service_id}`)}
                     onBookNow={() => router.push(`/service/${s.service_id}`)}
                   />
@@ -382,9 +384,9 @@ export default function SearchScreen() {
 
           {searched && products.length === 0 && services.length === 0 && (
             <Animated.View entering={FadeInUp} style={styles.emptyState}>
-              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconBlur}>
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconBlur}>
                 <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
-              </BlurView>
+              </GlassView>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you're looking for.</Text>
 

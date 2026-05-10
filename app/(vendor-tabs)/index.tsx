@@ -11,9 +11,9 @@ import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import { GlassView } from '@/components';
 
 export default function VendorDashboard() {
   const { user } = useAuth();
@@ -100,7 +100,7 @@ export default function VendorDashboard() {
                   entering={FadeInUp.delay(200 + index * 100).duration(800)}
                   style={styles.statCardWrapper}
                 >
-                  <BlurView 
+                  <GlassView 
                     intensity={isDark ? 20 : 40} 
                     tint={isDark ? 'dark' : 'light'} 
                     style={[styles.statCard, { borderColor: colors.cardBorder }]}
@@ -111,7 +111,7 @@ export default function VendorDashboard() {
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
                     <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
                     <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
-                  </BlurView>
+                  </GlassView>
                 </Animated.View>
               ))}
             </View>
@@ -166,7 +166,7 @@ export default function VendorDashboard() {
 
               {dashboard?.recent_orders.length ? (
                 dashboard.recent_orders.map((order, idx) => (
-                  <BlurView 
+                  <GlassView 
                     key={order.order_id} 
                     intensity={isDark ? 20 : 40} 
                     tint={isDark ? 'dark' : 'light'} 
@@ -185,13 +185,13 @@ export default function VendorDashboard() {
                       <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{order.item_count} items</Text>
                       <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
                     </View>
-                  </BlurView>
+                  </GlassView>
                 ))
               ) : (
-                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
+                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="clipboard-text-outline" size={48} color={colors.textMuted} />
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>No orders yet.</Text>
-                </BlurView>
+                </GlassView>
               )}
             </Animated.View>
 
@@ -205,7 +205,7 @@ export default function VendorDashboard() {
 
               {dashboard?.top_products.length ? (
                 dashboard.top_products.map((product) => (
-                  <BlurView 
+                  <GlassView 
                     key={product.product_id} 
                     intensity={isDark ? 20 : 40} 
                     tint={isDark ? 'dark' : 'light'} 
@@ -220,13 +220,13 @@ export default function VendorDashboard() {
                       <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{product.sold_units} sold · {product.stock} left</Text>
                     </View>
                     <Text style={[styles.productRevenue, { color: colors.pink }]}>{Number(product.price).toLocaleString('en-EG')} EGP</Text>
-                  </BlurView>
+                  </GlassView>
                 ))
               ) : (
-                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
+                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet.</Text>
-                </BlurView>
+                </GlassView>
               )}
             </Animated.View>
           </>

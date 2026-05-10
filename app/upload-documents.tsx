@@ -10,13 +10,12 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton } from '@/components';
+import { CenteredHeader, GradientButton, GlassView} from '@/components';
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -182,7 +181,7 @@ export default function UploadDocumentsScreen() {
 
     return (
       <Animated.View entering={FadeInDown.delay(delay).duration(600)} style={styles.docCardContainer} key={key}>
-        <BlurView
+        <GlassView
           intensity={isDark ? 40 : 60}
           tint={isDark ? 'dark' : 'light'}
           style={[
@@ -235,7 +234,7 @@ export default function UploadDocumentsScreen() {
               {hasFile ? 'Change File' : 'Choose Document'}
             </Text>
           </Pressable>
-        </BlurView>
+        </GlassView>
       </Animated.View>
     );
   };

@@ -1,4 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { CenteredHeader, GlassView } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { addressService, orderService, paymentService } from '@/services/api';
+import { PaymentMethod } from '@/services/api/payment.service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Image,
@@ -9,20 +21,7 @@ import {
     TextInput,
     View,
 } from 'react-native';
-import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { useCart } from '@/contexts/CartContext';
-import { PaymentMethod } from '@/services/api/payment.service';
-import * as ImagePicker from 'expo-image-picker';
-import { addressService, orderService, paymentService } from '@/services/api';
-import { CenteredHeader } from '@/components';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type Address = {
     address_id: number;
@@ -132,25 +131,32 @@ export default function CheckoutScreen() {
         }
     };
 
-    useEffect(() => {
-        const loadAddresses = async () => {
-            try {
-                const res = await addressService.getAddresses();
-                if (res.success && Array.isArray(res.data)) {
-                    setAddresses(res.data);
-                    if (res.data.length > 0) {
-                        setSelectedAddressId(res.data[0].address_id);
-                    }
+    const loadAddresses = useCallback(async () => {
+        try {
+            const res = await addressService.getAddresses();
+            if (res.success && Array.isArray(res.data)) {
+                // Ensure every address has an address_id even if it came as 'id'
+                const normalized = res.data.map(addr => ({
+                    ...addr,
+                    address_id: addr.address_id || addr.id
+                }));
+                setAddresses(normalized);
+                if (normalized.length > 0 && !selectedAddressId) {
+                    setSelectedAddressId(normalized[0].address_id);
                 }
-            } catch {
-                showToast('error', 'Address Error', 'Could not load addresses.');
-            } finally {
-                setLoadingAddresses(false);
             }
-        };
+        } catch {
+            showToast('error', 'Address Error', 'Could not load addresses.');
+        } finally {
+            setLoadingAddresses(false);
+        }
+    }, [selectedAddressId, showToast]);
 
-        loadAddresses();
-    }, [showToast]);
+    useFocusEffect(
+        useCallback(() => {
+            loadAddresses();
+        }, [loadAddresses])
+    );
 
     const handlePlaceOrder = async () => {
         if (items.length === 0) {
@@ -251,10 +257,10 @@ export default function CheckoutScreen() {
                                 router.push('/profile/addresses');
                             }}
                         >
-                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
                                 <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
                                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
-                            </BlurView>
+                            </GlassView>
                         </Pressable>
                     </Animated.View>
                 ) : (
@@ -275,7 +281,7 @@ export default function CheckoutScreen() {
                                         setSelectedAddressId(address.address_id);
                                     }}
                                 >
-                                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
                                         <View style={styles.addressHeader}>
                                             <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
                                                 {address.title || 'Address'}
@@ -285,7 +291,7 @@ export default function CheckoutScreen() {
                                         <Text style={[styles.addressText, { color: colors.textSecondary }]}>
                                             {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
                                         </Text>
-                                    </BlurView>
+                                    </GlassView>
                                 </Pressable>
                             </Animated.View>
                         );
@@ -311,13 +317,13 @@ export default function CheckoutScreen() {
                                     setPaymentMethod(method.value);
                                 }}
                             >
-                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
                                     <View style={styles.methodLeft}>
                                         <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textSecondary} />
                                         <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
                                     </View>
                                     {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
-                                </BlurView>
+                                </GlassView>
                             </Pressable>
                         </Animated.View>
                     );
@@ -325,7 +331,7 @@ export default function CheckoutScreen() {
 
                 {(paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') ? (
                     <Animated.View entering={FadeInUp}>
-                        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
+                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
                             <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
                             <Text style={[styles.paymentDetailsText, { color: colors.textSecondary }]}>Send to: {paymentMethod === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}</Text>
 
@@ -348,13 +354,13 @@ export default function CheckoutScreen() {
                             ) : (
                                 <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Required to unlock Place Order.</Text>
                             )}
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
                 ) : null}
 
                 {paymentMethod === 'credit_card' ? (
                     <Animated.View entering={FadeInUp}>
-                        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
+                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
                             <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
                             <TextInput
                                 value={cardHolderName}
@@ -390,16 +396,16 @@ export default function CheckoutScreen() {
                                 />
                             </View>
                             <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Complete all fields to unlock Place Order.</Text>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
                 ) : null}
 
                 <Animated.Text entering={FadeInDown.delay(700)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Arrival Date</Animated.Text>
                 <Animated.View entering={FadeInDown.delay(750)}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
                         <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Window</Text>
                         <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>From {formatReadableDate(formatDateValue(estimatedStartDate))} to {formatReadableDate(formatDateValue(estimatedEndDate))}</Text>
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
@@ -420,10 +426,10 @@ export default function CheckoutScreen() {
                                         setPreferredDeliveryDate(dateValue);
                                     }}
                                 >
-                                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
                                         <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>Preferred</Text>
                                         <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
-                                    </BlurView>
+                                    </GlassView>
                                 </Pressable>
                             </Animated.View>
                         );
@@ -431,19 +437,19 @@ export default function CheckoutScreen() {
                 </ScrollView>
 
                 <Animated.View entering={FadeInUp.delay(1000)}>
-                    <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
                         <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
                         <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Items: {items.length}</Text>
                         <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Preferred arrival: {formatReadableDate(preferredDeliveryDate)}</Text>
                         <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Subtotal: {totalNumber.toFixed(2)} EGP</Text>
                         <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Shipping: {SHIPPING_FEE.toFixed(2)} EGP</Text>
                         <Text style={[styles.summaryTotal, { color: colors.textPrimary }]}>Total: {totalWithShipping.toFixed(2)} EGP</Text>
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
             </ScrollView>
 
             <Animated.View entering={FadeInUp.delay(1200)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
-                <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+                <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
                     <Pressable
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -458,7 +464,7 @@ export default function CheckoutScreen() {
                             <Text style={styles.placeButtonText}>Place Order</Text>
                         )}
                     </Pressable>
-                </BlurView>
+                </GlassView>
             </Animated.View>
         </View>
     );

@@ -11,19 +11,20 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GetDirectionsButton, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GetDirectionsButton, GradientButton, OutlinedButton, GlassView} from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { orderService } from '@/services/api/order.service';
 import { vendorService } from '@/services/api/vendor.service';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
-import { OrderDetail } from '@/types/api.types';
+import { OrderDetail, Review } from '@/types/api.types';
+import { ReviewModal } from '@/components/ReviewModal';
+import { reviewService } from '@/services/api/review.service';
 
 const { width, height } = Dimensions.get('window');
 const SHIPPING_FEE = 50;
@@ -87,6 +88,8 @@ export default function OrderDetailScreen() {
     const [loading, setLoading] = useState(true);
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const [order, setOrder] = useState<OrderDetail | null>(null);
+    const [reviewModalVisible, setReviewModalVisible] = useState(false);
+    const [isReviewed, setIsReviewed] = useState(false);
 
     const subtotal = useMemo(() => Number(order?.total_amount || 0), [order?.total_amount]);
     const totalWithShipping = subtotal + SHIPPING_FEE;
@@ -113,10 +116,23 @@ export default function OrderDetailScreen() {
         }
     }, [orderId, router, showToast]);
 
+    const checkReviewStatus = useCallback(async () => {
+        if (!orderId || role !== 'customer') return;
+        try {
+            const response = await reviewService.checkReviewStatus({ orderId });
+            if (response.success && response.data) {
+                setIsReviewed(response.data.reviewed);
+            }
+        } catch (error) {
+            console.error('Error checking review status:', error);
+        }
+    }, [orderId, role]);
+
     useFocusEffect(
         useCallback(() => {
             loadOrder();
-        }, [loadOrder])
+            checkReviewStatus();
+        }, [loadOrder, checkReviewStatus])
     );
 
     const handleVendorStatusUpdate = async (status: string) => {
@@ -216,7 +232,7 @@ export default function OrderDetailScreen() {
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.headerRow}>
                                 <View>
                                     <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
@@ -237,11 +253,11 @@ export default function OrderDetailScreen() {
                                     <Text style={[styles.deliveryText, { color: colors.textMuted }]}>Estimated: {formatDate(order.estimated_delivery_start)} - {formatDate(order.estimated_delivery_end)}</Text>
                                 </View>
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(200).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                                 {role === 'customer' ? 'Tracking' : 'Fulfillment Status'}
                             </Text>
@@ -282,12 +298,12 @@ export default function OrderDetailScreen() {
                                     );
                                 })}
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     {role === 'vendor' && (
                         <Animated.View entering={FadeInDown.delay(300).springify()}>
-                            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Details</Text>
                                 <View style={styles.vendorCustomerRow}>
                                     <View style={styles.vendorCustomerText}>
@@ -303,12 +319,12 @@ export default function OrderDetailScreen() {
                                         </Pressable>
                                     </View>
                                 </View>
-                            </BlurView>
+                            </GlassView>
                         </Animated.View>
                     )}
 
                     <Animated.View entering={FadeInDown.delay(400).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Shipping Address</Text>
@@ -341,11 +357,11 @@ export default function OrderDetailScreen() {
                                     </View>
                                 ) : null}
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(500).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="basket-outline" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Order Items ({order.items.length})</Text>
@@ -385,14 +401,14 @@ export default function OrderDetailScreen() {
                                     <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(totalWithShipping)}</Text>
                                 </View>
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <View style={styles.spacer} />
                 </ScrollView>
             )}
 
-            <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.footerContainer} {...{} as any}>
+            <GlassView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.footerContainer} {...{} as any}>
                 {order && (role === 'vendor' ? (
                     <View style={styles.actionsContainer}>
                         {primaryAction ? (
@@ -433,17 +449,44 @@ export default function OrderDetailScreen() {
                                 style={{ flex: 1 }}
                             />
                         ) : null}
-                        {normalizeStatus(order.status) === 'delivered' ? (
+                        {normalizeStatus(order.status) === 'delivered' && !isReviewed ? (
                             <GradientButton 
                                 title="Rate Products" 
-                                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                                onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"
                             />
+                        ) : isReviewed ? (
+                            <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
+                                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
+                                <Text style={[styles.reviewedText, { color: colors.success }]}>Reviewed</Text>
+                            </View>
                         ) : null}
                     </View>
                 ))}
-            </BlurView>
+            </GlassView>
+
+            {order && (
+                <ReviewModal
+                    visible={reviewModalVisible}
+                    onClose={() => setReviewModalVisible(false)}
+                    entityId={order.vendor_id_fk || 0}
+                    entityName={order.vendor_name || 'Vendor'}
+                    entityType="vendor"
+                    orderId={order.order_id}
+                    items={order.items.map(item => ({
+                        id: item.product_id,
+                        name: item.product_name,
+                        type: 'product',
+                        rating: 0,
+                        comment: '',
+                    }))}
+                    onSuccess={() => {
+                        setIsReviewed(true);
+                        checkReviewStatus();
+                    }}
+                />
+            )}
         </View>
     );
 }
@@ -546,5 +589,18 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.05)',
     },
-    actionsContainer: { flexDirection: 'row', gap: Spacing.md },
+    actionsContainer: { flexDirection: 'row', gap: Spacing.md, alignItems: 'center' },
+    reviewedBadge: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        borderRadius: BorderRadius.lg,
+    },
+    reviewedText: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
+    },
 });

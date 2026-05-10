@@ -11,9 +11,9 @@ import { useToast } from '@/contexts/ToastContext';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorOrder } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassView } from '@/components';
 
 const ORDER_FILTERS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 type OrderFilter = (typeof ORDER_FILTERS)[number];
@@ -228,7 +228,7 @@ export default function VendorOrdersScreen() {
                         { transform: [{ scale: pressed ? 0.98 : 1 }] }
                     ]}
                 >
-                    <BlurView 
+                    <GlassView 
                         intensity={isDark ? 20 : 40} 
                         tint={isDark ? 'dark' : 'light'} 
                         style={[styles.orderCard, { borderColor: colors.cardBorder, borderLeftColor: palette.fg, borderLeftWidth: 3 }]}
@@ -255,7 +255,7 @@ export default function VendorOrdersScreen() {
                             <Text style={[styles.itemMeta, { color: colors.textMuted }]}>Tap to view details</Text>
                             <MaterialCommunityIcons name="chevron-right" size={18} color={colors.textMuted} />
                         </View>
-                    </BlurView>
+                    </GlassView>
                 </Pressable>
             </Animated.View>
         );
@@ -305,10 +305,10 @@ export default function VendorOrdersScreen() {
                             ))}
                         </View>
                     ) : (
-                        <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
+                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
                             <MaterialCommunityIcons name="receipt-text-outline" size={48} color={colors.textMuted} />
                             <Text style={[styles.emptyText, { color: colors.textMuted }]}>No orders found.</Text>
-                        </BlurView>
+                        </GlassView>
                     )
                 }
             />

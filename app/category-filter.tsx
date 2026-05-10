@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platf
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
   FadeInDown, 
@@ -17,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Colors } from '@/constants/theme';
 import { Category, ServiceCategory } from '@/types/api.types';
@@ -148,7 +147,7 @@ export default function CategoryFilterScreen() {
             <View style={[styles.orb, { bottom: 100, left: -200, backgroundColor: colors.purple + '10' }]} />
 
             <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
-                <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                 <CenteredHeader
                     title="Categories"
                     titleColor={colors.textPrimary}
@@ -271,7 +270,7 @@ export default function CategoryFilterScreen() {
                     </ScrollView>
 
                     <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
-                        <BlurView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                        <GlassView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                         <Pressable 
                             onPress={handleApply} 
                             style={({ pressed }) => [

@@ -18,9 +18,9 @@ import { providerService } from '@/services/api/provider.service';
 import { ProviderDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { GlassView } from '@/components';
 
 function getStatusTint(status: string, colors: any) {
     const s = (status || '').toLowerCase();
@@ -135,7 +135,7 @@ export default function ProviderDashboard() {
                                     entering={FadeInDown.delay(100 * index).duration(600)}
                                     style={{ flex: 1, minWidth: '45%' }}
                                 >
-                                    <BlurView 
+                                    <GlassView 
                                         intensity={isDark ? 20 : 40} 
                                         tint={isDark ? 'dark' : 'light'} 
                                         style={[styles.statCard, { borderColor: colors.cardBorder }]}
@@ -146,7 +146,7 @@ export default function ProviderDashboard() {
                                         <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
                                         <Text style={[styles.statLabel, { color: colors.textPrimary }]}>{stat.label}</Text>
                                         <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{stat.subtitle}</Text>
-                                    </BlurView>
+                                    </GlassView>
                                 </Animated.View>
                             ))}
                         </View>
@@ -182,7 +182,7 @@ export default function ProviderDashboard() {
                                     { borderColor: colors.pink, transform: [{ scale: pressed ? 0.98 : 1 }] }
                                 ]}
                             >
-                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
                                 <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
                                     <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
                                 </View>
@@ -215,7 +215,7 @@ export default function ProviderDashboard() {
                                             { transform: [{ scale: pressed ? 0.98 : 1 }] }
                                         ]}
                                     >
-                                        <BlurView 
+                                        <GlassView 
                                             intensity={isDark ? 20 : 40} 
                                             tint={isDark ? 'dark' : 'light'} 
                                             style={[styles.orderCard, { borderColor: colors.cardBorder }]}
@@ -233,14 +233,14 @@ export default function ProviderDashboard() {
                                                 <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>Booking #{appointment.booking_id}</Text>
                                                 <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} EGP</Text>
                                             </View>
-                                        </BlurView>
+                                        </GlassView>
                                     </Pressable>
                                 ))
                             ) : (
-                                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
+                                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="calendar-blank-outline" size={44} color={colors.textMuted} />
                                     <Text style={[styles.emptyText, { color: colors.textMuted }]}>No appointments today.</Text>
-                                </BlurView>
+                                </GlassView>
                             )}
                         </Animated.View>
 
@@ -255,7 +255,7 @@ export default function ProviderDashboard() {
 
                             {dashboard?.popular_services.length ? (
                                 dashboard.popular_services.map((service) => (
-                                    <BlurView key={service.service_id} intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
+                                    <GlassView key={service.service_id} intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
                                         <View style={styles.productThumbPlaceholder}>
                                             <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
                                         </View>
@@ -266,13 +266,13 @@ export default function ProviderDashboard() {
                                         <Text style={[styles.productRevenue, { color: colors.pink }]}>
                                             {Number(service.revenue).toLocaleString('en-EG')} EGP
                                         </Text>
-                                    </BlurView>
+                                    </GlassView>
                                 ))
                             ) : (
-                                <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
+                                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="wrench-outline" size={44} color={colors.textMuted} />
                                     <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet. Add your first service!</Text>
-                                </BlurView>
+                                </GlassView>
                             )}
                         </Animated.View>
                     </>

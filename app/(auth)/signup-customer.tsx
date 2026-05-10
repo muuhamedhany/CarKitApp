@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -9,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader } from '@/components';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
@@ -87,7 +86,7 @@ export default function SignUpCustomerScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(800)} style={styles.formWrapper}>
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[
@@ -170,7 +169,7 @@ export default function SignUpCustomerScreen() {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }}
               />
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>

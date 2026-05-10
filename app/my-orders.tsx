@@ -14,7 +14,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
 import Animated, { 
   FadeInUp, 
   FadeInDown,
@@ -25,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -124,7 +123,7 @@ export default function MyOrdersScreen() {
       entering={FadeInUp.delay(index * 100).springify()}
       style={styles.cardContainer}
     >
-      <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.orderCard}>
+      <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.orderCard}>
         <View style={styles.orderHeader}>
           <View>
             <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{item.order_id}</Text>
@@ -161,7 +160,7 @@ export default function MyOrdersScreen() {
             </LinearGradient>
           </Pressable>
         </View>
-      </BlurView>
+      </GlassView>
     </Animated.View>
   );
 
@@ -178,7 +177,7 @@ export default function MyOrdersScreen() {
       <CenteredHeader title="My Orders" titleColor={colors.textPrimary} />
 
       <View style={styles.tabContainer}>
-        <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+        <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
           <Pressable
             style={styles.tab}
             onPress={() => {
@@ -203,13 +202,13 @@ export default function MyOrdersScreen() {
             )}
             <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>Delivered</Text>
           </Pressable>
-        </BlurView>
+        </GlassView>
       </View>
 
       {loading && !refreshing ? (
         <View style={styles.skeletonContainer}>
           {[1, 2, 3].map(i => (
-            <BlurView key={i} intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.skeletonCard}>
+            <GlassView key={i} intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.skeletonCard}>
                <View style={styles.skeletonHeader}>
                  <View>
                    <SkeletonBone width={100} height={18} />
@@ -225,14 +224,14 @@ export default function MyOrdersScreen() {
                  </View>
                  <SkeletonBone width={80} height={36} borderRadius={18} />
                </View>
-            </BlurView>
+            </GlassView>
           ))}
         </View>
       ) : orders.length === 0 ? (
         <Animated.View entering={FadeInDown} style={styles.center}>
-          <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <MaterialCommunityIcons name="package-variant" size={48} color={colors.pink} />
-          </BlurView>
+          </GlassView>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} orders</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} product orders will appear here.</Text>
         </Animated.View>

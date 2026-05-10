@@ -1,29 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  Dimensions,
-  Platform,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
+import { CenteredHeader, GlassView, GradientButton } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
 import { addressService, bookingService, paymentService } from '@/services/api';
-import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
 import { PaymentMethod } from '@/services/api/payment.service';
-import { GradientButton, CenteredHeader } from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -136,25 +135,32 @@ export default function BookingConfirmationScreen() {
     []
   );
 
-  useEffect(() => {
-    const loadAddresses = async () => {
-      try {
-        const response = await addressService.getAddresses();
-        if (response.success && Array.isArray(response.data)) {
-          setAddresses(response.data);
-          if (response.data.length > 0) {
-            setSelectedAddressId(response.data[0].address_id);
-          }
+  const loadAddresses = useCallback(async () => {
+    try {
+      const response = await addressService.getAddresses();
+      if (response.success && Array.isArray(response.data)) {
+        // Normalize IDs
+        const normalized = response.data.map(addr => ({
+          ...addr,
+          address_id: addr.address_id || addr.id
+        }));
+        setAddresses(normalized);
+        if (normalized.length > 0 && !selectedAddressId) {
+          setSelectedAddressId(normalized[0].address_id);
         }
-      } catch {
-        showToast('error', 'Address Error', 'Could not load addresses.');
-      } finally {
-        setLoadingAddresses(false);
       }
-    };
+    } catch {
+      showToast('error', 'Address Error', 'Could not load addresses.');
+    } finally {
+      setLoadingAddresses(false);
+    }
+  }, [selectedAddressId, showToast]);
 
-    loadAddresses();
-  }, [showToast, token]);
+  useFocusEffect(
+    useCallback(() => {
+      loadAddresses();
+    }, [loadAddresses])
+  );
 
   const selectedAddress = addresses.find((address) => address.address_id === selectedAddressId) || null;
   const selectedAddressLabel = selectedAddress
@@ -236,21 +242,21 @@ export default function BookingConfirmationScreen() {
         colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
       <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
-      <CenteredHeader 
-        title="Confirm Booking" 
-        titleColor={colors.textPrimary} 
+      <CenteredHeader
+        title="Confirm Booking"
+        titleColor={colors.textPrimary}
       />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.summaryCard} {...{} as any}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.summaryCard} {...{} as any}>
             <View style={styles.summaryHeader}>
               <View style={styles.summaryInfo}>
                 <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>{serviceName}</Text>
@@ -269,7 +275,7 @@ export default function BookingConfirmationScreen() {
                 <Text style={[styles.footerText, { color: colors.textSecondary }]}>Certified</Text>
               </View>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
@@ -333,10 +339,10 @@ export default function BookingConfirmationScreen() {
               })}
             </View>
           ) : (
-            <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
+            <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
               <MaterialCommunityIcons name="clock-alert-outline" size={20} color={colors.pink} />
               <Text style={[styles.infoText, { color: colors.textSecondary }]}>No provider time slots available for this service.</Text>
-            </BlurView>
+            </GlassView>
           )}
         </Animated.View>
 
@@ -348,10 +354,10 @@ export default function BookingConfirmationScreen() {
             <Pressable
               onPress={() => router.push('/profile/addresses')}
             >
-              <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
+              <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
                 <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
-              </BlurView>
+              </GlassView>
             </Pressable>
           ) : (
             addresses.map((address) => {
@@ -365,9 +371,9 @@ export default function BookingConfirmationScreen() {
                     setSelectedAddressId(address.address_id);
                   }}
                 >
-                  <BlurView 
-                    intensity={active ? 40 : 20} 
-                    tint={isDark ? 'dark' : 'light'} 
+                  <GlassView
+                    intensity={active ? 40 : 20}
+                    tint={isDark ? 'dark' : 'light'}
                     style={[styles.addressCard, { borderColor: active ? colors.pink : 'rgba(255,255,255,0.1)' }]}
                   >
                     <View style={styles.addressHeader}>
@@ -381,7 +387,7 @@ export default function BookingConfirmationScreen() {
                         {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
                       </View>
                     </View>
-                  </BlurView>
+                  </GlassView>
                 </Pressable>
               );
             })
@@ -401,9 +407,9 @@ export default function BookingConfirmationScreen() {
                   setPaymentMethod(method.value);
                 }}
               >
-                <BlurView 
-                  intensity={active ? 40 : 20} 
-                  tint={isDark ? 'dark' : 'light'} 
+                <GlassView
+                  intensity={active ? 40 : 20}
+                  tint={isDark ? 'dark' : 'light'}
                   style={[styles.methodCard, { borderColor: active ? colors.pink : 'rgba(255,255,255,0.1)' }]}
                 >
                   <View style={[styles.methodIcon, { backgroundColor: active ? colors.pink + '20' : 'rgba(255,255,255,0.05)' }]}>
@@ -420,13 +426,13 @@ export default function BookingConfirmationScreen() {
                   <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
                   </View>
-                </BlurView>
+                </GlassView>
               </Pressable>
             );
           })}
 
           {paymentMethod === 'instapay' && (
-            <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard} {...{} as any}>
+            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard} {...{} as any}>
               <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>InstaPay Reference</Text>
               <TextInput
                 value={instapayReference}
@@ -435,11 +441,11 @@ export default function BookingConfirmationScreen() {
                 placeholderTextColor={colors.textMuted}
                 style={[styles.textInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
               />
-            </BlurView>
+            </GlassView>
           )}
 
           {paymentMethod === 'vodafone_cash' && (
-            <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
+            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
               <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>Vodafone Cash Number</Text>
               <TextInput
                 value={vodafoneNumber}
@@ -449,11 +455,11 @@ export default function BookingConfirmationScreen() {
                 keyboardType="phone-pad"
                 style={[styles.textInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
               />
-            </BlurView>
+            </GlassView>
           )}
 
           {paymentMethod === 'credit_card' && (
-            <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
+            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
               <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>Card Details</Text>
               <TextInput
                 value={cardNumber}
@@ -481,14 +487,14 @@ export default function BookingConfirmationScreen() {
                   style={[styles.textInput, styles.cardHalfInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
                 />
               </View>
-            </BlurView>
+            </GlassView>
           )}
         </Animated.View>
 
         <View style={{ height: 160 }} />
       </ScrollView>
 
-      <BlurView intensity={Platform.OS === 'ios' ? 80 : 100} tint={isDark ? 'dark' : 'light'} style={styles.bottomBar} {...{} as any}>
+      <GlassView intensity={Platform.OS === 'ios' ? 80 : 100} tint={isDark ? 'dark' : 'light'} style={styles.bottomBar} {...{} as any}>
         <View style={styles.totalContainer}>
           <View style={styles.totalInfo}>
             <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Price</Text>
@@ -503,7 +509,7 @@ export default function BookingConfirmationScreen() {
             icon="check-circle-outline"
           />
         </View>
-      </BlurView>
+      </GlassView>
     </View>
   );
 }

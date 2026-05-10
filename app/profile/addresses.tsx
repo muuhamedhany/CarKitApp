@@ -1,29 +1,28 @@
-import { useState, useCallback, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  Pressable, 
-  Platform, 
-  ScrollView, 
-  ActivityIndicator, 
-  Dimensions 
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp, FadeInLeft, Layout } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
+import Animated, { FadeInDown, FadeInLeft, Layout } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
 import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
-import { addressService, AddressData } from '@/services/api';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { AddressData, addressService } from '@/services/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -127,12 +126,12 @@ export default function AddressesScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <CenteredHeader
         title={isAdding ? 'Add Address' : 'Addresses'}
@@ -147,7 +146,7 @@ export default function AddressesScreen() {
       ) : isAdding ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -177,11 +176,11 @@ export default function AddressesScreen() {
                   </Text>
                 </View>
               )}
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Title (e.g. Home, Work)</Text>
                 <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
@@ -263,20 +262,20 @@ export default function AddressesScreen() {
                   />
                 </View>
               </View>
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <GradientButton 
-              title="Save Address" 
-              onPress={handleSave} 
+            <GradientButton
+              title="Save Address"
+              onPress={handleSave}
               loading={saving}
               style={{ marginTop: Spacing.xl }}
               icon="content-save-outline"
             />
-            <OutlinedButton 
-              title="Cancel" 
-              onPress={() => setIsAdding(false)} 
+            <OutlinedButton
+              title="Cancel"
+              onPress={() => setIsAdding(false)}
               style={{ marginTop: Spacing.md }}
               textColor={colors.textMuted}
             />
@@ -294,12 +293,12 @@ export default function AddressesScreen() {
             </Animated.View>
           ) : (
             addresses.map((addr, index) => (
-              <Animated.View 
-                key={addr.address_id || addr.id} 
+              <Animated.View
+                key={addr.address_id || addr.id}
                 entering={FadeInLeft.delay(index * 100).springify()}
                 layout={Layout.springify()}
               >
-                <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.addressCard}>
+                <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.addressCard}>
                   <View style={styles.cardInfo}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
                       <MaterialCommunityIcons name="map-marker" size={20} color={colors.pink} />
@@ -315,22 +314,22 @@ export default function AddressesScreen() {
                       </Text>
                     )}
                   </View>
-                  <Pressable 
-                    onPress={() => handleDelete(addr.address_id || addr.id)} 
+                  <Pressable
+                    onPress={() => handleDelete(addr.address_id || addr.id)}
                     style={styles.deleteBtn}
                   >
                     <View style={[styles.deleteIconWrap, { backgroundColor: colors.error + '15' }]}>
                       <MaterialCommunityIcons name="trash-can-outline" size={20} color={colors.error} />
                     </View>
                   </Pressable>
-                </BlurView>
+                </GlassView>
               </Animated.View>
             ))
           )}
 
           <Animated.View entering={FadeInDown.delay(addresses.length * 100).springify()}>
-            <GradientButton 
-              title="Add New Address" 
+            <GradientButton
+              title="Add New Address"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setIsAdding(true);
@@ -356,16 +355,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 100 },
-  
+
   orb: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.1 },
-  orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
   glassCard: {
     borderRadius: BorderRadius.xl,

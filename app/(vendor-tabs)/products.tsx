@@ -9,8 +9,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { apiFetch } from '@/services/api/client';
 import { Product } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { FormInput } from '@/components';
-import { BlurView } from 'expo-blur';
+import { FormInput, GlassView} from '@/components';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -127,7 +126,7 @@ export default function VendorProductsScreen() {
             { transform: [{ scale: pressed ? 0.98 : 1 }] }
           ]}
         >
-          <BlurView 
+          <GlassView 
             intensity={isDark ? 20 : 40} 
             tint={isDark ? 'dark' : 'light'} 
             style={[styles.productCard, { borderColor: colors.cardBorder }]}
@@ -155,7 +154,7 @@ export default function VendorProductsScreen() {
               <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
               <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
             </View>
-          </BlurView>
+          </GlassView>
         </Pressable>
       </Animated.View>
     );
@@ -185,18 +184,18 @@ export default function VendorProductsScreen() {
       </View>
 
       <View style={styles.statsRow}>
-        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
           <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
           <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total Items</Text>
-        </BlurView>
-        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+        </GlassView>
+        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
           <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
           <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Low Stock</Text>
-        </BlurView>
-        <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+        </GlassView>
+        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
           <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
           <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Out</Text>
-        </BlurView>
+        </GlassView>
       </View>
 
       <View style={styles.searchWrap}>
@@ -268,13 +267,13 @@ export default function VendorProductsScreen() {
       </ScrollView>
 
       {hasLowStock && (
-        <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.alertBox, { borderColor: 'rgba(249,115,22,0.5)' }]}>
+        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.alertBox, { borderColor: 'rgba(249,115,22,0.5)' }]}>
           <MaterialCommunityIcons name="alert-outline" size={22} color="#F97316" />
           <View style={{ flex: 1 }}>
             <Text style={styles.alertTitle}>Low Stock Alert</Text>
             <Text style={styles.alertText}>Some products are reaching critical stock levels. Restock soon.</Text>
           </View>
-        </BlurView>
+        </GlassView>
       )}
     </Animated.View>
   );
@@ -303,10 +302,10 @@ export default function VendorProductsScreen() {
           loading ? (
             <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
           ) : (
-            <BlurView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
+            <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder, marginHorizontal: Spacing.md }]}>
               <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products found.</Text>
-            </BlurView>
+            </GlassView>
           )
         }
       />

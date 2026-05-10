@@ -7,14 +7,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ServiceDetailSkeleton } from '@/components';
+import { ServiceDetailSkeleton, GlassView} from '@/components';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -118,7 +117,7 @@ export default function ServiceDetailScreen() {
         styles.stickyHeader,
         { height: insets.top + 50, opacity: headerOpacity }
       ]}>
-        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { marginTop: insets.top }]}>
            <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{service.name}</Text>
         </View>
@@ -130,16 +129,16 @@ export default function ServiceDetailScreen() {
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} 
           style={styles.floatingIconBtn}
         >
-          <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+          <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
              <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
-          </BlurView>
+          </GlassView>
         </Pressable>
         
         <View style={styles.rightFloatingControls}>
           <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={styles.floatingIconBtn}>
-            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+            <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
               <MaterialCommunityIcons name="share-variant" size={20} color="#FFF" />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </View>
       </View>
@@ -207,7 +206,15 @@ export default function ServiceDetailScreen() {
             </View>
           </View>
 
-          <View style={[styles.providerCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+          <Pressable 
+            style={[styles.providerCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+            onPress={() => {
+              if (service.provider_id_fk) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/provider/${service.provider_id_fk}`);
+              }
+            }}
+          >
              <View style={[styles.providerAvatar, { backgroundColor: colors.background }]}>
                 <MaterialCommunityIcons name="shield-star-outline" size={20} color={colors.pink} />
              </View>
@@ -216,7 +223,7 @@ export default function ServiceDetailScreen() {
                 <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || 'Verified Partner'}</Text>
              </View>
              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-          </View>
+          </Pressable>
 
           <View style={styles.statsRow}>
              <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
@@ -258,7 +265,7 @@ export default function ServiceDetailScreen() {
 
       {/* Glassmorphic Bottom Action Bar */}
       <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 10 }]}>
-         <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
+         <GlassView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
             <View style={styles.bottomBarContent}>
                <View style={styles.priceInfo}>
                   <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Starting at</Text>
@@ -286,7 +293,7 @@ export default function ServiceDetailScreen() {
                  </LinearGradient>
                </Pressable>
             </View>
-         </BlurView>
+         </GlassView>
       </View>
     </View>
   );

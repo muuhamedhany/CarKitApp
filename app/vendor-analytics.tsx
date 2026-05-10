@@ -22,10 +22,10 @@ import {
   VendorAnalyticsTrendPoint,
 } from '@/types/api.types';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { GlassView } from '@/components';
 
 const RANGE_OPTIONS: Array<{ label: string; value: VendorAnalyticsRange }> = [
   { label: 'Weekly', value: 'weekly' },
@@ -234,7 +234,7 @@ export default function VendorAnalyticsScreen() {
         ) : (
           <>
             <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-              <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '90' }]}>
+              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '90' }]}>
                 <View>
                   <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
                   <Text
@@ -254,12 +254,12 @@ export default function VendorAnalyticsScreen() {
                     {formatPercent(analytics.revenue.change_pct)}
                   </Text>
                 </View>
-              </BlurView>
+              </GlassView>
             </Animated.View>
 
             <View style={styles.statGrid}>
               <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ flex: 1 }}>
-                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>total Orders</Text>
                   <Text
@@ -274,11 +274,11 @@ export default function VendorAnalyticsScreen() {
                   >
                     {formatPercent(analytics.orders.change_pct)}
                   </Text>
-                </BlurView>
+                </GlassView>
               </Animated.View>
 
               <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ flex: 1 }}>
-                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Order Value</Text>
                   <Text
@@ -293,12 +293,12 @@ export default function VendorAnalyticsScreen() {
                   >
                     {formatPercent(analytics.order_value.change_pct)}
                   </Text>
-                </BlurView>
+                </GlassView>
               </Animated.View>
             </View>
 
             <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
@@ -334,11 +334,11 @@ export default function VendorAnalyticsScreen() {
                     </Text>
                   ))}
                 </View>
-              </BlurView>
+              </GlassView>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(600).duration(800)}>
-              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
                 <View style={styles.categoryRow}>
                   <View style={styles.donutWrap}>
@@ -397,11 +397,11 @@ export default function VendorAnalyticsScreen() {
                     ))}
                   </View>
                 </View>
-              </BlurView>
+              </GlassView>
             </Animated.View>
 
             <Animated.View entering={FadeInUp.delay(700).duration(800)}>
-              <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
                   <Pressable
@@ -442,7 +442,7 @@ export default function VendorAnalyticsScreen() {
                 ) : (
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No products yet.</Text>
                 )}
-              </BlurView>
+              </GlassView>
             </Animated.View>
           </>
         )}

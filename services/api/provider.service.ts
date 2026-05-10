@@ -1,4 +1,3 @@
-import { apiFetch } from './client';
 import {
     ApiResponse,
     ProviderAnalyticsRange,
@@ -8,7 +7,9 @@ import {
     ProviderDashboardResponse,
     Service,
     ServiceFormPayload,
+    ProviderPublicProfile,
 } from '@/types/api.types';
+import { apiFetch } from './client';
 
 export const providerService = {
     // Dashboard
@@ -30,7 +31,7 @@ export const providerService = {
         if (page) params.append('page', page.toString());
         if (limit) params.append('limit', limit.toString());
         if (search) params.append('search', search);
-        
+
         const query = params.toString() ? `?${params.toString()}` : '';
         return apiFetch<ApiResponse<ProviderBooking[]>>(`/service-providers/me/bookings${query}`);
     },
@@ -86,5 +87,79 @@ export const providerService = {
 
     async getServiceCategories() {
         return apiFetch<ApiResponse<Array<{ service_category_id: number; name: string }>>>('/services/categories');
+    },
+
+    async getProviderById(providerId: number) {
+        try {
+            // Fetch profile and services in parallel
+            const [profileRes, servicesRes1, servicesRes2] = await Promise.all([
+                apiFetch<ApiResponse<ProviderPublicProfile>>(`/service-providers/${providerId}`).catch(() => null),
+                apiFetch<ApiResponse<Service[]>>(`/services?provider_id=${providerId}`).catch(() => null),
+                apiFetch<ApiResponse<Service[]>>(`/services?provider_id_fk=${providerId}`).catch(() => null)
+            ]);
+
+            const profile = profileRes?.success ? profileRes.data : null;
+            
+            // Combine services and strictly verify they belong to this provider (checking all possible ID fields)
+            const isMatch = (s: any, id: any) => {
+                const sId = String(id);
+                return String(s.provider_id) === sId || 
+                       String(s.provider_id_fk) === sId || 
+                       String(s.user_id) === sId || 
+                       String(s.user_id_fk) === sId ||
+                       String(s.vendor_id) === sId ||
+                       String(s.vendor_id_fk) === sId;
+            };
+
+            let allServices: Service[] = [];
+            if (servicesRes1?.success && servicesRes1.data) {
+                const filtered = servicesRes1.data.filter(s => isMatch(s, providerId));
+                allServices = [...allServices, ...filtered];
+            }
+            if (servicesRes2?.success && servicesRes2.data) {
+                const existingIds = new Set(allServices.map(s => s.service_id));
+                const filtered = servicesRes2.data.filter(s => isMatch(s, providerId) && !existingIds.has(s.service_id));
+                allServices = [...allServices, ...filtered];
+            }
+
+            // Merge services into the profile and filter strictly
+            if (profile) {
+                const profileServices = Array.isArray(profile.services) ? profile.services : [];
+                const mergedServices = [...allServices, ...profileServices];
+
+                // Deduplicate and filter by ID (string safe)
+                const finalServices = mergedServices.filter((s, index, self) => 
+                    isMatch(s, providerId) &&
+                    self.findIndex(t => t.service_id === s.service_id) === index
+                );
+
+                return {
+                    success: true,
+                    data: {
+                        ...profile,
+                        services: finalServices
+                    }
+                } as ApiResponse<ProviderPublicProfile>;
+            }
+
+            // If profile fetch failed but we have services
+            if (allServices.length > 0) {
+                return {
+                    success: true,
+                    data: {
+                        provider_id: providerId,
+                        name: allServices[0].provider_name || 'Service Provider',
+                        services: allServices,
+                        rating: allServices[0].rating || 0,
+                        review_count: allServices[0].review_count || 0
+                    }
+                } as ApiResponse<ProviderPublicProfile>;
+            }
+
+            throw new Error('Provider not found');
+        } catch (error) {
+            console.error('[ProviderService] Error in getProviderById:', error);
+            throw error;
+        }
     },
 };

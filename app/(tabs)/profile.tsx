@@ -1,32 +1,26 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Platform,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import Animated, { 
-  FadeInUp, 
-  FadeInDown, 
-  useSharedValue, 
-  useAnimatedScrollHandler, 
-  useAnimatedStyle,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts, Colors, Shadows, BorderRadius } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeInUp
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView } from '@/components';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
@@ -80,7 +74,7 @@ export default function ProfileScreen() {
     const iconStyle = getIconStyles(item.label);
 
     return (
-      <Animated.View 
+      <Animated.View
         key={item.label}
         entering={FadeInUp.delay(500 + index * 100).duration(600)}
         style={styles.quickActionWrapper}
@@ -88,8 +82,8 @@ export default function ProfileScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.quickActionCard,
-            { 
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', 
+            {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
               borderColor: colors.cardBorder,
               opacity: pressed ? 0.8 : 1
             },
@@ -152,42 +146,67 @@ export default function ProfileScreen() {
       >
         {/* Profile Header Card */}
         <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileHeaderCard, { borderColor: colors.cardBorder }]}>
-            <View style={styles.headerRow}>
-              <View style={[styles.avatarContainer, { borderColor: colors.pink + '50', borderWidth: 1 }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileHeaderCard, { borderColor: colors.cardBorder }]}>
+            {/* Decorative gradient accent inside card */}
+            <LinearGradient
+              colors={[colors.pink + '12', 'transparent']}
+              style={styles.cardAccent}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+
+            {/* Avatar with glow */}
+            <View style={styles.avatarSection}>
+              <View style={[styles.avatarGlow, { shadowColor: colors.pink }]}>
                 <LinearGradient
-                  colors={[colors.pink, colors.purple]}
-                  style={styles.avatarGradient}
+                  colors={[colors.pink + '30', colors.purple + '20']}
+                  style={styles.avatarRing}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.avatarInitial}>{profileInitial}</Text>
+                  <View style={[styles.avatarContainer, { borderColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.8)' }]}>
+                    <LinearGradient
+                      colors={[colors.pink, colors.purple]}
+                      style={styles.avatarGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Text style={styles.avatarInitial}>{profileInitial}</Text>
+                    </LinearGradient>
+                  </View>
                 </LinearGradient>
               </View>
-              <View style={styles.headerInfo}>
-                <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.name || 'User'}</Text>
-                <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
-                <View style={[styles.memberBadge, { backgroundColor: colors.pink + '20' }]}>
-                  <MaterialCommunityIcons name="shield-check" size={12} color={colors.pink} />
-                  <Text style={[styles.memberBadgeText, { color: colors.pink }]}>VERIFIED MEMBER</Text>
-                </View>
+            </View>
+
+            {/* User Info */}
+            <View style={styles.userInfoSection}>
+              <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name || 'User'}</Text>
+              <View style={[styles.emailPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <MaterialCommunityIcons name="email-outline" size={13} color={colors.textMuted} />
+                <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">{user?.email}</Text>
+              </View>
+              <View style={[styles.memberBadge, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '25' }]}>
+                <MaterialCommunityIcons name="shield-check" size={12} color={colors.pink} />
+                <Text style={[styles.memberBadgeText, { color: colors.pink }]}>VERIFIED MEMBER</Text>
               </View>
             </View>
-            
+
+            {/* Edit Profile Button */}
             <Pressable
-              style={({ pressed }) => [
-                styles.editProfileBtn, 
-                { 
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                  opacity: pressed ? 0.7 : 1 
-                }
-              ]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/profile/edit'); }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
             >
-              <Text style={[styles.editProfileText, { color: colors.textPrimary }]}>Edit Profile</Text>
-              <MaterialCommunityIcons name="pencil" size={14} color={colors.textPrimary} style={{ marginLeft: 6 }} />
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.editProfileBtn}
+              >
+                <MaterialCommunityIcons name="account-edit-outline" size={16} color="#FFF" />
+                <Text style={styles.editProfileText}>Edit Profile</Text>
+              </LinearGradient>
             </Pressable>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* Quick Access */}
@@ -199,7 +218,7 @@ export default function ProfileScreen() {
         {/* Account & General */}
         <Animated.Text entering={FadeInDown.delay(700).duration(600)} style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Animated.Text>
         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
             {personalItems.map((item, idx) => renderMenuItem(item, idx, false))}
             <Pressable
               style={styles.menuItem}
@@ -211,17 +230,17 @@ export default function ProfileScreen() {
               <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Settings</Text>
               <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
             </Pressable>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* Logout */}
         <Animated.View entering={FadeInUp.delay(900).duration(800)}>
-          <Pressable 
-            onPress={handleLogout} 
+          <Pressable
+            onPress={handleLogout}
             style={({ pressed }) => [
-              styles.logoutBtn, 
-              { 
-                borderColor: 'rgba(255, 77, 77, 0.3)', 
+              styles.logoutBtn,
+              {
+                borderColor: 'rgba(255, 77, 77, 0.3)',
                 backgroundColor: 'rgba(255, 77, 77, 0.05)',
                 opacity: pressed ? 0.7 : 1
               }
@@ -249,43 +268,88 @@ const styles = StyleSheet.create({
 
   profileHeaderCard: {
     borderRadius: BorderRadius.xxl,
-    padding: Spacing.xl,
+    paddingTop: Spacing.xl + 4,
+    paddingBottom: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
     borderWidth: 1,
     ...Shadows.lg,
     overflow: 'hidden',
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  avatarContainer: {
-    width: 84, height: 84, borderRadius: 42,
+  cardAccent: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 120,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  avatarGlow: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  avatarRing: {
+    width: 96, height: 96, borderRadius: 48,
+    justifyContent: 'center', alignItems: 'center',
     padding: 3,
   },
+  avatarContainer: {
+    width: 90, height: 90, borderRadius: 45,
+    borderWidth: 2,
+    overflow: 'hidden',
+  },
   avatarGradient: {
-    flex: 1, borderRadius: 40,
+    flex: 1,
     justifyContent: 'center', alignItems: 'center',
   },
   avatarInitial: {
     fontFamily: Fonts.extraBold,
-    fontSize: 34, color: '#FFF',
+    fontSize: 36, color: '#FFF',
+    marginTop: -1,
   },
-  headerInfo: { flex: 1, marginLeft: Spacing.xl },
-  userName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl, letterSpacing: -1 },
-  userEmail: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.6, marginTop: 2 },
+  userInfoSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg + 4,
+  },
+  userName: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xxl,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  emailPill: {
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: 8, paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 20, gap: 6, borderWidth: 1,
+    maxWidth: '90%',
+  },
+  userEmail: {
+    fontFamily: Fonts.medium, fontSize: FontSizes.xs,
+    flexShrink: 1,
+  },
   memberBadge: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
-    marginTop: 10, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-    gap: 4,
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: 10, paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 20, gap: 5, borderWidth: 1,
   },
-  memberBadgeText: { fontFamily: Fonts.bold, fontSize: 9, letterSpacing: 0.5 },
-
+  memberBadgeText: { fontFamily: Fonts.bold, fontSize: 9, letterSpacing: 0.8 },
   editProfileBtn: {
-    marginTop: Spacing.xl, 
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: BorderRadius.xl,
+    gap: 8,
+    ...Shadows.md,
+    shadowColor: '#CD42A8',
   },
-  editProfileText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+  editProfileText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    color: '#FFF',
+  },
 
   groupLabel: {
     fontFamily: Fonts.extraBold, fontSize: 11,

@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
 
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -25,7 +24,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { API_URL } from '@/constants/config';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -109,7 +108,7 @@ export default function WishlistScreen() {
         style={({ pressed }) => [styles.cardWrapper, { opacity: pressed ? 0.9 : 1 }]}
         onPress={() => router.push(`/product/${item.product_id}` as any)}
       >
-        <BlurView
+        <GlassView
           intensity={isDark ? 30 : 50}
           tint={isDark ? 'dark' : 'light'}
           style={[styles.card, { borderColor: 'rgba(255,255,255,0.1)' }]}
@@ -165,7 +164,7 @@ export default function WishlistScreen() {
               </View>
             </View>
           </View>
-        </BlurView>
+        </GlassView>
       </Pressable>
     </Animated.View>
   );
@@ -188,9 +187,9 @@ export default function WishlistScreen() {
         </View>
       ) : products.length === 0 ? (
         <Animated.View entering={FadeInDown} style={styles.center}>
-          <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <MaterialCommunityIcons name="cards-heart-outline" size={56} color={colors.pink} />
-          </BlurView>
+          </GlassView>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No items yet</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
             Heart products you love and they'll appear here.

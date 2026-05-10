@@ -1,22 +1,22 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
 import {
-  useFonts,
   Poppins_400Regular,
   Poppins_500Medium,
   Poppins_600SemiBold,
   Poppins_700Bold,
-  Poppins_800ExtraBold,
   Poppins_700Bold_Italic,
+  Poppins_800ExtraBold,
   Poppins_800ExtraBold_Italic,
+  useFonts,
 } from '@expo-google-fonts/poppins';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { CartProvider } from '@/contexts/CartContext';
-import { ToastProvider } from '@/contexts/ToastContext';
-import { WishlistProvider } from '@/contexts/WishlistContext';
-import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 // Prevent the splash screen from auto-hiding

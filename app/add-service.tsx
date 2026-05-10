@@ -11,7 +11,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -22,6 +21,7 @@ import { providerService } from '@/services/api/provider.service';
 import { supabase } from '@/lib/supabase';
 import GradientButton from '@/components/common/GradientButton';
 import BackButton from '@/components/common/BackButton';
+import { GlassView } from '@/components';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ export default function AddServiceScreen() {
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                 <Animated.View entering={FadeInDown} key={`step-${currentStep}`}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.stepCard, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.stepCard, { borderColor: colors.cardBorder }]}>
                         {currentStep === 0 && (
                             <View>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Information</Text>
@@ -150,7 +150,7 @@ export default function AddServiceScreen() {
                                 </Pressable>
                             </View>
                         )}
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
             </ScrollView>
 

@@ -4,12 +4,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { GradientButton } from '@/components';
+import { GradientButton, GlassView} from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -58,7 +57,7 @@ export default function BookingSuccessScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.cardWrapper}>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.detailsCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.detailsCard}>
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Booking Summary</Text>
 
             <View style={styles.detailRow}>
@@ -86,7 +85,7 @@ export default function BookingSuccessScreen() {
               <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Amount Paid</Text>
               <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>{price} EGP</Text>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600).springify()}>

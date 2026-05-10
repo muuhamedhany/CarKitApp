@@ -16,7 +16,6 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,7 +24,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, FormInput, PickerModal, GradientButton } from '@/components';
+import { CenteredHeader, FormInput, PickerModal, GradientButton, GlassView} from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
@@ -225,7 +224,7 @@ export default function AddVehicleSignupScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <BlurView
+            <GlassView
               intensity={isDark ? 30 : 50}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.glassCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
@@ -355,7 +354,7 @@ export default function AddVehicleSignupScreen() {
               >
                 <Text style={[styles.skipText, { color: colors.pink }]}>Skip for now</Text>
               </Pressable>
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <View style={{ height: 100 }} />

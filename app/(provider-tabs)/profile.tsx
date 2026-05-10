@@ -8,10 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { providerService } from '@/services/api/provider.service';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { GlassView } from '@/components';
 
 export default function ProviderProfileScreen() {
     const router = useRouter();
@@ -84,7 +84,7 @@ export default function ProviderProfileScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(100).duration(800)}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
                         <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
                             <Text style={[styles.avatarText, { color: colors.pink }]}>
                                 {user?.name?.charAt(0).toUpperCase()}
@@ -98,7 +98,7 @@ export default function ProviderProfileScreen() {
                                 <Text style={[styles.badgeText, { color: verBadge.fg }]}>{verBadge.label}</Text>
                             </View>
                         </View>
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
 
                 <View style={styles.storeStatsRow}>
@@ -112,7 +112,7 @@ export default function ProviderProfileScreen() {
                             entering={FadeInDown.delay(200 + index * 100).duration(800)}
                             style={{ flex: 1 }}
                         >
-                            <BlurView 
+                            <GlassView 
                                 intensity={isDark ? 20 : 40} 
                                 tint={isDark ? 'dark' : 'light'} 
                                 style={[styles.storeStat, { borderColor: colors.cardBorder }]}
@@ -120,13 +120,13 @@ export default function ProviderProfileScreen() {
                                 <MaterialCommunityIcons name={stat.icon} size={22} color={stat.color} />
                                 <Text style={[styles.storeStatValue, { color: colors.textPrimary }]} numberOfLines={1}>{stat.value}</Text>
                                 <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
-                            </BlurView>
+                            </GlassView>
                         </Animated.View>
                     ))}
                 </View>
 
                 <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
                         <View style={styles.infoItem}>
                             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Role</Text>
                             <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Service Provider</Text>
@@ -135,11 +135,11 @@ export default function ProviderProfileScreen() {
                             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Provider ID</Text>
                             <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{(user as any)?.provider_id ?? 'N/A'}</Text>
                         </View>
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
 
                 <Animated.View entering={FadeInUp.delay(600).duration(800)}>
-                    <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
                         <Pressable
                             style={({ pressed }) => [
                                 styles.menuItem, 
@@ -204,7 +204,7 @@ export default function ProviderProfileScreen() {
                             <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
                             <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textSecondary} />
                         </Pressable>
-                    </BlurView>
+                    </GlassView>
                 </Animated.View>
             </ScrollView>
         </View>
