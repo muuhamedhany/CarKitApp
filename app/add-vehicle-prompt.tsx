@@ -2,11 +2,11 @@ import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { GlassView } from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,7 +55,7 @@ export default function AddVehiclePromptScreen() {
             ]}
             onPress={() => handlePress('/add-vehicle-signup')}
           >
-            <BlurView
+            <GlassView
               intensity={isDark ? 30 : 50}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.optionCard, { borderColor: colors.pink + '40' }]}
@@ -68,7 +68,7 @@ export default function AddVehiclePromptScreen() {
                 <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Quickly add your car details</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </Animated.View>
 
@@ -80,7 +80,7 @@ export default function AddVehiclePromptScreen() {
             ]}
             onPress={() => handlePress('/(tabs)', true)}
           >
-            <BlurView
+            <GlassView
               intensity={isDark ? 20 : 40}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.optionCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
@@ -93,7 +93,7 @@ export default function AddVehiclePromptScreen() {
                 <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>You can add it later in profile</Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </Animated.View>
       </View>

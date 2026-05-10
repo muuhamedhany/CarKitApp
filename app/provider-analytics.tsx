@@ -16,10 +16,10 @@ import {
     ProviderAnalyticsTrendPoint,
 } from '@/types/api.types';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { GlassView } from '@/components';
 
 const RANGE_OPTIONS: Array<{ label: string; value: ProviderAnalyticsRange }> = [
     { label: 'Weekly', value: 'weekly' },
@@ -190,14 +190,14 @@ export default function ProviderAnalyticsScreen() {
                                 entering={FadeInDown.delay(200 + index * 100).duration(800)}
                                 style={{ flex: 1 }}
                             >
-                                <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name={card.icon as any} size={22} color={card.color} />
                                     <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{card.value}</Text>
                                     <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>{card.label}</Text>
                                     <Text style={[styles.cardChange, { color: getChangeColor(card.change, colors) }]}>
                                         {formatPercent(card.change)}
                                     </Text>
-                                </BlurView>
+                                </GlassView>
                             </Animated.View>
                         ))}
                     </View>
@@ -205,7 +205,7 @@ export default function ProviderAnalyticsScreen() {
                     {/* Revenue Trend Chart */}
                     {analytics?.trend?.points?.length ? (
                         <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.chartCard, { borderColor: colors.cardBorder }]}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.chartCard, { borderColor: colors.cardBorder }]}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                                     Revenue Trend
                                 </Text>
@@ -233,14 +233,14 @@ export default function ProviderAnalyticsScreen() {
                                         </Text>
                                     ))}
                                 </View>
-                            </BlurView>
+                            </GlassView>
                         </Animated.View>
                     ) : null}
 
                     {/* Customer Mix */}
                     {analytics?.customer_mix && (
                         <Animated.View entering={FadeInDown.delay(600).duration(800)}>
-                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.mixCard, { borderColor: colors.cardBorder }]}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.mixCard, { borderColor: colors.cardBorder }]}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Mix</Text>
                                 <View style={styles.mixRow}>
                                     {[
@@ -255,14 +255,14 @@ export default function ProviderAnalyticsScreen() {
                                         </View>
                                     ))}
                                 </View>
-                            </BlurView>
+                            </GlassView>
                         </Animated.View>
                     )}
 
                     {/* Service Revenue breakdown */}
                     {analytics?.service_revenue?.length ? (
                         <Animated.View entering={FadeInUp.delay(700).duration(800)}>
-                            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.breakdownCard, { borderColor: colors.cardBorder }]}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.breakdownCard, { borderColor: colors.cardBorder }]}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Revenue by Service</Text>
                                 {analytics.service_revenue.map((svc, i) => {
                                     const pct = (svc.revenue / maxSvcRevenue) * 100;
@@ -282,7 +282,7 @@ export default function ProviderAnalyticsScreen() {
                                         </View>
                                     );
                                 })}
-                            </BlurView>
+                            </GlassView>
                         </Animated.View>
                     ) : null}
                 </ScrollView>

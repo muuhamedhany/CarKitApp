@@ -1,19 +1,19 @@
-import { useRef } from 'react';
-import { 
-  Pressable, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  ViewStyle, 
-  Animated,
-  Platform,
-  View 
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
+import { GlassView } from '@/components';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Spacing, FontSizes, BorderRadius, Fonts, Animations } from '@/constants/theme';
+import * as Haptics from 'expo-haptics';
+import { useRef } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle
+} from 'react-native';
 
 type SecondaryButtonProps = {
   title: string;
@@ -63,8 +63,8 @@ export default function SecondaryButton({
 
   const ButtonContent = (
     <View style={[
-      styles.glassContainer, 
-      { 
+      styles.glassContainer,
+      {
         backgroundColor: colors.glass,
         borderColor: colors.cardBorder,
       }
@@ -82,17 +82,17 @@ export default function SecondaryButton({
 
   return (
     <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
-      <Pressable 
+      <Pressable
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled || loading} 
+        disabled={disabled || loading}
         style={[styles.wrapper, (disabled || loading) && styles.disabled]}
       >
         {Platform.OS === 'ios' ? (
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blur}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blur}>
             {ButtonContent}
-          </BlurView>
+          </GlassView>
         ) : (
           ButtonContent
         )}

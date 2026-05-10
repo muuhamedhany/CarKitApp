@@ -5,13 +5,12 @@ import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ProviderBooking } from '@/types/api.types';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 import { GradientButton, OutlinedButton } from '@/components';
 import { providerService } from '@/services/api/provider.service';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
@@ -98,7 +97,7 @@ function BookingCard({
                     onPressDetails();
                 }}
             >
-                <BlurView 
+                <GlassView 
                     intensity={isDark ? 20 : 40} 
                     tint={isDark ? 'dark' : 'light'} 
                     style={[styles.card, { borderColor: colors.cardBorder }]}
@@ -169,7 +168,7 @@ function BookingCard({
                             />
                         </View>
                     </View>
-                </BlurView>
+                </GlassView>
             </AnimatedPressable>
         </Animated.View>
     );
@@ -290,7 +289,7 @@ export default function ProviderBookingsScreen() {
                                     setFilter(status);
                                 }}
                             >
-                                <BlurView
+                                <GlassView
                                     intensity={active ? 100 : (isDark ? 20 : 40)}
                                     tint={isDark ? 'dark' : 'light'}
                                     style={[
@@ -304,7 +303,7 @@ export default function ProviderBookingsScreen() {
                                     <Text style={[styles.filterLabel, { color: active ? colors.white : colors.textSecondary }]}>
                                         {label}
                                     </Text>
-                                </BlurView>
+                                </GlassView>
                             </Pressable>
                         );
                     })}

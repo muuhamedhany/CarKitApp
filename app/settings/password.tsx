@@ -1,28 +1,26 @@
-import { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  Pressable, 
-  ActivityIndicator, 
-  Platform, 
-  Dimensions, 
-  ScrollView 
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
+import { CenteredHeader, GradientButton, OutlinedButton, GlassView} from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
+import { useTheme } from '@/hooks/useTheme';
 import { userService } from '@/services/api';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -78,7 +76,7 @@ export default function PasswordScreen() {
         colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
       <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
@@ -90,7 +88,7 @@ export default function PasswordScreen() {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
             <View style={styles.headerInfo}>
               <View style={[styles.iconWrap, { backgroundColor: colors.pink + '20' }]}>
                 <MaterialCommunityIcons name="shield-lock-outline" size={28} color={colors.pink} />
@@ -149,20 +147,20 @@ export default function PasswordScreen() {
                 />
               </View>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <GradientButton 
-            title="Update Password" 
-            onPress={handleUpdatePassword} 
+          <GradientButton
+            title="Update Password"
+            onPress={handleUpdatePassword}
             loading={loading}
             style={{ marginTop: Spacing.xl }}
             icon="key-change"
           />
-          <OutlinedButton 
-            title="Cancel" 
-            onPress={() => router.back()} 
+          <OutlinedButton
+            title="Cancel"
+            onPress={() => router.back()}
             style={{ marginTop: Spacing.md }}
             textColor={colors.textMuted}
           />
@@ -177,7 +175,7 @@ export default function PasswordScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 40 },
-  
+
   orb: {
     position: 'absolute',
     width: width * 0.7,

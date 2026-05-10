@@ -1,7 +1,7 @@
-import { View, TextInput, StyleSheet, Pressable, Text } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type FormInputProps = {
   icon: string;
@@ -38,33 +38,33 @@ export default function FormInput({
     <View style={styles.outerContainer}>
       {label && <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>}
       <View style={[styles.container, { borderColor: colors.inputBorder }]}>
-      <MaterialCommunityIcons
-        name={icon as any}
-        size={20}
-        color={colors.textMuted}
-        style={styles.icon}
-      />
-      <TextInput
-        style={[styles.input, { color: colors.textPrimary }]}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        autoComplete={autoComplete}
-        maxLength={maxLength}
-      />
-      {showToggle && onToggle && (
-        <Pressable onPress={onToggle}>
-          <MaterialCommunityIcons
-            name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
-            size={22}
-            color={colors.textMuted}
-          />
-        </Pressable>
-      )}
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={20}
+          color={colors.textMuted}
+          style={styles.icon}
+        />
+        <TextInput
+          style={[styles.input, { color: colors.textPrimary }]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+        />
+        {showToggle && onToggle && (
+          <Pressable onPress={onToggle}>
+            <MaterialCommunityIcons
+              name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color={colors.textMuted}
+            />
+          </Pressable>
+        )}
       </View>
     </View>
   );

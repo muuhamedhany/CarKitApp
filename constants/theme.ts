@@ -73,9 +73,9 @@ export const Shadows = {
 // ═══════════════════════════════════
 export const DarkColors = {
   // Backgrounds
-  background: '#050505', 
-  backgroundSecondary: '#0D0D0F', 
-  card: 'rgba(20, 20, 25, 0.6)', 
+  background: '#050505',
+  backgroundSecondary: '#0D0D0F',
+  card: 'rgba(20, 20, 25, 0.6)',
   cardBorder: 'rgba(255, 255, 255, 0.08)',
   glass: 'rgba(255, 255, 255, 0.03)',
   glassHighlight: 'rgba(255, 255, 255, 0.08)',

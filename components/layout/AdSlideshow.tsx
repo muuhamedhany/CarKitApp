@@ -1,28 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  interpolate,
-  Extrapolate,
-  SharedValue
-} from 'react-native-reanimated';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { GlassView } from '@/components';
+import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad } from '@/services/api/ad.service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, {
+  Extrapolate,
+  SharedValue,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from 'react-native-reanimated';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const AD_SLIDE_INTERVAL = 5000;
@@ -138,9 +138,9 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
         />
 
         <View style={adStyles.adBadgeWrapper}>
-          <BlurView intensity={20} tint="dark" style={adStyles.adBadgeBlur}>
+          <GlassView intensity={20} tint="dark" style={adStyles.adBadgeBlur}>
             <Text style={adStyles.adBadgeText}>Ad</Text>
-          </BlurView>
+          </GlassView>
         </View>
 
       </Pressable>

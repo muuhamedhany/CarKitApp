@@ -1,31 +1,28 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
+  Animated,
+  Dimensions,
+  FlatList,
   Image,
   Pressable,
-  ActivityIndicator,
-  FlatList,
-  Dimensions,
-  Animated,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
-import { useWishlist } from '@/contexts/WishlistContext';
 
-import { useTheme } from '@/hooks/useTheme';
+import { GlassView, ProductDetailSkeleton } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ProductDetailSkeleton } from '@/components';
+import { useTheme } from '@/hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -38,6 +35,7 @@ type ProductDetail = {
   stock: number;
   category_name: string;
   vendor_name: string;
+  vendor_id_fk?: number;
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
@@ -135,37 +133,37 @@ export default function ProductDetailScreen() {
         styles.stickyHeader,
         { height: insets.top + 50, opacity: headerOpacity }
       ]}>
-        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { marginTop: insets.top }]}>
-           <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{product.name}</Text>
+          <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{product.name}</Text>
         </View>
       </Animated.View>
 
       {/* Floating Back Button */}
       <View style={[styles.floatingControls, { top: insets.top + 10 }]}>
-        <Pressable 
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} 
+        <Pressable
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
           style={styles.floatingIconBtn}
         >
-          <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
-             <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
-          </BlurView>
+          <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
+            <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
+          </GlassView>
         </Pressable>
-        
+
         <View style={styles.rightFloatingControls}>
           <Pressable onPress={handleToggleWishlist} style={styles.floatingIconBtn}>
-            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+            <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
               <MaterialCommunityIcons
                 name={isWishlisted ? 'cards-heart' : 'cards-heart-outline'}
                 size={22}
                 color={isWishlisted ? colors.pink : '#FFF'}
               />
-            </BlurView>
+            </GlassView>
           </Pressable>
           <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(tabs)/cart'); }} style={[styles.floatingIconBtn, { marginLeft: 10 }]}>
-            <BlurView intensity={40} tint="dark" style={styles.blurWrap}>
+            <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
               <MaterialCommunityIcons name="cart-outline" size={22} color="#FFF" />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </View>
       </View>
@@ -204,7 +202,7 @@ export default function ProductDetailScreen() {
             colors={['transparent', 'rgba(0,0,0,0.4)', colors.background]}
             style={styles.heroGradient}
           />
-          
+
           {images.length > 1 && (
             <View style={styles.paginationDots}>
               {images.map((_, i) => (
@@ -224,26 +222,34 @@ export default function ProductDetailScreen() {
         <View style={styles.mainContent}>
           <View style={styles.titleRow}>
             <View style={{ flex: 1 }}>
-               <Text style={[styles.categoryText, { color: colors.pink }]}>{product.category_name?.toUpperCase() || 'GENERAL'}</Text>
-               <Text style={[styles.productTitle, { color: colors.textPrimary }]}>{product.name}</Text>
+              <Text style={[styles.categoryText, { color: colors.pink }]}>{product.category_name?.toUpperCase() || 'GENERAL'}</Text>
+              <Text style={[styles.productTitle, { color: colors.textPrimary }]}>{product.name}</Text>
             </View>
             <View style={[styles.stockBadge, { backgroundColor: product.stock > 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
-               <Text style={[styles.stockText, { color: product.stock > 0 ? colors.success : colors.error }]}>
-                 {product.stock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
-               </Text>
+              <Text style={[styles.stockText, { color: product.stock > 0 ? colors.success : colors.error }]}>
+                {product.stock > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
+              </Text>
             </View>
           </View>
 
-          <View style={[styles.vendorCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-             <View style={[styles.vendorAvatar, { backgroundColor: colors.background }]}>
-                <MaterialCommunityIcons name="storefront-outline" size={20} color={colors.pink} />
-             </View>
-             <View style={{ flex: 1 }}>
-                <Text style={[styles.vendorLabel, { color: colors.textSecondary }]}>Vendor</Text>
-                <Text style={[styles.vendorName, { color: colors.textPrimary }]}>{product.vendor_name || 'Official Store'}</Text>
-             </View>
-             <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-          </View>
+          <Pressable
+            style={[styles.vendorCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+            onPress={() => {
+              if (product.vendor_id_fk) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/vendor/${product.vendor_id_fk}`);
+              }
+            }}
+          >
+            <View style={[styles.vendorAvatar, { backgroundColor: colors.background }]}>
+              <MaterialCommunityIcons name="storefront-outline" size={20} color={colors.pink} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.vendorLabel, { color: colors.textSecondary }]}>Vendor</Text>
+              <Text style={[styles.vendorName, { color: colors.textPrimary }]}>{product.vendor_name || 'Official Store'}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
 
           <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>About Product</Text>
           <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
@@ -252,54 +258,54 @@ export default function ProductDetailScreen() {
 
           {/* Quick Specs / Features can go here */}
           <View style={styles.featuresGrid}>
-             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
-                <MaterialCommunityIcons name="shield-check-outline" size={22} color={colors.pink} />
-                <Text style={[styles.featureText, { color: colors.textPrimary }]}>Authentic</Text>
-             </View>
-             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
-                <MaterialCommunityIcons name="truck-delivery-outline" size={22} color={colors.pink} />
-                <Text style={[styles.featureText, { color: colors.textPrimary }]}>Fast Shipping</Text>
-             </View>
-             <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
-                <MaterialCommunityIcons name="keyboard-return" size={22} color={colors.pink} />
-                <Text style={[styles.featureText, { color: colors.textPrimary }]}>7 Days Return</Text>
-             </View>
+            <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="shield-check-outline" size={22} color={colors.pink} />
+              <Text style={[styles.featureText, { color: colors.textPrimary }]}>Authentic</Text>
+            </View>
+            <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="truck-delivery-outline" size={22} color={colors.pink} />
+              <Text style={[styles.featureText, { color: colors.textPrimary }]}>Fast Shipping</Text>
+            </View>
+            <View style={[styles.featureItem, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="keyboard-return" size={22} color={colors.pink} />
+              <Text style={[styles.featureText, { color: colors.textPrimary }]}>7 Days Return</Text>
+            </View>
           </View>
         </View>
       </Animated.ScrollView>
 
       {/* Glassmorphic Bottom Action Bar */}
       <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 10 }]}>
-         <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
-            <View style={styles.bottomBarContent}>
-               <View style={styles.priceInfo}>
-                  <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Total Price</Text>
-                  <View style={styles.priceRow}>
-                     <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{product.price}</Text>
-                     <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
-                  </View>
-               </View>
-               
-               <Pressable
-                 onPress={handleAddToCart}
-                 disabled={product.stock <= 0}
-                 style={({ pressed }) => [
-                   styles.addBtn,
-                   { opacity: product.stock <= 0 ? 0.5 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }
-                 ]}
-               >
-                 <LinearGradient
-                   colors={[colors.pink, colors.purple]}
-                   start={{ x: 0, y: 0 }}
-                   end={{ x: 1, y: 0 }}
-                   style={styles.addBtnGradient}
-                 >
-                   <MaterialCommunityIcons name="cart-variant" size={20} color="#FFF" />
-                   <Text style={styles.addBtnText}>Add to Cart</Text>
-                 </LinearGradient>
-               </Pressable>
+        <GlassView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
+          <View style={styles.bottomBarContent}>
+            <View style={styles.priceInfo}>
+              <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Total Price</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{product.price}</Text>
+                <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
+              </View>
             </View>
-         </BlurView>
+
+            <Pressable
+              onPress={handleAddToCart}
+              disabled={product.stock <= 0}
+              style={({ pressed }) => [
+                styles.addBtn,
+                { opacity: product.stock <= 0 ? 0.5 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] }
+              ]}
+            >
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.addBtnGradient}
+              >
+                <MaterialCommunityIcons name="cart-variant" size={20} color="#FFF" />
+                <Text style={styles.addBtnText}>Add to Cart</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </GlassView>
       </View>
     </View>
   );
@@ -486,7 +492,7 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
   priceValue: { fontFamily: Fonts.extraBold, fontSize: 24, letterSpacing: -1 },
   currency: { fontFamily: Fonts.bold, fontSize: 12 },
-  
+
   addBtn: {
     flex: 0.55,
     height: 56,

@@ -14,7 +14,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
 import Animated, { 
   FadeInUp, 
   FadeInDown,
@@ -24,7 +23,7 @@ import Animated, {
 import { useAuth } from '@/contexts/AuthContext';
 import { bookingService } from '@/services/api/booking.service';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -136,7 +135,7 @@ export default function MyBookingsScreen() {
       entering={FadeInUp.delay(index * 100).springify()}
       style={styles.cardContainer}
     >
-      <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.bookingCard}>
+      <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.bookingCard}>
         <View style={styles.bookingHeader}>
           <View style={styles.bookingLeft}>
             <Text style={[styles.bookingName, { color: colors.textPrimary }]} numberOfLines={1}>{item.service_name}</Text>
@@ -196,7 +195,7 @@ export default function MyBookingsScreen() {
             </LinearGradient>
           </Pressable>
         </View>
-      </BlurView>
+      </GlassView>
     </Animated.View>
   );
 
@@ -213,7 +212,7 @@ export default function MyBookingsScreen() {
       <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
 
       <View style={styles.tabContainer}>
-        <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+        <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
           <Pressable
             style={[styles.tab]}
             onPress={() => {
@@ -238,7 +237,7 @@ export default function MyBookingsScreen() {
             )}
             <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>Completed</Text>
           </Pressable>
-        </BlurView>
+        </GlassView>
       </View>
 
       {loading && !refreshing ? (
@@ -247,9 +246,9 @@ export default function MyBookingsScreen() {
         </View>
       ) : bookings.length === 0 ? (
         <Animated.View entering={FadeInDown} style={styles.center}>
-          <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
-          </BlurView>
+          </GlassView>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} bookings</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} service bookings will appear here.</Text>
         </Animated.View>

@@ -1,46 +1,42 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  AdSlideshow,
+  GlassView,
+  HomeSkeleton,
+  ProductCard,
+  ServiceCard
+} from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useSharedValue,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
-import { useWishlist } from '@/contexts/WishlistContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Animations } from '@/constants/theme';
+import { Ad, adService } from '@/services/api/ad.service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  CategoryPill,
-  ProductCard,
-  ServiceCard,
-  AdSlideshow,
-  HomeSkeleton
-} from '@/components';
-import { adService, Ad } from '@/services/api/ad.service';
+  Dimensions,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import Animated, {
+  Extrapolate,
+  FadeInDown,
+  FadeInUp,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
 const SEARCH_PHRASES = [
@@ -112,11 +108,15 @@ type Product = {
   product_id: number; name: string; price: string; description?: string;
   category_name?: string; vendor_name?: string;
   image_url?: string | null;
+  rating?: number;
+  review_count?: number;
 };
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
   category_name?: string; provider_name?: string;
   image_url?: string | null;
+  rating?: number;
+  review_count?: number;
 };
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -144,13 +144,7 @@ export default function HomeScreen() {
     scrollY.value = event.contentOffset.y;
   });
 
-  const headerStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(scrollY.value, [0, 80], [0, 1], Extrapolate.CLAMP);
-    return {
-      opacity,
-      backgroundColor: isDark ? 'rgba(5,5,5,0.85)' : 'rgba(255,255,255,0.85)',
-    };
-  });
+
 
   const fetchData = useCallback(async () => {
     try {
@@ -232,20 +226,6 @@ export default function HomeScreen() {
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      {/* Sticky Header Blur */}
-      <Animated.View style={[styles.headerBlurContainer, { paddingTop: insets.top }, headerStyle]}>
-        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={styles.headerInner}>
-          <Text style={[styles.headerCompactTitle, { color: colors.textPrimary }]}>CarKit</Text>
-          <Pressable
-            style={[styles.notificationBtnSmall, { backgroundColor: colors.backgroundSecondary }]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          >
-            <MaterialCommunityIcons name="bell-outline" size={20} color={colors.textPrimary} />
-          </Pressable>
-        </View>
-      </Animated.View>
-
       <Animated.ScrollView
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -262,7 +242,10 @@ export default function HomeScreen() {
           </View>
           <Pressable
             style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/notifications');
+            }}
           >
             <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
             <View style={[styles.notificationDot, { backgroundColor: colors.pink }]} />
@@ -287,7 +270,7 @@ export default function HomeScreen() {
           >
             <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
             <TypewriterSearchBar textColor={colors.textSecondary} />
-            
+
           </Pressable>
         </Animated.View>
 
@@ -314,6 +297,8 @@ export default function HomeScreen() {
                   providerName={service.provider_name}
                   price={service.price}
                   imageUrl={service.image_url}
+                  rating={service.rating}
+                  reviewCount={service.review_count}
                   onView={() => router.push(`/service/${service.service_id}`)}
                   onBookNow={() => router.push(`/service/${service.service_id}`)}
                 />
@@ -343,6 +328,8 @@ export default function HomeScreen() {
                   price={product.price}
                   imageUrl={product.image_url}
                   vendorName={product.vendor_name}
+                  rating={product.rating}
+                  reviewCount={product.review_count}
                   onPress={() => router.push(`/product/${product.product_id}`)}
                   onAddToCart={() => handleAddToCart(product.product_id)}
                 />
@@ -365,7 +352,7 @@ export default function HomeScreen() {
               }
             ]}
           >
-            <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
             <View style={styles.promoContent}>
               <View style={styles.promoTextGroup}>
                 <Text style={[styles.promoTitle, { color: colors.textPrimary }]}>20% OFF FIRST SERVICE</Text>
@@ -419,29 +406,7 @@ const styles = StyleSheet.create({
   },
   center: { justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  headerBlurContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 110,
-    zIndex: 100,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  headerInner: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 12,
-  },
-  headerCompactTitle: {
-    fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.lg,
-    letterSpacing: -0.5,
-  },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

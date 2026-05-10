@@ -1,11 +1,11 @@
-import React from 'react';
-import { Pressable, StyleSheet, Platform, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import { useTheme } from '@/hooks/useTheme';
+import { GlassView } from '@/components';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type BackButtonProps = {
   onPress?: () => void;
@@ -30,7 +30,7 @@ export default function BackButton({ onPress }: BackButtonProps) {
         hitSlop={8}
       >
         {Platform.OS === 'ios' && (
-          <BlurView intensity={35} tint="dark" style={StyleSheet.absoluteFill} />
+          <GlassView intensity={35} tint="dark" style={StyleSheet.absoluteFill} />
         )}
         <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
       </Pressable>

@@ -14,13 +14,12 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp, FadeInLeft, Layout } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton, GlassView} from '@/components';
 import { supportService } from '@/services/api';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
@@ -114,7 +113,7 @@ export default function SupportScreen() {
       ) : isCreating ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
               <View style={styles.infoBox}>
                 <View style={[styles.infoIconWrap, { backgroundColor: colors.pink + '20' }]}>
                   <MaterialCommunityIcons name="information-outline" size={20} color={colors.pink} />
@@ -152,7 +151,7 @@ export default function SupportScreen() {
                   />
                 </View>
               </View>
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
@@ -193,7 +192,7 @@ export default function SupportScreen() {
                 entering={FadeInLeft.delay(index * 100).springify()}
                 layout={Layout.springify()}
               >
-                <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.ticketCard}>
+                <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.ticketCard}>
                   <View style={styles.cardHeader}>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                       {ticket.subject || 'Support Ticket'}
@@ -213,7 +212,7 @@ export default function SupportScreen() {
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </Text>
                   </View>
-                </BlurView>
+                </GlassView>
               </Animated.View>
             ))
           )}

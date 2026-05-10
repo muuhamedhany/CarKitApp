@@ -2,11 +2,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
+import { GlassView } from '@/components';
 
 const { height } = Dimensions.get('window');
 
@@ -49,7 +49,7 @@ export default function SelectAccountScreen() {
             ]}
             onPress={() => handlePress('/signup-customer')}
           >
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.card, { borderColor: colors.cardBorder }, Shadows.md]}
@@ -64,7 +64,7 @@ export default function SelectAccountScreen() {
                 </Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </Animated.View>
 
@@ -76,7 +76,7 @@ export default function SelectAccountScreen() {
             ]}
             onPress={() => handlePress('/signup-vendor')}
           >
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.card, { borderColor: colors.cardBorder }, Shadows.md]}
@@ -91,7 +91,7 @@ export default function SelectAccountScreen() {
                 </Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </BlurView>
+            </GlassView>
           </Pressable>
         </Animated.View>
 

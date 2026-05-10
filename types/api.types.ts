@@ -35,6 +35,8 @@ export type Product = {
   image_url_2?: string | null;
   image_url_3?: string | null;
   status?: string;
+  rating?: number;
+  review_count?: number;
   created_at?: string;
   updated_at?: string;
 };
@@ -97,6 +99,34 @@ export type CartItem = {
   stock: number;
   item_total: string;
   image_url?: string | null;
+};
+
+export type Vendor = {
+  vendor_id: number;
+  name: string;
+  contact_info?: string | null;
+  verification_status?: string;
+  user_id_fk?: number;
+};
+
+export type ServiceProvider = {
+  provider_id: number;
+  name: string;
+  contact_info?: string | null;
+  verification_status?: string;
+  user_id_fk?: number;
+};
+
+export type VendorPublicProfile = Vendor & {
+  products: Product[];
+  rating?: number;
+  review_count?: number;
+};
+
+export type ProviderPublicProfile = ServiceProvider & {
+  services: Service[];
+  rating?: number;
+  review_count?: number;
 };
 
 export type PaginationData = {
@@ -247,6 +277,8 @@ export type OrderDetail = {
   preferred_delivery_date?: string | null;
   estimated_delivery_start?: string | null;
   estimated_delivery_end?: string | null;
+  vendor_id_fk?: number | null;
+  vendor_name?: string | null;
   items: OrderDetailItem[];
 } & OrderAddressSummary;
 
@@ -269,6 +301,8 @@ export type Service = {
   image_url_3?: string | null;
   location_type?: 'both' | 'mobile' | 'in-shop';
   available_times?: string[];
+  rating?: number;
+  review_count?: number;
   created_at?: string;
 };
 
@@ -384,6 +418,8 @@ export type ProviderBooking = {
   notes?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  provider_id_fk?: number | null;
+  provider_name?: string | null;
 };
 
 export type ProviderBookingDetail = ProviderBooking & {
@@ -391,4 +427,33 @@ export type ProviderBookingDetail = ProviderBooking & {
   service_duration?: number;
   notes?: string | null;
   address_title?: string | null;
+};
+
+// ─── Reviews & Ratings ────────────────────────────────────────────────────────
+
+export type Review = {
+  review_id: number;
+  user_id_fk: number;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+  vendor_id_fk?: number | null;
+  provider_id_fk?: number | null;
+  product_id_fk?: number | null;
+  service_id_fk?: number | null;
+  order_id_fk?: number | null;
+  booking_id_fk?: number | null;
+  user_name?: string;
+  user_picture?: string;
+};
+
+export type ReviewPayload = {
+  rating: number;
+  comment?: string | null;
+  vendor_id_fk?: number | null;
+  provider_id_fk?: number | null;
+  product_id_fk?: number | null;
+  service_id_fk?: number | null;
+  order_id_fk?: number | null;
+  booking_id_fk?: number | null;
 };

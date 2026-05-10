@@ -11,15 +11,16 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView} from '@/components';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { bookingService, type Booking } from '@/services/api/booking.service';
+import { reviewService } from '@/services/api/review.service';
+import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -64,6 +65,8 @@ export default function BookingDetailScreen() {
     const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [reviewModalVisible, setReviewModalVisible] = useState(false);
+    const [isReviewed, setIsReviewed] = useState(false);
 
     const bookingId = Number(id || 0);
 
@@ -89,10 +92,23 @@ export default function BookingDetailScreen() {
         }
     }, [bookingId, router, showToast]);
 
+    const checkReviewStatus = useCallback(async () => {
+        if (!bookingId) return;
+        try {
+            const response = await reviewService.checkReviewStatus({ bookingId });
+            if (response.success && response.data) {
+                setIsReviewed(response.data.reviewed);
+            }
+        } catch (error) {
+            console.error('Error checking review status:', error);
+        }
+    }, [bookingId]);
+
     useFocusEffect(
         useCallback(() => {
             loadBooking();
-        }, [loadBooking])
+            checkReviewStatus();
+        }, [loadBooking, checkReviewStatus])
     );
 
     const timelineSteps = useMemo(
@@ -167,7 +183,7 @@ export default function BookingDetailScreen() {
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.cardHeader}>
                                 <View>
                                     <Text style={[styles.bookingId, { color: colors.textPrimary }]}>Booking #{booking.booking_id}</Text>
@@ -177,11 +193,11 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.statusText, { color: colors.pink }]}>{booking.status}</Text>
                                 </View>
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(200).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tracking</Text>
                             <View style={styles.timelineContainer}>
                                 {timelineSteps.map((step, index) => {
@@ -217,11 +233,11 @@ export default function BookingDetailScreen() {
                                     );
                                 })}
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(300).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="car-cog" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Service</Text>
@@ -236,11 +252,11 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.service_duration} min</Text>
                                 </View>
                             ) : null}
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(400).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="account-tie" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Provider</Text>
@@ -252,11 +268,11 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.provider_phone}</Text>
                                 </View>
                             ) : null}
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(500).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Location & Schedule</Text>
@@ -303,11 +319,11 @@ export default function BookingDetailScreen() {
                                     />
                                 </View>
                             ) : null}
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(600).springify()}>
-                        <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.priceCard}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.priceCard}>
                             <View>
                                 <Text style={styles.totalLabel}>Total Amount</Text>
                                 <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price)}</Text>
@@ -316,7 +332,7 @@ export default function BookingDetailScreen() {
                                 <MaterialCommunityIcons name="credit-card-check" size={16} color={colors.white} />
                                 <Text style={styles.paymentText}>Paid</Text>
                             </View>
-                        </BlurView>
+                        </GlassView>
                     </Animated.View>
 
                     <View style={styles.actionsRow}>
@@ -335,8 +351,43 @@ export default function BookingDetailScreen() {
                                 borderColor={colors.error}
                             />
                         ) : null}
+                        {booking.status?.toLowerCase() === 'completed' && !isReviewed ? (
+                            <GradientButton 
+                                title="Rate Service" 
+                                onPress={() => setReviewModalVisible(true)} 
+                                style={{ flex: 1 }} 
+                                icon="star-outline"
+                            />
+                        ) : isReviewed ? (
+                             <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
+                                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
+                                <Text style={[styles.reviewedText, { color: colors.success }]}>Reviewed</Text>
+                            </View>
+                        ) : null}
                     </View>
                 </ScrollView>
+            )}
+
+            {booking && (
+                <ReviewModal
+                    visible={reviewModalVisible}
+                    onClose={() => setReviewModalVisible(false)}
+                    entityId={booking.provider_id_fk || 0}
+                    entityName={booking.provider_name || 'Provider'}
+                    entityType="provider"
+                    bookingId={booking.booking_id}
+                    items={[{
+                        id: booking.service_id_fk,
+                        name: booking.service_name,
+                        type: 'service',
+                        rating: 0,
+                        comment: '',
+                    }]}
+                    onSuccess={() => {
+                        setIsReviewed(true);
+                        checkReviewStatus();
+                    }}
+                />
             )}
         </View>
     );
@@ -448,5 +499,18 @@ const styles = StyleSheet.create({
     },
     paymentText: { fontFamily: Fonts.bold, fontSize: 10, color: '#FFF', textTransform: 'uppercase' },
     
-    actionsRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
+    actionsRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md, paddingHorizontal: Spacing.md, alignItems: 'center' },
+    reviewedBadge: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        paddingVertical: 12,
+        borderRadius: BorderRadius.lg,
+    },
+    reviewedText: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
+    },
 });

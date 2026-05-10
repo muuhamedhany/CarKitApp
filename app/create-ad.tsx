@@ -9,14 +9,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const AD_TIERS = [
@@ -106,12 +105,12 @@ export default function CreateAdScreen() {
                   style={[styles.tierCard, { borderColor: selected ? colors.pink : colors.cardBorder, borderWidth: selected ? 2 : 1 }]}
                   onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedTier(tier); }}
                 >
-                  <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.tierBlur}>
+                  <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.tierBlur}>
                     {selected && <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} style={styles.checkIcon} />}
                     <Text style={[styles.tierName, { color: colors.textPrimary }]}>{tier.name}</Text>
                     <Text style={[styles.tierDuration, { color: colors.textSecondary }]}>{tier.duration}</Text>
                     <Text style={[styles.tierPrice, { color: colors.pink }]}>{tier.price} EGP</Text>
-                  </BlurView>
+                  </GlassView>
                 </Pressable>
               </Animated.View>
             );
@@ -119,7 +118,7 @@ export default function CreateAdScreen() {
         </View>
 
         <Animated.View entering={FadeInDown.delay(500)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.formCard, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.formCard, { borderColor: colors.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Ad Details</Text>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Ad Title</Text>
             <TextInput
@@ -142,22 +141,22 @@ export default function CreateAdScreen() {
                 </View>
               )}
             </Pressable>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(700)}>
-          <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
             <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
             <View style={styles.summaryRow}><Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Ad Plan:</Text><Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedTier?.name || 'None'}</Text></View>
             <View style={styles.summaryRow}><Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Duration:</Text><Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{selectedTier?.duration || '-'}</Text></View>
             <View style={styles.divider} />
             <View style={styles.summaryRow}><Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total:</Text><Text style={[styles.totalValue, { color: colors.pink }]}>{selectedTier?.price || 0} EGP</Text></View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
       </ScrollView>
 
       <Animated.View entering={FadeInUp.delay(900)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
-        <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+        <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleCreateAd(); }}
             disabled={submitting || !title || !selectedTier || !imageUri}
@@ -165,7 +164,7 @@ export default function CreateAdScreen() {
           >
             {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.createButtonText}>Proceed to Payment</Text>}
           </Pressable>
-        </BlurView>
+        </GlassView>
       </Animated.View>
     </View>
   );

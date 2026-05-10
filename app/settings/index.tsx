@@ -1,16 +1,15 @@
-import { View, Text, StyleSheet, Pressable, Platform, Dimensions, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp, FadeInLeft } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInLeft, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { ThemeMode } from '@/contexts/ThemeContext';
+import { useTheme } from '@/hooks/useTheme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,12 +32,12 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <CenteredHeader
         title="Settings"
@@ -50,7 +49,7 @@ export default function SettingsScreen() {
         {/* Appearance Section */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>APPEARANCE</Text>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
             {THEME_OPTIONS.map((option, index) => {
               const isSelected = themeMode === option.mode;
               return (
@@ -80,12 +79,12 @@ export default function SettingsScreen() {
                 </Pressable>
               );
             })}
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* Current mode indicator */}
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
             <View style={[styles.infoIconWrap, { backgroundColor: colors.purple + '20' }]}>
               <MaterialCommunityIcons
                 name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'}
@@ -96,13 +95,13 @@ export default function SettingsScreen() {
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               Currently using <Text style={{ color: colors.pink, fontFamily: Fonts.bold }}>{isDark ? 'Dark' : 'Light'}</Text> mode
             </Text>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* Security Section */}
         <Animated.View entering={FadeInDown.delay(300).springify()}>
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>SECURITY</Text>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
             <Pressable
               style={styles.optionRow}
               onPress={() => {
@@ -119,13 +118,13 @@ export default function SettingsScreen() {
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
             </Pressable>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* About Section */}
         <Animated.View entering={FadeInDown.delay(400).springify()}>
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>ABOUT</Text>
-          <BlurView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
             <View style={styles.aboutRow}>
               <View style={styles.aboutInfo}>
                 <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>Version</Text>
@@ -142,7 +141,7 @@ export default function SettingsScreen() {
               </View>
               <Text style={[styles.aboutValue, { color: colors.textSecondary }]}>#20240507.1</Text>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <View style={{ height: 100 }} />
@@ -154,16 +153,14 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
-  
+
   orb: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.1 },
-  orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
   sectionLabel: {
     fontFamily: Fonts.bold,

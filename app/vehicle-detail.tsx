@@ -16,7 +16,6 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,7 +24,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, FormInput, PickerModal, GradientButton } from '@/components';
+import { CenteredHeader, FormInput, PickerModal, GradientButton, GlassView} from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
@@ -290,7 +289,7 @@ export default function VehicleDetailScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(800)}>
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.glassCard, Shadows.lg, { borderColor: colors.cardBorder }]}
@@ -388,7 +387,7 @@ export default function VehicleDetailScreen() {
                   <Text style={[styles.deleteBtnText, { color: colors.pink }]}>Delete Vehicle</Text>
                 </Pressable>
               </View>
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <View style={{ height: 40 }} />
@@ -401,9 +400,9 @@ export default function VehicleDetailScreen() {
       {/* Delete Modal */}
       <Modal visible={showDeleteModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+          <GlassView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           <Animated.View entering={FadeInDown} style={styles.modalContent}>
-            <BlurView
+            <GlassView
               intensity={80}
               tint={isDark ? 'dark' : 'light'}
               style={[styles.modalCard, { borderColor: colors.cardBorder }]}
@@ -437,7 +436,7 @@ export default function VehicleDetailScreen() {
                   )}
                 </Pressable>
               </View>
-            </BlurView>
+            </GlassView>
           </Animated.View>
         </View>
       </Modal>

@@ -8,10 +8,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassView } from '@/components';
 
 export default function VendorProfileScreen() {
   const router = useRouter();
@@ -63,7 +63,7 @@ export default function VendorProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
             <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
               <Text style={[styles.avatarText, { color: colors.pink }]}>
                 {user?.name?.charAt(0).toUpperCase()}
@@ -77,30 +77,30 @@ export default function VendorProfileScreen() {
                 <Text style={[styles.badgeText, { color: verificationBadge.fg }]}>{verificationBadge.label}</Text>
               </View>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         {/* Store Stats Summary */}
         <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.storeStatsRow}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="package-variant" size={22} color="#6366F1" />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_products ?? '—'}</Text>
             <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Products</Text>
-          </BlurView>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
+          </GlassView>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="receipt-text" size={22} color="#10B981" />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_orders ?? '—'}</Text>
             <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Orders</Text>
-          </BlurView>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
+          </GlassView>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
             <MaterialCommunityIcons name="cash-multiple" size={22} color={colors.pink} />
             <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard ? Number(dashboard.stats.revenue).toLocaleString('en-EG') : '—'}</Text>
             <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Revenue</Text>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(500).duration(800)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Role</Text>
               <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
@@ -109,11 +109,11 @@ export default function VendorProfileScreen() {
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Vendor ID</Text>
               <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(600).duration(800)}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
             <Pressable 
               style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
               onPress={() => {
@@ -166,7 +166,7 @@ export default function VendorProfileScreen() {
               <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
             </Pressable>
-          </BlurView>
+          </GlassView>
         </Animated.View>
       </ScrollView>
     </View>

@@ -1,19 +1,19 @@
-import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  interpolate,
-  withTiming,
-  FadeInDown
-} from 'react-native-reanimated';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
+import { GlassView } from '@/components';
+import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { Fonts, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import React, { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View, Dimensions, Platform } from 'react-native';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TabItem = {
   name: string;
@@ -44,36 +44,19 @@ function TabButton({
   isFocused: boolean;
   onPress: () => void;
 }) {
-  const { colors, isDark } = useTheme();
-  const focusProgress = useSharedValue(isFocused ? 1 : 0);
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
 
-  useEffect(() => {
-    focusProgress.value = withSpring(isFocused ? 1 : 0, {
-      damping: 15,
-      stiffness: 150,
-    });
-  }, [isFocused]);
-
   const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { translateY: interpolate(focusProgress.value, [0, 1], [0, -4]) }
-    ],
-    opacity: interpolate(focusProgress.value, [0, 1], [0.6, 1]),
-  }));
-
-  const animatedGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(focusProgress.value, [0, 1], [0, 1]),
-    transform: [{ scale: interpolate(focusProgress.value, [0, 1], [0.8, 1.2]) }],
+    transform: [{ scale: withSpring(isFocused ? 1.15 : 1, { damping: 12, stiffness: 300 }) }],
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.9);
+    scale.value = withSpring(0.85, { damping: 10, stiffness: 400 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1);
+    scale.value = withSpring(1, { damping: 10, stiffness: 400 });
   };
 
   return (
@@ -82,36 +65,28 @@ function TabButton({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={styles.tab}
+      android_ripple={{ color: 'transparent' }}
     >
-      <Animated.View style={[styles.glow, animatedGlowStyle, { backgroundColor: colors.pink + '20' }]} />
-      
-      <Animated.View style={animatedIconStyle}>
+      <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
         <MaterialCommunityIcons
           name={isFocused ? tab.iconFilled : tab.icon}
           size={24}
           color={isFocused ? colors.pink : colors.textSecondary}
         />
       </Animated.View>
-      
+
       <Text
         style={[
           styles.label,
-          { 
+          {
             color: isFocused ? colors.pink : colors.textSecondary,
-            fontFamily: isFocused ? Fonts.extraBold : Fonts.bold,
-            opacity: isFocused ? 1 : 0.7
+            fontFamily: isFocused ? Fonts.bold : Fonts.medium,
+            opacity: isFocused ? 1 : 0.6
           },
         ]}
       >
         {tab.label}
       </Text>
-      
-      {isFocused && (
-        <Animated.View 
-          entering={FadeInDown.duration(400)}
-          style={[styles.activeDot, { backgroundColor: colors.pink, shadowColor: colors.pink }]} 
-        />
-      )}
     </Pressable>
   );
 }
@@ -120,23 +95,60 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
+  const containerWidth = SCREEN_WIDTH - Spacing.xl * 2;
+  const horizontalPadding = Spacing.md;
+  const tabWidth = (containerWidth - horizontalPadding * 2) / TABS.length;
+
+  const indicatorPosition = useSharedValue(state.index * tabWidth);
+
+  useEffect(() => {
+    indicatorPosition.value = withSpring(state.index * tabWidth, {
+      damping: 18,
+      stiffness: 280,
+      mass: 0.8,
+    });
+  }, [state.index, tabWidth]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorPosition.value }],
+  }));
+
   return (
-    <Animated.View 
+    <Animated.View
       entering={FadeInDown.delay(500).duration(1000)}
       style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 16) }]}
     >
-      <BlurView
-        intensity={isDark ? 30 : 50}
-        tint={isDark ? 'dark' : 'light'}
+      <View
         style={[
           styles.container,
           {
-            backgroundColor: isDark ? 'rgba(25, 10, 40, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: isDark ? '#1A1A24' : '#FFFFFF',
+            borderColor: isDark ? '#2A2A3A' : '#F0F0F5',
+            ...Platform.select({
+              ios: {
+                shadowColor: isDark ? '#000' : '#888',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: isDark ? 0.6 : 0.12,
+                shadowRadius: 20,
+              },
+              android: {
+                elevation: 12,
+              }
+            })
           },
-          Shadows.lg,
         ]}
       >
+        <Animated.View 
+          style={[
+            styles.indicator, 
+            { 
+              width: tabWidth, 
+              backgroundColor: colors.pink + '10',
+            },
+            indicatorStyle
+          ]} 
+        />
+        
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
 
@@ -163,7 +175,7 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
             />
           );
         })}
-      </BlurView>
+      </View>
     </Animated.View>
   );
 }
@@ -180,42 +192,38 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderRadius: BorderRadius.xxl,
-    borderWidth: 1,
-    paddingVertical: 12,
+    borderWidth: 1.5,
+    paddingVertical: 8,
     paddingHorizontal: Spacing.md,
     width: '100%',
     overflow: 'hidden',
     justifyContent: 'space-between',
     alignItems: 'center',
     ...Shadows.lg,
+    elevation: 0,
+    borderTopWidth: 0,
+  },
+  indicator: {
+    position: 'absolute',
+    height: 48,
+    borderRadius: BorderRadius.xl,
+    left: Spacing.md,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 54,
+    height: 58,
+    zIndex: 1,
   },
-  glow: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    top: 0,
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 10,
-    marginTop: 4,
-    letterSpacing: 0.2,
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: -2,
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4,
+    marginTop: 2,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 });

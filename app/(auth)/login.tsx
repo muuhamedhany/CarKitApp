@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
   FadeInDown, 
@@ -24,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, SocialButton, Divider } from '@/components';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
@@ -131,7 +130,7 @@ export default function LoginScreen() {
             entering={FadeInDown.delay(400).duration(800)}
             style={styles.formWrapper}
           >
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[
@@ -183,7 +182,7 @@ export default function LoginScreen() {
                 actionText={googleLoading ? 'Signing in...' : 'Sign in with Google'}
                 onPress={handleGoogleLogin}
               />
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View 

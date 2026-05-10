@@ -1,33 +1,31 @@
-import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  FadeInUp, 
-  FadeInDown, 
-  Layout,
-  FadeOut
-} from 'react-native-reanimated';
+import { CartSkeleton, GlassView, SecondaryButton } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CartItem } from '@/types/api.types';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { CartItem } from '@/types/api.types';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
-import { SecondaryButton, CartSkeleton } from '@/components';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  FadeOut,
+  Layout
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
@@ -44,14 +42,14 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
   const showImage = !!item.image_url && !imgError;
 
   return (
-    <Animated.View 
+    <Animated.View
       entering={FadeInUp.delay(index * 100).duration(600)}
       exiting={FadeOut.duration(300)}
       layout={Layout.springify()}
     >
-      <BlurView 
-        intensity={isDark ? 20 : 40} 
-        tint={isDark ? 'dark' : 'light'} 
+      <GlassView
+        intensity={isDark ? 20 : 40}
+        tint={isDark ? 'dark' : 'light'}
         style={[styles.cartItem, { borderColor: colors.cardBorder }]}
       >
         {/* Product thumbnail */}
@@ -74,12 +72,12 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
             {item.name}
           </Text>
           <Text style={[styles.itemPrice, { color: colors.pink }]}>{item.price} EGP</Text>
-          
+
           <View style={styles.qtyRow}>
             <Pressable
               style={({ pressed }) => [
-                styles.qtyBtn, 
-                { 
+                styles.qtyBtn,
+                {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                   opacity: pressed ? 0.7 : 1
                 }
@@ -91,8 +89,8 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
             <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
             <Pressable
               style={({ pressed }) => [
-                styles.qtyBtn, 
-                { 
+                styles.qtyBtn,
+                {
                   backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                   opacity: pressed ? 0.7 : 1
                 }
@@ -105,11 +103,11 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
         </View>
 
         {/* Delete button */}
-        <Pressable 
-          onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); onRemove(item.cart_item_id); }} 
+        <Pressable
+          onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); onRemove(item.cart_item_id); }}
           style={({ pressed }) => [
-            styles.deleteBtn, 
-            { 
+            styles.deleteBtn,
+            {
               backgroundColor: isDark ? 'rgba(255, 77, 77, 0.1)' : 'rgba(255, 77, 77, 0.05)',
               opacity: pressed ? 0.6 : 1
             }
@@ -118,7 +116,7 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
         >
           <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF4D4D" />
         </Pressable>
-      </BlurView>
+      </GlassView>
     </Animated.View>
   );
 }
@@ -162,10 +160,10 @@ export default function CartScreen() {
           </Text>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(200).duration(600)}>
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
-              styles.headerAction, 
-              { 
+              styles.headerAction,
+              {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                 opacity: pressed ? 0.7 : 1
               }
@@ -181,9 +179,9 @@ export default function CartScreen() {
         <CartSkeleton />
       ) : items.length === 0 ? (
         <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.center}>
-          <BlurView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconCircle}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconCircle}>
             <MaterialCommunityIcons name="cart-variant" size={48} color={colors.pink} />
-          </BlurView>
+          </GlassView>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Looks like you haven't added anything to your cart yet.</Text>
           <View style={{ marginTop: Spacing.xxl, width: 220 }}>
@@ -204,10 +202,10 @@ export default function CartScreen() {
                 onRemove={removeItem}
               />
             ),
-            contentContainerStyle: { 
-              paddingHorizontal: Spacing.lg, 
+            contentContainerStyle: {
+              paddingHorizontal: Spacing.lg,
               paddingTop: 10,
-              paddingBottom: androidTabOffset + 220 
+              paddingBottom: androidTabOffset + 220
             },
             showsVerticalScrollIndicator: false,
           } as any)}
@@ -215,25 +213,25 @@ export default function CartScreen() {
       )}
 
       {items.length > 0 && (
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.delay(400).duration(800)}
           style={[styles.bottomContainer, { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 15 }]}
         >
-          <BlurView 
-            intensity={isDark ? 30 : 50} 
+          <GlassView
+            intensity={isDark ? 30 : 50}
             tint={isDark ? 'dark' : 'light'}
             style={styles.bottomBlur}
           >
             <View style={styles.bottomBar}>
-              <View>
+              <View style={{ alignItems: 'center', flexShrink: 1, marginRight: Spacing.md }}>
                 <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Amount</Text>
                 <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{total.toLocaleString()} EGP</Text>
               </View>
-              <Pressable 
-                onPress={handleCheckout} 
+              <Pressable
+                onPress={handleCheckout}
                 style={({ pressed }) => [
-                  styles.checkoutBtn, 
-                  { 
+                  styles.checkoutBtn,
+                  {
                     backgroundColor: colors.pink,
                     opacity: pressed ? 0.9 : 1,
                     transform: [{ scale: pressed ? 0.98 : 1 }]
@@ -244,7 +242,7 @@ export default function CartScreen() {
                 <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
               </Pressable>
             </View>
-          </BlurView>
+          </GlassView>
         </Animated.View>
       )}
     </View>
@@ -260,6 +258,11 @@ const styles = StyleSheet.create({
     borderRadius: 200,
     opacity: 0.4,
   },
+  priceContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
 
   header: {
@@ -269,14 +272,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  headerTitle: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.xxxl, 
-    letterSpacing: -1 
+  headerTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xxxl,
+    letterSpacing: -1
   },
-  headerSubtitle: { 
-    fontFamily: Fonts.medium, 
-    fontSize: FontSizes.sm, 
+  headerSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
     marginTop: -4,
     opacity: 0.6
   },
@@ -289,7 +292,7 @@ const styles = StyleSheet.create({
   },
 
   cartItem: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.md,
     borderRadius: BorderRadius.xxl,
@@ -299,50 +302,50 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   itemImage: {
-    width: 84, 
-    height: 84, 
+    width: 84,
+    height: 84,
     borderRadius: BorderRadius.xl,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  itemInfo: { 
-    flex: 1, 
+  itemInfo: {
+    flex: 1,
     marginLeft: Spacing.lg,
     justifyContent: 'center',
   },
-  itemName: { 
-    fontFamily: Fonts.bold, 
-    fontSize: FontSizes.lg, 
+  itemName: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
     marginBottom: 4,
     letterSpacing: -0.3
   },
-  itemPrice: { 
-    fontFamily: Fonts.extraBold, 
+  itemPrice: {
+    fontFamily: Fonts.extraBold,
     fontSize: FontSizes.md,
     marginBottom: 10,
   },
 
-  qtyRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 16 
+  qtyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16
   },
   qtyBtn: {
-    width: 32, 
-    height: 32, 
+    width: 32,
+    height: 32,
     borderRadius: 10,
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  qtyText: { 
-    fontFamily: Fonts.bold, 
-    fontSize: FontSizes.lg, 
-    minWidth: 28, 
-    textAlign: 'center' 
+  qtyText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+    minWidth: 28,
+    textAlign: 'center'
   },
 
-  deleteBtn: { 
+  deleteBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
@@ -366,39 +369,42 @@ const styles = StyleSheet.create({
     ...Shadows.lg,
   },
   bottomBar: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
   },
-  totalLabel: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: 10, 
+  totalLabel: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginBottom: 2,
-    opacity: 0.5
+    opacity: 0.5,
+    textAlign: 'center',
   },
-  totalValue: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.xxl,
-    letterSpacing: -0.5
+  totalValue: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.lg,
+    letterSpacing: -0.5,
+    textAlign: 'center',
   },
 
   checkoutBtn: {
     flexDirection: 'row',
     borderRadius: BorderRadius.xl,
     paddingVertical: 16,
-    paddingHorizontal: 28,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.lg,
     shadowColor: '#CD42A8',
   },
-  checkoutText: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.md, 
-    color: '#FFFFFF' 
+  checkoutText: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.md,
+    color: '#FFFFFF'
   },
 
   emptyIconCircle: {
@@ -412,16 +418,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  emptyTitle: { 
-    fontFamily: Fonts.extraBold, 
-    fontSize: FontSizes.xl, 
+  emptyTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.xl,
     marginTop: Spacing.md,
     letterSpacing: -0.5
   },
-  emptySubtitle: { 
-    fontFamily: Fonts.medium, 
-    fontSize: FontSizes.md, 
-    marginTop: 10, 
+  emptySubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md,
+    marginTop: 10,
     textAlign: 'center',
     lineHeight: 22,
     opacity: 0.6,

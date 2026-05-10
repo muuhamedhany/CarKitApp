@@ -7,14 +7,13 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { BlurView } from 'expo-blur';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService, Ad } from '@/services/api/ad.service';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, GlassView} from '@/components';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string; icon: string; border: string }> = {
   pending: { label: 'Pending Review', bg: 'rgba(249,115,22,0.15)', fg: '#F97316', icon: 'clock-outline', border: 'rgba(249,115,22,0.3)' },
@@ -96,7 +95,7 @@ export default function PromoteScreen() {
                 router.push('/create-ad' as any);
               }}
             >
-              <BlurView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.createBlur} {...{} as any}>
+              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.createBlur} {...{} as any}>
                 <View style={[styles.iconBox, { backgroundColor: colors.pink }]}>
                   <MaterialCommunityIcons name="rocket-launch" size={28} color="#FFFFFF" />
                 </View>
@@ -105,7 +104,7 @@ export default function PromoteScreen() {
                   <Text style={[styles.createSub, { color: colors.textSecondary }]}>Boost your visibility & reach more customers</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={24} color={colors.pink} />
-              </BlurView>
+              </GlassView>
             </Pressable>
           </Animated.View>
 

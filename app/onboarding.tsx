@@ -1,23 +1,21 @@
-import { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, Pressable, ViewToken, ScrollView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import { useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import { Dimensions, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewToken } from 'react-native';
+import Animated, {
   FadeInRight,
-  FadeInUp
+  FadeInUp,
+  useAnimatedStyle,
+  withTiming
 } from 'react-native-reanimated';
 
+import { GlassView, GradientButton } from '@/components';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
-import { GradientButton } from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -42,7 +40,7 @@ const slides: Slide[] = [
   {
     id: '2', type: 'cards',
     title: 'All Your Car Needs,\nOne App',
-    subtitle: 'Everything you need to keep your vehicle in peak performance, organized in one premium hub.', 
+    subtitle: 'Everything you need to keep your vehicle in peak performance, organized in one premium hub.',
     buttonText: 'Continue',
     cards: [
       { iconName: 'wrench', title: 'Find Certified Service', description: 'Easily book appointments with our network of trusted mechanics.' },
@@ -61,7 +59,7 @@ const slides: Slide[] = [
 
 function FeatureCard({ iconName, title, description, colors, isDark }: { iconName: string; title: string; description: string; colors: any; isDark: boolean }) {
   return (
-    <BlurView 
+    <GlassView
       intensity={isDark ? 20 : 40}
       tint={isDark ? 'dark' : 'light'}
       style={[cardStyles.container, { borderColor: colors.cardBorder }]}
@@ -73,7 +71,7 @@ function FeatureCard({ iconName, title, description, colors, isDark }: { iconNam
         <Text style={[cardStyles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={[cardStyles.description, { color: colors.textSecondary }]}>{description}</Text>
       </View>
-    </BlurView>
+    </GlassView>
   );
 }
 
@@ -140,28 +138,28 @@ export default function OnboardingScreen() {
 
   const renderSlide = ({ item }: { item: Slide }) => (
     <View style={styles.slideOuter}>
-      <ScrollView 
-        contentContainerStyle={styles.slideScroll} 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        contentContainerStyle={styles.slideScroll}
+        showsVerticalScrollIndicator={false}
         bounces={false}
       >
         <Animated.View entering={FadeInUp.delay(200).duration(800)}>
           {item.type === 'image' ? (
             <View style={styles.imageWrapper}>
               <View style={[styles.imageGlowContainer, { shadowColor: colors.pink }]}>
-                <Image 
-                  source={item.image} 
-                  style={styles.heroImage} 
-                  contentFit="cover" 
-                  transition={300} 
+                <Image
+                  source={item.image}
+                  style={styles.heroImage}
+                  contentFit="cover"
+                  transition={300}
                 />
               </View>
             </View>
           ) : (
             <View style={styles.cardsHeader}>
-               <View style={[styles.iconCircleLarge, { backgroundColor: colors.pink + '15' }]}>
-                 <MaterialCommunityIcons name="layers-triple-outline" size={48} color={colors.pink} />
-               </View>
+              <View style={[styles.iconCircleLarge, { backgroundColor: colors.pink + '15' }]}>
+                <MaterialCommunityIcons name="layers-triple-outline" size={48} color={colors.pink} />
+              </View>
             </View>
           )}
         </Animated.View>
@@ -188,7 +186,7 @@ export default function OnboardingScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 100, left: -100, backgroundColor: colors.purple + '10' }]} />
@@ -251,27 +249,27 @@ const styles = StyleSheet.create({
     borderRadius: 200,
   },
   slideOuter: { width, flex: 1 },
-  slideScroll: { 
-    flexGrow: 1, 
-    paddingHorizontal: Spacing.xl, 
-    paddingTop: 20, 
-    paddingBottom: 40 
+  slideScroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 20,
+    paddingBottom: 40
   },
-  imageWrapper: { 
-    alignItems: 'center', 
+  imageWrapper: {
+    alignItems: 'center',
     marginBottom: Spacing.xl + 10,
     marginTop: 20,
   },
   imageGlowContainer: {
-    width: width - 80, 
-    aspectRatio: 1, 
-    borderRadius: BorderRadius.xl, 
+    width: width - 80,
+    aspectRatio: 1,
+    borderRadius: BorderRadius.xl,
     overflow: 'hidden',
-    borderWidth: 1, 
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    shadowOffset: { width: 0, height: 0 }, 
-    shadowOpacity: 0.3, 
-    shadowRadius: 20, 
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
     elevation: 10,
   },
   heroImage: { width: '100%', height: '100%' },
@@ -287,27 +285,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: { 
-    fontSize: 36, 
-    fontFamily: Fonts.extraBoldItalic, 
-    textAlign: 'center', 
-    marginBottom: Spacing.md, 
+  title: {
+    fontSize: 36,
+    fontFamily: Fonts.extraBoldItalic,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
     lineHeight: 44,
     letterSpacing: -1,
   },
-  subtitle: { 
-    fontSize: FontSizes.md, 
-    textAlign: 'center', 
-    lineHeight: 24, 
-    paddingHorizontal: Spacing.sm, 
+  subtitle: {
+    fontSize: FontSizes.md,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: Spacing.sm,
     fontFamily: Fonts.medium,
     opacity: 0.7,
   },
   cardsContainer: { marginTop: Spacing.xl },
-  bottomContainer: { 
-    paddingBottom: Platform.OS === 'ios' ? 50 : 30, 
-    paddingTop: Spacing.md, 
-    paddingHorizontal: Spacing.xl, 
+  bottomContainer: {
+    paddingBottom: Platform.OS === 'ios' ? 50 : 30,
+    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
     backgroundColor: 'transparent',
   },

@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, CenteredHeader } from '@/components';
+import { FormInput, GradientButton, AuthFooter, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
@@ -85,7 +84,7 @@ export default function SignUpVendorScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(800)} style={styles.formWrapper}>
-            <BlurView
+            <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
               style={[
@@ -192,7 +191,7 @@ export default function SignUpVendorScreen() {
                 onPress={handleContinue} 
                 style={{...styles.continueBtn,  width: '100%'}}
               />
-            </BlurView>
+            </GlassView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>
