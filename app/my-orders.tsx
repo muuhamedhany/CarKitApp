@@ -1,30 +1,29 @@
-import { useTheme } from '@/hooks/useTheme';
-import { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  Dimensions,
-} from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-const TypedFlashList = FlashList as any;
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import Animated, { 
-  FadeInUp, 
-  FadeInDown,
-  withSpring,
-  LinearTransition,
-} from 'react-native-reanimated';
-import { useAuth } from '@/contexts/AuthContext';
+import { CenteredHeader, GlassView } from '@/components';
 import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { CenteredHeader, GlassView} from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  LinearTransition
+} from 'react-native-reanimated';
+const TypedFlashList = FlashList as any;
 
 const { width, height } = Dimensions.get('window');
 
@@ -61,7 +60,7 @@ export default function MyOrdersScreen() {
 
   const fetchOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
     if (!token) return;
-    
+
     if (pageNum === 1 && !isRefresh) setLoading(true);
     if (pageNum > 1) setLoadingMore(true);
 
@@ -74,7 +73,7 @@ export default function MyOrdersScreen() {
       if (data.success) {
         const newOrders = data.data || [];
         setOrders(prev => pageNum === 1 ? newOrders : [...prev, ...newOrders]);
-        
+
         if (data.pagination) {
           setHasMore(pageNum < data.pagination.totalPages);
         } else {
@@ -119,7 +118,7 @@ export default function MyOrdersScreen() {
   };
 
   const renderOrder = ({ item, index }: { item: Order; index: number }) => (
-    <Animated.View 
+    <Animated.View
       entering={FadeInUp.delay(index * 100).springify()}
       style={styles.cardContainer}
     >
@@ -167,12 +166,12 @@ export default function MyOrdersScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <CenteredHeader title="My Orders" titleColor={colors.textPrimary} />
 
@@ -209,21 +208,21 @@ export default function MyOrdersScreen() {
         <View style={styles.skeletonContainer}>
           {[1, 2, 3].map(i => (
             <GlassView key={i} intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.skeletonCard}>
-               <View style={styles.skeletonHeader}>
-                 <View>
-                   <SkeletonBone width={100} height={18} />
-                   <SkeletonBone width={80} height={14} style={{ marginTop: 6 }} />
-                 </View>
-                 <SkeletonBone width={70} height={26} borderRadius={13} />
-               </View>
-               <View style={styles.skeletonDivider} />
-               <View style={styles.skeletonFooter}>
-                 <View>
-                    <SkeletonBone width={40} height={10} />
-                    <SkeletonBone width={80} height={18} style={{ marginTop: 4 }} />
-                 </View>
-                 <SkeletonBone width={80} height={36} borderRadius={18} />
-               </View>
+              <View style={styles.skeletonHeader}>
+                <View>
+                  <SkeletonBone width={100} height={18} />
+                  <SkeletonBone width={80} height={14} style={{ marginTop: 6 }} />
+                </View>
+                <SkeletonBone width={70} height={26} borderRadius={13} />
+              </View>
+              <View style={styles.skeletonDivider} />
+              <View style={styles.skeletonFooter}>
+                <View>
+                  <SkeletonBone width={40} height={10} />
+                  <SkeletonBone width={80} height={18} style={{ marginTop: 4 }} />
+                </View>
+                <SkeletonBone width={80} height={36} borderRadius={18} />
+              </View>
             </GlassView>
           ))}
         </View>
@@ -261,13 +260,11 @@ const styles = StyleSheet.create({
 
   orb: {
     position: 'absolute',
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: (width * 0.8) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.2 },
-  orb2: { bottom: height * 0.1, left: -width * 0.3 },
 
   tabContainer: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
   tabRow: { flexDirection: 'row', borderRadius: BorderRadius.full, padding: 4, overflow: 'hidden', borderWidth: 1 },

@@ -1,30 +1,30 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-    Alert,
     ActivityIndicator,
+    Alert,
+    Dimensions,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     View,
-    Dimensions,
 } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GetDirectionsButton, GradientButton, OutlinedButton, GlassView} from '@/components';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { orderService } from '@/services/api/order.service';
-import { vendorService } from '@/services/api/vendor.service';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
-import { OrderDetail, Review } from '@/types/api.types';
+import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { ReviewModal } from '@/components/ReviewModal';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { orderService } from '@/services/api/order.service';
 import { reviewService } from '@/services/api/review.service';
+import { vendorService } from '@/services/api/vendor.service';
+import { OrderDetail } from '@/types/api.types';
 
 const { width, height } = Dimensions.get('window');
 const SHIPPING_FEE = 50;
@@ -215,7 +215,7 @@ export default function OrderDetailScreen() {
                 colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
                 style={StyleSheet.absoluteFill}
             />
-            
+
             <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
             <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
@@ -275,15 +275,15 @@ export default function OrderDetailScreen() {
                                                         borderColor: reached ? colors.pink : colors.cardBorder,
                                                     },
                                                 ]}>
-                                                    <MaterialCommunityIcons 
-                                                        name={step.icon as any} 
-                                                        size={12} 
-                                                        color={reached ? colors.white : colors.textMuted} 
+                                                    <MaterialCommunityIcons
+                                                        name={step.icon as any}
+                                                        size={12}
+                                                        color={reached ? colors.white : colors.textMuted}
                                                     />
                                                 </View>
                                                 {index < timelineSteps.length - 1 ? (
                                                     <View style={[
-                                                        styles.timelineLine, 
+                                                        styles.timelineLine,
                                                         { backgroundColor: reached ? colors.pink : colors.cardBorder, opacity: reached ? 1 : 0.3 }
                                                     ]} />
                                                 ) : null}
@@ -370,7 +370,7 @@ export default function OrderDetailScreen() {
                             <View style={{ marginTop: Spacing.md }}>
                                 {order.items.map((item, idx) => (
                                     <View key={item.order_item_id} style={[
-                                        styles.itemRow, 
+                                        styles.itemRow,
                                         idx < order.items.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.cardBorder, paddingBottom: Spacing.md }
                                     ]}>
                                         <View style={{ flex: 1 }}>
@@ -450,8 +450,8 @@ export default function OrderDetailScreen() {
                             />
                         ) : null}
                         {normalizeStatus(order.status) === 'delivered' && !isReviewed ? (
-                            <GradientButton 
-                                title="Rate Products" 
+                            <GradientButton
+                                title="Rate Products"
                                 onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
     content: { padding: Spacing.md, paddingBottom: 180 },
     spacer: { height: 40 },
-    
+
     orb: {
         position: 'absolute',
         width: width * 0.7,
@@ -522,14 +522,14 @@ const styles = StyleSheet.create({
     orderDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 4, opacity: 0.7 },
     statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
     statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
-    
+
     deliveryInfo: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, gap: 6 },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     deliveryText: { fontFamily: Fonts.medium, fontSize: 11 },
-    
+
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
     sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5, marginBottom: Spacing.md },
-    
+
     timelineContainer: { marginTop: Spacing.xs },
     timelineRow: { flexDirection: 'row', gap: Spacing.md },
     timelineRailCol: { alignItems: 'center', width: 24 },
@@ -546,22 +546,22 @@ const styles = StyleSheet.create({
     timelineLabelCol: { flex: 1, paddingBottom: Spacing.lg },
     timelineLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
     timelineDate: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 2, opacity: 0.6 },
-    
+
     vendorCustomerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md },
     vendorCustomerText: { flex: 1 },
     customerName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
     customerHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
     iconGroup: { flexDirection: 'row', gap: Spacing.sm },
     iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-    
+
     addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
     addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
     addressSubtext: { fontFamily: Fonts.medium, fontSize: 11, opacity: 0.6 },
-    
+
     notesContainer: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1 },
     notesLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
     notesText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 20, opacity: 0.8 },
-    
+
     itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
     itemName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 4 },
     qtyContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.2)' },
     itemPriceEach: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
     itemPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-    
+
     summaryBox: { borderRadius: BorderRadius.lg, padding: Spacing.md, marginTop: Spacing.sm },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     summaryLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.8 },
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     summaryDivider: { height: 1, marginVertical: Spacing.sm, opacity: 0.1 },
     totalLabel: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
     totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
-    
+
     footerContainer: {
         position: 'absolute',
         bottom: 0,

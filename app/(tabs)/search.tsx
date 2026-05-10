@@ -234,8 +234,7 @@ export default function SearchScreen() {
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }, headerStyle]}>
-        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
         <View style={styles.headerContent}>
           {/* Search Input */}
           <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, {
@@ -272,8 +271,20 @@ export default function SearchScreen() {
             </Animated.View>
           )}
 
+        </View>
+      </Animated.View>
+
+      {loading ? (
+        <SearchSkeleton />
+      ) : (
+        <Animated.ScrollView
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top + (adFilter ? 60 : 0) }]}
+        >
           {/* Mode toggle */}
-          <View style={styles.toggleRow}>
+          <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
             <View style={[styles.toggleContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder }]}>
               {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
                 <Pressable
@@ -312,18 +323,7 @@ export default function SearchScreen() {
               <MaterialCommunityIcons name="filter-variant" size={20} color={colors.pink} />
             </Pressable>
           </View>
-        </View>
-      </Animated.View>
 
-      {loading ? (
-        <SearchSkeleton />
-      ) : (
-        <Animated.ScrollView
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.results, { paddingTop: 170 + insets.top + (adFilter ? 60 : 0) }]}
-        >
           {showProducts && products.length > 0 && (
             <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
               <View style={styles.sectionHeader}>

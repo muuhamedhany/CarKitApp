@@ -29,42 +29,50 @@ export const Animations = {
 
 // ═══════════════════════════════════
 // Elevation & Shadows
+// On Android, elevation creates opaque dark rectangular layers behind views
+// that have borderRadius + overflow:'hidden' (like cards and glassmorphism).
+// We keep iOS shadow* properties and zero out Android elevation.
 // ═══════════════════════════════════
+import { Platform } from 'react-native';
+
+const androidElevation = (level: number) =>
+  Platform.OS === 'android' ? 0 : level; // disabled on Android to prevent dark frames
+
 export const Shadows = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: androidElevation(2),
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: androidElevation(4),
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: androidElevation(8),
   },
   pink: {
     shadowColor: '#CD42A8',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 10,
+    elevation: androidElevation(10),
   },
   purple: {
     shadowColor: '#5923A0',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 10,
+    elevation: androidElevation(10),
   }
 };
 

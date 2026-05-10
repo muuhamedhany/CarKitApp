@@ -30,6 +30,9 @@ function InnerLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: isDark ? '#050505' : '#F8F9FD' },
+          animation: 'fade_from_bottom',
+          animationDuration: 200,
         }}
       >
         <Stack.Screen name="index" options={{ title: '' }} />

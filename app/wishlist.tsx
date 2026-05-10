@@ -1,30 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-  Platform,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useWishlist } from '@/contexts/WishlistContext';
+import { CenteredHeader, GlassView } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
-import { API_URL } from '@/constants/config';
-import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
-import { CenteredHeader, GlassView} from '@/components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -60,11 +60,11 @@ export default function WishlistScreen() {
         setProducts([]);
         return;
       }
-      
+
       const idsParam = wishlistIds.join(',');
       const res = await fetch(`${API_URL}/products?product_ids=${idsParam}`);
       const data = await res.json();
-      
+
       if (data.success && Array.isArray(data.data)) {
         setProducts(data.data);
       }
@@ -140,7 +140,7 @@ export default function WishlistScreen() {
               <Text style={[styles.priceText, { color: colors.textPrimary }]}>
                 {Number(item.price).toLocaleString()} EGP
               </Text>
-              
+
               <View style={styles.actionButtons}>
                 <Pressable
                   onPress={() => handleRemove(item.product_id)}
@@ -172,12 +172,12 @@ export default function WishlistScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
 
@@ -236,9 +236,13 @@ export default function WishlistScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
-  orb: { position: 'absolute', width: width * 0.8, height: width * 0.8, borderRadius: width * 0.4, opacity: 0.12 },
-  orb1: { top: -width * 0.2, right: -width * 0.2 },
-  orb2: { bottom: height * 0.1, left: -width * 0.3 },
+  orb: {
+    position: 'absolute',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
+  },
 
   list: { paddingHorizontal: Spacing.lg },
   listLabel: { fontFamily: Fonts.bold, fontSize: 10, marginBottom: Spacing.md, textTransform: 'uppercase', letterSpacing: 1 },

@@ -132,7 +132,9 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
                 shadowRadius: 20,
               },
               android: {
-                elevation: 12,
+                elevation: 0,
+                borderTopWidth: 0.5,
+                borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               }
             })
           },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -197,7 +197,10 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    overflow: 'hidden',
+    ...Platform.select({
+      ios: { overflow: 'hidden' as const },
+      android: { overflow: 'hidden' as const, elevation: 0 },
+    }),
   },
   imageBanner: {
     height: 150,

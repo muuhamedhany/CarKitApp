@@ -1,5 +1,5 @@
-import { apiFetch } from './client';
 import { ApiResponse } from '@/types/api.types';
+import { apiFetch } from './client';
 
 export type BookingPayload = {
   service_id: number;
@@ -26,6 +26,8 @@ export type Booking = {
   service_description?: string;
   service_duration?: number;
   provider_name?: string;
+  provider_id_fk?: number;
+  service_id_fk?: number;
   provider_phone?: string;
   customer_name?: string;
   customer_phone?: string;
