@@ -14,6 +14,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/poppins';
 import { Stack } from 'expo-router';
+import { DefaultTheme, DarkTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -23,10 +24,25 @@ import 'react-native-reanimated';
 SplashScreen.preventAutoHideAsync();
 
 function InnerLayout() {
-  const { isDark } = useThemeContext();
+  const { isDark, isThemeLoaded } = useThemeContext();
+
+  useEffect(() => {
+    if (isThemeLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [isThemeLoaded]);
+
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: isDark ? '#050505' : '#F8F9FD',
+      card: isDark ? '#050505' : '#F8F9FD',
+    },
+  };
 
   return (
-    <>
+    <NavThemeProvider value={navTheme}>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -68,7 +84,7 @@ function InnerLayout() {
         <Stack.Screen name="edit-service/[id]" options={{ headerShown: false, title: '' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-    </>
+    </NavThemeProvider>
   );
 }
 
@@ -84,9 +100,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
+    // Fonts are loaded, but we wait for Theme to hide splash in InnerLayout
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {

@@ -1,12 +1,12 @@
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { GlassView } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,17 +24,17 @@ export default function AddVehiclePromptScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
       <View style={styles.content}>
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.delay(200).springify()}
           style={styles.header}
         >
@@ -105,18 +105,16 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   orb: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.1 },
-  orb2: { bottom: height * 0.1, left: -width * 0.3 },
 
-  content: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    paddingHorizontal: Spacing.xl 
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl
   },
   header: {
     alignItems: 'center',
@@ -132,16 +130,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  title: { 
-    fontSize: 32, 
-    fontFamily: Fonts.extraBold, 
+  title: {
+    fontSize: 32,
+    fontFamily: Fonts.extraBold,
     textAlign: 'center',
     lineHeight: 38,
-    marginBottom: 12 
+    marginBottom: 12
   },
-  subtitle: { 
-    fontSize: FontSizes.md, 
-    fontFamily: Fonts.medium, 
+  subtitle: {
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.medium,
     textAlign: 'center',
     lineHeight: 24,
     opacity: 0.7,
@@ -151,31 +149,31 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   optionCard: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: BorderRadius.xxl, 
-    borderWidth: 1, 
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
     padding: Spacing.xl,
     overflow: 'hidden',
   },
   iconCircle: {
-    width: 54, 
-    height: 54, 
+    width: 54,
+    height: 54,
     borderRadius: 27,
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: Spacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   optionText: { flex: 1 },
-  optionTitle: { 
-    fontSize: FontSizes.lg, 
-    fontFamily: Fonts.bold 
+  optionTitle: {
+    fontSize: FontSizes.lg,
+    fontFamily: Fonts.bold
   },
-  optionSubtitle: { 
-    fontSize: FontSizes.sm, 
-    fontFamily: Fonts.medium, 
+  optionSubtitle: {
+    fontSize: FontSizes.sm,
+    fontFamily: Fonts.medium,
     marginTop: 2,
     opacity: 0.6
   },

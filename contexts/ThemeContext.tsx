@@ -14,6 +14,7 @@ type ThemeContextType = {
   setThemeMode: (mode: ThemeMode) => void;
   isDark: boolean;
   colors: ThemeColors;
+  isThemeLoaded: boolean;
 };
 
 const THEME_STORAGE_KEY = '@carkit_theme_mode';
@@ -77,7 +78,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   if (!isLoaded) return null;
 
   return (
-    <ThemeContext.Provider value={{ themeMode, setThemeMode, isDark, colors }}>
+    <ThemeContext.Provider value={{ themeMode, setThemeMode, isDark, colors, isThemeLoaded: isLoaded }}>
       {children}
     </ThemeContext.Provider>
   );
