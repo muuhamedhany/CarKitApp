@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, Pressable,
-    TextInput, ActivityIndicator,
+    ActivityIndicator,
     KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,7 +20,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { supabase } from '@/lib/supabase';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
-import GradientButton from '@/components/common/GradientButton';
+import { FormInput, GradientButton } from '@/components';
 import BackButton from '@/components/common/BackButton';
 import type { Service } from '@/types/api.types';
 
@@ -237,23 +237,23 @@ export default function EditServiceScreen() {
                     <>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Info</Text>
 
-                        <View style={[styles.inputShell, { borderColor: colors.inputBorder }]}>
-                            <MaterialCommunityIcons name="format-title" size={20} color={colors.textMuted} />
-                            <TextInput style={[styles.inputText, { color: colors.textPrimary }]}
-                                placeholder="Service Name" placeholderTextColor={colors.textMuted}
-                                value={name} onChangeText={setName} />
-                        </View>
+                        <FormInput
+                            label="Service Name"
+                            icon="format-title"
+                            placeholder="Service Name"
+                            value={name}
+                            onChangeText={setName}
+                        />
 
-                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder }]}>
-                            <View style={styles.textAreaHeader}>
-                                <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />
-                            </View>
-                            <TextInput style={[styles.textAreaInput, { color: colors.textPrimary }]}
-                                placeholder="Detailed service description..."
-                                placeholderTextColor={colors.textMuted}
-                                value={description} onChangeText={setDescription}
-                                multiline textAlignVertical="top" />
-                        </View>
+                        <FormInput
+                            label="Description"
+                            icon="text"
+                            placeholder="Detailed service description..."
+                            value={description}
+                            onChangeText={setDescription}
+                            multiline
+                            numberOfLines={4}
+                        />
 
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
                         {categoriesLoading ? (
@@ -286,20 +286,24 @@ export default function EditServiceScreen() {
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Duration</Text>
                         <View style={styles.row}>
                             <View style={styles.halfWidth}>
-                                <View style={[styles.inputShell, { borderColor: colors.inputBorder }]}>
-                                    <MaterialCommunityIcons name="cash" size={20} color={colors.textMuted} />
-                                    <TextInput style={[styles.inputText, { color: colors.textPrimary }]}
-                                        placeholder="Price (EGP)" placeholderTextColor={colors.textMuted}
-                                        value={price} onChangeText={setPrice} keyboardType="numeric" />
-                                </View>
+                                <FormInput
+                                    label="Price (EGP)"
+                                    icon="cash"
+                                    placeholder="Price (EGP)"
+                                    value={price}
+                                    onChangeText={setPrice}
+                                    keyboardType="numeric"
+                                />
                             </View>
                             <View style={styles.halfWidth}>
-                                <View style={[styles.inputShell, { borderColor: colors.inputBorder }]}>
-                                    <MaterialCommunityIcons name="timer-outline" size={20} color={colors.textMuted} />
-                                    <TextInput style={[styles.inputText, { color: colors.textPrimary }]}
-                                        placeholder="Duration (min)" placeholderTextColor={colors.textMuted}
-                                        value={duration} onChangeText={setDuration} keyboardType="numeric" />
-                                </View>
+                                <FormInput
+                                    label="Duration (min)"
+                                    icon="timer-outline"
+                                    placeholder="Duration (min)"
+                                    value={duration}
+                                    onChangeText={setDuration}
+                                    keyboardType="numeric"
+                                />
                             </View>
                         </View>
 
@@ -324,16 +328,15 @@ export default function EditServiceScreen() {
                         })}
 
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Available Times</Text>
-                        <View style={[styles.inputShell, { borderColor: colors.inputBorder }]}>
-                            <MaterialCommunityIcons name="clock-outline" size={20} color={colors.textMuted} />
-                            <TextInput style={[styles.inputText, { color: colors.textPrimary, flex: 1 }]}
-                                placeholder="e.g. 09:00" placeholderTextColor={colors.textMuted}
-                                value={timeInput} onChangeText={setTimeInput}
-                                onSubmitEditing={addTime} returnKeyType="done" />
-                            <Pressable onPress={addTime} hitSlop={8}>
-                                <MaterialCommunityIcons name="plus-circle" size={24} color={colors.pink} />
-                            </Pressable>
-                        </View>
+                        <FormInput
+                            label="Add Time"
+                            icon="clock-outline"
+                            placeholder="e.g. 09:00"
+                            value={timeInput}
+                            onChangeText={setTimeInput}
+                            onSubmitEditing={addTime}
+                            returnKeyType="done"
+                        />
                         {availableTimes.length > 0 && (
                             <View style={styles.timePillsRow}>
                                 {availableTimes.map((t, i) => (

@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  FadeInDown, 
+import Animated, {
+  FadeInDown,
   FadeInUp,
   useSharedValue,
   useAnimatedStyle,
@@ -23,8 +23,8 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView} from '@/components';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView } from '@/components';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Colors } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
 
@@ -33,7 +33,7 @@ export default function LoginScreen() {
   const { login, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -75,7 +75,7 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
+
     setTimeout(async () => {
       const mockUser = {
         id: 'mock_google_id_123',
@@ -83,7 +83,7 @@ export default function LoginScreen() {
         email: 'demo@carkit.com',
         picture: 'https://ui-avatars.com/api/?name=Demo+User&background=random',
       };
-      
+
       const result = await loginWithGoogle(mockUser);
       setGoogleLoading(false);
 
@@ -102,7 +102,7 @@ export default function LoginScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '20' }]} />
       <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
@@ -116,17 +116,17 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Animated.View 
+          <Animated.View
             entering={FadeInUp.delay(200).duration(800)}
             style={styles.headerSection}
           >
             <Text style={[styles.welcomeTitle, { color: colors.pink }]}>Welcome Back!</Text>
             <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
-              Enter your credentials to continue your journey
+              Login to your account
             </Text>
           </Animated.View>
 
-          <Animated.View 
+          <Animated.View
             entering={FadeInDown.delay(400).duration(800)}
             style={styles.formWrapper}
           >
@@ -139,9 +139,9 @@ export default function LoginScreen() {
                 Shadows.lg
               ]}
             >
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
               <FormInput
                 icon="email-outline"
+                label="Email"
                 placeholder="email@example.com"
                 value={email}
                 onChangeText={setEmail}
@@ -149,10 +149,9 @@ export default function LoginScreen() {
                 autoComplete="email"
               />
 
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
               <FormInput
                 icon="lock-outline"
+                label="Password"
                 placeholder="••••••••"
                 value={password}
                 onChangeText={setPassword}
@@ -161,8 +160,8 @@ export default function LoginScreen() {
                 onToggle={() => setShowPassword(!showPassword)}
               />
 
-              <Pressable 
-                style={styles.forgotContainer} 
+              <Pressable
+                style={styles.forgotContainer}
                 onPress={() => router.push('/forgot-password' as any)}
               >
                 <Text style={[styles.forgotText, { color: colors.pink }]}>Forgot Password?</Text>
@@ -185,7 +184,7 @@ export default function LoginScreen() {
             </GlassView>
           </Animated.View>
 
-          <Animated.View 
+          <Animated.View
             entering={FadeInDown.delay(600).duration(800)}
             style={styles.footer}
           >
@@ -224,12 +223,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   welcomeTitle: {
-    fontSize: 40,
+    fontSize: FontSizes.xxxl,
     fontFamily: Fonts.extraBoldItalic,
     letterSpacing: -1,
   },
   welcomeSubtitle: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.sm,
     fontFamily: Fonts.medium,
     lineHeight: 22,
     marginTop: 4,
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: Colors.glass,
   },
   label: {
     fontSize: FontSizes.sm,
@@ -254,6 +253,7 @@ const styles = StyleSheet.create({
   forgotContainer: {
     alignItems: 'flex-end',
     marginBottom: Spacing.lg,
+    marginTop: -6,
   },
   forgotText: {
     fontSize: FontSizes.sm,

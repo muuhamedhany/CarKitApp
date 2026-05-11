@@ -82,17 +82,15 @@ export default function ForgotPasswordScreen() {
                 Shadows.lg
               ]}
             >
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
               <FormInput
+                label="Email Address"
                 icon="email-outline"
-                placeholder="john@example.com"
+                placeholder="yourname@mail.com"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoComplete="email"
               />
-
-              <View style={{ height: Spacing.lg }} />
 
               <GradientButton
                 title="Send Recovery Code"
@@ -137,15 +135,14 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.medium,
-    textAlign: 'center',
-    marginBottom: Spacing.xl + 8,
-    marginTop: 4,
+    marginBottom: Spacing.lg,
     opacity: 0.7,
   },
   formWrapper: {
     width: '100%',
   },
   glassCard: {
+    gap: Spacing.sm,
     padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
@@ -159,7 +156,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   footer: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.lg,
     alignItems: 'center',
   },
 });
