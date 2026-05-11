@@ -16,7 +16,7 @@ import {
 import Animated, { FadeInDown, FadeInLeft, FadeInUp, Layout } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -112,7 +112,7 @@ export default function SupportScreen() {
       ) : isCreating ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+            <View style={styles.formSection}>
               <View style={styles.infoBox}>
                 <View style={[styles.infoIconWrap, { backgroundColor: colors.pink + '20' }]}>
                   <MaterialCommunityIcons name="information-outline" size={20} color={colors.pink} />
@@ -122,35 +122,22 @@ export default function SupportScreen() {
                 </Text>
               </View>
 
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Subject</Text>
-                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary }]}
-                    placeholder="Ex. Booking Issue"
-                    placeholderTextColor={colors.textMuted}
-                    value={subject}
-                    onChangeText={setSubject}
-                  />
-                </View>
-              </View>
+              <FormInput
+                label="Subject"
+                placeholder="Ex. Booking Issue"
+                value={subject}
+                onChangeText={setSubject}
+              />
 
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Message</Text>
-                <View style={[styles.inputWrapper, styles.textAreaWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                  <TextInput
-                    style={[styles.input, styles.textArea, { color: colors.textPrimary }]}
-                    placeholder="Provide details about your issue here..."
-                    placeholderTextColor={colors.textMuted}
-                    value={message}
-                    onChangeText={setMessage}
-                    multiline
-                    numberOfLines={6}
-                    textAlignVertical="top"
-                  />
-                </View>
-              </View>
-            </GlassView>
+              <FormInput
+                label="Message"
+                placeholder="Provide details about your issue here..."
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                numberOfLines={6}
+              />
+            </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
@@ -248,13 +235,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 
-  glassCard: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: Spacing.lg,
+  formSection: {
+    gap: Spacing.md,
     marginBottom: Spacing.md,
-    overflow: 'hidden',
   },
 
   infoBox: {

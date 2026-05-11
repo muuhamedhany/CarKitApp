@@ -17,7 +17,7 @@ import {
 import Animated, { FadeInDown, FadeInLeft, Layout } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
 import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
@@ -203,89 +203,57 @@ export default function AddressesScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Title (e.g. Home, Work)</Text>
-                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                  <MaterialCommunityIcons name="label-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary }]}
-                    placeholder="Ex. Home"
-                    placeholderTextColor={colors.textMuted}
-                    value={title}
-                    onChangeText={setTitle}
-                  />
-                </View>
-              </View>
+            <View style={styles.formSection}>
+              <FormInput
+                label="Title (e.g. Home, Work)"
+                icon="label-outline"
+                placeholder="Ex. Home"
+                value={title}
+                onChangeText={setTitle}
+              />
 
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Street Address</Text>
-                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary }]}
-                    placeholder="123 Main St, Apt 4B"
-                    placeholderTextColor={colors.textMuted}
-                    value={street}
-                    onChangeText={setStreet}
-                  />
-                </View>
-              </View>
+              <FormInput
+                label="Street Address"
+                placeholder="123 Main St, Apt 4B"
+                value={street}
+                onChangeText={setStreet}
+              />
 
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>City</Text>
-                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary }]}
-                    placeholder="Ex. Cairo"
-                    placeholderTextColor={colors.textMuted}
-                    value={city}
-                    onChangeText={setCity}
-                  />
-                </View>
-              </View>
+              <FormInput
+                label="City"
+                placeholder="Ex. Cairo"
+                value={city}
+                onChangeText={setCity}
+              />
 
               <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-                <View style={[styles.formGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.textPrimary }]}>Building</Text>
-                  <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                    <TextInput
-                      style={[styles.input, { color: colors.textPrimary }]}
-                      placeholder="Ex. 42"
-                      placeholderTextColor={colors.textMuted}
-                      value={building}
-                      onChangeText={setBuilding}
-                    />
-                  </View>
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label="Building"
+                    placeholder="Ex. 42"
+                    value={building}
+                    onChangeText={setBuilding}
+                  />
                 </View>
-                <View style={[styles.formGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.textPrimary }]}>Apt / Floor</Text>
-                  <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                    <TextInput
-                      style={[styles.input, { color: colors.textPrimary }]}
-                      placeholder="Ex. Apt 4, Floor 2"
-                      placeholderTextColor={colors.textMuted}
-                      value={apartmentFloor}
-                      onChangeText={setApartmentFloor}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Delivery Notes (Optional)</Text>
-                <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', height: 80, alignItems: 'flex-start', paddingTop: 10 }]}>
-                  <TextInput
-                    style={[styles.input, { color: colors.textPrimary, textAlignVertical: 'top' }]}
-                    placeholder="Ex. Gate code, ring bell twice..."
-                    placeholderTextColor={colors.textMuted}
-                    multiline
-                    numberOfLines={3}
-                    value={notes}
-                    onChangeText={setNotes}
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label="Apt / Floor"
+                    placeholder="Ex. Apt 4, Floor 2"
+                    value={apartmentFloor}
+                    onChangeText={setApartmentFloor}
                   />
                 </View>
               </View>
-            </GlassView>
+
+              <FormInput
+                label="Delivery Notes (Optional)"
+                placeholder="Ex. Gate code, ring bell twice..."
+                multiline
+                numberOfLines={3}
+                value={notes}
+                onChangeText={setNotes}
+              />
+            </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).springify()}>
@@ -405,15 +373,18 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 
+  formSection: {
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
   glassCard: {
+    padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
     overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    marginBottom: Spacing.xl,
   },
-
   formGroup: { marginBottom: Spacing.lg },
   label: { fontFamily: Fonts.bold, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm, opacity: 0.6 },
   inputWrapper: {

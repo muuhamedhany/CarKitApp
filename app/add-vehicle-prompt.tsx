@@ -83,7 +83,7 @@ export default function AddVehiclePromptScreen() {
             <GlassView
               intensity={isDark ? 20 : 40}
               tint={isDark ? 'dark' : 'light'}
-              style={[styles.optionCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
+              style={[styles.optionCard, { borderColor: colors.purple + '40' }]}
             >
               <View style={[styles.iconCircle, { backgroundColor: colors.purple + '20' }]}>
                 <MaterialCommunityIcons name="clock-outline" size={28} color={colors.purple} />
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     overflow: 'hidden',
   },
   iconCircle: {

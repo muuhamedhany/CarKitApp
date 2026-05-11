@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GlassView} from '@/components';
+import { CenteredHeader, FormInput, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const AD_TIERS = [
@@ -120,13 +120,11 @@ export default function CreateAdScreen() {
         <Animated.View entering={FadeInDown.delay(500)}>
           <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.formCard, { borderColor: colors.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Ad Details</Text>
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Ad Title</Text>
-            <TextInput
+            <FormInput
+              label="Ad Title"
               placeholder="e.g. Summer Tire Sale"
-              placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
               value={title}
               onChangeText={setTitle}
-              style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
             />
             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md, marginBottom: Spacing.sm }]}>Banner Asset</Text>
             <Text style={[styles.helperText, { color: colors.textSecondary, opacity: 0.7 }]}>Recommended size: 1200x400 (3:1 aspect ratio)</Text>

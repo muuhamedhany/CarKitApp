@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GlassView, GradientButton, PickerModal } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -203,10 +203,7 @@ export default function AddVehicleSignupScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Add Your Vehicle"
-        titleColor={colors.textPrimary}
-      />
+
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -218,6 +215,10 @@ export default function AddVehicleSignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <CenteredHeader
+              title="Add Your Vehicle"
+              titleColor={colors.pink}
+            />
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Customize your experience with your car details
             </Text>
@@ -259,19 +260,13 @@ export default function AddVehicleSignupScreen() {
 
               {/* Form Fields */}
               <View style={styles.formContainer}>
-                <View style={styles.pickerGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
-                  <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                    <MaterialCommunityIcons name="tag-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
-                    <TextInput
-                      placeholder="e.g. My Fast Rider"
-                      placeholderTextColor={colors.textMuted}
-                      style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                      value={nickname}
-                      onChangeText={setNickname}
-                    />
-                  </View>
-                </View>
+                <FormInput
+                  label="Nickname"
+                  icon="tag-outline"
+                  placeholder="e.g. My Fast Rider"
+                  value={nickname}
+                  onChangeText={setNickname}
+                />
 
                 <View style={styles.pickerGroup}>
                   <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Make</Text>
@@ -309,30 +304,22 @@ export default function AddVehicleSignupScreen() {
 
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
-                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
-                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                      <TextInput
-                        placeholder="2024"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                        value={year}
-                        onChangeText={setYear}
-                        keyboardType="numeric"
-                        maxLength={4}
-                      />
-                    </View>
+                    <FormInput
+                      label="Year"
+                      placeholder="2024"
+                      value={year}
+                      onChangeText={setYear}
+                      keyboardType="numeric"
+                      maxLength={4}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Color</Text>
-                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                      <TextInput
-                        placeholder="Black"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                        value={color}
-                        onChangeText={setColor}
-                      />
-                    </View>
+                    <FormInput
+                      label="Color"
+                      placeholder="Black"
+                      value={color}
+                      onChangeText={setColor}
+                    />
                   </View>
                 </View>
               </View>
@@ -394,27 +381,24 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: height * 0.1,
     paddingBottom: 40
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.medium,
-    textAlign: 'center',
     marginBottom: Spacing.xl,
-    marginTop: 4,
     opacity: 0.7
   },
   glassCard: {
     borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    padding: Spacing.xl,
+    padding: Spacing.md,
     overflow: 'hidden',
   },
   section: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   label: {
     fontSize: 11,
@@ -466,15 +450,14 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   formContainer: {
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   inputLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 8,
-    marginLeft: 4,
+    marginBottom: Spacing.xs,
     opacity: 0.6
   },
   pickerGroup: {
@@ -503,16 +486,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtn: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
   },
   skipBtn: {
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     paddingVertical: 10,
   },
   skipText: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
-    textDecorationLine: 'underline',
   },
 });

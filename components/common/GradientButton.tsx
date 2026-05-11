@@ -66,7 +66,6 @@ export default function GradientButton({
   return (
     <Animated.View style={[
       { transform: [{ scale: scaleAnim }] }, 
-      Platform.OS === 'ios' ? Shadows[variant] : undefined, 
       { borderRadius: BorderRadius.full }, // Ensure shadow matches button shape on Android
       style
     ]}>
@@ -116,7 +115,7 @@ const styles = StyleSheet.create({
   text: {
     color: '#FFFFFF',
     fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
+    fontFamily: Fonts.semiBold,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },

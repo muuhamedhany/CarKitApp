@@ -102,8 +102,8 @@ export default function ResetPasswordScreen() {
                 Shadows.lg
               ]}
             >
-              <Text style={[styles.label, { color: colors.textPrimary }]}>New Password</Text>
               <FormInput
+                label="New Password"
                 icon="lock-outline"
                 placeholder="••••••••"
                 value={password}
@@ -113,10 +113,8 @@ export default function ResetPasswordScreen() {
                 onToggle={() => setShowPassword(!showPassword)}
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password</Text>
               <FormInput
+                label="Confirm New Password"
                 icon="lock-check-outline"
                 placeholder="••••••••"
                 value={confirmPassword}
@@ -124,12 +122,11 @@ export default function ResetPasswordScreen() {
                 secureTextEntry={!showPassword}
               />
 
-              <View style={{ height: Spacing.lg }} />
-
               <GradientButton
                 title="Update Password"
                 onPress={handleUpdatePassword}
                 loading={loading}
+                style={{ marginTop: Spacing.sm }}
               />
             </GlassView>
           </Animated.View>
@@ -154,14 +151,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: height * 0.1,
     paddingBottom: 40,
-    justifyContent: 'center',
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.medium,
-    textAlign: 'center',
-    marginBottom: Spacing.xl + 8,
-    marginTop: 4,
+    marginBottom: Spacing.lg,
     opacity: 0.7,
   },
   formWrapper: {
@@ -179,5 +173,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     marginBottom: Spacing.xs,
     marginLeft: 4,
+  },
+  footer: {
+    marginTop: Spacing.lg,
+    alignItems: 'center',
   },
 });
