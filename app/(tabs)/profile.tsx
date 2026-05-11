@@ -155,39 +155,12 @@ export default function ProfileScreen() {
               end={{ x: 0.5, y: 1 }}
             />
 
-            {/* Avatar with glow */}
-            <View style={styles.avatarSection}>
-              <View style={[styles.avatarGlow, { shadowColor: colors.pink }]}>
-                <LinearGradient
-                  colors={[colors.pink + '30', colors.purple + '20']}
-                  style={styles.avatarRing}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <View style={[styles.avatarContainer, { borderColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.8)' }]}>
-                    <LinearGradient
-                      colors={[colors.pink, colors.purple]}
-                      style={styles.avatarGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <Text style={styles.avatarInitial}>{profileInitial}</Text>
-                    </LinearGradient>
-                  </View>
-                </LinearGradient>
-              </View>
-            </View>
-
             {/* User Info */}
             <View style={styles.userInfoSection}>
               <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name || 'User'}</Text>
               <View style={[styles.emailPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
                 <MaterialCommunityIcons name="email-outline" size={13} color={colors.textMuted} />
                 <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">{user?.email}</Text>
-              </View>
-              <View style={[styles.memberBadge, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '25' }]}>
-                <MaterialCommunityIcons name="shield-check" size={12} color={colors.pink} />
-                <Text style={[styles.memberBadgeText, { color: colors.pink }]}>VERIFIED MEMBER</Text>
               </View>
             </View>
 
@@ -268,9 +241,7 @@ const styles = StyleSheet.create({
 
   profileHeaderCard: {
     borderRadius: BorderRadius.xxl,
-    paddingTop: Spacing.xl + 4,
-    paddingBottom: Spacing.xl,
-    paddingHorizontal: Spacing.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
     ...Shadows.lg,
     overflow: 'hidden',
@@ -310,27 +281,23 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   userInfoSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.lg + 4,
+    marginBottom: Spacing.md,
   },
   userName: {
-    fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.xxl,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
     letterSpacing: -0.5,
-    textAlign: 'center',
   },
   emailPill: {
     flexDirection: 'row', alignItems: 'center',
     marginTop: 8, paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, gap: 6, borderWidth: 1,
-    maxWidth: '90%',
+    borderRadius: 20, gap: 6, borderWidth: 1, alignSelf: 'flex-start',
   },
   userEmail: {
     fontFamily: Fonts.medium, fontSize: FontSizes.xs,
-    flexShrink: 1,
   },
   memberBadge: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row',
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 5,
     borderRadius: 20, gap: 5, borderWidth: 1,
   },
@@ -341,9 +308,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: BorderRadius.xl,
-    gap: 8,
-    ...Shadows.md,
-    shadowColor: '#CD42A8',
+    gap: 8
   },
   editProfileText: {
     fontFamily: Fonts.bold,

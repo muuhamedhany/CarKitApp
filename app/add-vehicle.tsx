@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GlassView, GradientButton, PickerModal } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton, PickerModal } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -270,46 +270,32 @@ export default function AddVehicleScreen() {
                   </Pressable>
                 </View>
 
-                <View style={styles.pickerGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Vehicle Color</Text>
-                  <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                    <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
-                    <TextInput
-                      placeholder="e.g. Metallic Silver"
-                      placeholderTextColor={colors.textMuted}
-                      style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                      value={color}
-                      onChangeText={setColor}
-                    />
-                  </View>
-                </View>
+                <FormInput
+                  label="Vehicle Color"
+                  icon="palette-outline"
+                  placeholder="e.g. Metallic Silver"
+                  value={color}
+                  onChangeText={setColor}
+                />
 
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
-                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
-                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                      <TextInput
-                        placeholder="YYYY"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                        value={year}
-                        onChangeText={setYear}
-                        keyboardType="numeric"
-                        maxLength={4}
-                      />
-                    </View>
+                    <FormInput
+                      label="Year"
+                      placeholder="YYYY"
+                      value={year}
+                      onChangeText={setYear}
+                      keyboardType="numeric"
+                      maxLength={4}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
-                    <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                      <TextInput
-                        placeholder="e.g. My Ride"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                        value={nickname}
-                        onChangeText={setNickname}
-                      />
-                    </View>
+                    <FormInput
+                      label="Nickname"
+                      placeholder="e.g. My Ride"
+                      value={nickname}
+                      onChangeText={setNickname}
+                    />
                   </View>
                 </View>
               </View>
@@ -385,7 +371,7 @@ const styles = StyleSheet.create({
   photoText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, opacity: 0.6 },
 
   formContainer: { gap: Spacing.md },
-  inputLabel: { fontSize: 11, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4, opacity: 0.6 },
+  inputLabel: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginLeft: 4, marginBottom: 8, opacity: 0.8 },
   pickerGroup: { marginBottom: Spacing.xs },
   pickerBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

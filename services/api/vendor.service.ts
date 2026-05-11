@@ -1,5 +1,6 @@
 import { ApiResponse, Product, VendorAnalyticsRange, VendorAnalyticsResponse, VendorDashboardResponse, VendorOrder, VendorPublicProfile } from '@/types/api.types';
 import { apiFetch } from './client';
+import { API_URL } from '@/constants/config';
 
 export const vendorService = {
     async getDashboard() {
