@@ -246,15 +246,14 @@ export default function BookingConfirmationScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Confirm Booking"
-        titleColor={colors.textPrimary}
-      />
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <CenteredHeader
+          title="Confirm Booking"
+          titleColor={colors.textPrimary}
+        />
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.summaryCard} {...{} as any}>
             <View style={styles.summaryHeader}>

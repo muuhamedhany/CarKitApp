@@ -99,11 +99,7 @@ export default function SupportScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title={isCreating ? 'New Ticket' : 'Help & Support'}
-        titleColor={colors.textPrimary}
-        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
-      />
+
 
       {loading ? (
         <View style={styles.center}>
@@ -111,6 +107,11 @@ export default function SupportScreen() {
         </View>
       ) : isCreating ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <CenteredHeader
+            title={isCreating ? 'New Ticket' : 'Help & Support'}
+            titleColor={colors.textPrimary}
+            rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+          />
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <View style={styles.formSection}>
               <View style={styles.infoBox}>
@@ -161,6 +162,11 @@ export default function SupportScreen() {
         </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <CenteredHeader
+            title={isCreating ? 'New Ticket' : 'Help & Support'}
+            titleColor={colors.textPrimary}
+            rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+          />
           {tickets.length === 0 ? (
             <Animated.View entering={FadeInDown} style={styles.emptyState}>
               <View style={[styles.emptyIconWrap, { backgroundColor: colors.pink + '10' }]}>

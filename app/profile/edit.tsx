@@ -90,11 +90,7 @@ export default function EditProfileScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Edit Profile"
-        titleColor={colors.textPrimary}
-        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
-      />
+
 
       {initialFetch ? (
         <View style={styles.center}>
@@ -106,6 +102,11 @@ export default function EditProfileScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+
+          <CenteredHeader
+            title="Edit Profile"
+            titleColor={colors.textPrimary}
+          />
 
           {/* Form Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>
@@ -167,7 +168,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm },
+  content: { paddingHorizontal: Spacing.lg },
 
   orb: {
     position: 'absolute',

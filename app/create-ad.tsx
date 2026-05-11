@@ -91,9 +91,8 @@ export default function CreateAdScreen() {
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader title="Create Ad" titleColor={colors.textPrimary} />
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <CenteredHeader title="Create Ad" titleColor={colors.textPrimary} />
         <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose a Tier</Animated.Text>
         
         <View style={styles.tierGrid}>

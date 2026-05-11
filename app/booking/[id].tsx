@@ -169,8 +169,6 @@ export default function BookingDetailScreen() {
             <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-            <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
-
             {loading ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={colors.pink} />
@@ -181,6 +179,7 @@ export default function BookingDetailScreen() {
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.cardHeader}>

@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -208,8 +209,6 @@ export default function MyBookingsScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
-
       <View style={styles.tabContainer}>
         <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
           <Pressable
@@ -244,13 +243,16 @@ export default function MyBookingsScreen() {
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : bookings.length === 0 ? (
-        <Animated.View entering={FadeInDown} style={styles.center}>
-          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
-            <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
-          </GlassView>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} bookings</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} service bookings will appear here.</Text>
-        </Animated.View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+          <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
+          <Animated.View entering={FadeInDown} style={styles.center}>
+            <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+              <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
+            </GlassView>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} bookings</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} service bookings will appear here.</Text>
+          </Animated.View>
+        </ScrollView>
       ) : (
         <TypedFlashList
           data={bookings}
@@ -263,6 +265,7 @@ export default function MyBookingsScreen() {
           onEndReachedThreshold={0.5}
           refreshing={refreshing}
           onRefresh={handleRefresh}
+          ListHeaderComponent={<CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />}
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
         />
       )}

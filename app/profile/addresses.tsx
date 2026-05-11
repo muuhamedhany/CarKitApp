@@ -156,11 +156,7 @@ export default function AddressesScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title={isAdding ? (editingId ? 'Edit Address' : 'Add Address') : 'Addresses'}
-        titleColor={colors.textPrimary}
-        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
-      />
+
 
       {loading ? (
         <View style={styles.center}>
@@ -168,6 +164,11 @@ export default function AddressesScreen() {
         </View>
       ) : isAdding ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <CenteredHeader
+            title={isAdding ? (editingId ? 'Edit Address' : 'Add Address') : 'Addresses'}
+            titleColor={colors.textPrimary}
+            rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+          />
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
               <Pressable
@@ -280,6 +281,11 @@ export default function AddressesScreen() {
         </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <CenteredHeader
+            title={isAdding ? (editingId ? 'Edit Address' : 'Add Address') : 'Addresses'}
+            titleColor={colors.textPrimary}
+            rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+          />
           {addresses.length === 0 ? (
             <Animated.View entering={FadeInDown} style={styles.emptyState}>
               <View style={[styles.emptyIconWrap, { backgroundColor: colors.pink + '10' }]}>

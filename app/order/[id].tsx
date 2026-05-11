@@ -219,8 +219,6 @@ export default function OrderDetailScreen() {
             <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
             <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
-            <CenteredHeader title="Order Details" titleColor={colors.textPrimary} />
-
             {loading ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={colors.pink} />
@@ -231,6 +229,7 @@ export default function OrderDetailScreen() {
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <CenteredHeader title="Order Details" titleColor={colors.textPrimary} />
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.headerRow}>

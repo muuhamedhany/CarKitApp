@@ -240,9 +240,9 @@ export default function CheckoutScreen() {
             <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-            <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
 
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
                 <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Animated.Text>
 
                 {loadingAddresses ? (

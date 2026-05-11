@@ -145,8 +145,6 @@ export default function ProviderBookingDetailScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-            <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
-
             {loading ? (
                 <View style={styles.centered}>
                     <ActivityIndicator size="large" color={colors.pink} />
@@ -157,6 +155,7 @@ export default function ProviderBookingDetailScreen() {
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+                    <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
                     <View style={[styles.heroCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
                         <View style={styles.heroHeader}>
                             <View>

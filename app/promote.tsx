@@ -81,12 +81,11 @@ export default function PromoteScreen() {
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader title="Promote" titleColor={colors.textPrimary} />
-
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={colors.pink} /></View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <CenteredHeader title="Promote" titleColor={colors.textPrimary} />
           <Animated.View entering={FadeInDown.delay(100)} style={styles.createAdSection}>
             <Pressable
               style={[styles.createCard, { borderColor: colors.pink }]}

@@ -80,13 +80,12 @@ export default function PasswordScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Change Password"
-        titleColor={colors.textPrimary}
-        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
-      />
-
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <CenteredHeader
+          title="Change Password"
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <View style={styles.formSection}>
             <View style={styles.headerInfo}>

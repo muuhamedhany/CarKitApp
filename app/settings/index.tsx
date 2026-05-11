@@ -39,13 +39,12 @@ export default function SettingsScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Settings"
-        titleColor={colors.textPrimary}
-        rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
-      />
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <CenteredHeader
+          title="Settings"
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         {/* Appearance Section */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>APPEARANCE</Text>

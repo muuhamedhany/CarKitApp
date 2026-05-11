@@ -49,9 +49,9 @@ export default function ProfileScreen() {
   };
 
   const quickActions: MenuItem[] = [
-    { icon: 'car-sports', label: 'Vehicles', route: '/my-vehicles' },
     { icon: 'package-variant', label: 'Orders', route: '/my-orders' },
     { icon: 'calendar-check', label: 'Bookings', route: '/my-bookings' },
+    { icon: 'car-sports', label: 'Vehicles', route: '/my-vehicles' },
     { icon: 'heart-outline', label: 'Wishlist', route: '/wishlist' },
   ];
 
