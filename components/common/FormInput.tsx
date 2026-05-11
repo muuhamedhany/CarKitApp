@@ -4,10 +4,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type FormInputProps = {
-  icon: string;
-  placeholder: string;
+  icon?: string;
+  placeholder?: string;
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   secureTextEntry?: boolean;
   showToggle?: boolean;
   onToggle?: () => void;
@@ -16,6 +16,14 @@ type FormInputProps = {
   autoComplete?: 'email' | 'name' | 'tel' | 'off';
   label?: string;
   maxLength?: number;
+  multiline?: boolean;
+  numberOfLines?: number;
+  onSubmitEditing?: () => void;
+  returnKeyType?: 'done' | 'next' | 'search' | 'send';
+  editable?: boolean;
+  rightIcon?: string;
+  onRightIconPress?: () => void;
+  containerStyle?: any;
 };
 
 export default function FormInput({
@@ -31,21 +39,37 @@ export default function FormInput({
   autoComplete = 'off',
   label,
   maxLength,
+  multiline = false,
+  numberOfLines,
+  onSubmitEditing,
+  returnKeyType,
+  editable = true,
+  rightIcon,
+  onRightIconPress,
+  containerStyle,
 }: FormInputProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.outerContainer}>
-      {label && <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>}
-      <View style={[styles.container, { borderColor: colors.inputBorder }]}>
-        <MaterialCommunityIcons
-          name={icon as any}
-          size={20}
-          color={colors.textMuted}
-          style={styles.icon}
-        />
+    <View style={[styles.outerContainer, containerStyle]}>
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+      <View style={[styles.container, {
+        borderColor: colors.inputBorder,
+        backgroundColor: colors.glass,
+        height: multiline ? (numberOfLines ? numberOfLines * 24 + 20 : 100) : 52,
+        alignItems: multiline ? 'flex-start' : 'center',
+        paddingVertical: multiline ? Spacing.sm : 0,
+      }]}>
+        {icon && (
+          <MaterialCommunityIcons
+            name={icon as any}
+            size={18}
+            color={colors.textMuted}
+            style={[styles.icon, multiline && { marginTop: 4 }]}
+          />
+        )}
         <TextInput
-          style={[styles.input, { color: colors.textPrimary }]}
+          style={[styles.input, { color: colors.textPrimary }, multiline && { textAlignVertical: 'top' }]}
           placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
           value={value}
@@ -55,11 +79,25 @@ export default function FormInput({
           autoCapitalize={autoCapitalize}
           autoComplete={autoComplete}
           maxLength={maxLength}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+          onSubmitEditing={onSubmitEditing}
+          returnKeyType={returnKeyType}
+          editable={editable}
         />
         {showToggle && onToggle && (
           <Pressable onPress={onToggle}>
             <MaterialCommunityIcons
               name={secureTextEntry ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color={colors.textMuted}
+            />
+          </Pressable>
+        )}
+        {rightIcon && onRightIconPress && (
+          <Pressable onPress={onRightIconPress}>
+            <MaterialCommunityIcons
+              name={rightIcon as any}
               size={22}
               color={colors.textMuted}
             />
@@ -81,13 +119,15 @@ const styles = StyleSheet.create({
     height: 52,
   },
   outerContainer: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   label: {
+    fontSize: 11,
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
-    marginBottom: 8,
-    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: Spacing.xs,
+    opacity: 0.6
   },
   icon: {
     marginRight: Spacing.sm,

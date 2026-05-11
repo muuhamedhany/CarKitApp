@@ -37,7 +37,7 @@ export default function SelectAccountScreen() {
         >
           <Text style={[styles.title, { color: colors.pink }]}>Choose Account Type</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            How would you like to use CarKit today?
+            How would you like to use CarKit?
           </Text>
         </Animated.View>
 
@@ -127,10 +127,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   title: { 
-    fontSize: 36, 
+    fontSize: FontSizes.xl, 
     fontFamily: Fonts.extraBoldItalic, 
-    lineHeight: 40,
-    marginBottom: 8 
   },
   subtitle: { 
     fontSize: FontSizes.md, 

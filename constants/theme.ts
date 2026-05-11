@@ -206,19 +206,19 @@ export const FontSizes = {
   sm: 14,
   md: 16,
   lg: 18,
-  xl: 24,
-  xxl: 32,
-  xxxl: 40,
+  xl: 28,
+  xxl: 28,
+  xxxl: 28,
 };
 
 export const BorderRadius = {
-  xs: 4,
-  sm: 8,
-  md: 12,
+  xs: 16,
+  sm: 16,
+  md: 16,
   lg: 16,
   xl: 24,
-  xxl: 32,
-  full: 999,
+  xxl: 24,
+  full: 24,
 };
 
 export const IconSizes = {

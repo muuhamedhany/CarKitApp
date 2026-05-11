@@ -17,14 +17,16 @@ export const Spacing = {
   sm: 8,
   md: 16,
   lg: 24,
-  xl: 32,
+  xl: 32, 
   xxl: 48,
 };
 
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
+  xs: 16,
+  sm: 16,
+  md: 16,
   lg: 16,
-  xl: 24,
-  full: 999,
+  xl: 16,
+  xxl: 24,
+  full: 24,
 };

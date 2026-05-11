@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   iconCircle: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   photoText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
   formContainer: { gap: Spacing.xs },
-  inputLabel: { fontSize: 13, fontFamily: Fonts.bold, marginBottom: 6, marginLeft: 4, opacity: 0.8 },
+  inputLabel: { fontSize: FontSizes.sm, fontFamily: Fonts.medium, marginLeft: 4, marginBottom: 8, opacity: 0.8 },
   pickerGroup: { marginBottom: Spacing.sm },
   pickerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: BorderRadius.lg, borderWidth: 1, paddingHorizontal: Spacing.md, paddingVertical: 14 },
   pickerBtnDisabled: { opacity: 0.4 },

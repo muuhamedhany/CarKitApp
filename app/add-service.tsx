@@ -1,9 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, Pressable,
-    TextInput, ActivityIndicator,
-    KeyboardAvoidingView, Platform, Image,
+    ActivityIndicator, Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +19,7 @@ import { providerService } from '@/services/api/provider.service';
 import { supabase } from '@/lib/supabase';
 import GradientButton from '@/components/common/GradientButton';
 import BackButton from '@/components/common/BackButton';
-import { GlassView } from '@/components';
+import { GlassView, FormInput } from '@/components';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -131,15 +129,23 @@ export default function AddServiceScreen() {
                         {currentStep === 0 && (
                             <View>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Information</Text>
-                                <TextInput placeholder="Service Name" placeholderTextColor={colors.textMuted} value={form.name} onChangeText={(v) => setForm(f => ({ ...f, name: v }))} style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder }]} />
-                                <TextInput placeholder="Description" placeholderTextColor={colors.textMuted} value={form.description} onChangeText={(v) => setForm(f => ({ ...f, description: v }))} multiline numberOfLines={3} style={[styles.input, styles.textArea, { color: colors.textPrimary, borderColor: colors.cardBorder }]} />
+                                <FormInput label="Service Name" icon="wrench" placeholder="Enter service name" value={form.name} onChangeText={(v) => setForm(f => ({ ...f, name: v }))} />
+                                <FormInput 
+                                    label="Description" 
+                                    icon="text" 
+                                    placeholder="Describe your service" 
+                                    value={form.description} 
+                                    onChangeText={(v) => setForm(f => ({ ...f, description: v }))} 
+                                    multiline
+                                    numberOfLines={3}
+                                />
                             </View>
                         )}
                         {currentStep === 1 && (
                             <View>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Timing</Text>
-                                <TextInput placeholder="Price (EGP)" keyboardType="numeric" value={form.price} onChangeText={(v) => setForm(f => ({ ...f, price: v }))} style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder }]} />
-                                <TextInput placeholder="Duration (min)" keyboardType="numeric" value={form.duration} onChangeText={(v) => setForm(f => ({ ...f, duration: v }))} style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder }]} />
+                                <FormInput label="Price (EGP)" icon="cash" keyboardType="numeric" placeholder="0.00" value={form.price} onChangeText={(v) => setForm(f => ({ ...f, price: v }))} />
+                                <FormInput label="Duration (min)" icon="clock-outline" keyboardType="numeric" placeholder="30" value={form.duration} onChangeText={(v) => setForm(f => ({ ...f, duration: v }))} />
                             </View>
                         )}
                         {currentStep === 2 && (

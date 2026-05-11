@@ -117,8 +117,8 @@ export default function SignUpVendorScreen() {
                 </Pressable>
               </View>
 
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Business Name</Text>
               <FormInput 
+                label="Business Name"
                 icon="domain" 
                 placeholder="CarKit Solutions Ltd." 
                 value={name} 
@@ -126,10 +126,8 @@ export default function SignUpVendorScreen() {
                 autoCapitalize="words" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Business Email</Text>
               <FormInput 
+                label="Business Email"
                 icon="email-outline" 
                 placeholder="contact@business.com" 
                 value={email} 
@@ -138,10 +136,8 @@ export default function SignUpVendorScreen() {
                 autoComplete="email" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Phone Number</Text>
               <FormInput 
+                label="Phone Number"
                 icon="phone-outline" 
                 placeholder="+1 234 567 890" 
                 value={phone} 
@@ -149,10 +145,8 @@ export default function SignUpVendorScreen() {
                 keyboardType="phone-pad" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Business Address</Text>
               <FormInput 
+                label="Business Address"
                 icon="map-marker-outline" 
                 placeholder="123 Industrial Way" 
                 value={address} 
@@ -160,10 +154,8 @@ export default function SignUpVendorScreen() {
                 autoCapitalize="words" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
               <FormInput 
+                label="Password"
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={password} 
@@ -173,10 +165,8 @@ export default function SignUpVendorScreen() {
                 onToggle={() => setShowPassword(!showPassword)} 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm Password</Text>
               <FormInput 
+                label="Confirm Password"
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={confirmPassword} 
