@@ -13,7 +13,7 @@ import { VendorOrder } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassView } from '@/components';
+import { FormInput, GlassView } from '@/components';
 
 const ORDER_FILTERS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 type OrderFilter = (typeof ORDER_FILTERS)[number];
@@ -162,22 +162,16 @@ export default function VendorOrdersScreen() {
                 <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Track current vendor order flow.</Text>
             </View>
 
-            <View style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-                <TextInput
-                    style={[styles.searchInput, { color: colors.textPrimary }]}
-                    placeholder="Search orders, customers..."
-                    placeholderTextColor={colors.textMuted}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    autoCapitalize="none"
-                />
-                {searchQuery.length > 0 && (
-                    <Pressable onPress={() => setSearchQuery('')}>
-                        <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
-                    </Pressable>
-                )}
-            </View>
+            <FormInput
+                icon="magnify"
+                placeholder="Search orders, customers..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                rightIcon={searchQuery.length > 0 ? "close-circle" : undefined}
+                onRightIconPress={() => setSearchQuery('')}
+                containerStyle={styles.searchBarForm}
+            />
 
             <ScrollView
                 style={styles.controlsScroll}
@@ -450,23 +444,9 @@ const styles = StyleSheet.create({
         marginTop: Spacing.md,
         textAlign: 'center',
     },
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    searchBarForm: {
         marginHorizontal: Spacing.md,
         marginBottom: Spacing.md,
-        paddingHorizontal: Spacing.md,
-        height: 48,
-        borderRadius: BorderRadius.full,
-        borderWidth: 1,
-        gap: 8,
-        ...Shadows.sm,
-    },
-    searchInput: {
-        flex: 1,
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.sm,
-        height: '100%',
     },
     customerAvatar: {
         width: 36,
