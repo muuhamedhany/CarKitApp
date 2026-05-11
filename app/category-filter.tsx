@@ -146,34 +146,29 @@ export default function CategoryFilterScreen() {
             <View style={[styles.orb, { top: -100, right: -150, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 100, left: -200, backgroundColor: colors.purple + '10' }]} />
 
-            <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
-                <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-                <CenteredHeader
-                    title="Categories"
-                    titleColor={colors.textPrimary}
-                    rowStyle={{ borderBottomWidth: 0 }}
-                />
-            </View>
-
             {loading ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={colors.pink} />
                 </View>
             ) : (
                 <>
-                    <Animated.View entering={FadeInDown.delay(100)} style={styles.summaryRow}>
-                        <Text style={[styles.summaryText, { color: colors.textSecondary }]}>{selectedLabel}</Text>
-                        {(selectedProductIds.length > 0 || selectedServiceIds.length > 0) && (
-                            <Pressable onPress={handleClear}>
-                                <Text style={[styles.clearText, { color: colors.pink }]}>Reset All</Text>
-                            </Pressable>
-                        )}
-                    </Animated.View>
-
                     <ScrollView 
                         contentContainerStyle={[styles.list, { paddingBottom: 140 + insets.bottom }]}
                         showsVerticalScrollIndicator={false}
                     >
+                        <CenteredHeader
+                            title="Categories"
+                            titleColor={colors.textPrimary}
+                            rowStyle={{ borderBottomWidth: 0, paddingTop: insets.top }}
+                        />
+                        <Animated.View entering={FadeInDown.delay(100)} style={styles.summaryRow}>
+                            <Text style={[styles.summaryText, { color: colors.textSecondary }]}>{selectedLabel}</Text>
+                            {(selectedProductIds.length > 0 || selectedServiceIds.length > 0) && (
+                                <Pressable onPress={handleClear}>
+                                    <Text style={[styles.clearText, { color: colors.pink }]}>Reset All</Text>
+                                </Pressable>
+                            )}
+                        </Animated.View>
                         <Animated.View entering={FadeInUp.delay(200)}>
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shop Products</Text>
                             {productCategories.length === 0 ? (

@@ -190,11 +190,6 @@ export default function AddVehicleScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader
-        title="Add New Vehicle"
-        titleColor={colors.textPrimary}
-      />
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -204,6 +199,10 @@ export default function AddVehicleScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <CenteredHeader
+            title="Add New Vehicle"
+            titleColor={colors.textPrimary}
+          />
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
               {/* Photo */}

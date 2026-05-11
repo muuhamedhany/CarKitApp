@@ -179,14 +179,13 @@ export default function WishlistScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
-
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : products.length === 0 ? (
         <Animated.View entering={FadeInDown} style={styles.center}>
+          <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
           <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <MaterialCommunityIcons name="cards-heart-outline" size={56} color={colors.pink} />
           </GlassView>
@@ -223,9 +222,12 @@ export default function WishlistScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: androidPadding + 120 }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <Text style={[styles.listLabel, { color: colors.textMuted }]}>
-              {products.length} item{products.length !== 1 ? 's' : ''} saved
-            </Text>
+            <View>
+              <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
+              <Text style={[styles.listLabel, { color: colors.textMuted }]}>
+                {products.length} item{products.length !== 1 ? 's' : ''} saved
+              </Text>
+            </View>
           }
         />
       )}

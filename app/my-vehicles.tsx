@@ -80,8 +80,6 @@ export default function MyVehiclesScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <CenteredHeader title="My Vehicles" titleColor={colors.textPrimary} />
-
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.pink} />
@@ -91,6 +89,7 @@ export default function MyVehiclesScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          <CenteredHeader title="My Vehicles" titleColor={colors.textPrimary} />
           {vehicles.length === 0 ? (
             <Animated.View
               entering={FadeInDown.delay(400).duration(800)}

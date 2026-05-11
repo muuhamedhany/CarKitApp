@@ -19,7 +19,7 @@ export default function CenteredHeader({
     return (
         <>
             <BackButton noSpacer />
-            <View style={[styles.header, rowStyle]}>
+            <View style={[styles.header]}>
                 <Text style={[styles.title, { color: titleColor }, titleStyle]} numberOfLines={1}>
                     {title}
                 </Text>

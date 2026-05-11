@@ -142,9 +142,8 @@ export default function AdPaymentScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <CenteredHeader title="Ad Payment" titleColor={colors.textPrimary} />
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <CenteredHeader title="Ad Payment" titleColor={colors.textPrimary} />
 
         {/* Order Summary */}
         <View style={[styles.summaryCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>

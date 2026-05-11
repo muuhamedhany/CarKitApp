@@ -270,8 +270,6 @@ export default function ProviderBookingsScreen() {
             <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-            <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
-
             <View>
                 <ScrollView 
                     horizontal 
@@ -315,11 +313,14 @@ export default function ProviderBookingsScreen() {
                     <ActivityIndicator size="large" color={colors.pink} />
                 </View>
             ) : visibleBookings.length === 0 ? (
-                <View style={styles.centered}>
-                    <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textMuted} />
-                    <Text style={[styles.emptyTitle, { color: colors.textMuted }]}>No bookings found</Text>
-                    <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
-                </View>
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+                    <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
+                    <View style={styles.centered}>
+                        <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textMuted} />
+                        <Text style={[styles.emptyTitle, { color: colors.textMuted }]}>No bookings found</Text>
+                        <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
+                    </View>
+                </ScrollView>
             ) : (
                 <TypedFlashList
                     data={visibleBookings}
@@ -339,6 +340,7 @@ export default function ProviderBookingsScreen() {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
+                    ListHeaderComponent={<CenteredHeader title="Bookings" titleColor={colors.textPrimary} />}
                     ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
                     showsVerticalScrollIndicator={false}
                     ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
