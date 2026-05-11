@@ -4,6 +4,7 @@
     "slug": "CarKitApp",
     "version": "1.0.0",
     "orientation": "portrait",
+    "backgroundColor": "#050505",
     "icon": "./assets/images/icon.png",
     "scheme": "carkitapp",
     "userInterfaceStyle": "automatic",
@@ -16,6 +17,7 @@
         "backgroundColor": "#0A0A14",
         "foregroundImage": "./assets/images/icon.png"
       },
+      "backgroundColor": "#050505",
       "edgeToEdgeEnabled": true
     },
     "web": {

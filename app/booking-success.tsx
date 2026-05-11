@@ -1,14 +1,14 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp, ZoomIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { GlassView, GradientButton } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { GradientButton, GlassView} from '@/components';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -40,7 +40,7 @@ export default function BookingSuccessScreen() {
         colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
       <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
@@ -98,15 +98,15 @@ export default function BookingSuccessScreen() {
           <GradientButton
             title="View My Bookings"
             onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.replace('/my-bookings');
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.replace('/my-bookings');
             }}
             icon="calendar-check"
           />
-          <Pressable 
+          <Pressable
             onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.replace('/(tabs)');
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.replace('/(tabs)');
             }}
             style={styles.homeBtn}
           >
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xxl, textAlign: 'center' },
   subtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.md, textAlign: 'center', marginTop: 8, opacity: 0.7 },
-  
+
   cardWrapper: { width: '100%', marginTop: Spacing.xxl },
   detailsCard: {
     width: '100%', borderRadius: BorderRadius.xxl,
@@ -156,14 +156,14 @@ const styles = StyleSheet.create({
   divider: { height: 1, opacity: 0.05 },
   detailLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.6 },
   detailValue: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-  
-  infoText: { 
-    fontFamily: Fonts.medium, fontSize: FontSizes.sm, 
-    textAlign: 'center', marginTop: Spacing.xl, 
+
+  infoText: {
+    fontFamily: Fonts.medium, fontSize: FontSizes.sm,
+    textAlign: 'center', marginTop: Spacing.xl,
     lineHeight: 22, opacity: 0.6,
     paddingHorizontal: Spacing.md
   },
-  
+
   buttonContainer: { width: '100%', marginTop: Spacing.xxl, gap: Spacing.md },
   homeBtn: { alignItems: 'center', paddingVertical: 12 },
   homeBtnText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, opacity: 0.8 },

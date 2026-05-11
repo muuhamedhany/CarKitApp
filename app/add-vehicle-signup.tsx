@@ -1,32 +1,32 @@
 import { useTheme } from '@/hooks/useTheme';
-import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Image,
-  Dimensions,
-  TextInput,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { supabase } from '@/lib/supabase';
+import { CenteredHeader, GlassView, GradientButton, PickerModal } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, FormInput, PickerModal, GradientButton, GlassView} from '@/components';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -194,18 +194,18 @@ export default function AddVehicleSignupScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
-      <CenteredHeader 
-        title="Add Your Vehicle" 
-        titleColor={colors.textPrimary} 
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <CenteredHeader
+        title="Add Your Vehicle"
+        titleColor={colors.textPrimary}
       />
 
       <KeyboardAvoidingView
@@ -263,7 +263,7 @@ export default function AddVehicleSignupScreen() {
                   <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
                   <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
                     <MaterialCommunityIcons name="tag-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
-                    <TextInput 
+                    <TextInput
                       placeholder="e.g. My Fast Rider"
                       placeholderTextColor={colors.textMuted}
                       style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
@@ -311,27 +311,27 @@ export default function AddVehicleSignupScreen() {
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
                     <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
                     <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                        <TextInput 
-                          placeholder="2024"
-                          placeholderTextColor={colors.textMuted}
-                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                          value={year}
-                          onChangeText={setYear}
-                          keyboardType="numeric"
-                          maxLength={4}
-                        />
+                      <TextInput
+                        placeholder="2024"
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                        value={year}
+                        onChangeText={setYear}
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
                     </View>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Color</Text>
                     <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                        <TextInput 
-                          placeholder="Black"
-                          placeholderTextColor={colors.textMuted}
-                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                          value={color}
-                          onChangeText={setColor}
-                        />
+                      <TextInput
+                        placeholder="Black"
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                        value={color}
+                        onChangeText={setColor}
+                      />
                     </View>
                   </View>
                 </View>
@@ -386,13 +386,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   orb: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.1 },
-  orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
   scrollContent: {
     flexGrow: 1,

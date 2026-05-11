@@ -210,9 +210,9 @@ export default function OrderDetailScreen() {
     const currentPosition = statusPosition[normalizeStatus(order?.status)] ?? 0;
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
-                colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
                 style={StyleSheet.absoluteFill}
             />
 

@@ -1,32 +1,32 @@
 import { useTheme } from '@/hooks/useTheme';
-import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  Image,
-  Dimensions,
-  TextInput,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { supabase } from '@/lib/supabase';
+import { CenteredHeader, GlassView, GradientButton, PickerModal } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, FormInput, PickerModal, GradientButton, GlassView} from '@/components';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -181,18 +181,18 @@ export default function AddVehicleScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={[isDark ? '#0F172A' : '#F8FAFC', isDark ? '#020617' : '#F1F5F9']}
+        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
-      <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-      <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
 
-      <CenteredHeader 
-        title="Add New Vehicle" 
-        titleColor={colors.textPrimary} 
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <CenteredHeader
+        title="Add New Vehicle"
+        titleColor={colors.textPrimary}
       />
 
       <KeyboardAvoidingView
@@ -271,44 +271,44 @@ export default function AddVehicleScreen() {
                 </View>
 
                 <View style={styles.pickerGroup}>
-                   <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Vehicle Color</Text>
-                   <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                      <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
-                      <TextInput 
-                        placeholder="e.g. Metallic Silver"
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                        value={color}
-                        onChangeText={setColor}
-                      />
-                   </View>
+                  <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Vehicle Color</Text>
+                  <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <MaterialCommunityIcons name="palette-outline" size={20} color={colors.textMuted} style={{ marginRight: 10 }} />
+                    <TextInput
+                      placeholder="e.g. Metallic Silver"
+                      placeholderTextColor={colors.textMuted}
+                      style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                      value={color}
+                      onChangeText={setColor}
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.rowInputs}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
                     <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Year</Text>
                     <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                        <TextInput 
-                          placeholder="YYYY"
-                          placeholderTextColor={colors.textMuted}
-                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                          value={year}
-                          onChangeText={setYear}
-                          keyboardType="numeric"
-                          maxLength={4}
-                        />
+                      <TextInput
+                        placeholder="YYYY"
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                        value={year}
+                        onChangeText={setYear}
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
                     </View>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nickname</Text>
                     <View style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                        <TextInput 
-                          placeholder="e.g. My Ride"
-                          placeholderTextColor={colors.textMuted}
-                          style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
-                          value={nickname}
-                          onChangeText={setNickname}
-                        />
+                      <TextInput
+                        placeholder="e.g. My Ride"
+                        placeholderTextColor={colors.textMuted}
+                        style={[styles.pickerBtnText, { color: colors.textPrimary, flex: 1 }]}
+                        value={nickname}
+                        onChangeText={setNickname}
+                      />
                     </View>
                   </View>
                 </View>
@@ -328,21 +328,21 @@ export default function AddVehicleScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <PickerModal 
-        visible={showMakePicker} 
-        title="Select Make" 
-        items={makes.map((m) => ({ id: m.make_id, label: m.name }))} 
-        selectedId={selectedMake?.make_id} 
-        onSelect={handleSelectMake} 
-        onClose={() => setShowMakePicker(false)} 
+      <PickerModal
+        visible={showMakePicker}
+        title="Select Make"
+        items={makes.map((m) => ({ id: m.make_id, label: m.name }))}
+        selectedId={selectedMake?.make_id}
+        onSelect={handleSelectMake}
+        onClose={() => setShowMakePicker(false)}
       />
-      <PickerModal 
-        visible={showModelPicker} 
-        title="Select Model" 
-        items={models.map((m) => ({ id: m.model_id, label: m.name }))} 
-        selectedId={selectedModel?.model_id} 
-        onSelect={handleSelectModel} 
-        onClose={() => setShowModelPicker(false)} 
+      <PickerModal
+        visible={showModelPicker}
+        title="Select Model"
+        items={models.map((m) => ({ id: m.model_id, label: m.name }))}
+        selectedId={selectedModel?.model_id}
+        onSelect={handleSelectModel}
+        onClose={() => setShowModelPicker(false)}
       />
     </View>
   );
@@ -353,46 +353,44 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   orb: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    opacity: 0.12,
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.4,
   },
-  orb1: { top: -width * 0.2, right: -width * 0.1 },
-  orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
   scrollContent: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingBottom: 40 },
-  glassCard: { 
-    borderRadius: BorderRadius.xxl, 
-    borderWidth: 1, 
-    padding: Spacing.xl, 
+  glassCard: {
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
+    padding: Spacing.xl,
     overflow: 'hidden',
     borderColor: 'rgba(255,255,255,0.1)',
   },
   section: { alignItems: 'center', marginBottom: Spacing.xl },
   label: { fontSize: 11, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.md, opacity: 0.6 },
-  photoBox: { 
-    width: '100%', height: 160, borderRadius: BorderRadius.xl, 
-    borderWidth: 1.5, borderStyle: 'dashed', 
-    justifyContent: 'center', alignItems: 'center', 
-    backgroundColor: 'rgba(255,255,255,0.03)' 
+  photoBox: {
+    width: '100%', height: 160, borderRadius: BorderRadius.xl,
+    borderWidth: 1.5, borderStyle: 'dashed',
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)'
   },
-  photoPreview: { 
-    width: '100%', height: 160, borderRadius: BorderRadius.xl, 
-    overflow: 'hidden', position: 'relative', borderWidth: 1 
+  photoPreview: {
+    width: '100%', height: 160, borderRadius: BorderRadius.xl,
+    overflow: 'hidden', position: 'relative', borderWidth: 1
   },
   photoImg: { width: '100%', height: '100%' },
   photoOverlay: { position: 'absolute', bottom: 12, right: 12, borderRadius: 20, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   iconCircle: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   photoText: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, opacity: 0.6 },
-  
+
   formContainer: { gap: Spacing.md },
   inputLabel: { fontSize: 11, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4, opacity: 0.6 },
   pickerGroup: { marginBottom: Spacing.xs },
-  pickerBtn: { 
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
-    borderRadius: BorderRadius.lg, borderWidth: 1, 
-    paddingHorizontal: Spacing.md, height: 54 
+  pickerBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderRadius: BorderRadius.lg, borderWidth: 1,
+    paddingHorizontal: Spacing.md, height: 54
   },
   pickerBtnDisabled: { opacity: 0.3 },
   pickerBtnText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
