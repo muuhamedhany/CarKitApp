@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GlassView, GradientButton } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -140,7 +140,7 @@ export default function BookingConfirmationScreen() {
       const response = await addressService.getAddresses();
       if (response.success && Array.isArray(response.data)) {
         // Normalize IDs
-        const normalized = response.data.map(addr => ({
+        const normalized = response.data.map((addr: any) => ({
           ...addr,
           address_id: addr.address_id || addr.id
         }));
@@ -432,62 +432,58 @@ export default function BookingConfirmationScreen() {
           })}
 
           {paymentMethod === 'instapay' && (
-            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard} {...{} as any}>
-              <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>InstaPay Reference</Text>
-              <TextInput
+            <View style={styles.paymentDetailsCard}>
+              <FormInput
+                label="InstaPay Reference"
                 value={instapayReference}
                 onChangeText={setInstapayReference}
                 placeholder="Enter reference number"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.textInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
               />
-            </GlassView>
+            </View>
           )}
 
           {paymentMethod === 'vodafone_cash' && (
-            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
-              <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>Vodafone Cash Number</Text>
-              <TextInput
+            <View style={styles.paymentDetailsCard}>
+              <FormInput
+                label="Vodafone Cash Number"
                 value={vodafoneNumber}
                 onChangeText={setVodafoneNumber}
                 placeholder="Enter wallet number"
-                placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
-                style={[styles.textInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
               />
-            </GlassView>
+            </View>
           )}
 
           {paymentMethod === 'credit_card' && (
-            <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.paymentDetailsCard}>
-              <Text style={[styles.paymentHeading, { color: colors.textPrimary }]}>Card Details</Text>
-              <TextInput
+            <View style={styles.paymentDetailsCard}>
+              <FormInput
+                label="Card Number"
                 value={cardNumber}
                 onChangeText={setCardNumber}
                 placeholder="Card number"
-                placeholderTextColor={colors.textMuted}
                 keyboardType="number-pad"
-                style={[styles.textInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
               />
               <View style={styles.cardRow}>
-                <TextInput
-                  value={cardExpiry}
-                  onChangeText={setCardExpiry}
-                  placeholder="MM/YY"
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.textInput, styles.cardHalfInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
-                />
-                <TextInput
-                  value={cardCvv}
-                  onChangeText={setCardCvv}
-                  placeholder="CVV"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad"
-                  secureTextEntry
-                  style={[styles.textInput, styles.cardHalfInput, { color: colors.textPrimary, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.05)' }]}
-                />
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label="Expiry"
+                    value={cardExpiry}
+                    onChangeText={setCardExpiry}
+                    placeholder="MM/YY"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label="CVV"
+                    value={cardCvv}
+                    onChangeText={setCardCvv}
+                    placeholder="CVV"
+                    keyboardType="number-pad"
+                    secureTextEntry
+                  />
+                </View>
               </View>
-            </GlassView>
+            </View>
           )}
         </Animated.View>
 
@@ -607,13 +603,8 @@ const styles = StyleSheet.create({
   methodDescription: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.6 },
 
   paymentDetailsCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
     marginTop: Spacing.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   paymentHeading: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, opacity: 0.8 },
   textInput: {
