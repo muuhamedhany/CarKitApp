@@ -220,8 +220,9 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Info</Text>
 
                         <FormInput
+                            label="Product Name"
                             icon="format-title"
-                            placeholder="Product Name"
+                            placeholder="e.g. Premium Engine Oil"
                             value={name}
                             onChangeText={setName}
                         />
@@ -281,8 +282,9 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                         <View style={styles.row}>
                             <View style={styles.halfWidth}>
                                 <FormInput
+                                    label="Price"
                                     icon="currency-usd"
-                                    placeholder="Price"
+                                    placeholder="0.00"
                                     keyboardType="numeric"
                                     value={price}
                                     onChangeText={setPrice}
@@ -290,8 +292,9 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             </View>
                             <View style={styles.halfWidth}>
                                 <FormInput
+                                    label="Stock"
                                     icon="package-variant"
-                                    placeholder="Stock"
+                                    placeholder="0"
                                     keyboardType="number-pad"
                                     value={stock}
                                     onChangeText={setStock}

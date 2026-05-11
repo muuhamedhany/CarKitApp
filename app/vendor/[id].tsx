@@ -192,7 +192,7 @@ export default function VendorPublicProfileScreen() {
                   style={[styles.reviewItem, { borderColor: colors.cardBorder }]}
                 >
                   <View style={styles.reviewHeader}>
-                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.customer_name || 'Anonymous'}</Text>
+                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || 'Anonymous'}</Text>
                     <StarRating rating={review.rating || 0} size={14} readonly />
                   </View>
                   <Text style={[styles.reviewComment, { color: colors.textSecondary }]}>{review.comment}</Text>

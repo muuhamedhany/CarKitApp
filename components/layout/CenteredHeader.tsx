@@ -8,27 +8,21 @@ type CenteredHeaderProps = {
     titleColor: string;
     rowStyle?: StyleProp<ViewStyle>;
     titleStyle?: StyleProp<TextStyle>;
-    leftWidth?: number;
-    rightWidth?: number;
-};
+    };
 
 export default function CenteredHeader({
     title,
     titleColor,
     rowStyle,
     titleStyle,
-    leftWidth = 32,
-    rightWidth = 32,
 }: CenteredHeaderProps) {
     return (
         <>
             <BackButton noSpacer />
             <View style={[styles.header, rowStyle]}>
-                <View style={{ width: leftWidth }} />
                 <Text style={[styles.title, { color: titleColor }, titleStyle]} numberOfLines={1}>
                     {title}
                 </Text>
-                <View style={{ width: rightWidth }} />
             </View>
         </>
     );
@@ -37,15 +31,11 @@ export default function CenteredHeader({
 const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 60,
-        paddingBottom: Spacing.md,
-        paddingHorizontal: Spacing.lg,
+        paddingBottom: Spacing.sm,
+        marginTop: Spacing.sm,
     },
     title: {
-        flex: 1,
-        textAlign: 'center',
+        textAlign: 'left',
         fontFamily: Fonts.bold,
         fontSize: FontSizes.xl,
     },

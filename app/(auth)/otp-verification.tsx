@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { GradientButton, CenteredHeader, GlassView} from '@/components';
+import { GradientButton, CenteredHeader, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
@@ -20,7 +20,7 @@ export default function OTPVerificationScreen() {
   const { verifyOtp, forgotPassword } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
-  
+
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<Array<TextInput | null>>([]);
@@ -132,7 +132,7 @@ export default function OTPVerificationScreen() {
         colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, left: -50, backgroundColor: colors.pink + '20' }]} />
       <View style={[styles.orb, { bottom: -100, right: -50, backgroundColor: colors.purple + '15' }]} />
@@ -187,14 +187,7 @@ export default function OTPVerificationScreen() {
                 ))}
               </View>
 
-              <View style={styles.resendContainer}>
-                <Text style={[styles.resendText, { color: colors.textSecondary }]}>
-                  Didn&apos;t receive a code?{' '}
-                </Text>
-                <Pressable onPress={handleResend} hitSlop={10}>
-                  <Text style={[styles.resendAction, { color: colors.pink }]}>Resend</Text>
-                </Pressable>
-              </View>
+
 
               {internalError && (
                 <Text style={[styles.errorText, { color: colors.error }]}>{internalError}</Text>
@@ -207,6 +200,15 @@ export default function OTPVerificationScreen() {
                 style={styles.verifyBtn}
               />
             </GlassView>
+
+            <View style={styles.resendContainer}>
+              <Text style={[styles.resendText, { color: colors.textSecondary }]}>
+                Didn&apos;t receive a code?{' '}
+              </Text>
+              <Pressable onPress={handleResend} hitSlop={10}>
+                <Text style={[styles.resendAction, { color: colors.pink }]}>Resend</Text>
+              </Pressable>
+            </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -229,14 +231,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: height * 0.1,
     paddingBottom: 40,
-    justifyContent: 'center',
   },
   subtitle: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.medium,
     textAlign: 'center',
-    marginBottom: Spacing.xl + 10,
-    marginTop: 4,
+    marginBottom: Spacing.lg,
     opacity: 0.7,
   },
   formWrapper: {
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: Spacing.xl,
+    gap: 8,
+    marginBottom: Spacing.xs,
     width: '100%',
   },
   otpInput: {
@@ -266,19 +266,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   resendContainer: {
+    marginTop: Spacing.md,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
   },
   resendText: {
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.regular,
   },
   resendAction: {
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.bold,
-    textDecorationLine: 'underline',
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.medium,
   },
   verifyBtn: {
     marginTop: Spacing.md,

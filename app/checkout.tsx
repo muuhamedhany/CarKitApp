@@ -1,4 +1,4 @@
-import { CenteredHeader, GlassView } from '@/components';
+import { CenteredHeader, FormInput, GlassView } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -361,38 +361,38 @@ export default function CheckoutScreen() {
                     <Animated.View entering={FadeInUp}>
                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
                             <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
-                            <TextInput
+                            <FormInput
                                 value={cardHolderName}
                                 onChangeText={setCardHolderName}
                                 placeholder="Card holder name"
-                                placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
-                                style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+                                icon="account-outline"
                             />
-                            <TextInput
+                            <FormInput
                                 value={cardNumber}
                                 onChangeText={setCardNumber}
                                 placeholder="Card number"
-                                placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
                                 keyboardType="number-pad"
-                                style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+                                icon="credit-card-outline"
                             />
                             <View style={styles.rowInputs}>
-                                <TextInput
-                                    value={cardExpiry}
-                                    onChangeText={setCardExpiry}
-                                    placeholder="MM/YY"
-                                    placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
-                                    style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
-                                />
-                                <TextInput
-                                    value={cardCvv}
-                                    onChangeText={setCardCvv}
-                                    placeholder="CVV"
-                                    placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
-                                    keyboardType="number-pad"
-                                    secureTextEntry
-                                    style={[styles.input, styles.halfInput, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
-                                />
+                                <View style={{ flex: 1 }}>
+                                    <FormInput
+                                        value={cardExpiry}
+                                        onChangeText={setCardExpiry}
+                                        placeholder="MM/YY"
+                                        icon="calendar-range"
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <FormInput
+                                        value={cardCvv}
+                                        onChangeText={setCardCvv}
+                                        placeholder="CVV"
+                                        keyboardType="number-pad"
+                                        secureTextEntry
+                                        icon="lock-outline"
+                                    />
+                                </View>
                             </View>
                             <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Complete all fields to unlock Place Order.</Text>
                         </GlassView>

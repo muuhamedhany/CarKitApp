@@ -16,7 +16,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -88,7 +88,7 @@ export default function PasswordScreen() {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
+          <View style={styles.formSection}>
             <View style={styles.headerInfo}>
               <View style={[styles.iconWrap, { backgroundColor: colors.pink + '20' }]}>
                 <MaterialCommunityIcons name="shield-lock-outline" size={28} color={colors.pink} />
@@ -97,57 +97,38 @@ export default function PasswordScreen() {
               <Text style={[styles.headerDesc, { color: colors.textMuted }]}>Choose a strong password to keep your data safe.</Text>
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Current Password</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="Enter current password"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!showPassword}
-                  value={currentPassword}
-                  onChangeText={setCurrentPassword}
-                />
-                <Pressable onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowPassword(!showPassword);
-                }} style={styles.eyeIcon}>
-                  <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={20} color={colors.textMuted} />
-                </Pressable>
-              </View>
-            </View>
+            <FormInput
+              label="Current Password"
+              icon="lock-outline"
+              placeholder="Enter current password"
+              secureTextEntry={!showPassword}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              rightIcon={showPassword ? 'eye-off' : 'eye'}
+              onRightIconPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowPassword(!showPassword);
+              }}
+            />
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>New Password</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                <MaterialCommunityIcons name="lock-plus-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="Enter new password"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!showPassword}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                />
-              </View>
-            </View>
+            <FormInput
+              label="New Password"
+              icon="lock-plus-outline"
+              placeholder="Enter new password"
+              secureTextEntry={!showPassword}
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                <MaterialCommunityIcons name="lock-check-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="Confirm new password"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!showPassword}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                />
-              </View>
-            </View>
-          </GlassView>
+            <FormInput
+              label="Confirm New Password"
+              icon="lock-check-outline"
+              placeholder="Confirm new password"
+              secureTextEntry={!showPassword}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+          </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
@@ -184,13 +165,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 
-  glassCard: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: Spacing.lg,
+  formSection: {
+    gap: Spacing.md,
     marginBottom: Spacing.md,
-    overflow: 'hidden',
   },
 
   headerInfo: {

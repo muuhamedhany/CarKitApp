@@ -95,8 +95,8 @@ export default function SignUpCustomerScreen() {
                 Shadows.lg
               ]}
             >
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name</Text>
               <FormInput 
+                label="Full Name"
                 icon="account-outline" 
                 placeholder="John Doe" 
                 value={name} 
@@ -104,10 +104,8 @@ export default function SignUpCustomerScreen() {
                 autoCapitalize="words" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
               <FormInput 
+                label="Email Address"
                 icon="email-outline" 
                 placeholder="john@example.com" 
                 value={email} 
@@ -116,10 +114,8 @@ export default function SignUpCustomerScreen() {
                 autoComplete="email" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Phone Number</Text>
               <FormInput 
+                label="Phone Number"
                 icon="phone-outline" 
                 placeholder="+1 234 567 890" 
                 value={phone} 
@@ -127,10 +123,8 @@ export default function SignUpCustomerScreen() {
                 keyboardType="phone-pad" 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
               <FormInput 
+                label="Password"
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={password} 
@@ -140,10 +134,8 @@ export default function SignUpCustomerScreen() {
                 onToggle={() => setShowPassword(!showPassword)} 
               />
 
-              <View style={{ height: Spacing.md }} />
-
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm Password</Text>
               <FormInput 
+                label="Confirm Password"
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={confirmPassword} 
@@ -201,15 +193,13 @@ const styles = StyleSheet.create({
   scrollContent: { 
     flexGrow: 1, 
     paddingHorizontal: Spacing.lg, 
-    paddingTop: height * 0.05, 
+    paddingTop: height * 0.1, 
     paddingBottom: 40 
   },
   subtitle: { 
     fontSize: FontSizes.md, 
     fontFamily: Fonts.medium, 
-    textAlign: 'center',
     marginBottom: Spacing.xl, 
-    marginTop: 4,
     opacity: 0.7,
   },
   formWrapper: {
@@ -229,8 +219,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   signupBtn: {
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
   footer: {
     marginTop: Spacing.xl,
