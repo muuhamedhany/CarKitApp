@@ -1,4 +1,4 @@
-import { GlassView, ProductCard, SearchSkeleton, ServiceCard } from '@/components';
+import { FormInput, GlassView, ProductCard, SearchSkeleton, ServiceCard } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -237,26 +237,17 @@ export default function SearchScreen() {
       <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
         <View style={styles.headerContent}>
           {/* Search Input */}
-          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.searchInputContainer, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-            borderColor: colors.cardBorder
-          }]}>
-            <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.textPrimary }]}
-              placeholder="Search for parts or services..."
-              placeholderTextColor={colors.textSecondary}
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
-              returnKeyType="search"
-            />
-            {query.length > 0 && (
-              <Pressable onPress={() => { setQuery(''); search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter); }}>
-                <MaterialCommunityIcons name="close-circle" size={18} color={colors.textSecondary} />
-              </Pressable>
-            )}
-          </Animated.View>
+          <FormInput
+            icon="magnify"
+            placeholder="Search for parts or services..."
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
+            returnKeyType="search"
+            rightIcon={query.length > 0 ? "close-circle" : undefined}
+            onRightIconPress={() => { setQuery(''); search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter); }}
+            containerStyle={styles.searchInputForm}
+          />
 
           {/* Ad filter banner */}
           {adFilter && (
@@ -436,23 +427,9 @@ const styles = StyleSheet.create({
   loadingText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: Spacing.md },
   results: { paddingHorizontal: Spacing.md },
 
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    borderWidth: 1,
-    ...Shadows.md,
+  searchInputForm: {
     marginTop: Spacing.md,
     marginBottom: Spacing.md,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
-    marginLeft: Spacing.sm,
-    paddingVertical: 4,
   },
 
   adFilterBanner: {

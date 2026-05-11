@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService } from '@/services/api/ad.service';
 import { apiFetch } from '@/services/api/client';
-import { CenteredHeader } from '@/components';
+import { CenteredHeader, FormInput } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 
 type PaymentMethod = 'instapay' | 'vodafone_cash' | 'credit_card';
@@ -232,49 +232,38 @@ export default function AdPaymentScreen() {
         {method === 'credit_card' && (
           <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
             <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
-            {[
-              { label: 'Card holder name', value: cardHolderName, set: setCardHolderName, kbType: 'default' as const, secure: false },
-              { label: 'Card number', value: cardNumber, set: setCardNumber, kbType: 'number-pad' as const, secure: false },
-            ].map((field) => (
-              <TextInput
-                key={field.label}
-                value={field.value}
-                onChangeText={field.set}
-                placeholder={field.label}
-                placeholderTextColor={colors.textMuted}
-                keyboardType={field.kbType}
-                style={[styles.input, {
-                  color: colors.textPrimary,
-                  borderColor: colors.cardBorder,
-                  backgroundColor: colors.background,
-                }]}
-              />
-            ))}
+            <FormInput
+              value={cardHolderName}
+              onChangeText={setCardHolderName}
+              placeholder="Card holder name"
+              icon="account-outline"
+            />
+            <FormInput
+              value={cardNumber}
+              onChangeText={setCardNumber}
+              placeholder="Card number"
+              keyboardType="number-pad"
+              icon="credit-card-outline"
+            />
             <View style={styles.rowInputs}>
-              <TextInput
-                value={cardExpiry}
-                onChangeText={setCardExpiry}
-                placeholder="MM/YY"
-                placeholderTextColor={colors.textMuted}
-                style={[styles.input, styles.halfInput, {
-                  color: colors.textPrimary,
-                  borderColor: colors.cardBorder,
-                  backgroundColor: colors.background,
-                }]}
-              />
-              <TextInput
-                value={cardCvv}
-                onChangeText={setCardCvv}
-                placeholder="CVV"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="number-pad"
-                secureTextEntry
-                style={[styles.input, styles.halfInput, {
-                  color: colors.textPrimary,
-                  borderColor: colors.cardBorder,
-                  backgroundColor: colors.background,
-                }]}
-              />
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  value={cardExpiry}
+                  onChangeText={setCardExpiry}
+                  placeholder="MM/YY"
+                  icon="calendar-range"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  value={cardCvv}
+                  onChangeText={setCardCvv}
+                  placeholder="CVV"
+                  keyboardType="number-pad"
+                  secureTextEntry
+                  icon="lock-outline"
+                />
+              </View>
             </View>
             <Text style={[styles.hint, { color: colors.textMuted }]}>
               Complete all fields to confirm.
