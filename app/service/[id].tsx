@@ -1,9 +1,11 @@
-import { GlassView, ServiceDetailSkeleton } from '@/components';
+import { GlassView, ServiceDetailSkeleton, StarRating } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
+import { reviewService } from '@/services/api/review.service';
+import { Review } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,8 +18,10 @@ import {
   Image, Pressable,
   StyleSheet,
   Text,
-  View
+  View,
+  ScrollView
 } from 'react-native';
+import ReAnimated, { FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -48,6 +52,7 @@ export default function ServiceDetailScreen() {
   const { showToast } = useToast();
 
   const [service, setService] = useState<ServiceDetail | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -55,7 +60,20 @@ export default function ServiceDetailScreen() {
 
   useEffect(() => {
     fetchService();
+    fetchReviews();
   }, [id]);
+
+  const fetchReviews = async () => {
+    if (!id) return;
+    try {
+      const res = await reviewService.getServiceReviews(Number(id));
+      if (res.success) {
+        setReviews(res.data || []);
+      }
+    } catch (err) {
+      console.log('Error fetching service reviews:', err);
+    }
+  };
 
   const fetchService = async () => {
     try {
@@ -265,6 +283,35 @@ export default function ServiceDetailScreen() {
               </View>
             </>
           )}
+
+          {/* Reviews Section */}
+          <ReAnimated.View entering={FadeInUp.delay(200).duration(800)} style={styles.reviewsSection}>
+            <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Reviews</Text>
+            {reviews.length > 0 ? (
+              reviews.map((review, idx) => (
+                <GlassView
+                  key={review.review_id || idx}
+                  intensity={isDark ? 10 : 20}
+                  tint={isDark ? 'dark' : 'light'}
+                  style={[styles.reviewItem, { borderColor: colors.cardBorder }]}
+                >
+                  <View style={styles.reviewHeader}>
+                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || 'Anonymous'}</Text>
+                    <StarRating rating={review.rating || 0} size={14} readonly />
+                  </View>
+                  <Text style={[styles.reviewComment, { color: colors.textSecondary }]}>{review.comment}</Text>
+                  <Text style={[styles.reviewDate, { color: colors.textMuted }]}>
+                    {review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}
+                  </Text>
+                </GlassView>
+              ))
+            ) : (
+              <View style={styles.emptyReviews}>
+                <MaterialCommunityIcons name="comment-outline" size={32} color={colors.textMuted} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No reviews yet.</Text>
+              </View>
+            )}
+          </ReAnimated.View>
         </View>
       </Animated.ScrollView>
 
@@ -511,6 +558,45 @@ const styles = StyleSheet.create({
   bookBtnText: {
     color: '#FFF',
     fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.md,
+  },
+  reviewsSection: {
+    marginTop: Spacing.md,
+  },
+  reviewItem: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  reviewerName: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+  },
+  reviewComment: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  reviewDate: {
+    fontFamily: Fonts.medium,
+    fontSize: 10,
+    textAlign: 'right',
+  },
+  emptyReviews: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 8,
+  },
+  emptyText: {
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.md,
   },
 });
