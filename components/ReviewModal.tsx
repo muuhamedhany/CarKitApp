@@ -81,16 +81,25 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     try {
       setSubmitting(true);
 
-      // 1. Submit Entity Review
-      const entityPayload = {
-        rating: entityRating,
-        comment: entityComment,
-        [entityType === 'vendor' ? 'vendor_id_fk' : 'provider_id_fk']: entityId,
-        order_id_fk: orderId,
-        booking_id_fk: bookingId,
-      };
+      // Check if anything was rated
+      const hasItemRating = items.some(item => item.rating > 0);
+      if (entityRating === 0 && !hasItemRating) {
+        showToast('error', 'No Rating', 'Please provide at least one rating.');
+        setSubmitting(false);
+        return;
+      }
 
-      await reviewService.submitReview(entityPayload);
+      // 1. Submit Entity Review (if rated)
+      if (entityRating > 0) {
+        const entityPayload = {
+          rating: entityRating,
+          comment: entityComment,
+          [entityType === 'vendor' ? 'vendor_id_fk' : 'provider_id_fk']: entityId,
+          order_id_fk: orderId,
+          booking_id_fk: bookingId,
+        };
+        await reviewService.submitReview(entityPayload);
+      }
 
       // 2. Submit Item Reviews
       for (const item of items) {

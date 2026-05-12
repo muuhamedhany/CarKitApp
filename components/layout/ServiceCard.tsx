@@ -137,12 +137,7 @@ export default function ServiceCard({
                 <Text style={[styles.metaText, { color: colors.textSecondary }]}>{duration} min</Text>
               </View>
             )}
-            {reviewCount !== undefined && reviewCount > 0 && (
-              <View style={styles.metaItem}>
-                <MaterialCommunityIcons name="comment-text-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{reviewCount} reviews</Text>
-              </View>
-            )}
+            
           </View>
 
           <View style={styles.actions}>
