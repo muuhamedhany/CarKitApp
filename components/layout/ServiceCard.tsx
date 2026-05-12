@@ -122,10 +122,10 @@ export default function ServiceCard({
                 </Text>
               )}
             </View>
-            {rating !== undefined && (
+            {rating !== undefined && rating !== null && (
               <View style={[styles.ratingBadge, { backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.1)' }]}>
                 <MaterialCommunityIcons name="star" size={14} color="#FBBF24" />
-                <Text style={[styles.ratingText, { color: '#FBBF24' }]}>{rating.toFixed(1)}</Text>
+                <Text style={[styles.ratingText, { color: '#FBBF24' }]}>{Number(rating).toFixed(1)}</Text>
               </View>
             )}
           </View>

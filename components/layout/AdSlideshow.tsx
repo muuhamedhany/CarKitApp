@@ -39,7 +39,7 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useSharedValue(0);
 
-  const adWidth = SCREEN_WIDTH - Spacing.lg * 2;
+  const adWidth = SCREEN_WIDTH;
 
   useEffect(() => {
     if (ads.length <= 1) return;
@@ -133,7 +133,7 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
         )}
 
         <LinearGradient
-          colors={['transparent', 'rgba(0, 0, 0, 0.32)']}
+          colors={['transparent', 'rgba(0, 0, 0, 0.15)']}
           style={adStyles.slideOverlay}
         />
 
@@ -174,9 +174,12 @@ function Dot({ index, scrollX, width, activeColor }: { index: number; scrollX: S
 }
 
 const adStyles = StyleSheet.create({
-  wrapper: { marginBottom: Spacing.md },
+  wrapper: { 
+    marginBottom: Spacing.xl,
+    marginHorizontal: -Spacing.md, // Counteract parent padding in HomeScreen
+  },
   slideContainer: {
-    paddingHorizontal: 0,
+    paddingHorizontal: Spacing.lg,
     height: 200,
   },
   slide: {
@@ -200,7 +203,7 @@ const adStyles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(0, 0, 0, 0.16)',
   },
   adBadgeBlur: {
     paddingHorizontal: 10,
@@ -221,9 +224,8 @@ const adStyles = StyleSheet.create({
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
-    marginTop: -20,
-    marginBottom: 20,
+    gap: 8,
+    marginTop: Spacing.sm,
   },
   dot: { height: 6, borderRadius: 3 },
 });
