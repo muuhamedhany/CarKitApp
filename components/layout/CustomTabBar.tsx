@@ -4,7 +4,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View, Dimensions, Platform } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Dimensions, Platform, DeviceEventEmitter } from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -122,8 +122,8 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
         style={[
           styles.container,
           {
-            backgroundColor: isDark ? '#1A1A24' : '#FFFFFF',
-            borderColor: isDark ? '#2A2A3A' : '#F0F0F5',
+            backgroundColor: isDark ? colors.backgroundSecondary : '#FFFFFF',
+            borderColor: isDark ? colors.cardBorder : '#F0F0F5',
             ...Platform.select({
               ios: {
                 shadowColor: isDark ? '#000' : '#888',
@@ -134,7 +134,7 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
               android: {
                 elevation: 0,
                 borderTopWidth: 0.5,
-                borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                borderTopColor: isDark ? colors.dividerLine : 'rgba(0,0,0,0.06)',
               }
             })
           },
@@ -165,6 +165,8 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
 
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
+            } else if (isFocused) {
+              DeviceEventEmitter.emit('TAB_RELOAD', { screen: route.name });
             }
           };
 

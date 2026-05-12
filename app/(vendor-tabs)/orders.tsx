@@ -14,6 +14,7 @@ import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/th
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FormInput, GlassView } from '@/components';
+import { useTabReload } from '@/hooks/useTabReload';
 
 const ORDER_FILTERS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 type OrderFilter = (typeof ORDER_FILTERS)[number];
@@ -32,6 +33,12 @@ export default function VendorOrdersScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const listRef = useRef<FlatList>(null);
+    
+    useTabReload('orders', () => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+        onRefresh();
+    });
     
     // Use a ref for debounced search so loadOrders keeps a stable identity
     const debouncedSearchRef = useRef('');
@@ -136,7 +143,7 @@ export default function VendorOrdersScreen() {
         if (normalized === 'delivered') return { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' };
         if (normalized === 'shipped') return { bg: 'rgba(249,115,22,0.12)', fg: '#F97316' };
         if (normalized === 'processing') return { bg: 'rgba(99,102,241,0.12)', fg: '#6366F1' };
-        if (normalized === 'pending') return { bg: 'rgba(205,66,168,0.12)', fg: colors.pink };
+        if (normalized === 'pending') return { bg: colors.pink + '20', fg: colors.pink };
         return { bg: colors.pinkGlow, fg: colors.pink };
     };
 
@@ -258,7 +265,7 @@ export default function VendorOrdersScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
-                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
@@ -267,6 +274,7 @@ export default function VendorOrdersScreen() {
             <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
             <FlatList
+                ref={listRef}
                 data={loading ? [] : filteredOrders}
                 keyExtractor={(item) => item.order_id.toString()}
                 renderItem={renderOrder}

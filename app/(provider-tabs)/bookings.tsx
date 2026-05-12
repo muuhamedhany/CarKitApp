@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
+import { useTabReload } from '@/hooks/useTabReload';
 import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 const TypedFlashList = FlashList as any;
@@ -22,13 +23,13 @@ const STATUS_FILTERS = ['all', 'pending', 'confirmed', 'in-progress', 'completed
 
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 
-const STATUS_TINTS: Record<string, { bg: string; fg: string }> = {
-    pending: { bg: 'rgba(255,183,77,0.18)', fg: '#FFB74D' },
-    confirmed: { bg: 'rgba(129,140,248,0.18)', fg: '#818CF8' },
-    'in-progress': { bg: 'rgba(205,66,168,0.18)', fg: '#CD42A8' },
-    completed: { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' },
-    cancelled: { bg: 'rgba(239,68,68,0.18)', fg: '#EF4444' },
-    all: { bg: 'rgba(205,66,168,0.18)', fg: '#CD42A8' },
+const getStatusTint = (status: string, colors: any) => {
+    const s = (status || 'all').toLowerCase();
+    if (s === 'pending') return { bg: 'rgba(255,183,77,0.18)', fg: '#FFB74D' };
+    if (s === 'confirmed') return { bg: 'rgba(129,140,248,0.18)', fg: '#818CF8' };
+    if (s === 'completed') return { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' };
+    if (s === 'cancelled') return { bg: 'rgba(239,68,68,0.18)', fg: '#EF4444' };
+    return { bg: colors.pink + '20', fg: colors.pink };
 };
 
 const formatDate = (value?: string | null) => {
@@ -79,7 +80,7 @@ function BookingCard({
     const scale = useSharedValue(1);
     const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
     const statusKey = (item.status || 'all').toLowerCase();
-    const tint = STATUS_TINTS[statusKey] || STATUS_TINTS.all;
+    const tint = getStatusTint(statusKey, colors);
     const isPending = statusKey === 'pending';
 
     return (
@@ -188,6 +189,12 @@ export default function ProviderBookingsScreen() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const listRef = useRef<any>(null);
+
+    useTabReload('bookings', () => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+        onRefresh();
+    });
 
     useEffect(() => {
         const handler = setTimeout(() => setDebouncedSearch(searchQuery), 500);
@@ -262,7 +269,7 @@ export default function ProviderBookingsScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
-                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
@@ -270,7 +277,8 @@ export default function ProviderBookingsScreen() {
             <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-            <View>
+            <View style={styles.staticHeader}>
+                <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
                 <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false}
@@ -313,16 +321,14 @@ export default function ProviderBookingsScreen() {
                     <ActivityIndicator size="large" color={colors.pink} />
                 </View>
             ) : visibleBookings.length === 0 ? (
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-                    <CenteredHeader title="Bookings" titleColor={colors.textPrimary} />
-                    <View style={styles.centered}>
-                        <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textMuted} />
-                        <Text style={[styles.emptyTitle, { color: colors.textMuted }]}>No bookings found</Text>
-                        <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
-                    </View>
+                <ScrollView contentContainerStyle={styles.centered} showsVerticalScrollIndicator={false}>
+                    <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.textMuted} />
+                    <Text style={[styles.emptyTitle, { color: colors.textMuted }]}>No bookings found</Text>
+                    <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Try another status filter.</Text>
                 </ScrollView>
             ) : (
                 <TypedFlashList
+                    ref={listRef}
                     data={visibleBookings}
                     keyExtractor={(item: any) => String(item.booking_id)}
                     renderItem={({ item, index }: any) => (
@@ -340,7 +346,6 @@ export default function ProviderBookingsScreen() {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
-                    ListHeaderComponent={<CenteredHeader title="Bookings" titleColor={colors.textPrimary} />}
                     ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
                     showsVerticalScrollIndicator={false}
                     ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
@@ -352,6 +357,7 @@ export default function ProviderBookingsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    staticHeader: { zIndex: 10 },
     orb: {
         position: 'absolute',
         width: 300,

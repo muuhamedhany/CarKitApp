@@ -7,6 +7,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { useTabReload } from '@/hooks/useTabReload';
 import {
   Dimensions,
   Platform,
@@ -41,6 +43,13 @@ export default function ProfileScreen() {
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
   const username = user?.name?.trim() ?? '';
   const profileInitial = (username.charAt(0) || 'C').toUpperCase();
+  const scrollRef = useRef<ScrollView>(null);
+
+  useTabReload('profile', () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    // Profile is mostly static but we can trigger a visual refresh if needed
+    // or just scroll to top
+  });
 
   const handleLogout = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -62,7 +71,7 @@ export default function ProfileScreen() {
 
   const getIconStyles = (label: string) => {
     switch (label) {
-      case 'Vehicles': return { color: '#CD42A8', bg: 'rgba(205, 66, 168, 0.15)' };
+      case 'Vehicles': return { color: colors.pink, bg: colors.pink + '26' };
       case 'Orders': return { color: '#A855F7', bg: 'rgba(168, 85, 247, 0.15)' };
       case 'Bookings': return { color: '#00D2FF', bg: 'rgba(0, 210, 255, 0.15)' };
       case 'Wishlist': return { color: '#F7B733', bg: 'rgba(247, 183, 51, 0.15)' };
@@ -131,7 +140,7 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -140,6 +149,7 @@ export default function ProfileScreen() {
       <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingBottom: androidTabOffset + 100, paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
@@ -282,16 +292,18 @@ const styles = StyleSheet.create({
   },
   userInfoSection: {
     marginBottom: Spacing.md,
+    alignItems: 'center',
   },
   userName: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   emailPill: {
     flexDirection: 'row', alignItems: 'center',
     marginTop: 8, paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, gap: 6, borderWidth: 1, alignSelf: 'flex-start',
+    borderRadius: 20, gap: 6, borderWidth: 1, alignSelf: 'center',
   },
   userEmail: {
     fontFamily: Fonts.medium, fontSize: FontSizes.xs,
@@ -387,4 +399,5 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: '#FF4D4D', fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
 });
+
 

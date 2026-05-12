@@ -48,7 +48,7 @@ export default function ForgotPasswordScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
       
@@ -160,3 +160,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

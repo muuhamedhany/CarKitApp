@@ -1,15 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton } from '@/components';
+import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView } from '@/components';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { ProviderBookingDetail } from '@/types/api.types';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+
+const { width } = Dimensions.get('window');
 
 const formatDate = (value?: string | null) => {
     if (!value) return '-';
@@ -36,12 +40,12 @@ const formatTime = (value?: string | null) => {
 
 const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
 
-const getStatusTint = (status: string) => {
+const getStatusTint = (status: string, colors: any) => {
     const normalized = (status || '').toLowerCase();
     if (normalized === 'completed') return { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' };
     if (normalized === 'confirmed') return { bg: 'rgba(129,140,248,0.18)', fg: '#818CF8' };
     if (normalized === 'cancelled') return { bg: 'rgba(239,68,68,0.18)', fg: '#EF4444' };
-    if (normalized === 'in-progress') return { bg: 'rgba(205,66,168,0.18)', fg: '#CD42A8' };
+    if (normalized === 'in-progress') return { bg: colors.pink + '20', fg: colors.pink };
     return { bg: 'rgba(255,183,77,0.18)', fg: '#FFB74D' };
 };
 
@@ -141,10 +145,19 @@ export default function ProviderBookingDetailScreen() {
     };
 
     const statusAction = booking ? canMoveForward(booking.status) : null;
-    const tint = booking ? getStatusTint(booking.status) : getStatusTint('pending');
+    const tint = booking ? getStatusTint(booking.status, colors) : getStatusTint('pending', colors);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+
             {loading ? (
                 <View style={styles.centered}>
                     <ActivityIndicator size="large" color={colors.pink} />
@@ -156,132 +169,181 @@ export default function ProviderBookingDetailScreen() {
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
-                    <View style={[styles.heroCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <View style={styles.heroHeader}>
-                            <View>
-                                <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>#{booking.booking_id}</Text>
-                                <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{booking.service_name}</Text>
-                            </View>
-                            <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
-                                <Text style={[styles.statusText, { color: tint.fg }]}>{booking.status}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.heroMetaRow}>
-                            <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
-                            <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
-                            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} style={{ marginLeft: 8 }} />
-                            <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</Text>
-                        </View>
-                    </View>
-
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Progress</Text>
-                        {timelineSteps.map((step, index) => {
-                            const reached = currentStep >= index;
-                            const active = currentStep === index;
-                            return (
-                                <View key={step.key} style={styles.timelineRow}>
-                                    <View style={styles.timelineRailCol}>
-                                        <View style={[styles.timelineDot, { backgroundColor: reached ? colors.pink : colors.border, borderColor: reached ? colors.pink : colors.border }]}>
-                                            {reached ? <MaterialCommunityIcons name="check" size={12} color={colors.white} /> : null}
-                                        </View>
-                                        {index < timelineSteps.length - 1 ? (
-                                            <View style={[styles.timelineLine, { backgroundColor: reached ? colors.pink : colors.border }]} />
-                                        ) : null}
-                                    </View>
-                                    <View style={styles.timelineTextCol}>
-                                        <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : colors.textSecondary }]}>{step.label}</Text>
-                                        <Text style={[styles.timelineDate, { color: colors.textMuted }]}>{reached ? formatDate(booking.booking_date) : 'Pending'}</Text>
-                                    </View>
+                    
+                    <Animated.View entering={FadeInDown.delay(100).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 30 : 50} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.heroCard, { borderColor: colors.cardBorder }]}
+                        >
+                            <View style={styles.heroHeader}>
+                                <View>
+                                    <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>#{booking.booking_id}</Text>
+                                    <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>{booking.service_name}</Text>
                                 </View>
-                            );
-                        })}
-                    </View>
-
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer</Text>
-                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.customer_name}</Text>
-                        {booking.customer_phone ? (
-                            <View style={styles.metaRow}>
-                                <MaterialCommunityIcons name="phone-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.customer_phone}</Text>
+                                <View style={[styles.statusBadge, { backgroundColor: tint.bg }]}>
+                                    <Text style={[styles.statusText, { color: tint.fg }]}>{booking.status}</Text>
+                                </View>
                             </View>
-                        ) : null}
-                        {booking.customer_email ? (
-                            <View style={styles.metaRow}>
-                                <MaterialCommunityIcons name="email-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.customer_email}</Text>
+                            <View style={styles.heroMetaRow}>
+                                <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
+                                <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
+                                <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} style={{ marginLeft: 8 }} />
+                                <Text style={[styles.heroMetaText, { color: colors.textSecondary }]}>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</Text>
                             </View>
-                        ) : null}
-                    </View>
+                        </GlassView>
+                    </Animated.View>
 
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service</Text>
-                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.service_name}</Text>
-                        {booking.service_description ? (
-                            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.service_description}</Text>
-                        ) : null}
-                        {booking.service_duration ? (
-                            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.service_duration} min</Text>
-                        ) : null}
-                    </View>
+                    <Animated.View entering={FadeInDown.delay(200).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 20 : 40} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.card, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Progress</Text>
+                            {timelineSteps.map((step, index) => {
+                                const reached = currentStep >= index;
+                                const active = currentStep === index;
+                                return (
+                                    <View key={step.key} style={styles.timelineRow}>
+                                        <View style={styles.timelineRailCol}>
+                                            <View style={[styles.timelineDot, { backgroundColor: reached ? colors.pink : colors.border, borderColor: reached ? colors.pink : colors.border }]}>
+                                                {reached ? <MaterialCommunityIcons name="check" size={12} color={colors.white} /> : null}
+                                            </View>
+                                            {index < timelineSteps.length - 1 ? (
+                                                <View style={[styles.timelineLine, { backgroundColor: reached ? colors.pink : colors.border }]} />
+                                            ) : null}
+                                        </View>
+                                        <View style={styles.timelineTextCol}>
+                                            <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : colors.textSecondary }]}>{step.label}</Text>
+                                            <Text style={[styles.timelineDate, { color: colors.textMuted }]}>{reached ? formatDate(booking.booking_date) : 'Pending'}</Text>
+                                        </View>
+                                    </View>
+                                );
+                            })}
+                        </GlassView>
+                    </Animated.View>
 
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Schedule</Text>
-                        <View style={styles.metaRow}>
-                            <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
-                            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
-                        </View>
-                        <View style={styles.metaRow}>
-                            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-                            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</Text>
-                        </View>
-                        {booking.location ? (
+                    <Animated.View entering={FadeInUp.delay(300).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 20 : 40} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.card, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer</Text>
+                            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.customer_name}</Text>
+                            {booking.customer_phone ? (
+                                <View style={styles.metaRow}>
+                                    <MaterialCommunityIcons name="phone-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.customer_phone}</Text>
+                                </View>
+                            ) : null}
+                            {booking.customer_email ? (
+                                <View style={styles.metaRow}>
+                                    <MaterialCommunityIcons name="email-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.customer_email}</Text>
+                                </View>
+                            ) : null}
+                        </GlassView>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInUp.delay(400).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 20 : 40} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.card, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service</Text>
+                            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.service_name}</Text>
+                            {booking.service_description ? (
+                                <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.service_description}</Text>
+                            ) : null}
+                            {booking.service_duration ? (
+                                <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.service_duration} min</Text>
+                            ) : null}
+                        </GlassView>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInUp.delay(500).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 20 : 40} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.card, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Schedule</Text>
                             <View style={styles.metaRow}>
-                                <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.location}</Text>
+                                <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
+                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
                             </View>
-                        ) : null}
-                        {booking.address_title ? (
                             <View style={styles.metaRow}>
-                                <MaterialCommunityIcons name="home-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.address_title}</Text>
+                                <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
+                                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</Text>
                             </View>
-                        ) : null}
-                    </View>
+                            {booking.location ? (
+                                <View style={styles.metaRow}>
+                                    <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.location}</Text>
+                                </View>
+                            ) : null}
+                            {booking.address_title ? (
+                                <View style={styles.metaRow}>
+                                    <MaterialCommunityIcons name="home-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.address_title}</Text>
+                                </View>
+                            ) : null}
+                        </GlassView>
+                    </Animated.View>
 
-                    <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
-                        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.address_title || 'Service Location'}</Text>
-                        <Text style={[styles.metaText, { color: colors.textSecondary, marginBottom: 4 }]}>
-                            {booking.street || 'No street address'}{booking.city ? `, ${booking.city}` : ''}
-                        </Text>
-                        {(booking.building || booking.apartment_floor) && (
-                            <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
-                                {booking.building ? `Building: ${booking.building}` : ''}
-                                {booking.building && booking.apartment_floor ? ' | ' : ''}
-                                {booking.apartment_floor ? `Apt/Floor: ${booking.apartment_floor}` : ''}
+                    <Animated.View entering={FadeInUp.delay(600).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 20 : 40} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.card, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
+                            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{booking.address_title || 'Service Location'}</Text>
+                            <Text style={[styles.metaText, { color: colors.textSecondary, marginBottom: 4 }]}>
+                                {booking.street || 'No street address'}{booking.city ? `, ${booking.city}` : ''}
                             </Text>
-                        )}
-                        {booking.latitude && booking.longitude ? (
-                            <GetDirectionsButton
-                                latitude={booking.latitude}
-                                longitude={booking.longitude}
-                                label={booking.street || undefined}
-                            />
-                        ) : null}
-                    </View>
+                            {(booking.building || booking.apartment_floor) && (
+                                <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+                                    {booking.building ? `Building: ${booking.building}` : ''}
+                                    {booking.building && booking.apartment_floor ? ' | ' : ''}
+                                    {booking.apartment_floor ? `Apt/Floor: ${booking.apartment_floor}` : ''}
+                                </Text>
+                            )}
+                            {booking.latitude && booking.longitude ? (
+                                <GetDirectionsButton
+                                    latitude={booking.latitude}
+                                    longitude={booking.longitude}
+                                    label={booking.street || undefined}
+                                />
+                            ) : null}
+                        </GlassView>
+                    </Animated.View>
 
-                    <View style={[styles.priceCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Total Amount</Text>
-                        <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price)}</Text>
-                    </View>
+                    <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+                        <GlassView 
+                            intensity={isDark ? 30 : 60} 
+                            tint={isDark ? 'dark' : 'light'} 
+                            style={[styles.priceCard, { borderColor: colors.cardBorder }]}
+                        >
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Total Amount</Text>
+                            <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price)}</Text>
+                        </GlassView>
+                    </Animated.View>
 
                     {booking.notes ? (
-                        <View style={[styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Notes</Text>
-                            <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
-                        </View>
+                        <Animated.View entering={FadeInUp.delay(800).duration(800)}>
+                            <GlassView 
+                                intensity={isDark ? 20 : 40} 
+                                tint={isDark ? 'dark' : 'light'} 
+                                style={[styles.card, { borderColor: colors.cardBorder }]}
+                            >
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Notes</Text>
+                                <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
+                            </GlassView>
+                        </Animated.View>
                     ) : null}
 
                     <View style={styles.actionsRow}>
@@ -320,12 +382,20 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
-    content: { paddingHorizontal: Spacing.md, paddingBottom: 120 },
+    content: { paddingHorizontal: Spacing.md, paddingBottom: 120, paddingTop: Spacing.sm },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
     heroCard: {
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
         padding: Spacing.md,
         marginBottom: Spacing.md,
+        overflow: 'hidden',
     },
     heroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     heroTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
@@ -339,6 +409,7 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.xl,
         padding: Spacing.md,
         marginBottom: Spacing.md,
+        overflow: 'hidden',
     },
     sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
     timelineRow: { flexDirection: 'row', gap: Spacing.sm },

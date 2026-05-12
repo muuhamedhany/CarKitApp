@@ -162,7 +162,7 @@ export default function BookingDetailScreen() {
         <View style={styles.container}>
             {/* Background */}
             <LinearGradient
-                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 

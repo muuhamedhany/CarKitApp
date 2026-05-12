@@ -85,7 +85,7 @@ export default function CreateAdScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ExpoLinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
@@ -201,3 +201,4 @@ const styles = StyleSheet.create({
   createButton: { borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center', height: 56, ...Shadows.md },
   createButtonText: { color: '#FFFFFF', fontFamily: Fonts.bold, fontSize: 16 },
 });
+

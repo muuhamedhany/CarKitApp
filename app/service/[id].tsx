@@ -1,19 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, Image, Pressable,
-  ActivityIndicator, FlatList, Dimensions, Animated,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/hooks/useTheme';
+import { GlassView, ServiceDetailSkeleton } from '@/components';
+import { API_URL } from '@/constants/config';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { API_URL } from '@/constants/config';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { ServiceDetailSkeleton, GlassView} from '@/components';
+import { useTheme } from '@/hooks/useTheme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Dimensions,
+  FlatList,
+  Image, Pressable,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
@@ -119,21 +124,21 @@ export default function ServiceDetailScreen() {
       ]}>
         <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { marginTop: insets.top }]}>
-           <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{service.name}</Text>
+          <Text numberOfLines={1} style={[styles.headerTitle, { color: colors.textPrimary }]}>{service.name}</Text>
         </View>
       </Animated.View>
 
       {/* Floating Back Button */}
       <View style={[styles.floatingControls, { top: insets.top + 10 }]}>
-        <Pressable 
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }} 
+        <Pressable
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
           style={styles.floatingIconBtn}
         >
           <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
-             <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
+            <MaterialCommunityIcons name="chevron-left" size={28} color="#FFF" />
           </GlassView>
         </Pressable>
-        
+
         <View style={styles.rightFloatingControls}>
           <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={styles.floatingIconBtn}>
             <GlassView intensity={40} tint="dark" style={styles.blurWrap}>
@@ -181,7 +186,7 @@ export default function ServiceDetailScreen() {
             colors={['transparent', 'rgba(0,0,0,0.4)', colors.background]}
             style={styles.heroGradient}
           />
-          
+
           {images.length > 1 && (
             <View style={styles.paginationDots}>
               {images.map((_, i) => (
@@ -201,12 +206,12 @@ export default function ServiceDetailScreen() {
         <View style={styles.mainContent}>
           <View style={styles.titleRow}>
             <View style={{ flex: 1 }}>
-               <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name?.toUpperCase() || 'SERVICE'}</Text>
-               <Text style={[styles.serviceTitle, { color: colors.textPrimary }]}>{service.name}</Text>
+              <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name?.toUpperCase() || 'SERVICE'}</Text>
+              <Text style={[styles.serviceTitle, { color: colors.textPrimary }]}>{service.name}</Text>
             </View>
           </View>
 
-          <Pressable 
+          <Pressable
             style={[styles.providerCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
             onPress={() => {
               if (service.provider_id_fk) {
@@ -215,32 +220,32 @@ export default function ServiceDetailScreen() {
               }
             }}
           >
-             <View style={[styles.providerAvatar, { backgroundColor: colors.background }]}>
-                <MaterialCommunityIcons name="shield-star-outline" size={20} color={colors.pink} />
-             </View>
-             <View style={{ flex: 1 }}>
-                <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>Service Provider</Text>
-                <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || 'Verified Partner'}</Text>
-             </View>
-             <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+            <View style={[styles.providerAvatar, { backgroundColor: colors.background }]}>
+              <MaterialCommunityIcons name="shield-star-outline" size={20} color={colors.pink} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>Service Provider</Text>
+              <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || 'Verified Partner'}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
 
           <View style={styles.statsRow}>
-             <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
-                <MaterialCommunityIcons name="clock-outline" size={22} color={colors.pink} />
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} min</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
-             </View>
-             <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
-                <MaterialCommunityIcons 
-                  name={service.location_type === 'mobile' ? 'car' : 'store'} 
-                  size={22} color={colors.pink} 
-                />
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                   {service.location_type === 'mobile' ? 'Mobile' : service.location_type === 'in-shop' ? 'In-Shop' : 'Both'}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Location</Text>
-             </View>
+            <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons name="clock-outline" size={22} color={colors.pink} />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} min</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
+            </View>
+            <View style={[styles.statBox, { backgroundColor: colors.backgroundSecondary }]}>
+              <MaterialCommunityIcons
+                name={service.location_type === 'mobile' ? 'car' : 'store'}
+                size={22} color={colors.pink}
+              />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {service.location_type === 'mobile' ? 'Mobile' : service.location_type === 'in-shop' ? 'In-Shop' : 'Both'}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Location</Text>
+            </View>
           </View>
 
           <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>Service Details</Text>
@@ -265,35 +270,35 @@ export default function ServiceDetailScreen() {
 
       {/* Glassmorphic Bottom Action Bar */}
       <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 10 }]}>
-         <GlassView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
-            <View style={styles.bottomBarContent}>
-               <View style={styles.priceInfo}>
-                  <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Starting at</Text>
-                  <View style={styles.priceRow}>
-                     <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{service.price}</Text>
-                     <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
-                  </View>
-               </View>
-               
-               <Pressable
-                 onPress={handleBookNow}
-                 style={({ pressed }) => [
-                   styles.bookBtn,
-                   { transform: [{ scale: pressed ? 0.96 : 1 }] }
-                 ]}
-               >
-                 <LinearGradient
-                   colors={[colors.pink, colors.purple]}
-                   start={{ x: 0, y: 0 }}
-                   end={{ x: 1, y: 0 }}
-                   style={styles.bookBtnGradient}
-                 >
-                   <MaterialCommunityIcons name="calendar-check" size={20} color="#FFF" />
-                   <Text style={styles.bookBtnText}>Book Now</Text>
-                 </LinearGradient>
-               </Pressable>
+        <GlassView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
+          <View style={styles.bottomBarContent}>
+            <View style={styles.priceInfo}>
+              <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Starting at</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{service.price}</Text>
+                <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
+              </View>
             </View>
-         </GlassView>
+
+            <Pressable
+              onPress={handleBookNow}
+              style={({ pressed }) => [
+                styles.bookBtn,
+                { transform: [{ scale: pressed ? 0.96 : 1 }] }
+              ]}
+            >
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.bookBtnGradient}
+              >
+                <MaterialCommunityIcons name="calendar-check" size={20} color="#FFF" />
+                <Text style={styles.bookBtnText}>Book Now</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </GlassView>
       </View>
     </View>
   );
@@ -438,6 +443,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.lg,
     marginBottom: Spacing.md,
+    letterSpacing: -0.5,
   },
   descriptionText: {
     fontFamily: Fonts.medium,
@@ -489,7 +495,7 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'baseline' },
   priceValue: { fontFamily: Fonts.extraBold, fontSize: 24, letterSpacing: -1 },
   currency: { fontFamily: Fonts.bold, fontSize: 12 },
-  
+
   bookBtn: {
     flex: 0.55,
     height: 56,

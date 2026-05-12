@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, DeviceEventEmitter } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -53,7 +53,7 @@ function TabButton({
         <Pressable
             onPress={onPress}
             style={styles.tab}
-            android_ripple={{ color: 'rgba(205,66,168,0.12)', borderless: true, radius: 28 }}
+            android_ripple={{ color: colors.pink + '20', borderless: true, radius: 28 }}
         >
             <Animated.View style={iconAnimatedStyle}>
                 <MaterialCommunityIcons
@@ -102,6 +102,8 @@ export default function ProviderTabBar({ state, navigation }: any) {
 
                         if (!isFocused && !event.defaultPrevented) {
                             navigation.navigate(route.name);
+                        } else if (isFocused) {
+                            DeviceEventEmitter.emit('TAB_RELOAD', { screen: route.name });
                         }
                     };
 

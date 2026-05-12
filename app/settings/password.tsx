@@ -73,7 +73,7 @@ export default function PasswordScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -206,3 +206,4 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.md },
   eyeIcon: { padding: Spacing.sm, marginRight: -Spacing.xs },
 });
+

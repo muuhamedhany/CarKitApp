@@ -4,7 +4,7 @@ import { useThemeContext, ThemeMode } from '@/contexts/ThemeContext';
 import { ThemeColors } from '@/constants/theme';
 
 export function useTheme() {
-  const { colors, isDark, themeMode, setThemeMode } = useThemeContext();
+  const { colors, isDark, themeMode, setThemeMode, themeVariant, setThemeVariant } = useThemeContext();
 
   return {
     colors,
@@ -15,5 +15,7 @@ export function useTheme() {
     isDark,
     themeMode,
     setThemeMode,
+    themeVariant,
+    setThemeVariant,
   };
 }

@@ -75,7 +75,7 @@ export default function PromoteScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ExpoLinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
@@ -108,7 +108,18 @@ export default function PromoteScreen() {
           </Animated.View>
 
           <Animated.Text entering={FadeInDown.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Existing Ads</Animated.Text>
-          {ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} index={index} />)}
+          {ads.length > 0 ? (
+            ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} index={index} />)
+          ) : (
+            <Animated.View entering={FadeInDown.delay(300)} style={styles.emptyContainer}>
+              <View style={[styles.emptyGlow, { backgroundColor: colors.pink + '20' }]} />
+              <MaterialCommunityIcons name="bullhorn-variant-outline" size={64} color={colors.textMuted} />
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No ads yet</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                Promote your products to reach thousands of potential customers.
+              </Text>
+            </Animated.View>
+          )}
           
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -155,26 +166,5 @@ const styles = StyleSheet.create({
   emptyGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, top: 20 },
   emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginTop: Spacing.lg, marginBottom: Spacing.sm },
   emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, textAlign: 'center', paddingHorizontal: Spacing.xl, lineHeight: 22 },
-
-  fab: {
-    position: 'absolute',
-    bottom: Spacing.xl,
-    left: Spacing.xl,
-    right: Spacing.xl,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-    shadowColor: '#CD42A8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  fabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-  },
-  fabText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
 });
+

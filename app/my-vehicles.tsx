@@ -73,7 +73,7 @@ export default function MyVehiclesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -218,7 +218,8 @@ const styles = StyleSheet.create({
   emptyState: { marginTop: 40 },
   emptyCard: { padding: Spacing.xxl, borderRadius: BorderRadius.xxl, borderWidth: 1, alignItems: 'center', overflow: 'hidden' },
   emptyIconCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.xl },
-  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginBottom: Spacing.md },
+  emptyTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginBottom: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.md, textAlign: 'center', opacity: 0.6, marginBottom: Spacing.xl, lineHeight: 22 },
   emptyAddBtn: { width: '100%' },
 });
+

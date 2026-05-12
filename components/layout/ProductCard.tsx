@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, Platform } from 'react-native';
+import { BorderRadius, Colors, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring,
-  interpolate
+import React, { useState } from 'react';
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
 } from 'react-native-reanimated';
-import { useWishlist } from '@/contexts/WishlistContext';
-import { useTheme } from '@/hooks/useTheme';
-import { Fonts, FontSizes, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
 
 type ProductCardProps = {
   productId?: number;
@@ -41,7 +40,7 @@ export default function ProductCard({
   const [imgLoading, setImgLoading] = useState(!!imageUrl);
   const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
   const isWishlisted = productId ? !!wishlist[productId] : false;
-  
+
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -68,10 +67,10 @@ export default function ProductCard({
     <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
       <Pressable
         style={[
-          styles.card, 
-          { 
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,1)', 
-            borderColor: colors.cardBorder 
+          styles.card,
+          {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,1)',
+            borderColor: colors.cardBorder
           },
           Shadows.md
         ]}
@@ -103,25 +102,25 @@ export default function ProductCard({
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-               <View style={styles.placeholderIcon}>
+              <View style={styles.placeholderIcon}>
                 <MaterialCommunityIcons name="car-wrench" size={40} color={colors.pink + '40'} />
-               </View>
+              </View>
             </LinearGradient>
           )}
-          
+
           {productId && (
-            <Pressable 
+            <Pressable
               style={[
-                styles.favoriteCardIcon, 
+                styles.favoriteCardIcon,
                 { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)' }
               ]}
               onPress={handleToggleWishlist}
               hitSlop={8}
             >
-              <MaterialCommunityIcons 
-                name={isWishlisted ? "cards-heart" : "cards-heart-outline"} 
-                size={18} 
-                color={isWishlisted ? colors.pink : (isDark ? '#FFF' : '#000')} 
+              <MaterialCommunityIcons
+                name={isWishlisted ? "cards-heart" : "cards-heart-outline"}
+                size={18}
+                color={isWishlisted ? colors.pink : (isDark ? '#FFF' : '#000')}
               />
             </Pressable>
           )}
@@ -150,16 +149,16 @@ export default function ProductCard({
               )}
               <Text style={[styles.price, { color: colors.textPrimary }]}>{typeof price === 'number' ? price.toLocaleString() : price} <Text style={styles.currency}>EGP</Text></Text>
             </View>
-            
+
             {onAddToCart && (
-              <Pressable 
+              <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onAddToCart();
-                }} 
+                }}
                 style={({ pressed }) => [
-                  styles.addButton, 
-                  { 
+                  styles.addButton,
+                  {
                     backgroundColor: colors.pink,
                     opacity: pressed ? 0.8 : 1,
                     transform: [{ scale: pressed ? 0.92 : 1 }]
@@ -210,19 +209,19 @@ const styles = StyleSheet.create({
   info: { padding: Spacing.md },
   name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: -0.3 },
   vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.6 },
-  bottomRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.md 
+    marginTop: Spacing.md
   },
   price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, letterSpacing: -0.5 },
   currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.7 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   reviewCount: { fontFamily: Fonts.bold, fontSize: 10, marginLeft: 2, opacity: 0.7 },
-  addButton: { 
-    width: 34, 
-    height: 34, 
+  addButton: {
+    width: 34,
+    height: 34,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',

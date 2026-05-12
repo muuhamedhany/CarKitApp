@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Image, ActivityIndicator, Platform } from 'react-native';
+import { BorderRadius, Colors, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring
 } from 'react-native-reanimated';
-import { useTheme } from '@/hooks/useTheme';
-import { Fonts, FontSizes, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
 
 type ServiceCardProps = {
   name: string;

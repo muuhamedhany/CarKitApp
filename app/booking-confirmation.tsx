@@ -11,10 +11,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  View,
+  View
 } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, FormInput, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
@@ -239,7 +238,7 @@ export default function BookingConfirmationScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -522,7 +521,8 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: Spacing.md, paddingBottom: 40 },
   summaryCard: {
     borderRadius: BorderRadius.xxl,
-    padding: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
     marginTop: Spacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
@@ -530,10 +530,10 @@ const styles = StyleSheet.create({
   },
   summaryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   summaryInfo: { flex: 1 },
-  summaryTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
+  summaryTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl },
   summaryProvider: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 4, opacity: 0.7 },
   summaryPrice: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl },
-  divider: { height: 1, marginVertical: Spacing.lg, opacity: 0.1 },
+  divider: { height: 1, marginVertical: Spacing.md, opacity: 0.1 },
   summaryFooter: { flexDirection: 'row', gap: Spacing.xl },
   footerItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   footerText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.8 },
@@ -634,3 +634,4 @@ const styles = StyleSheet.create({
   totalValue: { fontFamily: Fonts.extraBold, fontSize: 24 },
   confirmButton: { flex: 1.2 },
 });
+
