@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassView } from '@/components';
+import { useTabReload } from '@/hooks/useTabReload';
 
 export default function VendorProfileScreen() {
   const router = useRouter();
@@ -26,6 +27,15 @@ export default function VendorProfileScreen() {
   };
 
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useTabReload('profile', () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    // Refresh data
+    vendorService.getDashboard().then(res => {
+        if (res.success && res.data) setDashboard(res.data);
+    }).catch(() => {});
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -54,6 +64,7 @@ export default function VendorProfileScreen() {
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <ScrollView 
+        ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
         showsVerticalScrollIndicator={false}
       >
@@ -328,4 +339,3 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
   },
 });
-

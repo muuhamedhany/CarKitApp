@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  Image, ActivityIndicator, RefreshControl,
+  Image, ActivityIndicator,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService, Ad } from '@/services/api/ad.service';
@@ -22,12 +22,12 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string; ico
   rejected:{ label: 'Rejected',       bg: 'rgba(239,68,68,0.15)',   fg: '#EF4444', icon: 'close-circle-outline', border: 'rgba(239,68,68,0.3)' },
 };
 
-function AdCard({ ad, colors, index }: { ad: Ad; colors: any; index: number }) {
+function AdCard({ ad, colors, isDark, index }: { ad: Ad; colors: any; isDark: boolean; index: number }) {
   const cfg = STATUS_CONFIG[ad.status] ?? STATUS_CONFIG.pending;
   
   return (
     <Animated.View entering={FadeInDown.delay(index * 100)}>
-      <View style={[styles.adCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+      <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.adCard, { borderColor: colors.cardBorder }]}>
         <View style={styles.adCardContent}>
           <Image source={{ uri: ad.banner_image_url || undefined }} style={styles.adImage} />
           <View style={styles.adInfo}>
@@ -37,26 +37,35 @@ function AdCard({ ad, colors, index }: { ad: Ad; colors: any; index: number }) {
                 <Text style={[styles.statusText, { color: cfg.fg }]}>{cfg.label.toUpperCase()}</Text>
               </View>
             </View>
-            <Text style={[styles.adStats, { color: colors.textMuted }]}>
-              {new Date(ad.created_at).toLocaleDateString('en-EG')} · {Number((ad as any).price || 0).toLocaleString()} EGP
-            </Text>
+            <View style={styles.adFooter}>
+              <View style={styles.footerItem}>
+                <MaterialCommunityIcons name="calendar-outline" size={14} color={colors.textMuted} />
+                <Text style={[styles.adStats, { color: colors.textMuted }]}>
+                  {new Date(ad.created_at).toLocaleDateString('en-EG')}
+                </Text>
+              </View>
+              <View style={styles.footerItem}>
+                <MaterialCommunityIcons name="cash" size={14} color={colors.pink} />
+                <Text style={[styles.adStats, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                  {Number((ad as any).price || 0).toLocaleString()} EGP
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
-      </View>
+      </GlassView>
     </Animated.View>
   );
 }
 
 export default function PromoteScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
-  const isDark = colors.background === '#000000' || colors.background === '#121212';
   const insets = useSafeAreaInsets();
 
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const loadAds = useCallback(async () => {
     try {
@@ -66,7 +75,6 @@ export default function PromoteScreen() {
       showToast('error', 'Error', 'Failed to load your promotions.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [showToast]);
 
@@ -74,7 +82,7 @@ export default function PromoteScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ExpoLinearGradient
+      <LinearGradient
         colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
@@ -84,9 +92,10 @@ export default function PromoteScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={colors.pink} /></View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <CenteredHeader title="Promote" titleColor={colors.textPrimary} />
-          <Animated.View entering={FadeInDown.delay(100)} style={styles.createAdSection}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]} showsVerticalScrollIndicator={false}>
+          <CenteredHeader title="Promotions" titleColor={colors.textPrimary} />
+          
+          <Animated.View entering={FadeInUp.delay(100)} style={styles.createAdSection}>
             <Pressable
               style={[styles.createCard, { borderColor: colors.pink }]}
               onPress={() => {
@@ -94,30 +103,34 @@ export default function PromoteScreen() {
                 router.push('/create-ad' as any);
               }}
             >
-              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.createBlur} {...{} as any}>
-                <View style={[styles.iconBox, { backgroundColor: colors.pink }]}>
+              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.createBlur}>
+                <LinearGradient
+                  colors={[colors.pink, colors.purple]}
+                  style={styles.iconBox}
+                >
                   <MaterialCommunityIcons name="rocket-launch" size={28} color="#FFFFFF" />
-                </View>
+                </LinearGradient>
                 <View style={styles.createTexts}>
                   <Text style={[styles.createTitle, { color: colors.textPrimary }]}>Create New Ad</Text>
-                  <Text style={[styles.createSub, { color: colors.textSecondary }]}>Boost your visibility & reach more customers</Text>
+                  <Text style={[styles.createSub, { color: colors.textSecondary }]}>Boost visibility & reach more customers</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={24} color={colors.pink} />
               </GlassView>
             </Pressable>
           </Animated.View>
 
-          <Animated.Text entering={FadeInDown.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Existing Ads</Animated.Text>
+          <Animated.Text entering={FadeInUp.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your History</Animated.Text>
           {ads.length > 0 ? (
-            ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} index={index} />)
+            ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} isDark={isDark} index={index} />)
           ) : (
             <Animated.View entering={FadeInDown.delay(300)} style={styles.emptyContainer}>
-              <View style={[styles.emptyGlow, { backgroundColor: colors.pink + '20' }]} />
-              <MaterialCommunityIcons name="bullhorn-variant-outline" size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No ads yet</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                Promote your products to reach thousands of potential customers.
-              </Text>
+              <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyCard, { borderColor: colors.cardBorder }]}>
+                <MaterialCommunityIcons name="bullhorn-variant-outline" size={64} color={colors.textMuted} />
+                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No active ads</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                  Promote your products to reach thousands of potential customers.
+                </Text>
+              </GlassView>
             </Animated.View>
           )}
           
@@ -148,9 +161,11 @@ const styles = StyleSheet.create({
   adCardContent: { flexDirection: 'row', padding: Spacing.md },
   adImage: { width: 80, height: 80, borderRadius: BorderRadius.lg, marginRight: Spacing.md },
   adInfo: { flex: 1, justifyContent: 'center' },
-  adHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  adHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   adTitle: { fontFamily: Fonts.bold, fontSize: 16, flex: 1, marginRight: 8 },
   adStats: { fontFamily: Fonts.medium, fontSize: 13 },
+  adFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  footerItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   
   statusBadge: {
     paddingHorizontal: 8,
@@ -160,11 +175,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexShrink: 0,
   },
-  statusText: { fontFamily: Fonts.semiBold, fontSize: 11 },
+  statusText: { fontFamily: Fonts.semiBold, fontSize: 10 },
 
-  emptyContainer: { alignItems: 'center', paddingTop: 60, paddingBottom: 40, position: 'relative' },
-  emptyGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100, top: 20 },
-  emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginTop: Spacing.lg, marginBottom: Spacing.sm },
-  emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, textAlign: 'center', paddingHorizontal: Spacing.xl, lineHeight: 22 },
+  emptyContainer: { width: '100%' },
+  emptyCard: { alignItems: 'center', padding: Spacing.xl, borderRadius: BorderRadius.xxl, borderWidth: 1, overflow: 'hidden' },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: 20, marginTop: Spacing.lg, marginBottom: Spacing.sm },
+  emptySubtitle: { fontFamily: Fonts.medium, fontSize: 14, textAlign: 'center', paddingHorizontal: Spacing.md, lineHeight: 22, opacity: 0.7 },
 });
 

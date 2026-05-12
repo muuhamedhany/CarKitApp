@@ -1,18 +1,21 @@
 import { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  Image, ActivityIndicator, TextInput,
+  Image, ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService } from '@/services/api/ad.service';
 import { apiFetch } from '@/services/api/client';
-import { CenteredHeader, FormInput } from '@/components';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { CenteredHeader, FormInput, GlassView } from '@/components';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 type PaymentMethod = 'instapay' | 'vodafone_cash' | 'credit_card';
 
@@ -28,7 +31,7 @@ const VODAFONE_CASH_NUMBER = '01004899835';
 export default function AdPaymentScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
 
   const params = useLocalSearchParams<{
@@ -42,8 +45,6 @@ export default function AdPaymentScreen() {
   const title = params.title || '';
   const durationDays = Number(params.duration_days) as 7 | 14 | 30;
   const price = Number(params.price);
-
-
 
   const durationLabel =
     durationDays === 7  ? '7 Days'  :
@@ -100,8 +101,6 @@ export default function AdPaymentScreen() {
 
     try {
       setSubmitting(true);
-
-      // 1. Create the ad in the DB (status = 'pending')
       const adRes = await adService.createAd({
         banner_image_url: bannerUrl || null,
         title: title || undefined,
@@ -114,7 +113,6 @@ export default function AdPaymentScreen() {
         return;
       }
 
-      // 2. Record the payment
       try {
         await apiFetch('/payments', {
           method: 'POST',
@@ -125,10 +123,9 @@ export default function AdPaymentScreen() {
           }),
         });
       } catch {
-        // Payment record failure is non-blocking (ad is already created)
+        // Payment record failure is non-blocking
       }
 
-      // 3. Success!
       router.replace({
         pathname: '/ad-success' as any,
         params: { ad_id: String(adRes.data.ad_id) },
@@ -141,256 +138,278 @@ export default function AdPaymentScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <CenteredHeader title="Ad Payment" titleColor={colors.textPrimary} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-        {/* Order Summary */}
-        <View style={[styles.summaryCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Ad Summary</Text>
-          {title ? (
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]} showsVerticalScrollIndicator={false}>
+        <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
+
+        <Animated.View entering={FadeInDown.delay(100)}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
+            <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Details</Text>
+            {title ? (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryKey, { color: colors.textSecondary }]}>Ad Title</Text>
+                <Text style={[styles.summaryVal, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
+              </View>
+            ) : null}
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Title</Text>
-              <Text style={[styles.summaryVal, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
+              <Text style={[styles.summaryKey, { color: colors.textSecondary }]}>Duration</Text>
+              <Text style={[styles.summaryVal, { color: colors.textPrimary }]}>{durationLabel}</Text>
             </View>
-          ) : null}
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Duration</Text>
-            <Text style={[styles.summaryVal, { color: colors.textPrimary }]}>{durationLabel}</Text>
-          </View>
-          {bannerUrl ? (
-            <Image source={{ uri: bannerUrl }} style={styles.bannerPreview} resizeMode="cover" />
-          ) : null}
-          <View style={[styles.totalRow, { borderTopColor: colors.cardBorder }]}>
-            <Text style={[styles.totalKey, { color: colors.textMuted }]}>Total Due</Text>
-            <Text style={[styles.totalVal, { color: colors.pink }]}>{price.toLocaleString('en-EG')} EGP</Text>
-          </View>
+            {bannerUrl ? (
+              <View style={[styles.bannerContainer, { borderColor: colors.cardBorder }]}>
+                <Image source={{ uri: bannerUrl }} style={styles.bannerPreview} resizeMode="cover" />
+              </View>
+            ) : null}
+            <View style={[styles.totalRow, { borderTopColor: colors.cardBorder }]}>
+              <Text style={[styles.totalKey, { color: colors.textPrimary }]}>Total Amount</Text>
+              <Text style={[styles.totalVal, { color: colors.pink }]}>{price.toLocaleString('en-EG')} EGP</Text>
+            </View>
+          </GlassView>
+        </Animated.View>
+
+        <Animated.Text entering={FadeInDown.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Animated.Text>
+        <View style={styles.methodList}>
+          {PAYMENT_METHODS.map((pm, idx) => {
+            const active = method === pm.value;
+            return (
+              <Animated.View key={pm.value} entering={FadeInDown.delay(300 + idx * 100)}>
+                <Pressable
+                  style={[styles.methodCard, {
+                    borderColor: active ? colors.pink : colors.cardBorder,
+                    borderWidth: active ? 2 : 1,
+                    backgroundColor: active ? colors.pink + '08' : 'transparent'
+                  }]}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMethod(pm.value); }}
+                >
+                  <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
+                    <View style={styles.methodLeft}>
+                      <View style={[styles.methodIcon, { backgroundColor: active ? colors.pink + '15' : colors.cardBorder }]}>
+                        <MaterialCommunityIcons
+                          name={pm.icon as any}
+                          size={22}
+                          color={active ? colors.pink : colors.textSecondary}
+                        />
+                      </View>
+                      <Text style={[styles.methodLabel, { color: active ? colors.textPrimary : colors.textSecondary, fontFamily: active ? Fonts.bold : Fonts.medium }]}>{pm.label}</Text>
+                    </View>
+                    <MaterialCommunityIcons
+                      name={active ? 'check-circle' : 'circle-outline'}
+                      size={24}
+                      color={active ? colors.pink : colors.cardBorder}
+                    />
+                  </GlassView>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
         </View>
 
-        {/* Payment Method */}
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Payment Method</Text>
-        {PAYMENT_METHODS.map((pm) => {
-          const active = method === pm.value;
-          return (
-            <Pressable
-              key={pm.value}
-              style={[styles.methodCard, {
-                backgroundColor: colors.backgroundSecondary,
-                borderColor: active ? colors.pink : colors.cardBorder,
-              }]}
-              onPress={() => setMethod(pm.value)}
-            >
-              <View style={styles.methodLeft}>
-                <MaterialCommunityIcons
-                  name={pm.icon as any}
-                  size={20}
-                  color={active ? colors.pink : colors.textMuted}
-                />
-                <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{pm.label}</Text>
-              </View>
-              <MaterialCommunityIcons
-                name={active ? 'radiobox-marked' : 'radiobox-blank'}
-                size={18}
-                color={active ? colors.pink : colors.textMuted}
-              />
-            </Pressable>
-          );
-        })}
-
-        {/* Transfer proof — for InstaPay / Vodafone Cash */}
-        {(method === 'instapay' || method === 'vodafone_cash') && (
-          <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
-            <Text style={[styles.detailsText, { color: colors.textSecondary }]}>
-              Send {price.toLocaleString('en-EG')} EGP to:{' '}
-              <Text style={{ color: colors.pink }}>
-                {method === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}
+        <Animated.View entering={FadeInUp.delay(600)}>
+          {(method === 'instapay' || method === 'vodafone_cash') && (
+            <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
+              <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
+              <Text style={[styles.detailsText, { color: colors.textSecondary }]}>
+                Please send the total amount to the following {method === 'instapay' ? 'InstaPay handle' : 'mobile number'}:
               </Text>
-            </Text>
-            <Pressable
-              style={[styles.uploadBtn, { borderColor: colors.pink }]}
-              onPress={pickTransferProof}
-            >
-              <MaterialCommunityIcons name="image-plus" size={18} color={colors.pink} />
-              <Text style={[styles.uploadBtnText, { color: colors.pink }]}>Upload payment screenshot</Text>
-            </Pressable>
-            {transferProofUri ? (
-              <View style={styles.proofWrap}>
-                <Image source={{ uri: transferProofUri }} style={styles.proofImage} />
-                <Text style={[styles.proofDone, { color: colors.textSecondary }]}>
-                  ✓ Screenshot uploaded
+              <View style={[styles.accountBox, { backgroundColor: colors.pink + '10', borderColor: colors.pink + '30' }]}>
+                <Text style={[styles.accountValue, { color: colors.pink }]}>
+                  {method === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}
                 </Text>
+                <MaterialCommunityIcons name="content-copy" size={20} color={colors.pink} />
               </View>
-            ) : (
-              <Text style={[styles.hint, { color: colors.textMuted }]}>Required to confirm payment.</Text>
-            )}
-          </View>
-        )}
+              
+              <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginTop: Spacing.lg }]}>Proof of Payment</Text>
+              <Pressable
+                style={[styles.uploadBtn, { borderColor: colors.pink, backgroundColor: colors.pink + '05' }]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); pickTransferProof(); }}
+              >
+                {transferProofUri ? (
+                  <View style={styles.proofDone}>
+                    <MaterialCommunityIcons name="check-circle" size={24} color={colors.pink} />
+                    <Text style={[styles.uploadBtnText, { color: colors.pink, fontFamily: Fonts.bold }]}>Screenshot Uploaded</Text>
+                  </View>
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="cloud-upload-outline" size={24} color={colors.pink} />
+                    <Text style={[styles.uploadBtnText, { color: colors.pink }]}>Upload Screenshot</Text>
+                  </>
+                )}
+              </Pressable>
+              {transferProofUri && (
+                <View style={styles.proofWrap}>
+                  <Image source={{ uri: transferProofUri }} style={styles.proofImage} />
+                  <Pressable style={styles.removeProof} onPress={() => setTransferProofUri(null)}>
+                    <MaterialCommunityIcons name="close-circle" size={24} color="#EF4444" />
+                  </Pressable>
+                </View>
+              )}
+            </GlassView>
+          )}
 
-        {/* Credit Card fields */}
-        {method === 'credit_card' && (
-          <View style={[styles.detailsCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
-            <FormInput
-              value={cardHolderName}
-              onChangeText={setCardHolderName}
-              placeholder="Card holder name"
-              icon="account-outline"
-            />
-            <FormInput
-              value={cardNumber}
-              onChangeText={setCardNumber}
-              placeholder="Card number"
-              keyboardType="number-pad"
-              icon="credit-card-outline"
-            />
-            <View style={styles.rowInputs}>
-              <View style={{ flex: 1 }}>
-                <FormInput
-                  value={cardExpiry}
-                  onChangeText={setCardExpiry}
-                  placeholder="MM/YY"
-                  icon="calendar-range"
-                />
+          {method === 'credit_card' && (
+            <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
+              <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Card Information</Text>
+              <FormInput
+                label="Card Holder"
+                value={cardHolderName}
+                onChangeText={setCardHolderName}
+                placeholder="Full Name"
+                icon="account-outline"
+              />
+              <FormInput
+                label="Card Number"
+                value={cardNumber}
+                onChangeText={setCardNumber}
+                placeholder="0000 0000 0000 0000"
+                keyboardType="number-pad"
+                icon="credit-card-outline"
+              />
+              <View style={styles.rowInputs}>
+                <View style={{ flex: 1.5 }}>
+                  <FormInput
+                    label="Expiry Date"
+                    value={cardExpiry}
+                    onChangeText={setCardExpiry}
+                    placeholder="MM/YY"
+                    icon="calendar-range"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label="CVV"
+                    value={cardCvv}
+                    onChangeText={setCardCvv}
+                    placeholder="000"
+                    keyboardType="number-pad"
+                    secureTextEntry
+                    icon="lock-outline"
+                  />
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <FormInput
-                  value={cardCvv}
-                  onChangeText={setCardCvv}
-                  placeholder="CVV"
-                  keyboardType="number-pad"
-                  secureTextEntry
-                  icon="lock-outline"
-                />
-              </View>
-            </View>
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              Complete all fields to confirm.
-            </Text>
-          </View>
-        )}
-
-        <View style={{ height: 120 }} />
+            </GlassView>
+          )}
+        </Animated.View>
+        <View style={{ height: 160 }} />
       </ScrollView>
 
-      {/* Bottom CTA */}
-      <View style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: colors.background }]}>
-        <Pressable
-          onPress={handleConfirmPayment}
-          disabled={!canPay || submitting}
-          style={[
-            styles.payBtn,
-            { backgroundColor: colors.pink, opacity: (!canPay || submitting) ? 0.45 : 1 },
-          ]}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.payBtnText}>Confirm Payment — {price.toLocaleString('en-EG')} EGP</Text>
-          )}
-        </Pressable>
-      </View>
+      <Animated.View entering={FadeInUp.delay(800)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(5, 5, 5, 0.8)' : 'rgba(255,255,255,0.8)' }]}>
+        <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+          <Pressable
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); handleConfirmPayment(); }}
+            disabled={!canPay || submitting}
+            style={[
+              styles.payBtn,
+              { backgroundColor: colors.pink, opacity: (!canPay || submitting) ? 0.5 : 1 },
+            ]}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.payBtnText}>Pay {price.toLocaleString('en-EG')} EGP</Text>
+            )}
+          </Pressable>
+        </GlassView>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
-
+  orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.5 },
+  content: { paddingHorizontal: Spacing.md, paddingBottom: 40 },
   summaryCard: {
+    borderRadius: BorderRadius.xxl,
     borderWidth: 1,
+    padding: Spacing.xl,
+    overflow: 'hidden',
+    ...Shadows.md,
+  },
+  summaryTitle: { fontFamily: Fonts.extraBold, fontSize: 20, marginBottom: Spacing.lg, letterSpacing: -0.5 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  summaryKey: { fontFamily: Fonts.medium, fontSize: 15 },
+  summaryVal: { fontFamily: Fonts.bold, fontSize: 15, textAlign: 'right' },
+  bannerContainer: {
+    width: '100%',
+    aspectRatio: 3,
     borderRadius: BorderRadius.xl,
-    padding: Spacing.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: Spacing.md,
     marginBottom: Spacing.lg,
   },
-  summaryTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  summaryKey: { fontFamily: Fonts.regular, fontSize: FontSizes.sm },
-  summaryVal: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, maxWidth: '60%', textAlign: 'right' },
-  bannerPreview: {
-    width: '100%', height: 100,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
+  bannerPreview: { width: '100%', height: '100%' },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: Spacing.sm,
+    alignItems: 'center',
+    paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    marginTop: Spacing.xs,
   },
-  totalKey: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-  totalVal: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
+  totalKey: { fontFamily: Fonts.extraBold, fontSize: 18 },
+  totalVal: { fontFamily: Fonts.extraBold, fontSize: 24 },
 
-  sectionTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.md,
-    marginBottom: Spacing.sm,
-  },
+  sectionTitle: { fontFamily: Fonts.extraBold, fontSize: 20, marginBottom: Spacing.md, letterSpacing: -0.5 },
+  methodList: { gap: Spacing.sm, marginBottom: Spacing.xl },
   methodCard: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...Shadows.sm,
+  },
+  methodInner: {
+    padding: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  methodLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  methodLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+  methodLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  methodIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  methodLabel: { fontSize: 16 },
 
   detailsCard: {
+    borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.md,
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.md,
+    padding: Spacing.xl,
+    overflow: 'hidden',
+    ...Shadows.lg,
   },
-  detailsTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: Spacing.xs },
-  detailsText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: Spacing.sm, lineHeight: 20 },
-  uploadBtn: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+  detailsTitle: { fontFamily: Fonts.bold, fontSize: 18, marginBottom: Spacing.sm },
+  detailsText: { fontFamily: Fonts.medium, fontSize: 14, marginBottom: Spacing.md, lineHeight: 22 },
+  accountBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  uploadBtnText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
-  proofWrap: { marginTop: Spacing.sm, alignItems: 'flex-start' },
-  proofImage: { width: 100, height: 100, borderRadius: BorderRadius.sm, marginBottom: 4 },
-  proofDone: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
-  hint: { marginTop: Spacing.xs, fontFamily: Fonts.regular, fontSize: FontSizes.xs },
-
-  input: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-  },
-  rowInputs: { flexDirection: 'row', gap: Spacing.sm },
-  halfInput: { flex: 1 },
-
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    borderTopWidth: 1,
+    justifyContent: 'space-between',
     padding: Spacing.md,
-    paddingBottom: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
-  payBtn: {
-    borderRadius: BorderRadius.md,
+  accountValue: { fontFamily: Fonts.extraBold, fontSize: 18, letterSpacing: 0.5 },
+  uploadBtn: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: BorderRadius.xl,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    gap: 8,
   },
-  payBtnText: { color: '#fff', fontFamily: Fonts.bold, fontSize: FontSizes.md },
+  uploadBtnText: { fontFamily: Fonts.semiBold, fontSize: 14 },
+  proofWrap: { marginTop: Spacing.md, position: 'relative', width: 120, height: 120 },
+  proofImage: { width: '100%', height: '100%', borderRadius: BorderRadius.lg },
+  removeProof: { position: 'absolute', top: -8, right: -8, backgroundColor: '#fff', borderRadius: 12 },
+  proofDone: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+
+  rowInputs: { flexDirection: 'row', gap: Spacing.md },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, overflow: 'hidden' },
+  buttonBlur: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40 },
+  payBtn: { borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center', height: 56, ...Shadows.md },
+  payBtnText: { color: '#fff', fontFamily: Fonts.bold, fontSize: 16 },
 });
