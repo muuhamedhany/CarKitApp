@@ -139,11 +139,11 @@ export default function ProductCard({
 
           <View style={styles.bottomRow}>
             <View style={{ flex: 1 }}>
-              {rating !== undefined && (
+              {rating !== undefined && rating !== null && (
                 <View style={styles.ratingRow}>
                   <MaterialCommunityIcons name="star" size={12} color="#FBBF24" />
                   <Text style={[styles.reviewCount, { color: colors.textSecondary }]}>
-                    {rating.toFixed(1)}{reviewCount ? ` (${reviewCount})` : ''}
+                    {Number(rating).toFixed(1)}{reviewCount ? ` (${reviewCount})` : ''}
                   </Text>
                 </View>
               )}

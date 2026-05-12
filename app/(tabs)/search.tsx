@@ -251,7 +251,7 @@ export default function SearchScreen() {
         <GlassView
           intensity={isDark ? 20 : 40}
           tint={isDark ? 'dark' : 'light'}
-          style={[styles.headerContent, { borderRadius: BorderRadius.xl, borderColor: colors.primary, borderWidth: 1, overflow: 'hidden' }]}
+          style={[styles.headerContent, { borderRadius: BorderRadius.xl, borderColor: colors.glassHighlight, borderWidth: 1, overflow: 'hidden' }]}
         >
           {/* Search Input */}
           <FormInput
@@ -276,14 +276,14 @@ export default function SearchScreen() {
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top + (adFilter ? 60 : 0) }]}
+          contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top }]}
         >
           {/* Ad filter banner */}
           {adFilter && (
             <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}>
               <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
               <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
-                Results from <Text style={{ fontFamily: Fonts.bold }}>{adFilter.title || 'Sponsored Ad'}</Text>
+                Results from <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || 'Sponsored Ad'}</Text>
               </Text>
               <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
                 <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.md,
+    padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
   },

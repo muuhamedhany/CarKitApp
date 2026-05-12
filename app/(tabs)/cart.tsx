@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 84,
     height: 84,
-    borderRadius: BorderRadius.xl,
+    borderRadius: BorderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -323,10 +323,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   itemName: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.md,
     marginBottom: 4,
-    letterSpacing: -0.3
   },
   itemPrice: {
     fontFamily: Fonts.extraBold,
@@ -337,7 +336,6 @@ const styles = StyleSheet.create({
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16
   },
   qtyBtn: {
     width: 32,
