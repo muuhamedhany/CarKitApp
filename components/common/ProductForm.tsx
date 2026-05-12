@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Category, ProductFormInitialValues, ProductFormPayload } from '@/types/api.types';
 import { useTheme } from '@/hooks/useTheme';
@@ -199,9 +200,18 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const progressWidth = `${(step / 3) * 100}%` as `${number}%`;
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-            <BackButton />
-            <View style={[styles.header, { paddingTop: Spacing.lg }]}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+                style={StyleSheet.absoluteFill}
+            />
+
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}>
+                <BackButton />
                 <View style={styles.headerSpacer} />
                 <Text style={[styles.title, { color: colors.textPrimary }]}>{screenTitle}</Text>
                 <View style={styles.headerSpacer} />
@@ -227,7 +237,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             onChangeText={setName}
                         />
 
-                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder }]}>
+                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder, backgroundColor: colors.inputBackground }]}>
 
                             <View style={styles.textAreaHeader}>
                                 <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />
@@ -260,8 +270,8 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                             style={[
                                                 styles.categoryChip,
                                                 {
-                                                    backgroundColor: isSelected ? colors.pink : colors.card,
-                                                    borderColor: isSelected ? colors.pink : colors.border,
+                                                    backgroundColor: isSelected ? colors.pink : colors.backgroundSecondary,
+                                                    borderColor: isSelected ? colors.pink : colors.cardBorder,
                                                 },
                                             ]}
                                         >
@@ -318,7 +328,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                             onPress={() => pickImage(index)}
                                             style={[
                                                 styles.imageSlot,
-                                                { backgroundColor: colors.card, borderColor: colors.border },
+                                                { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
                                             ]}
                                         >
                                             <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
@@ -382,6 +392,13 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
     },
     header: {
         flexDirection: 'row',

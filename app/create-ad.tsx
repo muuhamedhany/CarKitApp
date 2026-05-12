@@ -36,10 +36,10 @@ async function uploadAdImage(base64File: string): Promise<string> {
 
 export default function CreateAdScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
-  const isDark = colors.background === '#000000' || colors.background === '#121212';
+
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export default function CreateAdScreen() {
             <Text style={[styles.helperText, { color: colors.textSecondary, opacity: 0.7 }]}>Recommended size: 1200x400 (3:1 aspect ratio)</Text>
             <Pressable
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickImage(); }}
-              style={[styles.imageUpload, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder, borderStyle: 'dashed' }]}
+              style={[styles.imageUpload, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder, borderStyle: 'dashed' }]}
             >
               {imageUri ? <Image source={{ uri: imageUri }} style={styles.previewImage} /> : (
                 <View style={styles.uploadPlaceholder}>
@@ -152,7 +152,7 @@ export default function CreateAdScreen() {
         </Animated.View>
       </ScrollView>
 
-      <Animated.View entering={FadeInUp.delay(900)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
+      <Animated.View entering={FadeInUp.delay(900)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(5, 5, 5, 0.8)' : 'rgba(255,255,255,0.8)' }]}>
         <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
           <Pressable
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleCreateAd(); }}
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm },
   summaryLabel: { fontFamily: Fonts.medium, fontSize: 15 },
   summaryValue: { fontFamily: Fonts.semiBold, fontSize: 15 },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: Spacing.md },
+  divider: { height: 1, backgroundColor: 'rgba(150,150,150,0.1)', marginVertical: Spacing.md },
   totalLabel: { fontFamily: Fonts.extraBold, fontSize: 18 },
   totalValue: { fontFamily: Fonts.extraBold, fontSize: 22 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, overflow: 'hidden' },

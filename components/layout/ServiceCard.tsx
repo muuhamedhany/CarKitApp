@@ -60,7 +60,7 @@ export default function ServiceCard({
         style={[
           styles.card,
           {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,1)',
+            backgroundColor: colors.card,
             borderColor: colors.cardBorder
           },
           Shadows.md

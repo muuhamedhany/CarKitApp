@@ -1,19 +1,20 @@
-import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Image, RefreshControl } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { GlassView } from '@/components';
+import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTabReload } from '@/hooks/useTabReload';
+import { useTheme } from '@/hooks/useTheme';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { GlassView } from '@/components';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function VendorDashboard() {
   const { user } = useAuth();
@@ -25,13 +26,21 @@ export default function VendorDashboard() {
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const hasLoaded = useRef(false);
+
+  useTabReload('index', () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    onRefresh();
+  });
 
   const loadDashboard = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoaded.current) setLoading(true);
       const res = await vendorService.getDashboard();
       if (res.success && res.data) {
         setDashboard(res.data);
+        hasLoaded.current = true;
       }
     } catch (error: any) {
       showToast('error', 'Error', error?.message || 'Failed to load vendor dashboard.');
@@ -40,11 +49,9 @@ export default function VendorDashboard() {
     }
   }, [showToast]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadDashboard();
-    }, [loadDashboard])
-  );
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -54,10 +61,38 @@ export default function VendorDashboard() {
 
   const stats = dashboard
     ? [
-      { label: 'Total Products', value: String(dashboard.stats.total_products), icon: 'package-variant', color: '#6366F1', subtitle: 'In catalogue' },
-      { label: 'Total Orders', value: String(dashboard.stats.total_orders), icon: 'receipt-text', color: '#10B981', subtitle: `${dashboard.stats.active_orders} active` },
-      { label: 'Revenue', value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')}`, icon: 'cash-multiple', color: colors.pink, subtitle: 'All time' },
-      { label: 'Low Stock', value: String(dashboard.stats.low_stock_count), icon: 'alert-circle-outline', color: '#F97316', subtitle: `${dashboard.stats.out_of_stock_count} out of stock` },
+      {
+        label: 'Total Products',
+        value: String(dashboard.stats.total_products),
+        icon: 'package-variant',
+        color: '#6366F1',
+        subtitle: 'In catalogue',
+        onPress: () => router.push('/(vendor-tabs)/products')
+      },
+      {
+        label: 'Total Orders',
+        value: String(dashboard.stats.total_orders),
+        icon: 'receipt-text',
+        color: '#10B981',
+        subtitle: `${dashboard.stats.active_orders} active`,
+        onPress: () => router.push('/(vendor-tabs)/orders')
+      },
+      {
+        label: 'Revenue',
+        value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')}`,
+        icon: 'cash-multiple',
+        color: colors.pink,
+        subtitle: 'All time',
+        onPress: () => router.push('/vendor-analytics')
+      },
+      {
+        label: 'Low Stock',
+        value: String(dashboard.stats.low_stock_count),
+        icon: 'alert-circle-outline',
+        color: '#F97316',
+        subtitle: `${dashboard.stats.out_of_stock_count} out of stock`,
+        onPress: () => router.push({ pathname: '/(vendor-tabs)/products', params: { filter: 'low-stock' } })
+      },
     ]
     : [];
 
@@ -80,6 +115,7 @@ export default function VendorDashboard() {
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
         showsVerticalScrollIndicator={false}
@@ -95,37 +131,46 @@ export default function VendorDashboard() {
           <>
             <View style={styles.statsContainer}>
               {stats.map((stat, index) => (
-                <Animated.View 
-                  key={stat.label} 
-                  entering={FadeInUp.delay(200 + index * 100).duration(800)}
-                  style={styles.statCardWrapper}
+                <Animated.View
+                  key={stat.label}
+                  entering={FadeInUp.delay(index * 100).duration(600)}
+                  style={styles.statWrapper}
                 >
-                  <GlassView 
-                    intensity={isDark ? 20 : 40} 
-                    tint={isDark ? 'dark' : 'light'} 
-                    style={[styles.statCard, { borderColor: colors.cardBorder }]}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      stat.onPress();
+                    }}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
                   >
-                    <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
-                      <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
-                    </View>
-                    <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
-                    <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
-                  </GlassView>
+                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                      <View style={[styles.statIcon, { backgroundColor: stat.color + '15' }]}>
+                        <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
+                      </View>
+                      <View style={styles.statInfo}>
+                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+                        <Text style={[styles.statSubtitle, { color: colors.textMuted }]}>{stat.subtitle}</Text>
+                      </View>
+                    </GlassView>
+                  </Pressable>
                 </Animated.View>
               ))}
             </View>
 
-            <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.quickActions}>
+            <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.quickActions}>
               <Pressable
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/promote' as any); }}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push('/promote' as any);
+                }}
                 style={{ flex: 1 }}
               >
                 <LinearGradient
                   colors={[colors.pink, colors.purple]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={[styles.quickAction]}
+                  style={[styles.quickAction, { borderColor: 'transparent' }]}
                 >
                   <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
                   <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Products</Text>
@@ -133,99 +178,65 @@ export default function VendorDashboard() {
               </Pressable>
             </Animated.View>
 
-            <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+            <Animated.View entering={FadeInUp.delay(500).duration(800)}>
               <Pressable
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/vendor-analytics'); }}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/vendor-analytics');
+                }}
                 style={({ pressed }) => [
-                  styles.analyticsCard, 
-                  { 
-                    borderColor: colors.pink,
-                    backgroundColor: colors.pink + '05',
-                    opacity: pressed ? 0.8 : 1
-                  }
+                  styles.analyticsCard,
+                  { borderColor: colors.pink, transform: [{ scale: pressed ? 0.98 : 1 }] }
                 ]}
               >
-                <View style={[styles.analyticsIcon, { backgroundColor: colors.pink + '15' }]}>
+                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                <View style={[styles.analyticsIcon, { backgroundColor: colors.purpleGlow }]}>
                   <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
-                  <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>Track product performance</Text>
+                  <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Detailed Analytics</Text>
+                  <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>Track your sales performance</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
               </Pressable>
             </Animated.View>
 
-            <Animated.View entering={FadeInUp.delay(800).duration(800)} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Orders</Text>
-                <Pressable onPress={() => router.push('/(vendor-tabs)/orders')}>
-                  <Text style={[styles.sectionLink, { color: colors.pink }]}>See All</Text>
-                </Pressable>
-              </View>
-
-              {dashboard?.recent_orders.length ? (
-                dashboard.recent_orders.map((order, idx) => (
-                  <GlassView 
-                    key={order.order_id} 
-                    intensity={isDark ? 20 : 40} 
-                    tint={isDark ? 'dark' : 'light'} 
-                    style={[styles.orderCard, { borderColor: colors.cardBorder }]}
-                  >
-                    <View style={styles.orderTopRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.orderCustomer, { color: colors.textPrimary }]}>{order.customer_name}</Text>
-                        <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>Order #{order.order_id} · {formatDate(order.order_date)}</Text>
+            <Animated.View entering={FadeInUp.delay(600).duration(800)}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Orders</Text>
+              {dashboard?.recent_orders && dashboard.recent_orders.length > 0 ? (
+                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.recentOrdersCard, { borderColor: colors.cardBorder }]}>
+                  {dashboard.recent_orders.map((order, index) => (
+                    <Pressable
+                      key={order.order_id}
+                      style={({ pressed }) => [
+                        styles.orderItem,
+                        {
+                          borderBottomWidth: index === dashboard.recent_orders.length - 1 ? 0 : 1,
+                          borderBottomColor: colors.cardBorder,
+                          backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent'
+                        }
+                      ]}
+                      onPress={() => router.push(`/order/${order.order_id}?role=vendor`)}
+                    >
+                      <View style={styles.orderMain}>
+                        <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
+                        <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
                       </View>
-                      <View style={[styles.statusBadge, { backgroundColor: getStatusTint(order.status, colors).bg }]}>
-                        <Text style={[styles.statusBadgeText, { color: getStatusTint(order.status, colors).fg }]}>{order.status}</Text>
+                      <View style={styles.orderRight}>
+                        <Text style={[styles.orderAmount, { color: colors.pink }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: order.status === 'pending' ? 'rgba(249,115,22,0.1)' : 'rgba(16,185,129,0.1)' }]}>
+                          <Text style={[styles.statusText, { color: order.status === 'pending' ? '#F97316' : '#10B981' }]}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                    <View style={styles.orderBottomRow}>
-                      <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{order.item_count} items</Text>
-                      <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
-                    </View>
-                  </GlassView>
-                ))
-              ) : (
-                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
-                  <MaterialCommunityIcons name="clipboard-text-outline" size={48} color={colors.textMuted} />
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>No orders yet.</Text>
+                    </Pressable>
+                  ))}
                 </GlassView>
-              )}
-            </Animated.View>
-
-            <Animated.View entering={FadeInUp.delay(900).duration(800)} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Top Products</Text>
-                <Pressable onPress={() => router.push('/(vendor-tabs)/products')}>
-                  <Text style={[styles.sectionLink, { color: colors.pink }]}>Manage</Text>
-                </Pressable>
-              </View>
-
-              {dashboard?.top_products.length ? (
-                dashboard.top_products.map((product) => (
-                  <GlassView 
-                    key={product.product_id} 
-                    intensity={isDark ? 20 : 40} 
-                    tint={isDark ? 'dark' : 'light'} 
-                    style={[styles.productRow, { borderColor: colors.cardBorder }]}
-                  >
-                    <Image
-                      source={{ uri: product.image_url || 'https://via.placeholder.com/40' }}
-                      style={styles.productThumb}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
-                      <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{product.sold_units} sold · {product.stock} left</Text>
-                    </View>
-                    <Text style={[styles.productRevenue, { color: colors.pink }]}>{Number(product.price).toLocaleString('en-EG')} EGP</Text>
-                  </GlassView>
-                ))
               ) : (
-                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
-                  <MaterialCommunityIcons name="package-variant" size={48} color={colors.textMuted} />
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet.</Text>
+                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.emptyState}>
+                  <MaterialCommunityIcons name="receipt-text-outline" size={48} color={colors.textMuted} />
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent orders</Text>
                 </GlassView>
               )}
             </Animated.View>
@@ -234,14 +245,6 @@ export default function VendorDashboard() {
       </ScrollView>
     </View>
   );
-}
-
-function getStatusTint(status: string, colors: any) {
-  const normalized = (status || '').toLowerCase();
-  if (normalized === 'delivered') return { bg: 'rgba(16,185,129,0.12)', fg: '#10B981' };
-  if (normalized === 'shipped') return { bg: 'rgba(249,115,22,0.12)', fg: '#F97316' };
-  if (normalized === 'processing') return { bg: 'rgba(99,102,241,0.12)', fg: '#6366F1' };
-  return { bg: colors.pinkGlow, fg: colors.pink };
 }
 
 const styles = StyleSheet.create({
@@ -260,18 +263,59 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   greeting: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.md,
-    marginBottom: 4,
-    opacity: 0.8,
   },
   title: {
     fontFamily: Fonts.extraBold,
     fontSize: 32,
     letterSpacing: -1,
+    marginTop: 4,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  statWrapper: {
+    width: '48%',
+  },
+  statCard: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.md,
+  },
+  statIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statInfo: {
+    gap: 2,
+  },
+  statValue: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+  },
+  statLabel: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.8,
+  },
+  statSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: 10,
   },
   quickActions: {
     flexDirection: 'row',
@@ -280,14 +324,14 @@ const styles = StyleSheet.create({
   },
   quickAction: {
     flex: 1,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: 16,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    ...Shadows.md,
   },
   quickActionText: {
     fontFamily: Fonts.semiBold,
@@ -298,9 +342,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     padding: Spacing.md,
-    borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   analyticsIcon: {
     width: 44,
@@ -318,148 +364,63 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  statCardWrapper: {
-    width: '48.5%',
-  },
-  statCard: {
-    flex: 1,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
-    ...Shadows.sm,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  statValue: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xl,
-    marginBottom: Spacing.xs,
-  },
-  statLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-  },
-  statSubtitle: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.xs,
-    marginTop: 2,
-    opacity: 0.7,
-  },
-  section: {
-    marginTop: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
   sectionTitle: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
+    marginBottom: Spacing.md,
   },
-  sectionLink: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.sm,
-  },
-  orderCard: {
+  recentOrdersCard: {
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
     overflow: 'hidden',
-    ...Shadows.sm,
+    ...Shadows.md,
   },
-  orderTopRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
-  },
-  orderBottomRow: {
+  orderItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: Spacing.md,
   },
-  orderCustomer: {
-    fontFamily: Fonts.semiBold,
+  orderMain: {
+    gap: 4,
+  },
+  orderId: {
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
-    marginBottom: 2,
   },
-  orderMeta: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
+  orderDate: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
   },
-  orderTotal: {
+  orderRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  orderAmount: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
   },
   statusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  statusBadgeText: {
+  statusText: {
     fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.xs,
-    textTransform: 'capitalize',
-  },
-  productRow: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    overflow: 'hidden',
-    ...Shadows.sm,
-  },
-  productThumb: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    backgroundColor: '#f0f0f0',
-  },
-  productName: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.md,
-    marginBottom: 2,
-  },
-  productMeta: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-  },
-  productRevenue: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
+    fontSize: 10,
+    textTransform: 'uppercase',
   },
   emptyState: {
-    marginTop: Spacing.md,
     padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: Spacing.sm,
   },
   emptyText: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
     marginTop: Spacing.md,
   },
 });
-

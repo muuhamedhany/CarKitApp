@@ -92,7 +92,7 @@ const buildCategorySeries = (categories: VendorAnalyticsCategory[]) => {
 };
 
 export default function VendorAnalyticsScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -102,7 +102,7 @@ export default function VendorAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const isDark = colors.background === '#000000' || colors.background === '#121212';
+
 
   const chartWidth = Math.max(240, width - Spacing.md * 2 - 32);
   const chartHeight = 160;
@@ -234,7 +234,7 @@ export default function VendorAnalyticsScreen() {
         ) : (
           <>
             <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '90' }]}>
+              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
                 <View>
                   <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
                   <Text

@@ -143,7 +143,7 @@ export const GreenDarkColors = {
   backgroundSecondary: '#08120D',
   card: 'rgba(15, 25, 20, 0.6)',
   surface: '#0A1A12',
-  FormBg: 'rgba(255, 255, 255, 0.08)',
+  FormBg: 'rgba(5, 20, 15, 0.3)',
 
   // Primary - Emerald / Green
   pink: '#10B981',
@@ -226,12 +226,50 @@ export const LightColors = {
   itemSeparator: 'rgba(0,0,0,0.05)',
 };
 
+// ═══════════════════════════════════
+// Green Light Theme Colors
+// ═══════════════════════════════════
+export const GreenLightColors = {
+  ...LightColors,
+  // Backgrounds - Soft Mint Tints
+  background: '#F0FDF4', // Very light mint
+  backgroundSecondary: '#FFFFFF',
+  card: 'rgba(255, 255, 255, 0.9)',
+  surface: '#FFFFFF',
+  FormBg: 'rgba(255, 255, 255, 0.8)',
+
+  // Primary - Emerald / Green
+  pink: '#10B981',
+  pinkLight: '#34D399',
+  purple: '#059669', // Stronger green
+  purpleDark: '#065F46',
+  purpleLight: '#D1FAE5',
+
+  // Gradient
+  gradientStart: '#10B981',
+  gradientEnd: '#059669',
+  bgGradientStart: '#ECFDF5',
+  bgGradientEnd: '#FFFFFF',
+
+  primary: '#10B981',
+
+  // Extras
+  purpleGlow: 'rgba(5, 150, 105, 0.1)',
+  pinkGlow: 'rgba(16, 185, 129, 0.1)',
+  cardBorder: 'rgba(16, 185, 129, 0.1)',
+  inputBorder: 'rgba(16, 185, 129, 0.2)',
+  toastBorder: 'rgba(16, 185, 129, 0.1)',
+  dividerLine: 'rgba(16, 185, 129, 0.08)',
+};
+
 export type ThemeColors = typeof DarkColors;
 export type ThemeVariant = 'traditional' | 'green';
 
 export function getColors(isDark: boolean, variant: ThemeVariant = 'traditional'): ThemeColors {
-  if (!isDark) return LightColors;
-  return variant === 'green' ? GreenDarkColors : DarkColors;
+  if (variant === 'green') {
+    return isDark ? GreenDarkColors : GreenLightColors;
+  }
+  return isDark ? DarkColors : LightColors;
 }
 
 export const Colors = DarkColors;
