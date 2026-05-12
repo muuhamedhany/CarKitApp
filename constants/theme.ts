@@ -87,6 +87,7 @@ export const DarkColors = {
   cardBorder: 'rgba(255, 255, 255, 0.08)',
   glass: 'rgba(255, 255, 255, 0.03)',
   glassHighlight: 'rgba(255, 255, 255, 0.08)',
+  FormBg: '#0d0d0f2f',
 
   // Primary
   pink: '#CD42A8',
@@ -142,6 +143,7 @@ export const GreenDarkColors = {
   backgroundSecondary: '#08120D',
   card: 'rgba(15, 25, 20, 0.6)',
   surface: '#0A1A12',
+  FormBg: 'rgba(255, 255, 255, 0.08)',
 
   // Primary - Emerald / Green
   pink: '#10B981',
@@ -178,6 +180,7 @@ export const LightColors = {
   cardBorder: 'rgba(205, 66, 168, 0.15)',
   glass: 'rgba(255, 255, 255, 0.7)',
   glassHighlight: 'rgba(255, 255, 255, 0.9)',
+  FormBg: '#ffffffbe',
 
   // Primary
   pink: '#CD42A8',
@@ -248,8 +251,8 @@ export const FontSizes = {
   md: 16,
   lg: 20,
   xl: 24,
-  xxl: 32,
-  xxxl: 40,
+  xxl: 28,
+  xxxl: 28,
 };
 
 export const BorderRadius = {

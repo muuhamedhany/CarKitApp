@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 175,
     opacity: 0.5,
   },
-  content: { paddingHorizontal: Spacing.lg },
+  content: { paddingHorizontal: Spacing.md, },
 
   profileHeaderCard: {
     borderRadius: BorderRadius.xxl,

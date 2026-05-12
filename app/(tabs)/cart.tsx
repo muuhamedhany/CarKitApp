@@ -130,7 +130,7 @@ export default function CartScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<any>(null);
 
   useTabReload('cart', () => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -271,11 +271,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.md },
 
   header: {
     paddingBottom: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
   bottomBlur: {
     borderRadius: BorderRadius.xxl,

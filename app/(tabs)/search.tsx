@@ -8,6 +8,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { Product } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTabReload } from '@/hooks/useTabReload';
@@ -237,14 +238,21 @@ export default function SearchScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
+      <LinearGradient
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+        style={StyleSheet.absoluteFill}
+      />
 
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
-        <View style={styles.headerContent}>
+        <GlassView
+          intensity={isDark ? 20 : 40}
+          tint={isDark ? 'dark' : 'light'}
+          style={[styles.headerContent, { borderRadius: BorderRadius.xl, borderColor: colors.primary, borderWidth: 1, overflow: 'hidden' }]}
+        >
           {/* Search Input */}
           <FormInput
             icon="magnify"
@@ -257,21 +265,7 @@ export default function SearchScreen() {
             onRightIconPress={() => { setQuery(''); search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter); }}
             containerStyle={styles.searchInputForm}
           />
-
-          {/* Ad filter banner */}
-          {adFilter && (
-            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}>
-              <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
-              <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
-                Results from <Text style={{ fontFamily: Fonts.bold }}>{adFilter.title || 'Sponsored Ad'}</Text>
-              </Text>
-              <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
-                <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
-              </Pressable>
-            </Animated.View>
-          )}
-
-        </View>
+        </GlassView>
       </Animated.View>
 
       {loading ? (
@@ -284,9 +278,21 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top + (adFilter ? 60 : 0) }]}
         >
+          {/* Ad filter banner */}
+          {adFilter && (
+            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}>
+              <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
+              <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
+                Results from <Text style={{ fontFamily: Fonts.bold }}>{adFilter.title || 'Sponsored Ad'}</Text>
+              </Text>
+              <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
+                <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
+              </Pressable>
+            </Animated.View>
+          )}
           {/* Mode toggle */}
           <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
-            <View style={[styles.toggleContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+            <View style={[styles.toggleContainer, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}>
               {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
                 <Pressable
                   key={mode}
@@ -424,14 +430,14 @@ const styles = StyleSheet.create({
   },
   stickyHeader: {
     position: 'absolute',
-    top: 0,
+    top: -50,
     left: 0,
     right: 0,
     zIndex: 100,
   },
   headerContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xxl,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: Spacing.md },
@@ -439,7 +445,6 @@ const styles = StyleSheet.create({
 
   searchInputForm: {
     marginTop: Spacing.md,
-    marginBottom: Spacing.md,
   },
 
   adFilterBanner: {
@@ -448,7 +453,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
   },

@@ -49,13 +49,14 @@ export default function FormInput({
   containerStyle,
 }: FormInputProps) {
   const { colors } = useTheme();
+  const backgroundColor = colors.FormBg;
 
   return (
     <View style={[styles.outerContainer, containerStyle]}>
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <View style={[styles.container, {
         borderColor: colors.inputBorder,
-        backgroundColor: colors.backgroundSecondary,
+        backgroundColor: backgroundColor,
         height: multiline ? (numberOfLines ? numberOfLines * 24 + 20 : 100) : 52,
         alignItems: multiline ? 'flex-start' : 'center',
         paddingVertical: multiline ? Spacing.sm : 0,
