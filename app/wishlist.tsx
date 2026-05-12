@@ -172,7 +172,7 @@ export default function WishlistScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -184,29 +184,31 @@ export default function WishlistScreen() {
           <ActivityIndicator size="large" color={colors.pink} />
         </View>
       ) : products.length === 0 ? (
-        <Animated.View entering={FadeInDown} style={styles.center}>
+        <View style={{ flex: 1 }}>
           <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
-          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
-            <MaterialCommunityIcons name="cards-heart-outline" size={56} color={colors.pink} />
-          </GlassView>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No items yet</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-            Heart products you love and they'll appear here.
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/' as any)}
-          >
-            <LinearGradient
-              colors={[colors.pink, colors.purple]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.shopBtn}
+          <Animated.View entering={FadeInDown} style={styles.center}>
+            <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+              <MaterialCommunityIcons name="cards-heart-outline" size={56} color={colors.pink} />
+            </GlassView>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No items yet</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+              Heart products you love and they'll appear here.
+            </Text>
+            <Pressable
+              onPress={() => router.push('/(tabs)/' as any)}
             >
-              <MaterialCommunityIcons name="shopping-outline" size={18} color="white" />
-              <Text style={styles.shopBtnText}>Browse Products</Text>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.shopBtn}
+              >
+                <MaterialCommunityIcons name="shopping-outline" size={18} color="white" />
+                <Text style={styles.shopBtnText}>Browse Products</Text>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        </View>
       ) : (
         <FlatList
           data={products}
@@ -269,3 +271,4 @@ const styles = StyleSheet.create({
   shopBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, borderRadius: BorderRadius.full, paddingHorizontal: Spacing.xl, paddingVertical: 14 },
   shopBtnText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.sm },
 });
+

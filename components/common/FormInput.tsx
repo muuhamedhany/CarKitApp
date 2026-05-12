@@ -55,7 +55,7 @@ export default function FormInput({
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <View style={[styles.container, {
         borderColor: colors.inputBorder,
-        backgroundColor: colors.glass,
+        backgroundColor: colors.backgroundSecondary,
         height: multiline ? (numberOfLines ? numberOfLines * 24 + 20 : 100) : 52,
         alignItems: multiline ? 'flex-start' : 'center',
         paddingVertical: multiline ? Spacing.sm : 0,

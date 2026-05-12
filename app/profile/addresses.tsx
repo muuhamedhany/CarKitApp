@@ -149,7 +149,7 @@ export default function AddressesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -466,3 +466,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+

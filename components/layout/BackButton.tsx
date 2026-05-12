@@ -1,33 +1,66 @@
-import { Stack } from 'expo-router';
-import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { View, Pressable, StyleSheet, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 type BackButtonProps = {
-  // OS natively handles the back action when using the native header
   onPress?: () => void;
   noSpacer?: boolean;
 };
 
 export default function BackButton({ onPress, noSpacer }: BackButtonProps) {
-  // By rendering Stack.Screen options dynamically here, we tell the
-  // Expo Router / React Navigation stack to enable the purely native
-  // iOS navigation header (UINavigationController).
+  const router = useRouter();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (onPress) {
+      onPress();
+    } else {
+      router.back();
+    }
+  };
+
+  // On Android, we need a bit more top space to clear the status bar
+  const topOffset = Platform.OS === 'android' ? insets.top + 12 : insets.top + 8;
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true, // Overlays instead of pushing content down
-          headerTitle: '',         // Hides the title next to the back button
-          // @ts-ignore: React Navigation validates this, but Expo Router types can occasionally drop it
-          headerBackTitleVisible: false, // Forcefully hides previous route name (e.g. "(tabs)")
-          headerTintColor: '#ffffff', // Dark theme matching
-        }}
-      />
-      {/* 
-        This transparent spacer prevents screen content from jumping upward 
-        into the Native Header area, preserving pixel layout.
-      */}
-      {!noSpacer && <View style={{ height: 48 }} />}
+      <View style={[styles.container, { top: topOffset }]}>
+        <Pressable 
+          onPress={handlePress} 
+          style={({ pressed }) => [
+            styles.button,
+            { 
+              backgroundColor: pressed ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)',
+              borderColor: colors.border + '30'
+            }
+          ]}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={26} color={colors.pink} />
+        </Pressable>
+      </View>
+      {!noSpacer && <View style={{ height: (Platform.OS === 'android' ? 60 : 54) + insets.top }} />}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 999,
+  },
+  button: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
+});

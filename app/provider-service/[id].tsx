@@ -227,7 +227,7 @@ export default function ProviderServiceDetailScreen() {
                             {service.available_times.map((t, i) => (
                                 <View
                                     key={i}
-                                    style={[styles.timePill, { backgroundColor: 'rgba(205,66,168,0.12)', borderColor: colors.pink }]}
+                                    style={[styles.timePill, { backgroundColor: colors.pink + '20', borderColor: colors.pink }]}
                                 >
                                     <MaterialCommunityIcons name="clock-outline" size={13} color={colors.pink} />
                                     <Text style={[styles.timePillText, { color: colors.pink }]}>{t}</Text>

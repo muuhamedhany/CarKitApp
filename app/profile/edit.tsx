@@ -82,7 +82,7 @@ export default function EditProfileScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -249,3 +249,4 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
   helperText: { fontFamily: Fonts.medium, fontSize: 11, marginTop: 8, opacity: 0.5, marginLeft: 4 },
 });
+

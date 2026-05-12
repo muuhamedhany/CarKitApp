@@ -439,6 +439,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.lg,
     marginBottom: Spacing.md,
+    letterSpacing: -0.5,
   },
   descriptionText: {
     fontFamily: Fonts.medium,

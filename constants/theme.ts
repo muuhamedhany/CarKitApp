@@ -98,6 +98,8 @@ export const DarkColors = {
   // Gradient
   gradientStart: '#CD42A8',
   gradientEnd: '#5923A0',
+  bgGradientStart: '#1A0B2E',
+  bgGradientEnd: '#000000',
 
   // Text
   textPrimary: '#F8F7FF',
@@ -131,6 +133,41 @@ export const DarkColors = {
 };
 
 // ═══════════════════════════════════
+// Green Dark Theme Colors
+// ═══════════════════════════════════
+export const GreenDarkColors = {
+  ...DarkColors,
+  // Backgrounds - Deep Forest Tints
+  background: '#040806', // Very deep green-black
+  backgroundSecondary: '#08120D',
+  card: 'rgba(15, 25, 20, 0.6)',
+  surface: '#0A1A12',
+
+  // Primary - Emerald / Green
+  pink: '#10B981',
+  pinkLight: '#34D399',
+  purple: '#4A5D23', // Olive
+  purpleDark: '#2D3A15',
+  purpleLight: '#D1FAE5', // Mint
+
+  // Gradient
+  gradientStart: '#10B981',
+  gradientEnd: '#4A5D23',
+  bgGradientStart: '#0A2418', // Slightly more vibrant green for depth
+  bgGradientEnd: '#050505',   // Fade to near black
+
+  primary: '#10B981',
+
+  // Extras
+  purpleGlow: 'rgba(74, 93, 35, 0.2)',
+  pinkGlow: 'rgba(16, 185, 129, 0.2)',
+  cardBorder: 'rgba(16, 185, 129, 0.15)',
+  inputBorder: 'rgba(16, 185, 129, 0.2)',
+  toastBorder: 'rgba(16, 185, 129, 0.1)',
+  dividerLine: 'rgba(16, 185, 129, 0.08)',
+};
+
+// ═══════════════════════════════════
 // Light Theme Colors
 // ═══════════════════════════════════
 export const LightColors = {
@@ -152,6 +189,8 @@ export const LightColors = {
   // Gradient
   gradientStart: '#5923A0',
   gradientEnd: '#CD42A8',
+  bgGradientStart: '#F8F0FF',
+  bgGradientEnd: '#FFFFFF',
 
   // Text
   textPrimary: '#0F172A',
@@ -185,9 +224,11 @@ export const LightColors = {
 };
 
 export type ThemeColors = typeof DarkColors;
+export type ThemeVariant = 'traditional' | 'green';
 
-export function getColors(isDark: boolean): ThemeColors {
-  return isDark ? DarkColors : LightColors;
+export function getColors(isDark: boolean, variant: ThemeVariant = 'traditional'): ThemeColors {
+  if (!isDark) return LightColors;
+  return variant === 'green' ? GreenDarkColors : DarkColors;
 }
 
 export const Colors = DarkColors;
@@ -205,21 +246,22 @@ export const FontSizes = {
   xs: 12,
   sm: 14,
   md: 16,
-  lg: 18,
-  xl: 28,
-  xxl: 28,
-  xxxl: 28,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
+  xxxl: 40,
 };
 
 export const BorderRadius = {
-  xs: 16,
-  sm: 16,
+  xs: 8,
+  sm: 12,
   md: 16,
-  lg: 16,
+  lg: 20,
   xl: 24,
-  xxl: 24,
-  full: 24,
+  xxl: 32,
+  full: 999,
 };
+
 
 export const IconSizes = {
   xs: 16,

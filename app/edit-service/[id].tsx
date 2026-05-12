@@ -313,7 +313,7 @@ export default function EditServiceScreen() {
                             return (
                                 <Pressable key={opt.key} onPress={() => setLocationType(opt.key)}
                                     style={[styles.radioCard, {
-                                        backgroundColor: selected ? 'rgba(205,66,168,0.08)' : colors.card,
+                                        backgroundColor: selected ? colors.pink + '15' : colors.card,
                                         borderColor: selected ? colors.pink : colors.border,
                                     }]}>
                                     <View style={[styles.radioCircle, { borderColor: selected ? colors.pink : colors.border }]}>
@@ -342,7 +342,7 @@ export default function EditServiceScreen() {
                                 {availableTimes.map((t, i) => (
                                     <Pressable key={i}
                                         onPress={() => setAvailableTimes(availableTimes.filter((_, idx) => idx !== i))}
-                                        style={[styles.timePill, { backgroundColor: 'rgba(205,66,168,0.12)', borderColor: colors.pink }]}>
+                                        style={[styles.timePill, { backgroundColor: colors.pink + '20', borderColor: colors.pink }]}>
                                         <MaterialCommunityIcons name="clock-outline" size={12} color={colors.pink} />
                                         <Text style={[styles.timePillText, { color: colors.pink }]}>{t}</Text>
                                         <MaterialCommunityIcons name="close-circle" size={14} color={colors.pink} />

@@ -104,7 +104,7 @@ export default function ProviderDashboard() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
-                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
@@ -160,7 +160,7 @@ export default function ProviderDashboard() {
                                 style={{ flex: 1 }}
                             >
                                 <LinearGradient
-                                    colors={[colors.pink, '#6366F1']}
+                                    colors={[colors.pink, colors.purple]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
                                     style={[styles.quickAction, { borderColor: 'transparent' }]}
@@ -256,7 +256,7 @@ export default function ProviderDashboard() {
                             {dashboard?.popular_services.length ? (
                                 dashboard.popular_services.map((service) => (
                                     <GlassView key={service.service_id} intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
-                                        <View style={styles.productThumbPlaceholder}>
+                                        <View style={[styles.productThumbPlaceholder, { backgroundColor: colors.pink + '20' }]}>
                                             <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
                                         </View>
                                         <View style={{ flex: 1 }}>
@@ -472,7 +472,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(205,66,168,0.12)',
     },
     productName: {
         fontFamily: Fonts.semiBold,
@@ -502,3 +501,4 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+

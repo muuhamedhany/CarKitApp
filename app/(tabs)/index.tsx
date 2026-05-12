@@ -10,6 +10,7 @@ import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/th
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad, adService } from '@/services/api/ad.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -28,12 +29,9 @@ import {
   View
 } from 'react-native';
 import Animated, {
-  Extrapolate,
   FadeInDown,
   FadeInUp,
-  interpolate,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -93,11 +91,12 @@ function useTypewriter(phrases: string[]) {
 }
 
 function TypewriterSearchBar({ textColor }: { textColor: string }) {
+  const { colors } = useTheme();
   const { displayed, showCursor } = useTypewriter(SEARCH_PHRASES);
   return (
     <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm, color: textColor, flex: 1 }}>
       {displayed}
-      <Text style={{ opacity: showCursor ? 1 : 0, color: '#CD42A8' }}>|</Text>
+      <Text style={{ opacity: showCursor ? 1 : 0, color: colors?.pink || '#CD42A8' }}>|</Text>
     </Text>
   );
 }
@@ -137,6 +136,12 @@ export default function HomeScreen() {
   const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<Animated.ScrollView>(null);
+
+  useTabReload('index', () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    onRefresh();
+  });
 
   const scrollY = useSharedValue(0);
 
@@ -207,7 +212,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <LinearGradient
-          colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+          colors={[colors.bgGradientStart, colors.bgGradientEnd]}
           style={StyleSheet.absoluteFill}
         />
         <HomeSkeleton />
@@ -218,7 +223,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -227,6 +232,7 @@ export default function HomeScreen() {
       <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
 
       <Animated.ScrollView
+        ref={scrollRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         style={styles.container}
@@ -258,7 +264,7 @@ export default function HomeScreen() {
             style={({ pressed }) => [
               styles.searchBar,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                backgroundColor: colors.backgroundSecondary,
                 borderColor: colors.cardBorder,
                 opacity: pressed ? 0.8 : 1
               }
@@ -450,8 +456,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontFamily: Fonts.bold, fontSize: FontSizes.xl,
-    letterSpacing: -1,
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.lg,
+    letterSpacing: -0.5,
   },
   seeAllText: {
     fontFamily: Fonts.bold,
@@ -526,3 +533,4 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
+

@@ -10,6 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTabReload } from '@/hooks/useTabReload';
 import {
   Dimensions,
   Platform,
@@ -78,6 +79,14 @@ export default function SearchScreen() {
   const [selectedServiceCategoryIds, setSelectedServiceCategoryIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const scrollRef = useRef<Animated.ScrollView>(null);
+
+  useTabReload('search', () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    // Reset search
+    setQuery('');
+    search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter);
+  });
 
   const [adFilter, setAdFilter] = useState<{
     vendorId?: number;
@@ -269,6 +278,7 @@ export default function SearchScreen() {
         <SearchSkeleton />
       ) : (
         <Animated.ScrollView
+          ref={scrollRef}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
@@ -276,7 +286,7 @@ export default function SearchScreen() {
         >
           {/* Mode toggle */}
           <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
-            <View style={[styles.toggleContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: colors.cardBorder }]}>
+            <View style={[styles.toggleContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
               {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
                 <Pressable
                   key={mode}

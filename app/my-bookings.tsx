@@ -1,4 +1,5 @@
 import { CenteredHeader, GlassView } from '@/components';
+import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -17,6 +18,7 @@ import {
   Text,
   View,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -25,7 +27,7 @@ import Animated, {
 } from 'react-native-reanimated';
 const TypedFlashList = FlashList as any;
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type Booking = {
   booking_id: number;
@@ -202,50 +204,78 @@ export default function MyBookingsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
+      {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <View style={styles.tabContainer}>
-        <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
-          <Pressable
-            style={[styles.tab]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setTab('upcoming');
-            }}
-          >
-            {tab === 'upcoming' && (
-              <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
-            )}
-            <Text style={[styles.tabText, { color: tab === 'upcoming' ? 'white' : colors.textSecondary }]}>Upcoming</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.tab]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setTab('completed');
-            }}
-          >
-            {tab === 'completed' && (
-              <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
-            )}
-            <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>Completed</Text>
-          </Pressable>
-        </GlassView>
+      {/* Static Header & Tabs - Always Visible */}
+      <View style={styles.staticHeader}>
+        <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
+        <View style={styles.tabContainer}>
+          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+            <Pressable
+              style={[styles.tab]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTab('upcoming');
+              }}
+            >
+              {tab === 'upcoming' && (
+                <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
+              )}
+              <Text style={[styles.tabText, { color: tab === 'upcoming' ? 'white' : colors.textSecondary }]}>Upcoming</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tab]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTab('completed');
+              }}
+            >
+              {tab === 'completed' && (
+                <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
+              )}
+              <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>Completed</Text>
+            </Pressable>
+          </GlassView>
+        </View>
       </View>
 
+      {/* Dynamic Content Area */}
       {loading && !refreshing ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.pink} />
-        </View>
+        <ScrollView contentContainerStyle={styles.skeletonContainer} showsVerticalScrollIndicator={false}>
+          {[1, 2, 3].map(i => (
+            <GlassView key={i} intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.skeletonCard}>
+              <View style={styles.skeletonHeader}>
+                <View style={{ flex: 1 }}>
+                  <SkeletonBone width={140} height={20} />
+                  <SkeletonBone width={100} height={14} style={{ marginTop: 8 }} />
+                </View>
+                <SkeletonBone width={80} height={26} borderRadius={13} />
+              </View>
+              <SkeletonBone width={width - 80} height={14} style={{ marginTop: 12 }} />
+              <View style={styles.skeletonMeta}>
+                <SkeletonBone width={100} height={14} />
+                <SkeletonBone width={80} height={14} />
+              </View>
+              <View style={styles.skeletonDivider} />
+              <View style={styles.skeletonFooter}>
+                <View>
+                  <SkeletonBone width={60} height={10} />
+                  <SkeletonBone width={100} height={20} style={{ marginTop: 4 }} />
+                </View>
+                <SkeletonBone width={90} height={40} borderRadius={20} />
+              </View>
+            </GlassView>
+          ))}
+        </ScrollView>
       ) : bookings.length === 0 ? (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
-          <Animated.View entering={FadeInDown} style={styles.center}>
+        <ScrollView contentContainerStyle={styles.center} showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInDown} style={styles.emptyContent}>
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
               <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
             </GlassView>
@@ -263,9 +293,7 @@ export default function MyBookingsScreen() {
           showsVerticalScrollIndicator={false}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          ListHeaderComponent={<CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
         />
       )}
@@ -275,8 +303,10 @@ export default function MyBookingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
-  list: { paddingHorizontal: Spacing.md, paddingBottom: 40, paddingTop: Spacing.sm },
+  staticHeader: { zIndex: 10 },
+  center: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyContent: { alignItems: 'center', paddingHorizontal: Spacing.xl },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
 
   orb: {
     position: 'absolute',
@@ -286,7 +316,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 
-  tabContainer: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+  tabContainer: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.sm },
   tabRow: { flexDirection: 'row', borderRadius: BorderRadius.full, padding: 4, overflow: 'hidden', borderWidth: 1 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', borderRadius: BorderRadius.full },
   tabHighlight: { borderRadius: BorderRadius.full },
@@ -317,6 +347,13 @@ const styles = StyleSheet.create({
   totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: 2 },
   viewDetailsBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: BorderRadius.full, gap: 6 },
   viewDetailsText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+
+  skeletonContainer: { paddingHorizontal: Spacing.lg, gap: Spacing.md, paddingTop: Spacing.md },
+  skeletonCard: { borderRadius: BorderRadius.xxl, padding: Spacing.xl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: Spacing.md },
+  skeletonHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.lg },
+  skeletonMeta: { flexDirection: 'row', gap: 16, marginTop: 12 },
+  skeletonDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginVertical: Spacing.lg },
+  skeletonFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   emptyIconContainer: { width: 100, height: 100, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.lg, overflow: 'hidden', borderWidth: 1 },
   emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginBottom: 8 },

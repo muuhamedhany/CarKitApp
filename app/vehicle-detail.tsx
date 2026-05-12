@@ -253,7 +253,7 @@ export default function VehicleDetailScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+          colors={[colors.bgGradientStart, colors.bgGradientEnd]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.center}>
@@ -268,7 +268,7 @@ export default function VehicleDetailScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -485,3 +485,4 @@ const styles = StyleSheet.create({
   modalConfirmBtn: { flex: 1, paddingVertical: 14, borderRadius: BorderRadius.lg, alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.md },
 });
+

@@ -92,7 +92,7 @@ export default function SupportScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -283,3 +283,4 @@ const styles = StyleSheet.create({
   emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.xl, marginTop: Spacing.md },
   emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginTop: 8, textAlign: 'center', opacity: 0.6, maxWidth: 260 },
 });
+

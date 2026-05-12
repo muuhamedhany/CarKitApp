@@ -9,7 +9,8 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTabReload } from '@/hooks/useTabReload';
 import {
   Dimensions,
   Image,
@@ -129,6 +130,12 @@ export default function CartScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
+  const listRef = useRef<FlashList<any>>(null);
+
+  useTabReload('cart', () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    fetchCart();
+  });
 
   useEffect(() => { fetchCart(); }, []);
 
@@ -144,7 +151,7 @@ export default function CartScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -190,6 +197,7 @@ export default function CartScreen() {
         </Animated.View>
       ) : (
         <FlashList
+          ref={listRef}
           {...({
             data: items,
             estimatedItemSize: 120,
@@ -433,4 +441,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+
 

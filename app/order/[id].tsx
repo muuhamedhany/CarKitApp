@@ -212,12 +212,13 @@ export default function OrderDetailScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
-                colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+                colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
-            <Animated.View entering={FadeInDown.duration(1000)} style={[styles.orb, styles.orb1, { backgroundColor: colors.pink }]} />
-            <Animated.View entering={FadeInUp.duration(1000).delay(200)} style={[styles.orb, styles.orb2, { backgroundColor: colors.purple }]} />
+            {/* Decorative Orbs */}
+            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
             {loading ? (
                 <View style={styles.center}>
@@ -500,13 +501,11 @@ const styles = StyleSheet.create({
 
     orb: {
         position: 'absolute',
-        width: width * 0.7,
-        height: width * 0.7,
-        borderRadius: (width * 0.7) / 2,
-        opacity: 0.12,
+        width: 400,
+        height: 400,
+        borderRadius: 200,
+        opacity: 0.4,
     },
-    orb1: { top: -width * 0.2, right: -width * 0.1 },
-    orb2: { bottom: height * 0.2, left: -width * 0.3 },
 
     card: {
         borderRadius: BorderRadius.xl,
