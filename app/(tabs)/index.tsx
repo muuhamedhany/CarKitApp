@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  content: { paddingHorizontal: Spacing.md, paddingBottom: 60 },
 
   header: {
     flexDirection: 'row',

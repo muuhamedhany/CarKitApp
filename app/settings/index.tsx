@@ -20,7 +20,7 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string; description
   { mode: 'system', label: 'System', icon: 'cellphone', description: 'Follow device settings' },
 ];
 
-const THEME_VARIANTS: { variant: string; label: string; description: string; previewColors: string[] }[] = [
+const THEME_VARIANTS: { variant: string; label: string; description: string; previewColors: [string, string, ...string[]] }[] = [
   { variant: 'traditional', label: 'Traditional Neon', description: 'Classic Pink & Purple', previewColors: ['#CD42A8', '#5923A0'] },
   { variant: 'green', label: 'Emerald Mint', description: 'Olive & Mint Greens', previewColors: ['#10B981', '#4A5D23'] },
 ];
@@ -91,40 +91,10 @@ export default function SettingsScreen() {
           titleColor={colors.textPrimary}
         />
 
-        {/* Profile Header Card */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <GlassView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={styles.profileCard}>
-            <View style={[styles.avatarWrap, { backgroundColor: colors.pink + '20' }]}>
-              <Text style={[styles.avatarText, { color: colors.pink }]}>
-                {(user?.name || 'U').charAt(0).toUpperCase()}
-              </Text>
-              <View style={[styles.roleBadge, { backgroundColor: colors.purple }]}>
-                <MaterialCommunityIcons
-                  name={user?.role === 'vendor' ? 'store' : user?.role === 'provider' ? 'wrench' : 'account'}
-                  size={10}
-                  color="white"
-                />
-              </View>
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: colors.textPrimary }]}>{user?.name || 'User'}</Text>
-              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email || 'email@example.com'}</Text>
-            </View>
-            <Pressable
-              style={[styles.editProfileBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
-              onPress={() => router.push('/profile/edit')}
-            >
-              <MaterialCommunityIcons name="pencil-outline" size={20} color={colors.textMuted} />
-            </Pressable>
-          </GlassView>
-        </Animated.View>
-
         {/* Account Section */}
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>Account</Text>
           <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
-            {renderSettingRow('map-marker-outline', 'Saved Addresses', 'Manage your delivery locations', () => router.push('/profile/addresses'))}
-            {renderSettingRow('car-outline', 'My Vehicles', 'View and edit your cars', () => router.push('/my-vehicles'))}
             {renderSettingRow('lock-outline', 'Security', 'Change password and privacy', () => router.push('/settings/password'), true)}
           </GlassView>
         </Animated.View>

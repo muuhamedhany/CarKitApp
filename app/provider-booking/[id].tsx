@@ -5,13 +5,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-
-import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView } from '@/components';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { ProviderBookingDetail } from '@/types/api.types';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
+import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView } from '@/components';
 
 const { width } = Dimensions.get('window');
 
@@ -66,7 +65,7 @@ export default function ProviderBookingDetailScreen() {
     const { id } = useLocalSearchParams<{ id?: string }>();
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const { showToast } = useToast();
 
     const [booking, setBooking] = useState<ProviderBookingDetail | null>(null);

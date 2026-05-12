@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader, GlassView} from '@/components';
+import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
@@ -18,7 +18,7 @@ export default function SignUpCustomerScreen() {
   const { register } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
-  
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -64,22 +64,22 @@ export default function SignUpCustomerScreen() {
         colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, left: -50, backgroundColor: colors.pink + '20' }]} />
       <View style={[styles.orb, { bottom: -100, right: -50, backgroundColor: colors.purple + '15' }]} />
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false} 
+      >            <CenteredHeader title="Create Account" titleColor={colors.pink} />
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <CenteredHeader title="Create Account" titleColor={colors.pink} />
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Join CarKit and experience premium car care
             </Text>
@@ -95,68 +95,68 @@ export default function SignUpCustomerScreen() {
                 Shadows.lg
               ]}
             >
-              <FormInput 
+              <FormInput
                 label="Full Name"
-                icon="account-outline" 
-                placeholder="John Doe" 
-                value={name} 
-                onChangeText={setName} 
-                autoCapitalize="words" 
+                icon="account-outline"
+                placeholder="John Doe"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
               />
 
-              <FormInput 
+              <FormInput
                 label="Email Address"
-                icon="email-outline" 
-                placeholder="john@example.com" 
-                value={email} 
-                onChangeText={setEmail} 
-                keyboardType="email-address" 
-                autoComplete="email" 
+                icon="email-outline"
+                placeholder="john@example.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoComplete="email"
               />
 
-              <FormInput 
+              <FormInput
                 label="Phone Number"
-                icon="phone-outline" 
-                placeholder="+1 234 567 890" 
-                value={phone} 
-                onChangeText={setPhone} 
-                keyboardType="phone-pad" 
+                icon="phone-outline"
+                placeholder="+1 234 567 890"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
               />
 
-              <FormInput 
+              <FormInput
                 label="Password"
-                icon="lock-outline" 
-                placeholder="••••••••" 
-                value={password} 
-                onChangeText={setPassword} 
-                secureTextEntry={!showPassword} 
-                showToggle 
-                onToggle={() => setShowPassword(!showPassword)} 
+                icon="lock-outline"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                showToggle
+                onToggle={() => setShowPassword(!showPassword)}
               />
 
-              <FormInput 
+              <FormInput
                 label="Confirm Password"
-                icon="lock-outline" 
-                placeholder="••••••••" 
-                value={confirmPassword} 
-                onChangeText={setConfirmPassword} 
-                secureTextEntry={!showConfirm} 
-                showToggle 
-                onToggle={() => setShowConfirm(!showConfirm)} 
+                icon="lock-outline"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirm}
+                showToggle
+                onToggle={() => setShowConfirm(!showConfirm)}
               />
 
-              <GradientButton 
-                title="Create Account" 
-                onPress={handleSignUp} 
-                loading={loading} 
-                style={styles.signupBtn} 
+              <GradientButton
+                title="Create Account"
+                onPress={handleSignUp}
+                loading={loading}
+                style={styles.signupBtn}
               />
 
               <Divider text="OR" />
 
-              <SocialButton 
-                provider="google" 
-                actionText="Sign up with Google" 
+              <SocialButton
+                provider="google"
+                actionText="Sign up with Google"
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }}
@@ -165,13 +165,13 @@ export default function SignUpCustomerScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>
-            <AuthFooter 
-              message="Already have an account?" 
-              actionText="Login" 
+            <AuthFooter
+              message="Already have an account?"
+              actionText="Login"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/(auth)/login');
-              }} 
+              }}
             />
           </Animated.View>
         </ScrollView>
@@ -190,16 +190,15 @@ const styles = StyleSheet.create({
     borderRadius: 150,
     opacity: 0.5,
   },
-  scrollContent: { 
-    flexGrow: 1, 
-    paddingHorizontal: Spacing.lg, 
-    paddingTop: height * 0.1, 
-    paddingBottom: 40 
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 40
   },
-  subtitle: { 
-    fontSize: FontSizes.md, 
-    fontFamily: Fonts.medium, 
-    marginBottom: Spacing.xl, 
+  subtitle: {
+    fontSize: FontSizes.md,
+    fontFamily: Fonts.medium,
+    marginBottom: Spacing.xl,
     opacity: 0.7,
   },
   formWrapper: {
@@ -212,9 +211,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.02)',
   },
-  label: { 
-    fontSize: FontSizes.sm, 
-    fontFamily: Fonts.bold, 
+  label: {
+    fontSize: FontSizes.sm,
+    fontFamily: Fonts.bold,
     marginBottom: Spacing.xs,
     marginLeft: 4,
   },

@@ -95,19 +95,14 @@ export default function VendorPublicProfileScreen() {
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
+      <View style={[styles.backButtonContainer]}>
+        <BackButton />
+      </View>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerCover}>
-          <LinearGradient
-            colors={[colors.pink + '30', 'transparent']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[styles.backButtonContainer, { top: insets.top + 10 }]}>
-            <BackButton />
-          </View>
-        </View>
+
 
         <View style={styles.profileSection}>
           <Animated.View entering={FadeInDown.duration(800)}>
@@ -130,12 +125,12 @@ export default function VendorPublicProfileScreen() {
                     </Text>
                   ) : null}
                 </View>
-                {vendor.verification_status === 'verified' && (
-                  <View style={styles.verifiedBadge}>
-                    <MaterialCommunityIcons name="shield-check" size={14} color={colors.success} />
-                    <Text style={[styles.verifiedText, { color: colors.success }]}>Verified Vendor</Text>
-                  </View>
-                )}
+
+                <View style={styles.verifiedBadge}>
+                  <MaterialCommunityIcons name="shield-check" size={14} color={colors.success} />
+                  <Text style={[styles.verifiedText, { color: colors.success }]}>Verified Vendor</Text>
+                </View>
+
               </View>
             </GlassView>
           </Animated.View>
@@ -225,17 +220,16 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   headerCover: {
-    height: 180,
+    height: 150,
     width: '100%',
   },
   backButtonContainer: {
     position: 'absolute',
-    left: Spacing.md,
     zIndex: 10,
   },
   profileSection: {
     paddingHorizontal: Spacing.md,
-    marginTop: -60,
+    marginTop: 110,
   },
   profileCard: {
     flexDirection: 'row',
@@ -288,7 +282,7 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: 'rgba(16,185,129,0.1)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },

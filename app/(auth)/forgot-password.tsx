@@ -59,14 +59,14 @@ export default function ForgotPasswordScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >
+      ><CenteredHeader title="Reset Password" titleColor={colors.pink} />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <CenteredHeader title="Reset Password" titleColor={colors.pink} />
+            
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Enter your email to receive a 4-digit recovery code.
             </Text>
@@ -129,7 +129,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.lg,
-    paddingTop: height * 0.1,
     paddingBottom: 40,
   },
   subtitle: {

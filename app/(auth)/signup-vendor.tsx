@@ -70,14 +70,14 @@ export default function SignUpVendorScreen() {
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.flex}
-      >
+      >            <CenteredHeader title="Vendor Account" titleColor={colors.pink} />
+
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
           showsVerticalScrollIndicator={false} 
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <CenteredHeader title="Vendor Account" titleColor={colors.pink} />
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Join our network and grow your automotive business
             </Text>
@@ -213,7 +213,6 @@ const styles = StyleSheet.create({
   scrollContent: { 
     flexGrow: 1, 
     paddingHorizontal: Spacing.lg, 
-    paddingTop: height * 0.05, 
     paddingBottom: 40 
   },
   subtitle: { 

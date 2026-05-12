@@ -94,20 +94,17 @@ export default function ProviderPublicProfileScreen() {
 
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
-
+      
+        
+        <View style={[styles.backButtonContainer]}>
+          <BackButton />
+        </View>
+      
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerCover}>
-          <LinearGradient
-            colors={[colors.purple + '30', 'transparent']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[styles.backButtonContainer, { top: insets.top + 10 }]}>
-            <BackButton />
-          </View>
-        </View>
+
 
         <View style={styles.profileSection}>
           <Animated.View entering={FadeInDown.duration(800)}>
@@ -128,12 +125,11 @@ export default function ProviderPublicProfileScreen() {
                     </Text>
                   ) : null}
                 </View>
-                {provider.verification_status === 'verified' && (
-                  <View style={styles.verifiedBadge}>
+                <View style={styles.verifiedBadge}>
                     <MaterialCommunityIcons name="check-decagram" size={14} color="#10B981" />
                     <Text style={[styles.verifiedText, { color: '#10B981' }]}>Verified Provider</Text>
                   </View>
-                )}
+               
               </View>
             </GlassView>
           </Animated.View>
@@ -228,7 +224,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   headerCover: {
-    height: 180,
+    height: 100,
     width: '100%',
   },
   backButtonContainer: {
@@ -238,7 +234,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     paddingHorizontal: Spacing.md,
-    marginTop: -60,
+    marginTop: 110,
   },
   profileCard: {
     flexDirection: 'row',
@@ -273,12 +269,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ratingText: {
-    fontFamily: Fonts.bold,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
   },
   reviewCount: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
     opacity: 0.7,
   },
   verifiedBadge: {
@@ -287,7 +283,7 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: 'rgba(16,185,129,0.1)',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
