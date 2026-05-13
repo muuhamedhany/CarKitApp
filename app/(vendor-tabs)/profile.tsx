@@ -1,56 +1,168 @@
-import { useCallback, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform, ActivityIndicator } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { vendorService } from '@/services/api/vendor.service';
 import { VendorDashboardResponse } from '@/types/api.types';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassView } from '@/components';
-import { useTabReload } from '@/hooks/useTabReload';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import Animated, {
+  FadeInDown,
+  FadeInUp
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const TAB_BAR_HEIGHT = 65;
+
+type MenuItem = {
+  icon: string;
+  label: string;
+  route?: string;
+  onPress?: () => void;
+  color?: string;
+  bg?: string;
+};
 
 export default function VendorProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-
-  const handleLogout = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await logout();
-    router.replace('/login');
-  };
+  const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
+  const scrollRef = useRef<ScrollView>(null);
 
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
-  const scrollRef = useRef<ScrollView>(null);
 
   useTabReload('profile', () => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
-    // Refresh data
     vendorService.getDashboard().then(res => {
-        if (res.success && res.data) setDashboard(res.data);
-    }).catch(() => {});
+      if (res.success && res.data) setDashboard(res.data);
+    }).catch(() => { });
   });
 
   useFocusEffect(
     useCallback(() => {
       vendorService.getDashboard().then(res => {
         if (res.success && res.data) setDashboard(res.data);
-      }).catch(() => {});
+      }).catch(() => { });
     }, [])
   );
 
-  const verificationStatus = (user as any)?.verification_status || 'pending';
-  const verificationBadge = verificationStatus === 'verified'
-    ? { label: 'Verified', bg: 'rgba(16,185,129,0.1)', fg: '#10B981', icon: 'shield-check' as const }
-    : verificationStatus === 'rejected'
-    ? { label: 'Rejected', bg: 'rgba(239,68,68,0.1)', fg: '#EF4444', icon: 'shield-off' as const }
-    : { label: 'Pending Review', bg: 'rgba(249,115,22,0.1)', fg: '#F97316', icon: 'shield-half-full' as const };
+  const handleLogout = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await logout();
+    router.replace('/login');
+  };
+
+  const quickActions: MenuItem[] = [
+    { 
+      icon: 'package-variant', 
+      label: 'Products', 
+      onPress: () => router.push('/(vendor-tabs)/products'),
+      color: '#6366F1',
+      bg: 'rgba(99, 102, 241, 0.15)'
+    },
+    { 
+      icon: 'receipt-text', 
+      label: 'Orders', 
+      onPress: () => router.push('/(vendor-tabs)/orders'),
+      color: '#10B981',
+      bg: 'rgba(16, 185, 129, 0.15)'
+    },
+    { 
+      icon: 'cash-multiple', 
+      label: 'Revenue', 
+      onPress: () => router.push('/vendor-analytics'),
+      color: colors.pink,
+      bg: colors.pink + '26'
+    },
+    { 
+      icon: 'chart-box-outline', 
+      label: 'Analytics', 
+      route: '/vendor-analytics',
+      color: '#F7B733',
+      bg: 'rgba(247, 183, 51, 0.15)'
+    },
+  ];
+
+  const renderQuickAction = (item: MenuItem, index: number) => {
+    let value = '—';
+    
+    if (dashboard) {
+      if (item.label === 'Products') value = dashboard.stats.total_products.toString();
+      else if (item.label === 'Orders') value = dashboard.stats.total_orders.toString();
+      else if (item.label === 'Revenue') value = Number(dashboard.stats.revenue).toLocaleString('en-EG');
+      else if (item.label === 'Analytics') value = 'View';
+    }
+
+    return (
+      <Animated.View
+        key={item.label}
+        entering={FadeInUp.delay(500 + index * 100).duration(600)}
+        style={styles.quickActionWrapper}
+      >
+        <Pressable
+          style={({ pressed }) => [
+            styles.quickActionCard,
+            {
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              borderColor: colors.cardBorder,
+              opacity: pressed ? 0.8 : 1
+            },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (item.route) router.push(item.route as any);
+            else if (item.onPress) item.onPress();
+          }}
+        >
+          <View style={[styles.quickActionIconBox, { backgroundColor: item.bg }]}>
+            <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
+          </View>
+          <View style={styles.quickActionTextWrap}>
+            <Text style={[styles.quickActionTitle, { color: colors.textPrimary }]}>{value}</Text>
+            <Text style={[styles.quickActionSubtitle, { color: colors.textSecondary }]}>
+              {item.label}
+            </Text>
+          </View>
+        </Pressable>
+      </Animated.View>
+    );
+  };
+
+  const renderMenuItem = (item: any, index: number, isLast: boolean) => {
+    return (
+      <Pressable
+        key={index}
+        style={[styles.menuItem, !isLast && { borderBottomColor: colors.cardBorder, borderBottomWidth: 1 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (item.route) router.push(item.route as any);
+          else if (item.onPress) item.onPress();
+        }}
+      >
+        <View style={[styles.menuIconBox, { backgroundColor: item.iconBg || (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)') }]}>
+          <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor || colors.textPrimary} />
+        </View>
+        <Text style={[styles.menuLabel, { color: item.textColor || colors.textPrimary }]}>{item.label}</Text>
+        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+      </Pressable>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -60,124 +172,102 @@ export default function VendorProfileScreen() {
       />
 
       {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+      <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <ScrollView 
+      <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingBottom: androidTabOffset + 100, paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Vendor Profile</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your business presence</Text>
-        </Animated.View>
-
+        {/* Profile Header Card */}
         <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
-            <View style={[styles.avatar, { backgroundColor: colors.pinkGlow }]}>
-              <Text style={[styles.avatarText, { color: colors.pink }]}>
-                {user?.name?.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
-              <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
-              <View style={[styles.badge, { backgroundColor: verificationBadge.bg }]}>
-                <MaterialCommunityIcons name={verificationBadge.icon} size={14} color={verificationBadge.fg} />
-                <Text style={[styles.badgeText, { color: verificationBadge.fg }]}>{verificationBadge.label}</Text>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileHeaderCard, { borderColor: colors.cardBorder }]}>
+            <LinearGradient
+              colors={[colors.pink + '12', 'transparent']}
+              style={styles.cardAccent}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+
+            <View style={styles.userInfoSection}>
+              <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name || 'Vendor'}</Text>
+              <View style={[styles.emailPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <MaterialCommunityIcons name="email-outline" size={13} color={colors.textMuted} />
+                <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">{user?.email}</Text>
               </View>
             </View>
+
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/profile/edit'); }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+            >
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.editProfileBtn}
+              >
+                <MaterialCommunityIcons name="account-edit-outline" size={16} color="#FFF" />
+                <Text style={styles.editProfileText}>Edit Store Profile</Text>
+              </LinearGradient>
+            </Pressable>
           </GlassView>
         </Animated.View>
 
-        {/* Store Stats Summary */}
-        <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.storeStatsRow}>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
-            <MaterialCommunityIcons name="package-variant" size={22} color="#6366F1" />
-            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_products ?? '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Products</Text>
-          </GlassView>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
-            <MaterialCommunityIcons name="receipt-text" size={22} color="#10B981" />
-            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard?.stats.total_orders ?? '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Orders</Text>
-          </GlassView>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.storeStat, { borderColor: colors.cardBorder }]}>
-            <MaterialCommunityIcons name="cash-multiple" size={22} color={colors.pink} />
-            <Text style={[styles.storeStatValue, { color: colors.textPrimary }]}>{dashboard ? Number(dashboard.stats.revenue).toLocaleString('en-EG') : '—'}</Text>
-            <Text style={[styles.storeStatLabel, { color: colors.textSecondary }]}>Revenue</Text>
+        {/* Account & General */}
+        <Animated.Text entering={FadeInDown.delay(700).duration(600)} style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Animated.Text>
+        <Animated.View entering={FadeInUp.delay(800).duration(800)}>
+          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoColumn}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Role</Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
+              </View>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.infoColumn}>
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Vendor ID</Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
+              </View>
+            </View>
+            
+            <View style={[ { borderTopColor: colors.cardBorder, borderTopWidth: 1 }]} />
+            
+            {renderMenuItem({
+              icon: 'cog-outline',
+              label: 'Settings',
+              route: '/settings',
+              iconBg: 'rgba(99, 102, 241, 0.1)',
+              iconColor: '#6366F1'
+            }, 0, false)}
+            
+            {renderMenuItem({
+              icon: 'lifebuoy',
+              label: 'Support',
+              route: '/support',
+              iconBg: 'rgba(16, 185, 129, 0.1)',
+              iconColor: '#10B981'
+            }, 1, true)}
           </GlassView>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(500).duration(800)}>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.infoGrid, { borderColor: colors.cardBorder }]}>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Role</Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>Vendor</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Vendor ID</Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{user?.vendor_id ?? 'N/A'}</Text>
-            </View>
-          </GlassView>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(600).duration(800)}>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.section, { borderColor: colors.cardBorder }]}>
-            <Pressable 
-              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/profile/edit');
-              }}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: colors.pink + '15' }]}>
-                <MaterialCommunityIcons name="account-edit" size={22} color={colors.pink} />
-              </View>
-              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Edit Personal Info</Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </Pressable>
-
-            <Pressable 
-              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/settings');
-              }}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-                <MaterialCommunityIcons name="storefront" size={22} color="#6366F1" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Store Settings</Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </Pressable>
-
-            <Pressable 
-              style={({ pressed }) => [styles.menuItem, { borderBottomColor: colors.cardBorder, backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'transparent' }]} 
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/support');
-              }}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                <MaterialCommunityIcons name="lifebuoy" size={22} color="#10B981" />
-              </View>
-              <Text style={[styles.menuText, { color: colors.textPrimary }]}>Support</Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </Pressable>
-
-            <Pressable 
-              style={({ pressed }) => [styles.menuItemLast, { backgroundColor: pressed ? 'rgba(239,68,68,0.05)' : 'transparent' }]} 
-              onPress={handleLogout}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-                <MaterialCommunityIcons name="logout" size={22} color="#EF4444" />
-              </View>
-              <Text style={[styles.menuText, { color: '#EF4444' }]}>Log Out</Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </Pressable>
-          </GlassView>
+        {/* Logout */}
+        <Animated.View entering={FadeInUp.delay(900).duration(800)}>
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [
+              styles.logoutBtn,
+              {
+                borderColor: 'rgba(255, 77, 77, 0.3)',
+                backgroundColor: 'rgba(255, 77, 77, 0.05)',
+                opacity: pressed ? 0.7 : 1
+              }
+            ]}
+          >
+            <MaterialCommunityIcons name="logout-variant" size={20} color="#FF4D4D" />
+            <Text style={styles.logoutText}>Sign Out</Text>
+          </Pressable>
         </Animated.View>
       </ScrollView>
     </View>
@@ -185,157 +275,154 @@ export default function VendorProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   orb: {
     position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 350,
+    height: 350,
+    borderRadius: 175,
     opacity: 0.5,
   },
-  scrollContent: {
-    padding: Spacing.md,
-    paddingBottom: 150,
-  },
-  header: {
-    marginBottom: Spacing.md,
-  },
-  title: {
-    fontFamily: Fonts.extraBold,
-    fontSize: 32,
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-    marginTop: 4,
-    opacity: 0.8,
-  },
-  profileCard: {
-    flexDirection: 'row',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+  content: { paddingHorizontal: Spacing.md, },
+
+  profileHeaderCard: {
+    borderRadius: BorderRadius.xxl,
+    padding: Spacing.lg,
     borderWidth: 1,
+    ...Shadows.lg,
+    overflow: 'hidden',
+  },
+  cardAccent: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 120,
+  },
+  userInfoSection: {
+    marginBottom: Spacing.md,
     alignItems: 'center',
-    marginBottom: Spacing.md,
-    overflow: 'hidden',
-    ...Shadows.md,
   },
-  infoGrid: {
+  userName: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  emailPill: {
+    flexDirection: 'row', alignItems: 'center',
+    marginTop: 8, paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 20, gap: 6, borderWidth: 1, alignSelf: 'center',
+  },
+  userEmail: {
+    fontFamily: Fonts.medium, fontSize: FontSizes.xs,
+  },
+  editProfileBtn: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14,
     borderRadius: BorderRadius.xl,
+    gap: 8
+  },
+  editProfileText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    color: '#FFF',
+  },
+
+  groupLabel: {
+    fontFamily: Fonts.extraBold, fontSize: 11,
+    letterSpacing: 1.5, marginBottom: Spacing.md, marginLeft: 4,
+    textTransform: 'uppercase',
+    opacity: 0.6,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -Spacing.xs,
+  },
+  quickActionWrapper: {
+    width: '50%',
+    padding: Spacing.xs,
+  },
+  quickActionCard: {
+    borderRadius: BorderRadius.xxl,
     borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
-    overflow: 'hidden',
+    padding: Spacing.lg,
+    minHeight: 120,
+    justifyContent: 'space-between',
     ...Shadows.sm,
   },
-  infoItem: {
+  quickActionIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickActionTextWrap: {
+    marginTop: Spacing.md,
+  },
+  quickActionTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.md,
+  },
+  quickActionSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: 11,
+    marginTop: 2,
+    opacity: 0.6,
+  },
+  menuSection: {
+    borderRadius: BorderRadius.xxl, borderWidth: 1,
+    overflow: 'hidden', marginBottom: Spacing.xl,
+    ...Shadows.md,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
+  infoColumn: {
     flex: 1,
+    alignItems: 'center',
   },
   infoLabel: {
     fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: 4,
+    opacity: 0.7,
   },
   infoValue: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.md,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.xxl,
-  },
-  userInfo: {
-    marginLeft: Spacing.md,
-    flex: 1,
-  },
-  name: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-  },
-  email: {
-    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
-    marginBottom: Spacing.xs,
   },
-  badge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    marginTop: Spacing.xs,
-  },
-  badgeText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: 12,
-  },
-  section: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
-    ...Shadows.md,
+  divider: {
+    width: 1,
+    height: 30,
+    marginHorizontal: Spacing.md,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderBottomWidth: 1,
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 18, paddingHorizontal: Spacing.lg,
   },
-  menuItemLast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
+  menuIconBox: {
+    width: 40, height: 40, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: Spacing.md,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  menuLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md, flex: 1,
   },
-  menuText: {
-    flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
-    marginLeft: Spacing.md,
-  },
-  storeStatsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  storeStat: {
-    flex: 1,
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    gap: 4,
-    overflow: 'hidden',
+
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: BorderRadius.xxl,
+    borderWidth: 1, gap: 10,
+    marginTop: Spacing.md,
     ...Shadows.sm,
   },
-  storeStatValue: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.lg,
-  },
-  storeStatLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.xs,
-  },
+  logoutText: { color: '#FF4D4D', fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
 });

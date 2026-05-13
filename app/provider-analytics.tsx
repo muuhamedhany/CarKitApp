@@ -25,8 +25,10 @@ import {
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { GlassView } from '@/components';
+import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
+import { GlassView, AnalyticsSkeleton, CountUp } from '@/components';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const RANGE_OPTIONS: Array<{ label: string; value: ProviderAnalyticsRange }> = [
   { label: 'Weekly', value: 'weekly' },
@@ -66,8 +68,23 @@ const buildLineChart = (
     height - padding - ((value - minValue) / range) * innerHeight;
 
   let linePath = `M ${getX(0)} ${getY(values[0])}`;
+  
+  // Smooth curves using cubic Bezier
+  const smoothing = 0.3;
+
   for (let i = 1; i < values.length; i += 1) {
-    linePath += ` L ${getX(i)} ${getY(values[i])}`;
+    const x = getX(i);
+    const y = getY(values[i]);
+    const prevX = getX(i - 1);
+    const prevY = getY(values[i - 1]);
+    
+    // Control points for a natural looking curve that respects data points
+    const cp1x = prevX + (x - prevX) * smoothing;
+    const cp1y = prevY;
+    const cp2x = x - (x - prevX) * smoothing;
+    const cp2y = y;
+    
+    linePath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x} ${y}`;
   }
 
   const areaPath = `${linePath} L ${getX(values.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`;
@@ -89,6 +106,8 @@ export default function ProviderAnalyticsScreen() {
   const chartWidth = Math.max(240, width - Spacing.md * 2 - 32);
   const chartHeight = 160;
 
+  const chartProgress = useSharedValue(0);
+
   const loadAnalytics = useCallback(
     async (nextRange: ProviderAnalyticsRange) => {
       try {
@@ -101,6 +120,11 @@ export default function ProviderAnalyticsScreen() {
         showToast('error', 'Error', error?.message || 'Failed to load analytics.');
       } finally {
         setLoading(false);
+        chartProgress.value = 0;
+        chartProgress.value = withTiming(1, { 
+          duration: 3000,
+          easing: Easing.inOut(Easing.quad)
+        });
       }
     },
     [showToast]
@@ -123,6 +147,10 @@ export default function ProviderAnalyticsScreen() {
     () => buildLineChart(trendPoints, chartWidth, chartHeight, 12),
     [trendPoints, chartWidth]
   );
+
+  const animatedPathProps = useAnimatedProps(() => ({
+    strokeDashoffset: (1 - chartProgress.value) * 1000,
+  }));
 
   const mixTotal = analytics?.customer_mix?.total || 1;
   const returningPct = ((analytics?.customer_mix?.returning || 0) / mixTotal) * 100;
@@ -170,7 +198,7 @@ export default function ProviderAnalyticsScreen() {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
         </View>
 
-        <Animated.View entering={FadeInDown.delay(100).duration(800)} style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+        <View style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
         >
           {RANGE_OPTIONS.map((option) => {
             const isActive = option.value === range;
@@ -197,13 +225,10 @@ export default function ProviderAnalyticsScreen() {
               </Pressable>
             );
           })}
-        </Animated.View>
+        </View>
 
         {loading ? (
-          <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <ActivityIndicator color={colors.pink} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading analytics...</Text>
-          </View>
+          <AnalyticsSkeleton />
         ) : !analytics ? (
           <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <MaterialCommunityIcons name="chart-line" size={32} color={colors.textMuted} />
@@ -211,8 +236,8 @@ export default function ProviderAnalyticsScreen() {
           </View>
         ) : (
           <>
-            <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-              <View style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple }]}>
+            <View>
+              <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
                 <Pressable
                   style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
                   onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed bookings in the selected period. The percentage change is compared to the previous period.')}
@@ -220,30 +245,32 @@ export default function ProviderAnalyticsScreen() {
                 >
                   <MaterialCommunityIcons name="information-outline" size={18} color="rgba(255,255,255,0.7)" />
                 </Pressable>
-                <View>
+                <View style={{ flex: 1, marginRight: Spacing.md }}>
                   <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
-                  <Text
-                    selectable
-                    style={[styles.revenueValue, { color: colors.white, fontVariant: ['tabular-nums'] }]}
-                  >
-                    {formatCurrency(analytics.revenue.total)} EGP
-                  </Text>
+                    <CountUp
+                      value={analytics.revenue.total}
+                      style={[styles.revenueValue, { color: '#E9DEF8' }]}
+                      formatter={(val) => {
+                        'worklet';
+                        return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} EGP`;
+                      }}
+                    />
                 </View>
-                <View style={[styles.changePill, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <View style={[styles.changePill, { backgroundColor: colors.purpleDark }]}>
                   <MaterialCommunityIcons
                     name={analytics.revenue.change_pct >= 0 ? 'trending-up' : 'trending-down'}
                     size={16}
-                    color={colors.white}
+                    color={'#E9DEF8'}
                   />
-                  <Text selectable style={[styles.changeText, { color: colors.white }]}>
+                  <Text selectable style={[styles.changeText, { color: '#E9DEF8' }]}>
                     {formatPercent(analytics.revenue.change_pct)}
                   </Text>
                 </View>
-              </View>
-            </Animated.View>
+              </GlassView>
+            </View>
 
             <View style={styles.statGrid}>
-              <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
@@ -254,12 +281,10 @@ export default function ProviderAnalyticsScreen() {
                   </Pressable>
                   <MaterialCommunityIcons name="calendar-blank-outline" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bookings</Text>
-                  <Text
-                    selectable
-                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                  >
-                    {analytics.bookings.total}
-                  </Text>
+                    <CountUp
+                      value={analytics.bookings.total}
+                      style={[styles.statValue, { color: colors.textPrimary }]}
+                    />
                   <Text
                     selectable
                     style={[styles.statDelta, { color: getChangeColor(analytics.bookings.change_pct, colors) }]}
@@ -267,9 +292,9 @@ export default function ProviderAnalyticsScreen() {
                     {formatPercent(analytics.bookings.change_pct)}
                   </Text>
                 </GlassView>
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
@@ -280,12 +305,10 @@ export default function ProviderAnalyticsScreen() {
                   </Pressable>
                   <MaterialCommunityIcons name="account-group-outline" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>New Customers</Text>
-                  <Text
-                    selectable
-                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                  >
-                    {analytics.new_customers.total}
-                  </Text>
+                    <CountUp
+                      value={analytics.new_customers.total}
+                      style={[styles.statValue, { color: colors.textPrimary }]}
+                    />
                   <Text
                     selectable
                     style={[styles.statDelta, { color: getChangeColor(analytics.new_customers.change_pct, colors) }]}
@@ -293,10 +316,10 @@ export default function ProviderAnalyticsScreen() {
                     {formatPercent(analytics.new_customers.change_pct)}
                   </Text>
                 </GlassView>
-              </Animated.View>
+              </View>
             </View>
 
-            <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <View>
@@ -322,7 +345,14 @@ export default function ProviderAnalyticsScreen() {
                     <Path d={lineChart.areaPath} fill="url(#trendFill)" />
                   ) : null}
                   {lineChart.linePath ? (
-                    <Path d={lineChart.linePath} stroke={colors.pink} strokeWidth={3} fill="none" />
+                    <AnimatedPath
+                      d={lineChart.linePath}
+                      stroke={colors.pink}
+                      strokeWidth={3}
+                      fill="none"
+                      strokeDasharray={1000}
+                      animatedProps={animatedPathProps}
+                    />
                   ) : null}
                 </Svg>
 
@@ -334,9 +364,9 @@ export default function ProviderAnalyticsScreen() {
                   ))}
                 </View>
               </GlassView>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Customer Mix</Text>
@@ -403,9 +433,9 @@ export default function ProviderAnalyticsScreen() {
                   </View>
                 </View>
               </GlassView>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Revenue by Service</Text>
@@ -438,7 +468,7 @@ export default function ProviderAnalyticsScreen() {
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No services yet.</Text>
                 )}
               </GlassView>
-            </Animated.View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -662,6 +692,40 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
   },
+  productRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  productInfo: {
+    flex: 1,
+  },
+  productName: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.md,
+  },
+  productMeta: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+  },
+  productStats: {
+    alignItems: 'flex-end',
+  },
+  productRevenue: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
+  },
+  productDelta: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+  },
+  emptyText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+  },
+  // Unique to Provider Analytics
   serviceItem: {
     marginBottom: Spacing.md,
   },
@@ -687,10 +751,6 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 4,
-  },
-  emptyText: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
   },
 });
 
