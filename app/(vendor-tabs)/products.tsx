@@ -107,57 +107,175 @@ export default function VendorProductsScreen() {
 
   const getStockBadge = (item: Product) => {
     const stock = Number(item.stock ?? 0);
-    if (stock === 0) return { label: 'Out', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)' };
-    if (stock <= 5) return { label: 'Low', color: '#F97316', backgroundColor: 'rgba(249,115,22,0.1)' };
-    return { label: 'Active', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)' };
+    const isActive = (item as any).is_active !== false && (item as any).status !== 'disabled' && (item as any).status !== 'rejected';
+    
+    if (!isActive) return { label: 'Disabled', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
+    if (stock === 0) return { label: 'Out of Stock', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
+    if (stock <= 5) return { label: 'Low Stock', color: '#F97316', backgroundColor: 'rgba(249,115,22,0.15)', progressColor: '#F97316' };
+    return { label: 'Active', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', progressColor: '#10B981' };
   };
 
+  const [updatingStock, setUpdatingStock] = useState<number | null>(null);
+
+  const handleStockUpdate = useCallback(async (productId: number, currentStock: number, change: number) => {
+    const newStock = Math.max(0, currentStock + change);
+    if (newStock === currentStock) return;
+
+    setUpdatingStock(productId);
+    try {
+      const res = await apiFetch(`/products/${productId}/stock`, {
+        method: 'PATCH',
+        body: JSON.stringify({ stock: newStock }),
+      });
+
+      if (res.success) {
+        setProducts(current => current.map(p => 
+          p.product_id === productId ? { ...p, stock: newStock } : p
+        ));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        throw new Error(res.message || 'Failed to update stock');
+      }
+    } catch (e: any) {
+      showToast('error', 'Error', e.message || 'Failed to update stock');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setUpdatingStock(null);
+    }
+  }, [showToast]);
+
   const renderProductItem = useCallback(({ item, index }: { item: Product; index: number }) => {
+    const stock = Number(item.stock ?? 0);
+    const badge = getStockBadge(item);
+    const maxStockRef = Math.max(50, stock); 
+    const progressWidth = `${(stock / maxStockRef) * 100}%`;
+    const isUpdating = updatingStock === item.product_id;
+
+    const handleNavigate = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push(`/vendor-product/${item.product_id}`);
+    };
+
     return (
-      <Animated.View 
+      <Animated.View
         entering={FadeInUp.delay(index * 50).duration(400)}
         style={styles.cardWrapper}
       >
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push(`/vendor-product/${item.product_id}`);
-          }}
-          style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+        <GlassView
+          intensity={isDark ? 20 : 40}
+          tint={isDark ? 'dark' : 'light'}
+          style={[styles.productCard, { borderColor: colors.cardBorder }]}
         >
-          <GlassView 
-            intensity={isDark ? 20 : 40} 
-            tint={isDark ? 'dark' : 'light'} 
-            style={[styles.productCard, { borderColor: colors.cardBorder }]}
-          >
+          {/* Top Section */}
+          <View style={styles.cardTopSection}>
             <Image
               source={{ uri: item.image_url || 'https://via.placeholder.com/150' }}
               style={styles.productImage}
             />
             <View style={styles.productInfo}>
               <View style={styles.productHeaderRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.productCategory, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {item.category_name || 'Uncategorized'}
-                  </Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStockBadge(item).backgroundColor }]}>
-                  <Text style={[styles.statusBadgeText, { color: getStockBadge(item).color }]}>
-                    {getStockBadge(item).label}
+                <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <View style={[styles.statusBadge, { backgroundColor: badge.backgroundColor }]}>
+                  <Text style={[styles.statusBadgeText, { color: badge.color }]}>
+                    {badge.label}
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(item.price).toLocaleString('en-EG')} EGP</Text>
-              <Text style={[styles.productStock, { color: colors.textMuted }]}>Stock: {item.stock ?? 0}</Text>
+              
+              <Text style={[styles.productPrice, { color: colors.textSecondary }]}>
+                {Number(item.price).toLocaleString('en-EG')} EGP
+              </Text>
+              
+              {/* Progress Bar Row */}
+              <View style={styles.progressRow}>
+                <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                  <View style={[styles.progressBarFill, { width: progressWidth as any, backgroundColor: badge.progressColor }]} />
+                </View>
+                <Text style={[styles.stockLeftText, { color: badge.color }]}>{stock} left</Text>
+              </View>
             </View>
-          </GlassView>
-        </Pressable>
+          </View>
+
+          {/* Bottom Section: Actions */}
+          <View style={[styles.cardBottomSection, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+            {stock === 0 ? (
+              <View style={styles.actionRow}>
+                {/* Out of Stock Quick Controls */}
+                <View style={[styles.stockControls, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                  <Pressable 
+                    style={styles.stockBtn} 
+                    disabled={isUpdating}
+                    onPress={() => handleStockUpdate(item.product_id, stock, -1)}
+                  >
+                    <MaterialCommunityIcons name="minus" size={16} color={colors.textSecondary} />
+                  </Pressable>
+                  {isUpdating ? (
+                    <ActivityIndicator size="small" color={colors.pink} style={{ minWidth: 30 }} />
+                  ) : (
+                    <Text style={[styles.stockControlText, { color: colors.textPrimary }]}>{stock}</Text>
+                  )}
+                  <Pressable 
+                    style={styles.stockBtn}
+                    disabled={isUpdating}
+                    onPress={() => handleStockUpdate(item.product_id, stock, 1)}
+                  >
+                    <MaterialCommunityIcons name="plus" size={16} color={colors.textSecondary} />
+                  </Pressable>
+                </View>
+                <Pressable 
+                  style={({ pressed }) => [
+                    styles.restockButton, 
+                    { backgroundColor: colors.pink, opacity: pressed ? 0.8 : 1, flex: 1, paddingVertical: 0, height: 40 }
+                  ]}
+                  onPress={handleNavigate}
+                >
+                  <Text style={[styles.restockButtonText, { color: '#FFF' }]}>RESTOCK NOW</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.actionRow}>
+                {/* Stock Quick Controls */}
+                <View style={[styles.stockControls, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                  <Pressable 
+                    style={styles.stockBtn} 
+                    disabled={isUpdating}
+                    onPress={() => handleStockUpdate(item.product_id, stock, -1)}
+                  >
+                    <MaterialCommunityIcons name="minus" size={16} color={colors.textSecondary} />
+                  </Pressable>
+                  {isUpdating ? (
+                    <ActivityIndicator size="small" color={colors.pink} style={{ minWidth: 30 }} />
+                  ) : (
+                    <Text style={[styles.stockControlText, { color: colors.textPrimary }]}>{stock}</Text>
+                  )}
+                  <Pressable 
+                    style={styles.stockBtn}
+                    disabled={isUpdating}
+                    onPress={() => handleStockUpdate(item.product_id, stock, 1)}
+                  >
+                    <MaterialCommunityIcons name="plus" size={16} color={colors.textSecondary} />
+                  </Pressable>
+                </View>
+
+                {/* View Details Button */}
+                <Pressable 
+                  style={({ pressed }) => [
+                    styles.viewDetailsBtn, 
+                    { backgroundColor: colors.purple, opacity: pressed ? 0.8 : 1 }
+                  ]}
+                  onPress={handleNavigate}
+                >
+                  <Text style={[styles.viewDetailsBtnText, { color: '#FFF' }]}>View Details</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        </GlassView>
       </Animated.View>
     );
-  }, [colors, isDark, router]);
+  }, [colors, isDark, router, showToast, updatingStock, handleStockUpdate]);
 
   const hasLowStock = useMemo(() => products.some((product) => Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= 5), [products]);
 
@@ -402,7 +520,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.xs,
+    fontSize: FontSizes.sm,
   },
   sortRow: {
     paddingHorizontal: Spacing.md,
@@ -420,7 +538,7 @@ const styles = StyleSheet.create({
   },
   sortText: {
     fontFamily: Fonts.bold,
-    fontSize: 10,
+    fontSize: FontSizes.sm,
   },
   alertBox: {
     flexDirection: 'row',
@@ -456,56 +574,122 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   productCard: {
-    flexDirection: 'row',
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    padding: Spacing.sm,
-    overflow: 'hidden',
+    padding: Spacing.md,
     ...Shadows.sm,
   },
+  cardTopSection: {
+    flexDirection: 'row',
+    marginBottom: Spacing.md,
+  },
   productImage: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
     borderRadius: BorderRadius.lg,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   productInfo: {
     flex: 1,
     marginLeft: Spacing.md,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   productHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
+    gap: Spacing.sm,
   },
   productName: {
+    flex: 1,
     fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
   },
-  productCategory: {
-    fontFamily: Fonts.medium,
-    fontSize: 10,
-  },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BorderRadius.full,
   },
   statusBadgeText: {
     fontFamily: Fonts.bold,
-    fontSize: 8,
-    textTransform: 'uppercase',
+    fontSize: 10,
   },
   productPrice: {
-    fontFamily: Fonts.bold,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
     marginTop: 2,
+    marginBottom: 8,
   },
-  productStock: {
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  stockLeftText: {
     fontFamily: Fonts.medium,
-    fontSize: 10,
-    marginTop: 2,
+    fontSize: 12,
+    minWidth: 45,
+    textAlign: 'right',
+  },
+  cardBottomSection: {
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  restockButton: {
+    paddingVertical: 12,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restockButtonText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    letterSpacing: 0.5,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  stockControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: 4,
+    height: 40,
+  },
+  stockBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stockControlText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  viewDetailsBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewDetailsBtnText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
   },
   loadingState: {
     marginTop: 100,
