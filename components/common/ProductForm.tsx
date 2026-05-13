@@ -237,7 +237,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             onChangeText={setName}
                         />
 
-                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder, backgroundColor: colors.inputBackground }]}>
+                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder, backgroundColor: colors.FormBg }]}>
 
                             <View style={styles.textAreaHeader}>
                                 <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />

@@ -8,6 +8,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -158,6 +159,11 @@ export default function VendorAnalyticsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+
+      <ExpoLinearGradient
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+        style={StyleSheet.absoluteFill}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.scrollContent}
@@ -170,27 +176,24 @@ export default function VendorAnalyticsScreen() {
           />
         }
       >
-      <ExpoLinearGradient
-        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
-        style={StyleSheet.absoluteFill}
-      />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <View style={[styles.headerRow, { paddingTop: 60 }]}>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.back();
-          }}
-          style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
-        >
-          <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
-      </View>
+        {/* Decorative Orbs */}
+        <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+        <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+
+        <View style={[styles.headerRow]}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+          >
+            <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
+        </View>
 
         <Animated.View entering={FadeInDown.delay(100).duration(800)} style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
         >
@@ -235,6 +238,13 @@ export default function VendorAnalyticsScreen() {
           <>
             <Animated.View entering={FadeInDown.delay(200).duration(800)}>
               <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
+                <Pressable
+                  style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
+                  onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed orders in the selected period. The percentage change is compared to the previous period.')}
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="information-outline" size={18} color="rgba(255,255,255,0.7)" />
+                </Pressable>
                 <View>
                   <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
                   <Text
@@ -260,6 +270,13 @@ export default function VendorAnalyticsScreen() {
             <View style={styles.statGrid}>
               <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+                    onPress={() => Alert.alert('Total Orders', 'Total number of orders placed in the selected period. The percentage change is compared to the previous period.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                  </Pressable>
                   <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>total Orders</Text>
                   <Text
@@ -279,6 +296,13 @@ export default function VendorAnalyticsScreen() {
 
               <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+                    onPress={() => Alert.alert('Avg Order Value', 'Total revenue divided by the number of orders in the selected period. The percentage change is compared to the previous period.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                  </Pressable>
                   <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Order Value</Text>
                   <Text
@@ -300,16 +324,22 @@ export default function VendorAnalyticsScreen() {
             <Animated.View entering={FadeInDown.delay(500).duration(800)}>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
                     <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle}</Text>
                   </View>
-                  <View style={styles.cardSummary}>
+                  <View style={[styles.cardSummary, { marginRight: 12 }]}>
                     <Text style={[styles.cardSummaryValue, { color: colors.textPrimary }]}>
                       {formatCurrency(analytics.trend.summary_value)} EGP
                     </Text>
                     <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label}</Text>
                   </View>
+                  <Pressable
+                    onPress={() => Alert.alert(analytics.trend.title, 'A visual trend of performance over the selected period.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                  </Pressable>
                 </View>
 
                 <Svg width={chartWidth} height={chartHeight}>
@@ -339,7 +369,15 @@ export default function VendorAnalyticsScreen() {
 
             <Animated.View entering={FadeInDown.delay(600).duration(800)}>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                  <Pressable
+                    onPress={() => Alert.alert('Sales by Category', 'Revenue breakdown across different product categories.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                  </Pressable>
+                </View>
                 <View style={styles.categoryRow}>
                   <View style={styles.donutWrap}>
                     <Svg width={donutSize} height={donutSize}>
@@ -403,7 +441,15 @@ export default function VendorAnalyticsScreen() {
             <Animated.View entering={FadeInUp.delay(700).duration(800)}>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                    <Pressable
+                      onPress={() => Alert.alert('Top Products', 'Best-selling products in the selected period, ranked by revenue.')}
+                      hitSlop={8}
+                    >
+                      <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                    </Pressable>
+                  </View>
                   <Pressable
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -454,6 +500,7 @@ export default function VendorAnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: -44
   },
   orb: {
     position: 'absolute',
@@ -464,13 +511,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: Spacing.md,
-    paddingBottom: 100,
   },
   headerRow: {
+    paddingTop: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
   },
   backButton: {
