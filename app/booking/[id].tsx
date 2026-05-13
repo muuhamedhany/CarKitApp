@@ -335,7 +335,7 @@ export default function BookingDetailScreen() {
 
                     <View style={styles.actionsRow}>
                         <GradientButton
-                            title="Contact Support"
+                            title="Support"
                             onPress={() => router.push('/support' as any)}
                             style={{ flex: 1 }}
                             icon="chat-processing-outline"
@@ -351,7 +351,7 @@ export default function BookingDetailScreen() {
                         ) : null}
                         {booking.status?.toLowerCase() === 'completed' && !isReviewed ? (
                             <GradientButton
-                                title="Rate Service"
+                                title="Rate"
                                 onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"

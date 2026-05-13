@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   text: {
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md,
     fontFamily: Fonts.bold,
   },
   content: {

@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
+import { notificationService } from '@/services/api/notification.service';
 import { ProviderDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
@@ -40,6 +41,7 @@ export default function ProviderDashboard() {
     const [dashboard, setDashboard] = useState<ProviderDashboardResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const loadDashboard = useCallback(async () => {
         try {
@@ -48,6 +50,12 @@ export default function ProviderDashboard() {
             if (res.success && res.data) {
                 setDashboard(res.data);
             }
+            try {
+                const unreadRes = await notificationService.getUnreadCount();
+                if (unreadRes.success && unreadRes.data) {
+                    setUnreadCount(unreadRes.data.count);
+                }
+            } catch { /* non-blocking */ }
         } catch (error: any) {
             showToast('error', 'Error', error?.message || 'Failed to load dashboard.');
         } finally {
@@ -119,8 +127,22 @@ export default function ProviderDashboard() {
             >
                 {/* Header */}
                 <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
-                    <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello, {user?.name}</Text>
-                    <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
+                    <View style={styles.headerLeft}>
+                        <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello,</Text>
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Provider'}</Text>
+                    </View>
+                    <Pressable
+                        style={[styles.notificationBtn, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            router.push('/notifications');
+                        }}
+                    >
+                        <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
+                        {unreadCount > 0 && (
+                            <View style={[styles.notificationCircleIndicator, { backgroundColor: colors.pink }]} />
+                        )}
+                    </Pressable>
                 </Animated.View>
 
                 {loading ? (
@@ -130,14 +152,14 @@ export default function ProviderDashboard() {
                         {/* Stats Grid */}
                         <View style={styles.statsContainer}>
                             {stats.map((stat, index) => (
-                                <Animated.View 
-                                    key={stat.label} 
+                                <Animated.View
+                                    key={stat.label}
                                     entering={FadeInDown.delay(100 * index).duration(600)}
                                     style={{ flex: 1, minWidth: '45%' }}
                                 >
-                                    <GlassView 
-                                        intensity={isDark ? 20 : 40} 
-                                        tint={isDark ? 'dark' : 'light'} 
+                                    <GlassView
+                                        intensity={isDark ? 20 : 40}
+                                        tint={isDark ? 'dark' : 'light'}
                                         style={[styles.statCard, { borderColor: colors.cardBorder }]}
                                     >
                                         <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
@@ -215,9 +237,9 @@ export default function ProviderDashboard() {
                                             { transform: [{ scale: pressed ? 0.98 : 1 }] }
                                         ]}
                                     >
-                                        <GlassView 
-                                            intensity={isDark ? 20 : 40} 
-                                            tint={isDark ? 'dark' : 'light'} 
+                                        <GlassView
+                                            intensity={isDark ? 20 : 40}
+                                            tint={isDark ? 'dark' : 'light'}
                                             style={[styles.orderCard, { borderColor: colors.cardBorder }]}
                                         >
                                             <View style={styles.orderTopRow}>
@@ -298,7 +320,28 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: Spacing.md,
+    },
+    headerLeft: { flex: 1 },
+    notificationBtn: {
+        width: 52, height: 52, borderRadius: BorderRadius.full,
+        justifyContent: 'center', alignItems: 'center',
+        borderWidth: 1,
+    },
+    notificationBtnSmall: {
+        width: 40, height: 40, borderRadius: BorderRadius.full,
+        justifyContent: 'center', alignItems: 'center',
+    },
+    notificationDot: {
+        position: 'absolute', top: 16, right: 16,
+        width: 8, height: 8, borderRadius: 4,
+        borderWidth: 1.5, borderColor: '#050505',
+    },
+    notificationCircleIndicator: {
+        width: 10, height: 10, borderRadius: 999, borderColor: 'white', borderWidth: 1.3, position: "absolute", top: 15, right: 15, zIndex: 10
     },
     greeting: {
         fontFamily: Fonts.medium,
