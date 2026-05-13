@@ -1,13 +1,13 @@
 import { useRef } from 'react';
-import { 
-  Pressable, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  ViewStyle, 
+import {
+  Pressable,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
   Animated,
   Platform,
-  View 
+  View
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -65,15 +65,15 @@ export default function GradientButton({
 
   return (
     <Animated.View style={[
-      { transform: [{ scale: scaleAnim }] }, 
+      { transform: [{ scale: scaleAnim }] },
       { borderRadius: BorderRadius.full }, // Ensure shadow matches button shape on Android
       style
     ]}>
-      <Pressable 
+      <Pressable
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled || loading} 
+        disabled={disabled || loading}
         style={styles.wrapper}
       >
         <LinearGradient

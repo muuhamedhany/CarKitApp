@@ -6,13 +6,14 @@ import {
   ServiceCard
 } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing, Colors } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad, adService } from '@/services/api/ad.service';
+import { notificationService } from '@/services/api/notification.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -136,6 +137,7 @@ export default function HomeScreen() {
   const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
 
   useTabReload('index', () => {
@@ -171,6 +173,13 @@ export default function HomeScreen() {
       try {
         const adsRes = await adService.getActiveAds();
         if (adsRes.success && adsRes.data) setActiveAds(adsRes.data);
+      } catch { /* non-blocking */ }
+
+      try {
+        const unreadRes = await notificationService.getUnreadCount();
+        if (unreadRes.success && unreadRes.data) {
+          setUnreadCount(unreadRes.data.count);
+        }
       } catch { /* non-blocking */ }
     } catch {
       // silently fail
@@ -247,18 +256,20 @@ export default function HomeScreen() {
             <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
           </View>
           <Pressable
-            style={[styles.notificationBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
+            style={[styles.notificationBtn, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push('/notifications');
             }}
           >
             <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
-            <View style={[styles.notificationDot, { backgroundColor: colors.pink }]} />
+            {unreadCount > 0 ? (
+              <View style={[styles.notificationCircleIndicator, { backgroundColor: colors.pink }]} />
+            ) : ("")}
           </Pressable>
         </Animated.View>
 
-        {/* Search — premium glass design */}
+        {/* Search */}
         <Animated.View entering={FadeInDown.delay(400).duration(800)}>
           <Pressable
             style={({ pressed }) => [
@@ -424,18 +435,21 @@ const styles = StyleSheet.create({
   greetingLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.7 },
   greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4, letterSpacing: -1 },
   notificationBtn: {
-    width: 52, height: 52, borderRadius: 18,
+    width: 52, height: 52, borderRadius: BorderRadius.full,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 1,
   },
   notificationBtnSmall: {
-    width: 40, height: 40, borderRadius: 12,
+    width: 40, height: 40, borderRadius: BorderRadius.full,
     justifyContent: 'center', alignItems: 'center',
   },
   notificationDot: {
     position: 'absolute', top: 16, right: 16,
     width: 8, height: 8, borderRadius: 4,
     borderWidth: 1.5, borderColor: '#050505',
+  },
+  notificationCircleIndicator: {
+    width: 10, height: 10, borderRadius: 999, borderColor: 'white', borderWidth: 1.3, position: "absolute", top: 15, right: 15, zIndex: 10
   },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
