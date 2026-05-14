@@ -434,7 +434,7 @@ export default function OrderDetailScreen() {
                 ) : (
                     <View style={styles.actionsContainer}>
                         <GradientButton
-                            title="Contact Support"
+                            title="Support"
                             onPress={() => router.push('/support' as any)}
                             style={{ flex: 1 }}
                             icon="chat-question-outline"
@@ -451,7 +451,7 @@ export default function OrderDetailScreen() {
                         ) : null}
                         {normalizeStatus(order.status) === 'delivered' && !isReviewed ? (
                             <GradientButton
-                                title="Rate Products"
+                                title="Rate"
                                 onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"

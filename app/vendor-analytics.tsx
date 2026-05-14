@@ -8,6 +8,7 @@ import {
   Text,
   View,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -24,8 +25,10 @@ import {
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { GlassView } from '@/components';
+import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
+import { GlassView, AnalyticsSkeleton, CountUp } from '@/components';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const RANGE_OPTIONS: Array<{ label: string; value: VendorAnalyticsRange }> = [
   { label: 'Weekly', value: 'weekly' },
@@ -65,8 +68,23 @@ const buildLineChart = (
     height - padding - ((value - minValue) / range) * innerHeight;
 
   let linePath = `M ${getX(0)} ${getY(values[0])}`;
+
+  // Smooth curves using cubic Bezier
+  const smoothing = 0.2;
+
   for (let i = 1; i < values.length; i += 1) {
-    linePath += ` L ${getX(i)} ${getY(values[i])}`;
+    const x = getX(i);
+    const y = getY(values[i]);
+    const prevX = getX(i - 1);
+    const prevY = getY(values[i - 1]);
+
+    // Control points for a natural looking curve that respects data points
+    const cp1x = prevX + (x - prevX) * smoothing;
+    const cp1y = prevY;
+    const cp2x = x - (x - prevX) * smoothing;
+    const cp2y = y;
+
+    linePath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x} ${y}`;
   }
 
   const areaPath = `${linePath} L ${getX(values.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`;
@@ -102,6 +120,8 @@ export default function VendorAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const chartProgress = useSharedValue(0);
+
 
 
   const chartWidth = Math.max(240, width - Spacing.md * 2 - 32);
@@ -119,6 +139,11 @@ export default function VendorAnalyticsScreen() {
         showToast('error', 'Error', error?.message || 'Failed to load analytics.');
       } finally {
         setLoading(false);
+        chartProgress.value = 0;
+        chartProgress.value = withTiming(1, {
+          duration: 3000,
+          easing: Easing.inOut(Easing.quad)
+        });
       }
     },
     [showToast]
@@ -142,6 +167,10 @@ export default function VendorAnalyticsScreen() {
     [trendPoints, chartWidth]
   );
 
+  const animatedPathProps = useAnimatedProps(() => ({
+    strokeDashoffset: (1 - chartProgress.value) * 1000,
+  }));
+
   const categorySeries = useMemo(
     () => buildCategorySeries(analytics?.categories ?? []),
     [analytics?.categories]
@@ -158,6 +187,11 @@ export default function VendorAnalyticsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+
+      <ExpoLinearGradient
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
+        style={StyleSheet.absoluteFill}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.scrollContent}
@@ -170,29 +204,26 @@ export default function VendorAnalyticsScreen() {
           />
         }
       >
-      <ExpoLinearGradient
-        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
-        style={StyleSheet.absoluteFill}
-      />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <View style={[styles.headerRow, { paddingTop: 60 }]}>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.back();
-          }}
-          style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
-        >
-          <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
-      </View>
+        {/* Decorative Orbs */}
+        <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+        <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-        <Animated.View entering={FadeInDown.delay(100).duration(800)} style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+        <View style={[styles.headerRow]}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            style={[styles.backButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+          >
+            <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
+        </View>
+
+        <View style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
         >
           {RANGE_OPTIONS.map((option) => {
             const isActive = option.value === range;
@@ -219,13 +250,10 @@ export default function VendorAnalyticsScreen() {
               </Pressable>
             );
           })}
-        </Animated.View>
+        </View>
 
         {loading ? (
-          <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <ActivityIndicator color={colors.pink} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading analytics...</Text>
-          </View>
+          <AnalyticsSkeleton />
         ) : !analytics ? (
           <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <MaterialCommunityIcons name="chart-line" size={32} color={colors.textMuted} />
@@ -233,16 +261,25 @@ export default function VendorAnalyticsScreen() {
           </View>
         ) : (
           <>
-            <Animated.View entering={FadeInDown.delay(200).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
+                <Pressable
+                  style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
+                  onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed orders in the selected period. The percentage change is compared to the previous period.')}
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                </Pressable>
                 <View>
-                  <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
-                  <Text
-                    selectable
-                    style={[styles.revenueValue, { color: '#E9DEF8', fontVariant: ['tabular-nums'] }]}
-                  >
-                    {formatCurrency(analytics.revenue.total)} EGP
-                  </Text>
+                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Revenue</Text>
+                  <CountUp
+                    value={analytics.revenue.total}
+                    style={[styles.revenueValue, { color: colors.textPrimary }]}
+                    formatter={(val) => {
+                      'worklet';
+                      return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} EGP`;
+                    }}
+                  />
                 </View>
                 <View style={[styles.changePill, { backgroundColor: colors.purpleDark }]}>
                   <MaterialCommunityIcons
@@ -255,19 +292,24 @@ export default function VendorAnalyticsScreen() {
                   </Text>
                 </View>
               </GlassView>
-            </Animated.View>
+            </View>
 
             <View style={styles.statGrid}>
-              <Animated.View entering={FadeInDown.delay(300).duration(800)} style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
+                    onPress={() => Alert.alert('Total Orders', 'Total number of orders placed in the selected period. The percentage change is compared to the previous period.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                  </Pressable>
                   <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>total Orders</Text>
-                  <Text
-                    selectable
-                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                  >
-                    {analytics.orders.total}
-                  </Text>
+                  <CountUp
+                    value={analytics.orders.total}
+                    style={[styles.statValue, { color: colors.textPrimary }]}
+                  />
                   <Text
                     selectable
                     style={[styles.statDelta, { color: getChangeColor(analytics.orders.change_pct, colors) }]}
@@ -275,18 +317,27 @@ export default function VendorAnalyticsScreen() {
                     {formatPercent(analytics.orders.change_pct)}
                   </Text>
                 </GlassView>
-              </Animated.View>
+              </View>
 
-              <Animated.View entering={FadeInDown.delay(400).duration(800)} style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
+                    onPress={() => Alert.alert('Avg Order Value', 'Total revenue divided by the number of orders in the selected period. The percentage change is compared to the previous period.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
+                  </Pressable>
                   <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Order Value</Text>
-                  <Text
-                    selectable
-                    style={[styles.statValue, { color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}
-                  >
-                    {formatCurrency(analytics.order_value.total)}
-                  </Text>
+                  <CountUp
+                    value={analytics.order_value.total}
+                    style={[styles.statValue, { color: colors.textPrimary }]}
+                    formatter={(val) => {
+                      'worklet';
+                      return Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                    }}
+                  />
                   <Text
                     selectable
                     style={[styles.statDelta, { color: getChangeColor(analytics.order_value.change_pct, colors) }]}
@@ -294,22 +345,38 @@ export default function VendorAnalyticsScreen() {
                     {formatPercent(analytics.order_value.change_pct)}
                   </Text>
                 </GlassView>
-              </Animated.View>
+              </View>
             </View>
 
-            <Animated.View entering={FadeInDown.delay(500).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
+
+                <Pressable
+                  style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
+                  onPress={() => Alert.alert(analytics.trend.title, 'A visual trend of performance over the selected period.')}
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                </Pressable>
+
                 <View style={styles.cardHeader}>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
                     <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle}</Text>
                   </View>
-                  <View style={styles.cardSummary}>
-                    <Text style={[styles.cardSummaryValue, { color: colors.textPrimary }]}>
-                      {formatCurrency(analytics.trend.summary_value)} EGP
-                    </Text>
+                  <View style={[styles.cardSummary, { marginRight: 20 }]}>
+                    <CountUp
+                      value={analytics.trend.summary_value}
+                      style={[styles.cardSummaryValue, { color: colors.textPrimary }]}
+                      formatter={(val) => {
+                        'worklet';
+                        return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+                      }}
+                    />
                     <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label}</Text>
                   </View>
+
+
                 </View>
 
                 <Svg width={chartWidth} height={chartHeight}>
@@ -323,7 +390,14 @@ export default function VendorAnalyticsScreen() {
                     <Path d={lineChart.areaPath} fill="url(#trendFill)" />
                   ) : null}
                   {lineChart.linePath ? (
-                    <Path d={lineChart.linePath} stroke={colors.pink} strokeWidth={3} fill="none" />
+                    <AnimatedPath
+                      d={lineChart.linePath}
+                      stroke={colors.pink}
+                      strokeWidth={3}
+                      fill="none"
+                      strokeDasharray={1000}
+                      animatedProps={animatedPathProps}
+                    />
                   ) : null}
                 </Svg>
 
@@ -335,11 +409,19 @@ export default function VendorAnalyticsScreen() {
                   ))}
                 </View>
               </GlassView>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                  <Pressable
+                    onPress={() => Alert.alert('Sales by Category', 'Revenue breakdown across different product categories.')}
+                    hitSlop={8}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                  </Pressable>
+                </View>
                 <View style={styles.categoryRow}>
                   <View style={styles.donutWrap}>
                     <Svg width={donutSize} height={donutSize}>
@@ -398,12 +480,20 @@ export default function VendorAnalyticsScreen() {
                   </View>
                 </View>
               </GlassView>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={FadeInUp.delay(700).duration(800)}>
+            <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                    <Pressable
+                      onPress={() => Alert.alert('Top Products', 'Best-selling products in the selected period, ranked by revenue.')}
+                      hitSlop={8}
+                    >
+                      <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
+                    </Pressable>
+                  </View>
                   <Pressable
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -443,7 +533,7 @@ export default function VendorAnalyticsScreen() {
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No products yet.</Text>
                 )}
               </GlassView>
-            </Animated.View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -454,6 +544,7 @@ export default function VendorAnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: -44
   },
   orb: {
     position: 'absolute',
@@ -464,13 +555,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: Spacing.md,
-    paddingBottom: 100,
   },
   headerRow: {
+    paddingTop: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
   },
   backButton: {
@@ -522,11 +612,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
-    overflow: 'hidden',
     ...Shadows.md,
   },
   revenueLabel: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -534,7 +623,7 @@ const styles = StyleSheet.create({
   },
   revenueValue: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.xxl,
+    fontSize: FontSizes.xl,
   },
   changePill: {
     flexDirection: 'row',
@@ -563,7 +652,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   statLabel: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
     textTransform: 'uppercase',
   },
@@ -595,13 +684,13 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    marginTop: 2,
+    fontSize: FontSizes.xs,
   },
   cardSummary: {
     alignItems: 'flex-end',
   },
   cardSummaryValue: {
+    width: 60,
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.md,
   },
@@ -615,7 +704,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   trendLabel: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.xs,
   },
   categoryRow: {

@@ -64,14 +64,13 @@ export default function GetDirectionsButton({
             ]}
         >
             <MaterialCommunityIcons name="navigation-variant-outline" size={20} color={colors.pink} />
-            <Text style={[styles.text, { color: colors.pink }]}>Get Directions</Text>
+            <Text style={[styles.text, { color: colors.pink }]}>See on Maps</Text>
         </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
     button: {
-        marginTop: Spacing.md,
         height: 48,
         borderRadius: BorderRadius.full,
         borderWidth: 1.5,

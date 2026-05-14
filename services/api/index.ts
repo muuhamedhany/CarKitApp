@@ -9,4 +9,5 @@ export * from './payment.service';
 export * from './booking.service';
 export * from './ad.service';
 export * from './review.service';
+export * from './notification.service';
 export * from './client';
