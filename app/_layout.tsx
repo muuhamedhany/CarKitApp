@@ -82,11 +82,22 @@ function InnerLayout() {
         <Stack.Screen name="provider-service/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="provider-booking/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="edit-service/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="ad-payment" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="ad-success" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="add-product" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="category-filter" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="create-ad" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="pending" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="promote" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="upload-documents" options={{ headerShown: false, title: '' }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </NavThemeProvider>
   );
 }
+
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -108,16 +119,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <ToastProvider>
-            <WishlistProvider>
-              <InnerLayout />
-            </WishlistProvider>
-          </ToastProvider>
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <ToastProvider>
+              <WishlistProvider>
+                <InnerLayout />
+              </WishlistProvider>
+            </ToastProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

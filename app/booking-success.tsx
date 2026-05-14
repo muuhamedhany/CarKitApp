@@ -88,12 +88,6 @@ export default function BookingSuccessScreen() {
           </GlassView>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(600).springify()}>
-          <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            The service provider will review your booking and confirm the appointment. You can track progress in My Bookings.
-          </Text>
-        </Animated.View>
-
         <Animated.View entering={FadeInDown.delay(800).springify()} style={styles.buttonContainer}>
           <GradientButton
             title="View My Bookings"

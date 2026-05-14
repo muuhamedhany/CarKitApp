@@ -18,6 +18,7 @@ export { default as ThirdButton } from './common/ThirdButton';
 export { AdSlideshow } from './layout/AdSlideshow';
 export { default as BackButton } from './layout/BackButton';
 export { CartSkeleton } from './layout/CartSkeleton';
+export { AnalyticsSkeleton } from './layout/AnalyticsSkeleton';
 export { default as CategoryPill } from './layout/CategoryPill';
 export { default as CenteredHeader } from './layout/CenteredHeader';
 export { default as CustomTabBar } from './layout/CustomTabBar';
@@ -31,3 +32,4 @@ export { ServiceDetailSkeleton } from './layout/ServiceDetailSkeleton';
 export { default as VendorTabBar } from './layout/VendorTabBar';
 
 export { default as GetDirectionsButton } from './GetDirectionsButton';
+export { default as CountUp } from './ui/CountUp';

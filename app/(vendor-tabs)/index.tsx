@@ -6,6 +6,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { vendorService } from '@/services/api/vendor.service';
+import { notificationService } from '@/services/api/notification.service';
 import { VendorDashboardResponse } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +27,7 @@ export default function VendorDashboard() {
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const hasLoaded = useRef(false);
 
@@ -42,6 +44,12 @@ export default function VendorDashboard() {
         setDashboard(res.data);
         hasLoaded.current = true;
       }
+      try {
+        const unreadRes = await notificationService.getUnreadCount();
+        if (unreadRes.success && unreadRes.data) {
+          setUnreadCount(unreadRes.data.count);
+        }
+      } catch { /* non-blocking */ }
     } catch (error: any) {
       showToast('error', 'Error', error?.message || 'Failed to load vendor dashboard.');
     } finally {
@@ -121,8 +129,22 @@ export default function VendorDashboard() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
-          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello, {user?.name}</Text>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Dashboard</Text>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello,</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Vendor'}</Text>
+          </View>
+          <Pressable
+            style={[styles.notificationBtn, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/notifications');
+            }}
+          >
+            <MaterialCommunityIcons name="bell-outline" size={22} color={colors.textPrimary} />
+            {unreadCount > 0 && (
+              <View style={[styles.notificationCircleIndicator, { backgroundColor: colors.pink }]} />
+            )}
+          </Pressable>
         </Animated.View>
 
         {loading ? (
@@ -263,7 +285,28 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.xl,
+  },
+  headerLeft: { flex: 1 },
+  notificationBtn: {
+    width: 52, height: 52, borderRadius: BorderRadius.full,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1,
+  },
+  notificationBtnSmall: {
+    width: 40, height: 40, borderRadius: BorderRadius.full,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  notificationDot: {
+    position: 'absolute', top: 16, right: 16,
+    width: 8, height: 8, borderRadius: 4,
+    borderWidth: 1.5, borderColor: '#050505',
+  },
+  notificationCircleIndicator: {
+    width: 10, height: 10, borderRadius: 999, borderColor: 'white', borderWidth: 1.3, position: "absolute", top: 15, right: 15, zIndex: 10
   },
   greeting: {
     fontFamily: Fonts.medium,
