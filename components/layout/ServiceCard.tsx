@@ -92,7 +92,7 @@ export default function ServiceCard({
             </>
           ) : (
             <LinearGradient
-              colors={isDark ? ['#1A0B2E', '#2D1B4E'] : ['#F8F0FF', '#EBE0FF']}
+              colors={isDark ? [colors.backgroundSecondary, colors.background] : ['#F8F0FF', '#EBE0FF']}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -202,11 +202,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   loader: {
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   placeholderInner: {
     justifyContent: 'center',
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: BorderRadius.xl,
-    ...Shadows.md,
+    ...Shadows.lg,
   },
   priceBadgeText: {
     fontFamily: Fonts.extraBold,
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   body: { padding: Spacing.md },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
   name: { fontFamily: Fonts.bold, fontSize: FontSizes.md + 2, letterSpacing: -0.5 },
-  provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.6, marginTop: 3 },
+  provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.5, marginTop: 3 },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -242,15 +245,14 @@ const styles = StyleSheet.create({
   ratingText: { fontFamily: Fonts.bold, fontSize: 12, marginLeft: 3 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: Spacing.md },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaText: { fontFamily: Fonts.bold, fontSize: 12, opacity: 0.7 },
+  metaText: { fontFamily: Fonts.bold, fontSize: 12, opacity: 0.6 },
   actions: { flexDirection: 'row', gap: 12 },
   bookButton: {
     borderRadius: BorderRadius.xl,
     flex: 2,
     paddingVertical: 14,
     alignItems: 'center',
-    ...Shadows.sm,
-    shadowColor: Colors.pink,
+    ...Shadows.md,
   },
   bookButtonText: { fontFamily: Fonts.extraBold, fontSize: FontSizes.sm, color: '#FFFFFF' },
   viewButton: {

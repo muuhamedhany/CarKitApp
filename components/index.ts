@@ -12,6 +12,7 @@ export { default as ProductForm } from './common/ProductForm';
 export { default as SecondaryButton } from './common/SecondaryButton';
 export { default as SocialButton } from './common/SocialButton';
 export { StarRating } from './common/StarRating';
+export { RatingAnalysis } from './common/RatingAnalysis';
 export { default as ThirdButton } from './common/ThirdButton';
 
 export { AdSlideshow } from './layout/AdSlideshow';

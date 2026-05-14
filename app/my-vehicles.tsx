@@ -1,6 +1,6 @@
-import { CenteredHeader, GlassView, GradientButton } from '@/components';
+import { CenteredHeader, GlassView } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -19,9 +19,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type Vehicle = {
   vehicle_id: number;
@@ -72,13 +72,17 @@ export default function MyVehiclesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Premium Multi-Layered Background */}
       <LinearGradient
         colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
-
+      
+      {/* Decorative Atmospheric Orbs */}
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+
+      <CenteredHeader title="Garage" titleColor={colors.textPrimary} />
 
       {loading ? (
         <View style={styles.center}>
@@ -89,29 +93,40 @@ export default function MyVehiclesScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <CenteredHeader title="My Vehicles" titleColor={colors.textPrimary} />
           {vehicles.length === 0 ? (
             <Animated.View
-              entering={FadeInDown.delay(400).duration(800)}
-              style={styles.emptyState}
+              entering={FadeInDown.delay(200).springify()}
+              style={styles.emptyContainer}
             >
-              <GlassView
-                intensity={isDark ? 30 : 50}
-                tint={isDark ? 'dark' : 'light'}
-                style={[styles.emptyCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
-              >
-                <View style={[styles.emptyIconCircle, { backgroundColor: colors.pink + '15' }]}>
-                  <MaterialCommunityIcons name="car-off" size={64} color={colors.pink} />
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyGlass}>
+                <View style={styles.emptyIconBox}>
+                  <MaterialCommunityIcons name="car-outline" size={80} color={colors.pink} />
+                  <View style={[styles.emptyPlusBadge, { backgroundColor: colors.pink }]}>
+                    <MaterialCommunityIcons name="plus" size={24} color="#FFF" />
+                  </View>
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No vehicles yet</Text>
+                
+                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Vehicles Registered</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                  Add your first vehicle to personalize your experience and track history.
+                  Connect your vehicle to access specialized services, track service history, and get custom maintenance alerts.
                 </Text>
-                <GradientButton
-                  title="Add Now"
+                
+                <Pressable
                   onPress={handleAddVehicle}
-                  style={styles.emptyAddBtn}
-                />
+                  style={({ pressed }) => [
+                    styles.mainActionBtn,
+                    { transform: [{ scale: pressed ? 0.96 : 1 }] }
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[colors.pink, colors.purple]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.mainActionGradient}
+                  >
+                    <Text style={styles.mainActionText}>Add Your Vehicle</Text>
+                  </LinearGradient>
+                </Pressable>
               </GlassView>
             </Animated.View>
           ) : (
@@ -119,58 +134,112 @@ export default function MyVehiclesScreen() {
               {vehicles.map((v, index) => (
                 <Animated.View
                   key={v.vehicle_id}
-                  entering={FadeInDown.delay(index * 100).springify()}
+                  entering={FadeInUp.delay(index * 120).springify()}
                   layout={Layout.springify()}
                 >
                   <Pressable
                     onPress={() => handleVehiclePress(v.vehicle_id)}
+                    style={({ pressed }) => [
+                      styles.vehicleCardWrapper,
+                      { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                    ]}
                   >
                     <GlassView
                       intensity={isDark ? 30 : 50}
                       tint={isDark ? 'dark' : 'light'}
-                      style={[styles.vehicleCard, { borderColor: 'rgba(255,255,255,0.1)' }]}
+                      style={[styles.vehicleCard, { borderColor: colors.cardBorder }]}
                     >
-                      <View style={styles.vehicleThumb}>
+                      {/* Shorter Image Section */}
+                      <View style={styles.imageContainer}>
                         {v.photo_url ? (
-                          <Image source={{ uri: v.photo_url }} style={styles.vehicleThumbImg} />
+                          <Image source={{ uri: v.photo_url }} style={styles.vehicleImage} />
                         ) : (
                           <LinearGradient
-                            colors={[colors.pink, colors.purple]}
-                            style={styles.vehicleThumbPlaceholder}
+                            colors={isDark ? ['#1e1e2d', '#11111a'] : ['#f0f0f5', '#e6e6f0']}
+                            style={styles.imagePlaceholder}
                           >
-                            <MaterialCommunityIcons name="car-side" size={32} color="white" />
+                            <MaterialCommunityIcons 
+                              name="car-sports" 
+                              size={60} 
+                              color={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} 
+                            />
                           </LinearGradient>
                         )}
-                      </View>
-                      <View style={styles.vehicleInfo}>
-                        <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>
-                          {v.nickname || `${v.make_name} ${v.model_name}`}
-                        </Text>
-                        <Text style={[styles.vehicleSub, { color: colors.textSecondary }]}>
-                          {v.year ? `${v.year} • ` : ''}{v.make_name}
-                        </Text>
-                        <View style={[styles.modelBadge, { backgroundColor: colors.pink + '15' }]}>
-                          <Text style={[styles.modelBadgeText, { color: colors.pink }]}>{v.model_name}</Text>
+                        
+                        {/* Status Overlay Only */}
+                        <View style={styles.imageOverlay}>
+                          <View style={[styles.activeStatus, { backgroundColor: colors.success + '20' }]}>
+                            <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+                            <Text style={[styles.statusText, { color: colors.success }]}>ACTIVE</Text>
+                          </View>
                         </View>
                       </View>
-                      <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+
+                      {/* Unified Content Section */}
+                      <View style={styles.cardContent}>
+                        <View style={styles.headerRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.nickname, { color: colors.textPrimary }]} numberOfLines={1}>
+                              {v.nickname || `${v.make_name} ${v.model_name}`}
+                            </Text>
+                            <Text style={[styles.fullModel, { color: colors.textSecondary }]}>
+                              {v.make_name} • <Text style={{ color: colors.pink }}>{v.model_name}</Text>
+                            </Text>
+                          </View>
+                          
+                          <View style={[styles.arrowContainer, { backgroundColor: colors.pink + '15' }]}>
+                            <MaterialCommunityIcons name="arrow-right" size={20} color={colors.pink} />
+                          </View>
+                        </View>
+
+                        {/* Integrated Data Badges */}
+                        <View style={styles.dataBadgeRow}>
+                          <View style={[styles.dataBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                            <MaterialCommunityIcons name="calendar" size={14} color={colors.textSecondary} />
+                            <Text style={[styles.dataBadgeText, { color: colors.textPrimary }]}>{v.year || 'N/A'}</Text>
+                          </View>
+                          
+                          {v.color && (
+                            <View style={[styles.dataBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                              <View style={[styles.colorIndicator, { backgroundColor: v.color.toLowerCase() }]} />
+                              <Text style={[styles.dataBadgeText, { color: colors.textPrimary }]}>{v.color}</Text>
+                            </View>
+                          )}
+                          
+                          <View style={[styles.dataBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                            <MaterialCommunityIcons name="shield-check-outline" size={14} color={colors.pink} />
+                            <Text style={[styles.dataBadgeText, { color: colors.textPrimary }]}>Insured</Text>
+                          </View>
+                        </View>
+                      </View>
                     </GlassView>
                   </Pressable>
                 </Animated.View>
               ))}
 
-              <Animated.View entering={FadeInDown.delay(400).springify()}>
-                <GradientButton
-                  title="Add Another Vehicle"
-                  icon="plus"
+              {/* Sophisticated Add Button */}
+              <Animated.View entering={FadeInUp.delay(vehicles.length * 120 + 200).springify()}>
+                <Pressable
                   onPress={handleAddVehicle}
-                  style={styles.bottomAddBtn}
-                />
+                  style={({ pressed }) => [
+                    styles.secondaryAddBtn,
+                    { 
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                      borderColor: colors.cardBorder
+                    }
+                  ]}
+                >
+                  <View style={[styles.plusIconWrap, { backgroundColor: colors.pink + '15' }]}>
+                    <MaterialCommunityIcons name="plus" size={24} color={colors.pink} />
+                  </View>
+                  <Text style={[styles.secondaryAddText, { color: colors.textPrimary }]}>Add Another Vehicle</Text>
+                </Pressable>
               </Animated.View>
             </View>
           )}
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: 120 }} />
         </ScrollView>
       )}
     </View>
@@ -187,39 +256,195 @@ const styles = StyleSheet.create({
     borderRadius: 200,
     opacity: 0.4,
   },
-  scrollContent: { paddingHorizontal: Spacing.lg, paddingBottom: 20 },
-  listContainer: { gap: Spacing.md },
+  scrollContent: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 40 },
+  listContainer: { gap: Spacing.xl },
 
+  // Vehicle Card Design
+  vehicleCardWrapper: {
+    ...Shadows.lg,
+  },
   vehicleCard: {
+    borderRadius: 30,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 140, // Shorter picture
+    backgroundColor: '#000',
+  },
+  vehicleImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  activeStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: BorderRadius.xxl,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontFamily: Fonts.bold,
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+
+  cardContent: {
+    padding: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  infoTextContainer: {
+    flex: 1,
+  },
+  nickname: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 22,
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  fullModel: {
+    fontFamily: Fonts.medium,
+    fontSize: 13,
+    opacity: 0.8,
+  },
+  arrowContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 15,
+  },
+
+  // Data Badges
+  dataBadgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  dataBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 8,
+  },
+  dataBadgeText: {
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+  },
+  colorIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     borderWidth: 1,
-    padding: Spacing.lg,
-    overflow: 'hidden',
+    borderColor: 'rgba(0,0,0,0.1)',
   },
-  vehicleThumb: {
-    width: 80,
+
+  // Secondary Add Button
+  secondaryAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: Spacing.md,
+  },
+  plusIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  secondaryAddText: {
+    fontFamily: Fonts.bold,
+    fontSize: 16,
+  },
+
+  // Empty State Design
+  emptyContainer: {
+    marginTop: 40,
+  },
+  emptyGlass: {
+    borderRadius: 35,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  emptyIconBox: {
+    position: 'relative',
+    marginBottom: 25,
+  },
+  emptyPlusBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: -5,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  emptyTitle: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 24,
+    textAlign: 'center',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  emptySubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 24,
+    opacity: 0.7,
+    marginBottom: 35,
+  },
+  mainActionBtn: {
+    width: '100%',
     height: 60,
-    borderRadius: BorderRadius.xl,
-    marginRight: Spacing.lg,
-    overflow: 'hidden',
   },
-  vehicleThumbImg: { width: '100%', height: '100%' },
-  vehicleThumbPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  vehicleInfo: { flex: 1 },
-  vehicleName: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: 0.3 },
-  vehicleSub: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.6, marginBottom: 6 },
-  modelBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: BorderRadius.md },
-  modelBadgeText: { fontSize: 10, fontFamily: Fonts.bold, textTransform: 'uppercase', letterSpacing: 1 },
-
-  bottomAddBtn: { marginTop: Spacing.lg },
-
-  emptyState: { marginTop: 40 },
-  emptyCard: { padding: Spacing.xxl, borderRadius: BorderRadius.xxl, borderWidth: 1, alignItems: 'center', overflow: 'hidden' },
-  emptyIconCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.xl },
-  emptyTitle: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginBottom: Spacing.md },
-  emptySubtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.md, textAlign: 'center', opacity: 0.6, marginBottom: Spacing.xl, lineHeight: 22 },
-  emptyAddBtn: { width: '100%' },
+  mainActionGradient: {
+    flex: 1,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainActionText: {
+    color: '#FFF',
+    fontFamily: Fonts.extraBold,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
 });
-

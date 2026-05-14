@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, ReactN
 import {
   View,
   Text,
+  Platform,
   StyleSheet,
   Pressable,
   Dimensions,
@@ -126,10 +127,22 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
     opacity: opacity.value,
   }));
 
+  const isAndroid = Platform.OS === 'android';
+  const androidBg = isDark ? colors.backgroundSecondary : '#FFFFFF';
+
   return (
     <Animated.View style={[styles.toastContainer, animatedStyle]}>
       <Pressable onPress={dismiss}>
-        <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={[styles.toastInner, { borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
+        <View style={[
+          styles.toastInner, 
+          { 
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            backgroundColor: isAndroid ? androidBg : 'transparent'
+          }
+        ]}>
+          {!isAndroid && (
+            <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+          )}
           {/* Accent bar on left */}
           <View style={[styles.toastAccent, { backgroundColor: config.accentColor }]} />
 
@@ -146,7 +159,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
             ) : null}
           </View>
           <MaterialCommunityIcons name="close" size={18} color={colors.textMuted} />
-        </BlurView>
+        </View>
       </Pressable>
     </Animated.View>
   );

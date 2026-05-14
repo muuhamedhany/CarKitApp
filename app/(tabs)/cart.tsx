@@ -2,6 +2,7 @@ import { CartSkeleton, GlassView, SecondaryButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { CartItem } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,8 +10,7 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { useTabReload } from '@/hooks/useTabReload';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -31,29 +31,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
-// ─── Cart row component ───────────────────────────────────────────────────────
-function CartItemRow({ item, index, onUpdate, onRemove }: {
-  item: ReturnType<typeof useCart>['items'][0];
+// ─── Memoized Cart Row Component ─────────────────────────────────────────────
+const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
+  item: CartItem;
   index: number;
   onUpdate: (id: number, qty: number) => void;
   onRemove: (id: number) => void;
-}) {
+}) => {
   const { colors, isDark } = useTheme();
   const [imgError, setImgError] = useState(false);
   const showImage = !!item.image_url && !imgError;
 
   return (
     <Animated.View
-      entering={FadeInUp.delay(index * 100).duration(600)}
+      entering={FadeInUp.delay(index * 50).duration(400)}
       exiting={FadeOut.duration(300)}
-      layout={Layout.springify()}
+      layout={Layout.springify().damping(20)}
     >
       <GlassView
         intensity={isDark ? 20 : 40}
         tint={isDark ? 'dark' : 'light'}
         style={[styles.cartItem, { borderColor: colors.cardBorder }]}
       >
-        {/* Product thumbnail */}
         <View style={[styles.itemImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
           {showImage ? (
             <Image
@@ -67,7 +66,6 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
           )}
         </View>
 
-        {/* Name & price */}
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
             {item.name}
@@ -79,11 +77,14 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
               style={({ pressed }) => [
                 styles.qtyBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                  opacity: pressed ? 0.7 : 1
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  opacity: pressed ? 0.6 : 1
                 }
               ]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity - 1); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onUpdate(item.cart_item_id, item.quantity - 1);
+              }}
             >
               <MaterialCommunityIcons name="minus" size={14} color={colors.textPrimary} />
             </Pressable>
@@ -92,35 +93,41 @@ function CartItemRow({ item, index, onUpdate, onRemove }: {
               style={({ pressed }) => [
                 styles.qtyBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                  opacity: pressed ? 0.7 : 1
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  opacity: (pressed || item.quantity >= item.stock) ? 0.4 : 1
                 }
               ]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onUpdate(item.cart_item_id, item.quantity + 1); }}
+              disabled={item.quantity >= item.stock}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onUpdate(item.cart_item_id, item.quantity + 1);
+              }}
             >
-              <MaterialCommunityIcons name="plus" size={14} color={colors.textPrimary} />
+              <MaterialCommunityIcons name="plus" size={14} color={item.quantity >= item.stock ? colors.textMuted : colors.textPrimary} />
             </Pressable>
           </View>
         </View>
 
-        {/* Delete button */}
         <Pressable
-          onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); onRemove(item.cart_item_id); }}
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            onRemove(item.cart_item_id);
+          }}
           style={({ pressed }) => [
             styles.deleteBtn,
             {
-              backgroundColor: isDark ? 'rgba(255, 77, 77, 0.1)' : 'rgba(255, 77, 77, 0.05)',
-              opacity: pressed ? 0.6 : 1
+              backgroundColor: isDark ? 'rgba(255, 77, 77, 0.08)' : 'rgba(255, 77, 77, 0.04)',
+              opacity: pressed ? 0.5 : 1
             }
           ]}
-          hitSlop={8}
+          hitSlop={12}
         >
           <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF4D4D" />
         </Pressable>
       </GlassView>
     </Animated.View>
   );
-}
+});
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CartScreen() {
@@ -139,6 +146,18 @@ export default function CartScreen() {
 
   useEffect(() => { fetchCart(); }, []);
 
+  const handleUpdateQuantity = useCallback(async (id: number, qty: number) => {
+    // Note: The context now handles optimistic updates, so this returns instantly
+    const res = await updateQuantity(id, qty);
+    if (res && !res.success && res.message) {
+      showToast('error', 'Limit Reached', res.message);
+    }
+  }, [updateQuantity, showToast]);
+
+  const handleRemoveItem = useCallback(async (id: number) => {
+    await removeItem(id);
+  }, [removeItem]);
+
   const handleCheckout = () => {
     if (items.length === 0) {
       showToast('warning', 'Empty Cart', 'Add some products first!');
@@ -156,8 +175,8 @@ export default function CartScreen() {
       />
 
       {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '12' }]} />
+      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '08' }]} />
 
       <View style={[styles.header, { marginTop: insets.top + 10 }]}>
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
@@ -171,7 +190,8 @@ export default function CartScreen() {
             style={({ pressed }) => [
               styles.headerAction,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                backgroundColor: colors.backgroundSecondary,
+                borderColor: colors.cardBorder,
                 opacity: pressed ? 0.7 : 1
               }
             ]}
@@ -186,11 +206,11 @@ export default function CartScreen() {
         <CartSkeleton />
       ) : items.length === 0 ? (
         <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.center}>
-          <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconCircle}>
+          <View style={[styles.emptyIconCircle, { backgroundColor: colors.pink + '10' }]}>
             <MaterialCommunityIcons name="cart-variant" size={48} color={colors.pink} />
-          </GlassView>
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Looks like you haven't added anything to your cart yet.</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Explore our shop to find the best parts for your car.</Text>
           <View style={{ marginTop: Spacing.xxl, width: 220 }}>
             <SecondaryButton title="Start Shopping" onPress={() => router.push('/(tabs)/search')} />
           </View>
@@ -198,25 +218,23 @@ export default function CartScreen() {
       ) : (
         <FlashList
           ref={listRef}
-          {...({
-            data: items,
-            estimatedItemSize: 120,
-            keyExtractor: (item: CartItem) => item.cart_item_id.toString(),
-            renderItem: ({ item, index }: any) => (
-              <CartItemRow
-                item={item}
-                index={index}
-                onUpdate={updateQuantity}
-                onRemove={removeItem}
-              />
-            ),
-            contentContainerStyle: {
-              paddingHorizontal: Spacing.lg,
-              paddingTop: 10,
-              paddingBottom: androidTabOffset + 220
-            },
-            showsVerticalScrollIndicator: false,
-          } as any)}
+          data={items}
+          estimatedItemSize={120}
+          keyExtractor={(item) => item.cart_item_id.toString()}
+          renderItem={({ item, index }) => (
+            <CartItemRow
+              item={item}
+              index={index}
+              onUpdate={handleUpdateQuantity}
+              onRemove={handleRemoveItem}
+            />
+          )}
+          contentContainerStyle={{
+            paddingHorizontal: Spacing.lg,
+            paddingTop: 10,
+            paddingBottom: androidTabOffset + 200
+          }}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -231,9 +249,9 @@ export default function CartScreen() {
             style={styles.bottomBlur}
           >
             <View style={styles.bottomBar}>
-              <View style={{ alignItems: 'center', flexShrink: 1, marginRight: Spacing.md }}>
-                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Amount</Text>
-                <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{total.toLocaleString()} EGP</Text>
+              <View style={{ alignItems: 'flex-start', flexShrink: 1, marginRight: Spacing.md }}>
+                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>TOTAL AMOUNT</Text>
+                <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{parseFloat(total).toLocaleString()} EGP</Text>
               </View>
               <Pressable
                 onPress={handleCheckout}
@@ -266,11 +284,6 @@ const styles = StyleSheet.create({
     borderRadius: 200,
     opacity: 0.4,
   },
-  priceContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.md },
 
   header: {
@@ -297,6 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
   },
 
   cartItem: {
@@ -306,7 +320,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xxl,
     borderWidth: 1,
     marginBottom: Spacing.md,
-    ...Shadows.md,
     overflow: 'hidden',
   },
   itemImage: {
@@ -323,7 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   itemName: {
-    fontFamily: Fonts.medium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
     marginBottom: 4,
   },
@@ -336,10 +349,11 @@ const styles = StyleSheet.create({
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   qtyBtn: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -347,7 +361,7 @@ const styles = StyleSheet.create({
   qtyText: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
-    minWidth: 28,
+    minWidth: 24,
     textAlign: 'center'
   },
 
@@ -388,24 +402,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 2,
     opacity: 0.5,
-    textAlign: 'center',
   },
   totalValue: {
     fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.lg,
+    fontSize: 22,
     letterSpacing: -0.5,
-    textAlign: 'center',
   },
 
   checkoutBtn: {
     flexDirection: 'row',
     borderRadius: BorderRadius.xl,
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.lg,
-    shadowColor: '#CD42A8',
   },
   checkoutText: {
     fontFamily: Fonts.extraBold,
@@ -414,15 +425,12 @@ const styles = StyleSheet.create({
   },
 
   emptyIconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   emptyTitle: {
     fontFamily: Fonts.extraBold,
@@ -439,5 +447,3 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
-
-

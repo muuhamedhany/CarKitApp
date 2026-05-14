@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Category, ProductFormInitialValues, ProductFormPayload } from '@/types/api.types';
-import { useTheme } from '@/hooks/useTheme';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
-import { apiFetch } from '@/services/api/client';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
-import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { apiFetch } from '@/services/api/client';
+import { Category, ProductFormInitialValues, ProductFormPayload } from '@/types/api.types';
+import BackButton from './BackButton';
 import FormInput from './FormInput';
 import GradientButton from './GradientButton';
-import BackButton from './BackButton';
 
 type ImageSlot = {
     previewUri: string | null;

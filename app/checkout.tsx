@@ -18,8 +18,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
-    View,
+    View
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
