@@ -13,6 +13,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad, adService } from '@/services/api/ad.service';
+import { bookingService } from '@/services/api/booking.service';
+import { orderService } from '@/services/api/order.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -109,6 +111,7 @@ type Product = {
   image_url?: string | null;
   rating?: number;
   review_count?: number;
+  stock: number;
 };
 type Service = {
   service_id: number; name: string; price: string; duration?: number;
@@ -124,7 +127,7 @@ const TAB_BAR_HEIGHT = 90;
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -137,6 +140,14 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<Animated.ScrollView>(null);
+
+  const [latestUpdate, setLatestUpdate] = useState<{
+    title: string;
+    description: string;
+    icon: string;
+    route: any;
+    color: string;
+  } | null>(null);
 
   useTabReload('index', () => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -172,6 +183,72 @@ export default function HomeScreen() {
         const adsRes = await adService.getActiveAds();
         if (adsRes.success && adsRes.data) setActiveAds(adsRes.data);
       } catch { /* non-blocking */ }
+
+      // Fetch Latest Activity for Updates section
+      if (token) {
+        try {
+          const [bookingsRes, ordersRes] = await Promise.all([
+            bookingService.getMyBookings(undefined, 1, 1),
+            orderService.getMyOrders(undefined, 1, 1),
+          ]);
+
+          let latest: any = null;
+          let updateType: 'booking' | 'order' | null = null;
+
+          const booking = bookingsRes.success && bookingsRes.data?.[0];
+          const order = ordersRes.success && ordersRes.data?.[0];
+
+          if (booking && order) {
+            if (new Date(booking.booking_date) > new Date(order.order_date)) {
+              latest = booking;
+              updateType = 'booking';
+            } else {
+              latest = order;
+              updateType = 'order';
+            }
+          } else if (booking) {
+            latest = booking;
+            updateType = 'booking';
+          } else if (order) {
+            latest = order;
+            updateType = 'order';
+          }
+
+          if (updateType === 'booking') {
+            setLatestUpdate({
+              title: `Booking ${latest.status.charAt(0).toUpperCase() + latest.status.slice(1)}`,
+              description: `Your ${latest.service_name} is ${latest.status.toLowerCase()}.`,
+              icon: 'calendar-check',
+              route: '/my-bookings',
+              color: colors.pink,
+            });
+          } else if (updateType === 'order') {
+            setLatestUpdate({
+              title: `Order ${latest.status.charAt(0).toUpperCase() + latest.status.slice(1)}`,
+              description: `Order #${latest.order_id} is ${latest.status.toLowerCase()}.`,
+              icon: 'package-variant-closed',
+              route: '/my-orders',
+              color: colors.purple || '#8B5CF6',
+            });
+          } else {
+            setLatestUpdate({
+              title: 'Neon Redesign Live!',
+              description: 'Explore our premium new look across the entire app.',
+              icon: 'alert-decagram-outline',
+              route: '/notifications',
+              color: colors.pink,
+            });
+          }
+        } catch { /* non-blocking */ }
+      } else {
+        setLatestUpdate({
+          title: 'Neon Redesign Live!',
+          description: 'Explore our premium new look across the entire app.',
+          icon: 'alert-decagram-outline',
+          route: '/notifications',
+          color: colors.pink,
+        });
+      }
     } catch {
       // silently fail
     } finally {
@@ -185,6 +262,16 @@ export default function HomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const handleAddToCart = async (productId: number) => {
+    const product = products.find(p => p.product_id === productId);
+    if (product) {
+      const itemInCart = cartItems.find(i => i.product_id_fk === productId);
+      if (itemInCart && itemInCart.quantity >= (product.stock || 0)) {
+        showToast('warning', 'Limit Reached', `You already have all ${product.stock} available units in your cart.`);
+        return;
+      }
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await addToCart(productId);
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -383,14 +470,27 @@ export default function HomeScreen() {
                 opacity: pressed ? 0.8 : 1
               }
             ]}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (latestUpdate?.route) {
+                router.push(latestUpdate.route);
+              }
+            }}
           >
-            <View style={[styles.activityIcon, { backgroundColor: colors.pink + '20' }]}>
-              <MaterialCommunityIcons name="alert-decagram-outline" size={24} color={colors.pink} />
+            <View style={[styles.activityIcon, { backgroundColor: (latestUpdate?.color || colors.pink) + '20' }]}>
+              <MaterialCommunityIcons
+                name={(latestUpdate?.icon || "alert-decagram-outline") as any}
+                size={24}
+                color={latestUpdate?.color || colors.pink}
+              />
             </View>
             <View style={styles.activityInfo}>
-              <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>Neon Redesign Live!</Text>
-              <Text style={[styles.activitySub, { color: colors.textSecondary }]}>Explore our premium new look across the entire app.</Text>
+              <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>
+                {latestUpdate?.title || 'Neon Redesign Live!'}
+              </Text>
+              <Text style={[styles.activitySub, { color: colors.textSecondary }]}>
+                {latestUpdate?.description || 'Explore our premium new look across the entire app.'}
+              </Text>
             </View>
           </Pressable>
         </Animated.View>

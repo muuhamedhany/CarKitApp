@@ -4,6 +4,7 @@ import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/th
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { Product } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,14 +12,12 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTabReload } from '@/hooks/useTabReload';
 import {
   Dimensions,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View
 } from 'react-native';
 import Animated, {
@@ -65,7 +64,7 @@ const parseIds = (raw?: string) =>
 export default function SearchScreen() {
   const router = useRouter();
   const { token } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -208,6 +207,15 @@ export default function SearchScreen() {
   }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.type]);
 
   const handleAddToCart = async (productId: number) => {
+    const product = products.find(p => p.product_id === productId);
+    if (product) {
+      const itemInCart = cartItems.find(i => i.product_id_fk === productId);
+      if (itemInCart && itemInCart.quantity >= (product.stock || 0)) {
+        showToast('warning', 'Limit Reached', `You already have all ${product.stock} available units in your cart.`);
+        return;
+      }
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await addToCart(productId);
     if (result.success) {

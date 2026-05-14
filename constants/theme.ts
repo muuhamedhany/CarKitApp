@@ -29,48 +29,45 @@ export const Animations = {
 
 // ═══════════════════════════════════
 // Elevation & Shadows
-// On Android, elevation creates opaque dark rectangular layers behind views
-// that have borderRadius + overflow:'hidden' (like cards and glassmorphism).
-// We keep iOS shadow* properties and zero out Android elevation.
 // ═══════════════════════════════════
 import { Platform } from 'react-native';
 
 const androidElevation = (level: number) =>
-  Platform.OS === 'android' ? 0 : level; // disabled on Android to prevent dark frames
+  Platform.OS === 'android' ? 0 : level;
 
 export const Shadows = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: androidElevation(2),
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: androidElevation(4),
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.18,
     shadowRadius: 16,
     elevation: androidElevation(8),
   },
   pink: {
     shadowColor: '#CD42A8',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: androidElevation(10),
   },
   purple: {
     shadowColor: '#5923A0',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: androidElevation(10),
   }
@@ -138,29 +135,21 @@ export const DarkColors = {
 // ═══════════════════════════════════
 export const GreenDarkColors = {
   ...DarkColors,
-  // Backgrounds - Deep Forest Tints
-  background: '#040806', // Very deep green-black
+  background: '#040806',
   backgroundSecondary: '#08120D',
   card: 'rgba(15, 25, 20, 0.6)',
   surface: '#0A1A12',
   FormBg: 'rgba(5, 20, 15, 0.3)',
-
-  // Primary - Emerald / Green
   pink: '#10B981',
   pinkLight: '#34D399',
-  purple: '#4A5D23', // Olive
+  purple: '#4A5D23',
   purpleDark: '#2D3A15',
-  purpleLight: '#D1FAE5', // Mint
-
-  // Gradient
+  purpleLight: '#D1FAE5',
   gradientStart: '#10B981',
   gradientEnd: '#4A5D23',
-  bgGradientStart: '#0A2418', // Slightly more vibrant green for depth
-  bgGradientEnd: '#050505',   // Fade to near black
-
+  bgGradientStart: '#0A2418',
+  bgGradientEnd: '#050505',
   primary: '#10B981',
-
-  // Extras
   purpleGlow: 'rgba(74, 93, 35, 0.2)',
   pinkGlow: 'rgba(16, 185, 129, 0.2)',
   cardBorder: 'rgba(16, 185, 129, 0.15)',
@@ -170,17 +159,17 @@ export const GreenDarkColors = {
 };
 
 // ═══════════════════════════════════
-// Light Theme Colors
+// Soft Boutique Light Theme Colors
 // ═══════════════════════════════════
 export const LightColors = {
-  // Backgrounds
-  background: '#F8F9FD',
+  // Backgrounds - Switched from stark white to warm off-white
+  background: '#FAFAFC', 
   backgroundSecondary: '#FFFFFF',
-  card: 'rgba(255, 255, 255, 0.95)',
-  cardBorder: 'rgba(205, 66, 168, 0.15)',
-  glass: 'rgba(255, 255, 255, 0.7)',
-  glassHighlight: 'rgba(255, 255, 255, 0.9)',
-  FormBg: '#ffffffbe',
+  card: 'rgba(255, 255, 255, 0.98)',
+  cardBorder: 'rgba(205, 66, 168, 0.12)',
+  glass: 'rgba(255, 255, 255, 0.85)',
+  glassHighlight: 'rgba(255, 255, 255, 0.95)',
+  FormBg: '#ffffffef',
 
   // Primary
   pink: '#CD42A8',
@@ -189,25 +178,25 @@ export const LightColors = {
   purpleDark: '#411977',
   purpleLight: '#7E57C2',
 
-  // Gradient
-  gradientStart: '#5923A0',
+  // Gradient - Softer pastels
+  gradientStart: '#6D28D9',
   gradientEnd: '#CD42A8',
-  bgGradientStart: '#F8F0FF',
-  bgGradientEnd: '#FFFFFF',
+  bgGradientStart: '#F5F3FF', 
+  bgGradientEnd: '#FAFAFC',
 
-  // Text
-  textPrimary: '#0F172A',
+  // Text - Softened Slate instead of near-black
+  textPrimary: '#1E293B',
   textSecondary: '#475569',
   textMuted: '#94A3B8',
 
-  border: '#E2E8F0',
+  border: '#F1F5F9',
   primary: '#CD42A8',
 
   // Utility
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(0,0,0,0.4)',
+  overlay: 'rgba(15, 23, 42, 0.4)',
   surface: '#FFFFFF',
 
   // Status
@@ -217,13 +206,13 @@ export const LightColors = {
   info: '#3B82F6',
 
   // Extras
-  imagePlaceholder: 'rgba(205, 66, 168, 0.04)',
-  purpleGlow: 'rgba(89, 35, 160, 0.05)',
-  pinkGlow: 'rgba(205, 66, 168, 0.05)',
-  dividerLine: 'rgba(0, 0, 0, 0.06)',
-  inputBorder: 'rgba(205, 66, 168, 0.2)',
-  toastBorder: 'rgba(0, 0, 0, 0.05)',
-  itemSeparator: 'rgba(0,0,0,0.05)',
+  imagePlaceholder: 'rgba(205, 66, 168, 0.03)',
+  purpleGlow: 'rgba(89, 35, 160, 0.03)',
+  pinkGlow: 'rgba(205, 66, 168, 0.03)',
+  dividerLine: 'rgba(0, 0, 0, 0.04)',
+  inputBorder: 'rgba(205, 66, 168, 0.15)',
+  toastBorder: 'rgba(0, 0, 0, 0.03)',
+  itemSeparator: 'rgba(0,0,0,0.03)',
 };
 
 // ═══════════════════════════════════
@@ -231,35 +220,21 @@ export const LightColors = {
 // ═══════════════════════════════════
 export const GreenLightColors = {
   ...LightColors,
-  // Backgrounds - Soft Mint Tints
-  background: '#F0FDF4', // Very light mint
+  background: '#F7FEE7', 
   backgroundSecondary: '#FFFFFF',
-  card: 'rgba(255, 255, 255, 0.9)',
+  card: 'rgba(255, 255, 255, 0.95)',
   surface: '#FFFFFF',
-  FormBg: 'rgba(255, 255, 255, 0.8)',
-
-  // Primary - Emerald / Green
+  FormBg: 'rgba(255, 255, 255, 0.9)',
   pink: '#10B981',
   pinkLight: '#34D399',
-  purple: '#059669', // Stronger green
+  purple: '#059669',
   purpleDark: '#065F46',
   purpleLight: '#D1FAE5',
-
-  // Gradient
   gradientStart: '#10B981',
   gradientEnd: '#059669',
-  bgGradientStart: '#ECFDF5',
-  bgGradientEnd: '#FFFFFF',
-
+  bgGradientStart: '#F0FDF4',
+  bgGradientEnd: '#F7FEE7',
   primary: '#10B981',
-
-  // Extras
-  purpleGlow: 'rgba(5, 150, 105, 0.1)',
-  pinkGlow: 'rgba(16, 185, 129, 0.1)',
-  cardBorder: 'rgba(16, 185, 129, 0.1)',
-  inputBorder: 'rgba(16, 185, 129, 0.2)',
-  toastBorder: 'rgba(16, 185, 129, 0.1)',
-  dividerLine: 'rgba(16, 185, 129, 0.08)',
 };
 
 export type ThemeColors = typeof DarkColors;
@@ -302,7 +277,6 @@ export const BorderRadius = {
   xxl: 24,
   full: 999,
 };
-
 
 export const IconSizes = {
   xs: 16,

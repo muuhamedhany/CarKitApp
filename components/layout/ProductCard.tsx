@@ -97,7 +97,7 @@ export default function ProductCard({
             </>
           ) : (
             <LinearGradient
-              colors={isDark ? ['#1A0B2E', '#2D1B4E'] : ['#F8F0FF', '#EBE0FF']}
+              colors={isDark ? [colors.backgroundSecondary, colors.background] : ['#F8F0FF', '#EBE0FF']}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -194,6 +194,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   placeholderIcon: {
     flex: 1,
@@ -204,11 +206,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.04)',
   },
   info: { padding: Spacing.md },
   name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: -0.3 },
-  vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.6 },
+  vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.5 },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -216,17 +218,16 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md
   },
   price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, letterSpacing: -0.5 },
-  currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.7 },
+  currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.6 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  reviewCount: { fontFamily: Fonts.bold, fontSize: 10, marginLeft: 2, opacity: 0.7 },
+  reviewCount: { fontFamily: Fonts.bold, fontSize: 10, marginLeft: 2, opacity: 0.6 },
   addButton: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
-    shadowColor: Colors.pink,
+    ...Shadows.md,
   },
   favoriteCardIcon: {
     position: 'absolute',
@@ -234,6 +235,8 @@ const styles = StyleSheet.create({
     right: 10,
     borderRadius: 14,
     padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
     ...Shadows.sm,
   },
 });

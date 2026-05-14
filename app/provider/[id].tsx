@@ -1,19 +1,21 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackButton, GlassView, ServiceCard, StarRating } from '@/components';
+import { BackButton, GlassView, ServiceCard, StarRating, RatingAnalysis } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -33,24 +35,27 @@ export default function ProviderPublicProfileScreen() {
   const [provider, setProvider] = useState<ProviderPublicProfile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterRating, setFilterRating] = useState<number | null>(null);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const [reviewsY, setReviewsY] = useState(0);
+
+  const scrollToReviews = () => {
+    if (reviewsY > 0) {
+      scrollRef.current?.scrollTo({ y: reviewsY - 20, animated: true });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
 
   const fetchProviderProfile = useCallback(async () => {
-    if (!id || id === 'undefined' || isNaN(Number(id))) {
-      console.log('[ProviderProfile] Invalid or missing ID:', id);
-      return;
-    }
+    if (!id || id === 'undefined' || isNaN(Number(id))) return;
 
     try {
       setLoading(true);
-      console.log('[ProviderProfile] Fetching profile for ID:', id);
-
-      // Fetch profile first
       const profileRes = await providerService.getProviderById(Number(id));
 
       if (profileRes.success && profileRes.data) {
         setProvider(profileRes.data);
-
-        // Fetch reviews separately
         try {
           const reviewsRes = await reviewService.getProviderReviews(Number(id));
           if (reviewsRes.success && reviewsRes.data) {
@@ -64,7 +69,6 @@ export default function ProviderPublicProfileScreen() {
         router.back();
       }
     } catch (error) {
-      console.error('[ProviderProfile] Error fetching details:', error);
       showToast('error', 'Error', 'Failed to fetch provider details.');
     } finally {
       setLoading(false);
@@ -74,6 +78,10 @@ export default function ProviderPublicProfileScreen() {
   useEffect(() => {
     fetchProviderProfile();
   }, [fetchProviderProfile]);
+
+  const filteredReviews = filterRating 
+    ? reviews.filter(r => Math.round(r.rating || 0) === filterRating)
+    : reviews;
 
   if (loading) {
     return (
@@ -88,64 +96,88 @@ export default function ProviderPublicProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={isDark ? ['#1A0B2E', '#000000'] : ['#F8F0FF', '#FFFFFF']}
+        colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
-      
-        
-        <View style={[styles.backButtonContainer]}>
-          <BackButton />
-        </View>
-      
+      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.purple + '15' }]} />
+      <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.pink + '10' }]} />
+
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+        <BackButton />
+      </View>
+
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
+        ref={scrollRef}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Premium Hero Section */}
+        <Animated.View entering={FadeInDown.duration(800)} style={styles.heroSection}>
+          <View style={[styles.avatarGlow, { shadowColor: colors.purple }]}>
+            <LinearGradient
+              colors={[colors.purple, colors.pink]}
+              style={styles.avatarGradient}
+            >
+              <MaterialCommunityIcons name="account-cog" size={48} color="#FFF" />
+            </LinearGradient>
+            <View style={[styles.verifiedBadge, { backgroundColor: colors.success }]}>
+              <MaterialCommunityIcons name="check-decagram" size={14} color="#FFF" />
+            </View>
+          </View>
 
+          <Text style={[styles.providerName, { color: colors.textPrimary }]}>{provider.name}</Text>
+          
+          <View style={styles.badgeRow}>
+            <View style={[styles.typeBadge, { backgroundColor: colors.purple + '15' }]}>
+              <Text style={[styles.typeText, { color: colors.purple }]}>EXPERT SERVICE PROVIDER</Text>
+            </View>
+          </View>
 
-        <View style={styles.profileSection}>
-          <Animated.View entering={FadeInDown.duration(800)}>
-            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.profileCard, { borderColor: colors.cardBorder }]}>
-              <View style={[styles.avatar, { backgroundColor: colors.purple + '20' }]}>
-                <MaterialCommunityIcons name="shield-star-outline" size={40} color={colors.purple} />
+          {/* Stats Bar */}
+          <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.statsBar}>
+            <Pressable onPress={scrollToReviews} style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {provider.rating ? Number(provider.rating).toFixed(1) : '--'}
+              </Text>
+              <View style={styles.statLabelRow}>
+                <MaterialCommunityIcons name="star" size={12} color="#FBBF24" />
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Rating</Text>
               </View>
-              <View style={styles.providerInfo}>
-                <Text style={[styles.providerName, { color: colors.textPrimary }]}>{provider.name}</Text>
-                <View style={styles.ratingRow}>
-                  <MaterialCommunityIcons name="star" size={16} color="#FBBF24" />
-                  <Text style={[styles.ratingText, { color: colors.textPrimary }]}>
-                    {provider.rating ? Number(provider.rating).toFixed(1) : 'No ratings'}
-                  </Text>
-                  {provider.review_count ? (
-                    <Text style={[styles.reviewCount, { color: colors.textSecondary }]}>
-                      ({provider.review_count} reviews)
-                    </Text>
-                  ) : null}
-                </View>
-                <View style={styles.verifiedBadge}>
-                    <MaterialCommunityIcons name="check-decagram" size={14} color="#10B981" />
-                    <Text style={[styles.verifiedText, { color: '#10B981' }]}>Verified Provider</Text>
-                  </View>
-               
-              </View>
-            </GlassView>
-          </Animated.View>
+            </Pressable>
+            <View style={[styles.statDivider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{provider.review_count || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Reviews</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{provider.services?.length || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Services</Text>
+            </View>
+          </GlassView>
+        </Animated.View>
 
+        {/* Content Section */}
+        <View style={styles.contentContainer}>
+          {/* About Section */}
           {provider.contact_info && (
-            <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-              <GlassView intensity={isDark ? 15 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.infoBox, { borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="map-marker-outline" size={20} color={colors.purple} />
+            <Animated.View entering={FadeInUp.delay(200)} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons name="map-marker-radius-outline" size={20} color={colors.purple} />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Location & Contact</Text>
+              </View>
+              <GlassView intensity={isDark ? 10 : 20} style={styles.infoCard}>
                 <Text style={[styles.infoText, { color: colors.textSecondary }]}>{provider.contact_info}</Text>
               </GlassView>
             </Animated.View>
           )}
 
-          <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.servicesSection}>
+          {/* Services Section */}
+          <Animated.View entering={FadeInUp.delay(400)} style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Our Services</Text>
+              <MaterialCommunityIcons name="car-wrench" size={20} color={colors.purple} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Services</Text>
               <View style={[styles.countBadge, { backgroundColor: colors.purple + '20' }]}>
                 <Text style={[styles.countText, { color: colors.purple }]}>{provider.services?.length || 0}</Text>
               </View>
@@ -154,9 +186,8 @@ export default function ProviderPublicProfileScreen() {
             <View style={styles.servicesList}>
               {provider.services?.map((service, idx) => (
                 <Animated.View
-                  key={service.service_id}
+                  key={`svc-${service.service_id}`}
                   entering={FadeInUp.delay(500 + idx * 100).duration(600)}
-                  style={styles.serviceItem}
                 >
                   <ServiceCard
                     name={service.name}
@@ -180,26 +211,79 @@ export default function ProviderPublicProfileScreen() {
             )}
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.reviewsSection}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Reviews</Text>
+          {/* Reviews Section */}
+          <Animated.View 
+            onLayout={(e) => setReviewsY(e.nativeEvent.layout.y)}
+            entering={FadeInUp.delay(600)} 
+            style={styles.section}
+          >
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons name="comment-check-outline" size={20} color={colors.purple} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Client Experience</Text>
+            </View>
+            
             {reviews.length > 0 ? (
-              reviews.map((review, idx) => (
-                <GlassView
-                  key={review.review_id || idx}
-                  intensity={isDark ? 10 : 20}
-                  tint={isDark ? 'dark' : 'light'}
-                  style={[styles.reviewItem, { borderColor: colors.cardBorder }]}
-                >
-                  <View style={styles.reviewHeader}>
-                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || 'Anonymous'}</Text>
-                    <StarRating rating={review.rating || 0} size={14} readonly />
+              <>
+                <RatingAnalysis 
+                  reviews={reviews} 
+                  totalRating={provider.rating || 0} 
+                  reviewCount={provider.review_count || 0} 
+                />
+
+                {/* Filter UI */}
+                <View style={styles.filterSection}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                    <Pressable 
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFilterRating(null); }}
+                      style={[
+                        styles.filterChip, 
+                        { backgroundColor: filterRating === null ? colors.purple : 'transparent', borderColor: filterRating === null ? colors.purple : colors.cardBorder }
+                      ]}
+                    >
+                      <Text style={[styles.filterText, { color: filterRating === null ? '#FFF' : colors.textPrimary }]}>All Feedbacks</Text>
+                    </Pressable>
+                    {[5, 4, 3, 2, 1].map(star => (
+                      <Pressable 
+                        key={`filter-${star}`}
+                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFilterRating(star); }}
+                        style={[
+                          styles.filterChip, 
+                          { backgroundColor: filterRating === star ? colors.purple : 'transparent', borderColor: filterRating === star ? colors.purple : colors.cardBorder }
+                        ]}
+                      >
+                        <MaterialCommunityIcons name={filterRating === star ? "star" : "star-outline"} size={14} color={filterRating === star ? '#FFF' : '#FFD700'} />
+                        <Text style={[styles.filterText, { color: filterRating === star ? '#FFF' : colors.textPrimary }]}>{star}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+
+                {filteredReviews.map((review, idx) => (
+                  <GlassView
+                    key={`rev-${review.review_id || 'no-id'}-${idx}`}
+                    intensity={15}
+                    style={[styles.reviewCard, { borderColor: colors.cardBorder }]}
+                  >
+                    <View style={styles.reviewHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || 'Anonymous'}</Text>
+                        <Text style={[styles.reviewDate, { color: colors.textMuted }]}>
+                          {review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}
+                        </Text>
+                      </View>
+                      <StarRating rating={review.rating || 0} size={12} readonly />
+                    </View>
+                    <Text style={[styles.reviewComment, { color: colors.textSecondary }]}>{review.comment}</Text>
+                  </GlassView>
+                ))}
+
+                {filteredReviews.length === 0 && (
+                  <View style={styles.emptyReviews}>
+                    <MaterialCommunityIcons name="comment-remove-outline" size={32} color={colors.textMuted} />
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No {filterRating}-star reviews yet.</Text>
                   </View>
-                  <Text style={[styles.reviewComment, { color: colors.textSecondary }]}>{review.comment}</Text>
-                  <Text style={[styles.reviewDate, { color: colors.textMuted }]}>
-                    {review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}
-                  </Text>
-                </GlassView>
-              ))
+                )}
+              </>
             ) : (
               <View style={styles.emptyReviews}>
                 <MaterialCommunityIcons name="comment-outline" size={32} color={colors.textMuted} />
@@ -223,152 +307,191 @@ const styles = StyleSheet.create({
     borderRadius: 150,
     opacity: 0.5,
   },
-  headerCover: {
-    height: 100,
-    width: '100%',
-  },
-  backButtonContainer: {
+  headerContainer: {
     position: 'absolute',
     left: Spacing.md,
-    zIndex: 10,
+    zIndex: 100,
   },
-  profileSection: {
-    paddingHorizontal: Spacing.md,
-    marginTop: 110,
-  },
-  profileCard: {
-    flexDirection: 'row',
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.xxl,
-    borderWidth: 1,
+  heroSection: {
     alignItems: 'center',
-    marginBottom: Spacing.md,
-    ...Shadows.lg,
+    paddingTop: 80,
+    paddingHorizontal: Spacing.xl,
   },
-  avatar: {
-    width: 80,
-    height: 80,
+  avatarGlow: {
+    width: 110,
+    height: 110,
     borderRadius: BorderRadius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.md,
+    ...Shadows.lg,
+    elevation: 10,
+    marginBottom: 20,
+    position: 'relative',
   },
-  providerInfo: {
-    marginLeft: Spacing.lg,
+  avatarGradient: {
     flex: 1,
+    borderRadius: BorderRadius.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFF',
   },
   providerName: {
     fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.xl,
-    marginBottom: 4,
+    fontSize: 32,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -1,
   },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 6,
+  badgeRow: {
+    marginBottom: 24,
   },
-  ratingText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: FontSizes.sm,
-  },
-  reviewCount: {
-    fontFamily: Fonts.regular,
-    fontSize: FontSizes.sm,
-    opacity: 0.7,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(16,185,129,0.1)',
-    paddingHorizontal: 8,
+  typeBadge: {
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
+    borderRadius: 8,
   },
-  verifiedText: {
+  typeText: {
     fontFamily: Fonts.bold,
     fontSize: 10,
+    letterSpacing: 1,
   },
-  infoBox: {
+  statsBar: {
     flexDirection: 'row',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+    width: '100%',
+    paddingVertical: 20,
+    borderRadius: 24,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: Spacing.xl,
   },
-  infoText: {
+  statItem: {
+    alignItems: 'center',
     flex: 1,
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-    lineHeight: 20,
   },
-  servicesSection: {
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xl,
+  statValue: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 22,
+    marginBottom: 2,
+  },
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    opacity: 0.6,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    opacity: 0.1,
+  },
+  contentContainer: {
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.xl,
+  },
+  section: {
+    marginBottom: Spacing.xxl,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: 10,
   },
   sectionTitle: {
     fontFamily: Fonts.extraBold,
-    fontSize: FontSizes.lg,
+    fontSize: 18,
+    letterSpacing: -0.5,
   },
   countBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
   countText: {
     fontFamily: Fonts.bold,
-    fontSize: 12,
+    fontSize: 11,
+  },
+  infoCard: {
+    padding: Spacing.lg,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  infoText: {
+    fontFamily: Fonts.medium,
+    fontSize: 14,
+    lineHeight: 22,
   },
   servicesList: {
     gap: Spacing.md,
   },
-  serviceItem: {
-    marginBottom: Spacing.sm,
+  filterSection: {
+    marginBottom: Spacing.lg,
   },
-  reviewsSection: {
-    marginTop: Spacing.md,
+  filterScroll: {
+    gap: 10,
+    paddingVertical: 5,
   },
-  reviewItem: {
-    padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    gap: 6,
+    borderWidth: 1,
+  },
+  filterText: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+  },
+  reviewCard: {
+    padding: Spacing.lg,
+    borderRadius: 20,
     borderWidth: 1,
     marginBottom: Spacing.md,
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   reviewerName: {
     fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
-  },
-  reviewComment: {
-    fontFamily: Fonts.medium,
-    fontSize: FontSizes.sm,
-    lineHeight: 20,
-    marginBottom: 8,
+    fontSize: 15,
   },
   reviewDate: {
     fontFamily: Fonts.medium,
-    fontSize: 10,
-    textAlign: 'right',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  reviewComment: {
+    fontFamily: Fonts.medium,
+    fontSize: 14,
+    lineHeight: 22,
+    opacity: 0.8,
   },
   emptyReviews: {
     alignItems: 'center',
-    paddingVertical: 20,
-    gap: 8,
+    paddingVertical: 30,
+    gap: 10,
   },
   emptyState: {
     alignItems: 'center',
@@ -377,6 +500,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: Fonts.medium,
-    fontSize: FontSizes.md,
+    fontSize: 15,
+    opacity: 0.5,
   },
 });
