@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -62,9 +63,18 @@ export default function AddressesScreen() {
     }
   }, []);
 
+  const { add } = useLocalSearchParams();
+
+  useEffect(() => {
+    if (add === 'true') {
+      setIsAdding(true);
+    }
+  }, [add]);
+
   useEffect(() => {
     fetchAddresses();
   }, [fetchAddresses]);
+
 
   const handleMapResult = useCallback((result: MapPickerResult) => {
     if (result.street) setStreet(result.street);

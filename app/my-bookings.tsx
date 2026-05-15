@@ -185,17 +185,19 @@ export default function MyBookingsScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({ pathname: '/booking/[id]' as any, params: { id: String(item.booking_id) } });
             }}
+            style={styles.detailsBtnWrapper}
           >
             <LinearGradient
-              colors={[colors.pink, colors.purple]}
+              colors={[colors.gradientStart, colors.gradientEnd]}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.viewDetailsBtn}
             >
               <Text style={styles.viewDetailsText}>Details</Text>
-              <MaterialCommunityIcons name="chevron-right" size={18} color="white" />
+              <MaterialCommunityIcons name="chevron-right" size={16} color="white" />
             </LinearGradient>
           </Pressable>
+
         </View>
       </GlassView>
     </Animated.View>
@@ -344,9 +346,19 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginVertical: Spacing.lg, opacity: 0.1 },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6 },
-  totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: 2 },
-  viewDetailsBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: BorderRadius.full, gap: 6 },
-  viewDetailsText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+  totalValue: { fontFamily: Fonts.extraBold, fontSize: 20, marginTop: 2 },
+  detailsBtnWrapper: { height: 40 },
+  viewDetailsBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    borderRadius: 12, 
+    gap: 4,
+    height: '100%',
+  },
+  viewDetailsText: { color: 'white', fontFamily: Fonts.bold, fontSize: 13 },
+
 
   skeletonContainer: { paddingHorizontal: Spacing.lg, gap: Spacing.md, paddingTop: Spacing.md },
   skeletonCard: { borderRadius: BorderRadius.xxl, padding: Spacing.xl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: Spacing.md },

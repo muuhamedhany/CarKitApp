@@ -66,7 +66,7 @@ export default function ServiceDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isViewerVisible, setIsViewerVisible] = useState(false);
+
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
   const scrollY = useSharedValue(0);
@@ -218,9 +218,9 @@ export default function ServiceDetailScreen() {
               onViewableItemsChanged={onViewableItemsChanged}
               viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
               renderItem={({ item }) => (
-                <Pressable onPress={() => setIsViewerVisible(true)}>
+                <View style={styles.heroImageWrapper}>
                   <Image source={{ uri: item }} style={styles.heroImage} resizeMode="cover" />
-                </Pressable>
+                </View>
               )}
             />
           ) : (
@@ -420,54 +420,7 @@ export default function ServiceDetailScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* Full Screen Image Viewer Modal */}
-      {isViewerVisible && (
-        <Animated.View entering={FadeInDown.duration(300)} style={StyleSheet.absoluteFill}>
-          <View style={styles.viewerOverlay}>
-            <GlassView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
 
-            <View style={[styles.viewerHeader, { paddingTop: insets.top + 10 }]}>
-              <Pressable
-                onPress={() => setIsViewerVisible(false)}
-                style={styles.viewerCloseBtn}
-              >
-                <MaterialCommunityIcons name="close" size={28} color="#FFF" />
-              </Pressable>
-              <Text style={styles.viewerCounter}>
-                {activeImageIndex + 1} / {images.length}
-              </Text>
-              <View style={{ width: 44 }} />
-            </View>
-
-            <FlatList
-              data={images}
-              horizontal
-              pagingEnabled
-              initialScrollIndex={activeImageIndex}
-              getItemLayout={(_, index) => ({
-                length: SCREEN_WIDTH,
-                offset: SCREEN_WIDTH * index,
-                index,
-              })}
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(e) => {
-                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-                setActiveImageIndex(index);
-              }}
-              renderItem={({ item }) => (
-                <View style={styles.viewerImageWrapper}>
-                  <Image
-                    source={{ uri: item }}
-                    style={styles.viewerImage}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-              keyExtractor={(_, i) => i.toString()}
-            />
-          </View>
-        </Animated.View>
-      )}
 
       {/* Premium Bottom Bar */}
       <View style={[styles.bottomBarContainer, { paddingBottom: insets.bottom + 15 }]}>

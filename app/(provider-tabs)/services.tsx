@@ -176,129 +176,6 @@ export default function ServicesScreen() {
             <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
 
-            {/* Header */}
-            <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-                <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
-
-                <View style={styles.statsRow}>
-                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
-                        <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total</Text>
-                    </GlassView>
-                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
-                        <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Enabled</Text>
-                    </GlassView>
-                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
-                        <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Disabled</Text>
-                    </GlassView>
-                </View>
-
-                <Pressable
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        router.push('/add-service');
-                    }}
-                    hitSlop={8}
-                    style={[styles.headerAction, { backgroundColor: colors.pink }]}
-                >
-                    <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
-                    <Text style={[styles.headerActionText, { color: colors.white }]}>Add Service</Text>
-                </Pressable>
-            </Animated.View>
-
-            {/* Search */}
-            <View style={styles.searchWrap}>
-                <FormInput
-                    icon="magnify"
-                    placeholder="Search services..."
-                    value={query}
-                    onChangeText={setQuery}
-                />
-            </View>
-
-            {/* Filter pills */}
-            <View style={styles.controlsWrap}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.filterRow}
-                >
-                    {filterOptions.map((f) => {
-                        const active = filter === f.key;
-                        return (
-                            <Pressable
-                                key={f.key}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setFilter(f.key);
-                                }}
-                            >
-                                <GlassView
-                                    intensity={active ? 100 : (isDark ? 20 : 40)}
-                                    tint={isDark ? 'dark' : 'light'}
-                                    style={[
-                                        styles.filterChip,
-                                        {
-                                            backgroundColor: active ? colors.pink : 'transparent',
-                                            borderColor: active ? colors.pink : colors.cardBorder,
-                                        },
-                                    ]}
-                                >
-                                    <Text style={[
-                                        styles.filterChipText,
-                                        { color: active ? colors.white : colors.textPrimary },
-                                    ]}>
-                                        {f.label}
-                                    </Text>
-                                </GlassView>
-                            </Pressable>
-                        );
-                    })}
-                </ScrollView>
-            </View>
-
-            <View style={styles.controlsWrap}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.sortRow}
-                >
-                    {([
-                        { key: 'latest', label: 'Latest' },
-                        { key: 'price-desc', label: 'Price' },
-                        { key: 'duration-asc', label: 'Duration' },
-                    ] as const).map((option) => {
-                        const active = sortMode === option.key;
-                        return (
-                            <Pressable
-                                key={option.key}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setSortMode(option.key);
-                                }}
-                            >
-                                <GlassView
-                                    intensity={active ? 100 : (isDark ? 20 : 40)}
-                                    tint={isDark ? 'dark' : 'light'}
-                                    style={[
-                                        styles.sortChip,
-                                        {
-                                            backgroundColor: active ? colors.backgroundSecondary : 'transparent',
-                                            borderColor: active ? colors.pink : colors.cardBorder,
-                                        },
-                                    ]}
-                                >
-                                    <MaterialCommunityIcons name="sort" size={14} color={active ? colors.pink : colors.textSecondary} />
-                                    <Text style={[styles.sortText, { color: active ? colors.pink : colors.textSecondary }]}>{option.label}</Text>
-                                </GlassView>
-                            </Pressable>
-                        );
-                    })}
-                </ScrollView>
-            </View>
-
             <FlatList
                 data={filtered}
                 keyExtractor={(i) => String(i.service_id)}
@@ -306,6 +183,133 @@ export default function ServicesScreen() {
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
                 ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+                ListHeaderComponent={
+                    <View style={{ gap: Spacing.md }}>
+                        {/* Header */}
+                        <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+                            <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
+
+                            <View style={styles.statsRow}>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                    <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
+                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total</Text>
+                                </GlassView>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                    <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
+                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Enabled</Text>
+                                </GlassView>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                    <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
+                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Disabled</Text>
+                                </GlassView>
+                            </View>
+
+                            <Pressable
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    router.push('/add-service');
+                                }}
+                                hitSlop={8}
+                                style={[styles.headerAction, { backgroundColor: colors.pink }]}
+                            >
+                                <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
+                                <Text style={[styles.headerActionText, { color: colors.white }]}>Add Service</Text>
+                            </Pressable>
+                        </Animated.View>
+
+                        {/* Search */}
+                        <View style={styles.searchWrap}>
+                            <FormInput
+                                icon="magnify"
+                                placeholder="Search services..."
+                                value={query}
+                                onChangeText={setQuery}
+                            />
+                        </View>
+
+                        {/* Filter pills */}
+                        <View style={styles.controlsWrap}>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.filterRow}
+                            >
+                                {filterOptions.map((f) => {
+                                    const active = filter === f.key;
+                                    return (
+                                        <Pressable
+                                            key={f.key}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setFilter(f.key);
+                                            }}
+                                        >
+                                            <GlassView
+                                                intensity={active ? 100 : (isDark ? 20 : 40)}
+                                                tint={isDark ? 'dark' : 'light'}
+                                                style={[
+                                                    styles.filterChip,
+                                                    {
+                                                        backgroundColor: active ? colors.pink : 'transparent',
+                                                        borderColor: active ? colors.pink : colors.cardBorder,
+                                                    },
+                                                ]}
+                                            >
+                                                <Text style={[
+                                                    styles.filterChipText,
+                                                    { color: active ? colors.white : colors.textPrimary },
+                                                ]}>
+                                                    {f.label}
+                                                </Text>
+                                            </GlassView>
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        </View>
+
+                        <View style={styles.controlsWrap}>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.sortRow}
+                            >
+                                {([
+                                    { key: 'latest', label: 'Latest' },
+                                    { key: 'price-desc', label: 'Price' },
+                                    { key: 'duration-asc', label: 'Duration' },
+                                ] as const).map((option) => {
+                                    const active = sortMode === option.key;
+                                    return (
+                                        <Pressable
+                                            key={option.key}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setSortMode(option.key);
+                                            }}
+                                        >
+                                            <GlassView
+                                                intensity={active ? 100 : (isDark ? 20 : 40)}
+                                                tint={isDark ? 'dark' : 'light'}
+                                                style={[
+                                                    styles.sortChip,
+                                                    {
+                                                        backgroundColor: active ? colors.backgroundSecondary : 'transparent',
+                                                        borderColor: active ? colors.pink : colors.cardBorder,
+                                                    },
+                                                ]}
+                                            >
+                                                <MaterialCommunityIcons name="sort" size={14} color={active ? colors.pink : colors.textSecondary} />
+                                                <Text style={[styles.sortText, { color: active ? colors.pink : colors.textSecondary }]}>{option.label}</Text>
+                                            </GlassView>
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        </View>
+                    </View>
+                }
+
                 renderItem={({ item, index }) => (
                     <ServiceCard item={item} colors={colors} router={router} onToggle={handleToggle} index={index} isDark={isDark} />
                 )}
@@ -426,7 +430,8 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.medium,
         fontSize: FontSizes.xs,
     },
-    list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+    list: { paddingHorizontal: Spacing.md, paddingBottom: 140, paddingTop: Spacing.md },
+
     card: { 
         borderRadius: BorderRadius.xl, 
         borderWidth: 1, 

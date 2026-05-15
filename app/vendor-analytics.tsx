@@ -13,7 +13,9 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
+
 import { useToast } from '@/contexts/ToastContext';
 import { vendorService } from '@/services/api/vendor.service';
 import {
@@ -114,6 +116,8 @@ export default function VendorAnalyticsScreen() {
   const { showToast } = useToast();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
 
   const [range, setRange] = useState<VendorAnalyticsRange>('monthly');
   const [analytics, setAnalytics] = useState<VendorAnalyticsResponse | null>(null);
@@ -194,7 +198,8 @@ export default function VendorAnalyticsScreen() {
       />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
+
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -544,8 +549,8 @@ export default function VendorAnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: -44
   },
+
   orb: {
     position: 'absolute',
     width: 300,
@@ -557,12 +562,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   headerRow: {
-    paddingTop: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     marginBottom: Spacing.md,
   },
+
   backButton: {
     width: 44,
     height: 44,

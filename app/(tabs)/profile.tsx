@@ -66,7 +66,7 @@ export default function ProfileScreen() {
 
   const personalItems: MenuItem[] = [
     { icon: 'map-marker-outline', label: 'Addresses', route: '/profile/addresses' },
-    { icon: 'credit-card-outline', label: 'Payments', onPress: () => showToast('info', 'Coming Soon', 'Payments is being built.') },
+    { icon: 'credit-card-outline', label: 'Payments', route: '/profile/payments' },
   ];
 
   const getIconStyles = (label: string) => {

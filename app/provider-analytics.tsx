@@ -97,6 +97,8 @@ export default function ProviderAnalyticsScreen() {
   const { showToast } = useToast();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
 
   const [range, setRange] = useState<ProviderAnalyticsRange>('monthly');
   const [analytics, setAnalytics] = useState<ProviderAnalyticsResponse | null>(null);
@@ -171,7 +173,8 @@ export default function ProviderAnalyticsScreen() {
       />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
+
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -479,8 +482,8 @@ export default function ProviderAnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: -44
   },
+
   orb: {
     position: 'absolute',
     width: 300,
@@ -492,12 +495,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   headerRow: {
-    paddingTop: Spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     marginBottom: Spacing.md,
   },
+
   backButton: {
     width: 44,
     height: 44,

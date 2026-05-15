@@ -147,28 +147,35 @@ function BookingCard({
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                     onQuickConfirm();
                                 }}
-                                style={{ flex: 1 }}
+                                style={styles.quickConfirmBtn}
                             >
-                                <View pointerEvents="none" style={{ flex: 1 }}>
-                                    <OutlinedButton
-                                        title="Confirm"
-                                        onPress={() => {}}
-                                        style={{ flex: 1 }}
-                                    />
+                                <View style={[styles.confirmInner, { backgroundColor: colors.pink + '15' }]}>
+                                    <MaterialCommunityIcons name="check-circle-outline" size={16} color={colors.pink} />
+                                    <Text style={[styles.confirmText, { color: colors.pink }]}>Confirm</Text>
                                 </View>
+
                             </Pressable>
                         ) : null}
-                        <View style={{ flex: 1 }}>
-                            <GradientButton 
-                                title="View Details" 
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    onPressDetails();
-                                }} 
-                                style={{ flex: 1 }} 
-                            />
-                        </View>
+                        <Pressable 
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                onPressDetails();
+                            }} 
+                            style={styles.detailsBtnWrapper}
+                        >
+                            <LinearGradient
+                                colors={[colors.gradientStart, colors.gradientEnd]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.detailsBtn}
+                            >
+
+                                <Text style={styles.detailsText}>View Details</Text>
+                                <MaterialCommunityIcons name="chevron-right" size={16} color="white" />
+                            </LinearGradient>
+                        </Pressable>
                     </View>
+
                 </GlassView>
             </AnimatedPressable>
         </Animated.View>
@@ -413,8 +420,45 @@ const styles = StyleSheet.create({
     },
     priceLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
     priceValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg },
-    actionsRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
-    detailsButton: { flex: 1 },
+    actionsRow: { 
+        flexDirection: 'row', 
+        gap: Spacing.sm, 
+        marginTop: Spacing.lg,
+    },
+    quickConfirmBtn: {
+        flex: 1,
+        height: 42,
+    },
+    confirmInner: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 12,
+        gap: 6,
+    },
+    confirmText: {
+        fontFamily: Fonts.bold,
+        fontSize: 13,
+    },
+    detailsBtnWrapper: {
+        flex: 1.2,
+        height: 42,
+    },
+    detailsBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 12,
+        gap: 4,
+    },
+    detailsText: {
+        color: 'white',
+        fontFamily: Fonts.bold,
+        fontSize: 13,
+    },
     emptyTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginTop: Spacing.md },
     emptySubtitle: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginTop: 4, textAlign: 'center' },
 });
+

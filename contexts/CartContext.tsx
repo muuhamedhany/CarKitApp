@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useRef, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '@/constants/config';
 import { CartItem } from '@/types/api.types';
@@ -36,6 +36,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState('0.00');
   const [loading, setLoading] = useState(false);
+
+  // Keep refs to access latest state synchronously in stable callbacks
+  const itemsRef = useRef(items);
+  const totalRef = useRef(total);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { totalRef.current = total; }, [total]);
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
@@ -89,29 +95,63 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [token, authHeaders, fetchCart, items]);
 
+  const removeItem = useCallback(async (cartItemId: number) => {
+    if (!token) return;
+    
+    const originalItems = itemsRef.current;
+    const originalTotal = totalRef.current;
+    const itemToRemove = originalItems.find(i => i.cart_item_id === cartItemId);
+
+    if (!itemToRemove) return;
+
+    // --- Optimistic Update ---
+    const price = parseFloat(itemToRemove.price) || 0;
+    const diff = itemToRemove.quantity * price;
+    
+    setTotal((parseFloat(originalTotal) - diff).toFixed(2));
+    setItems(prev => prev.filter(i => i.cart_item_id !== cartItemId));
+
+    try {
+      const res = await fetchWithTimeout(`${API_URL}/cart/items/${cartItemId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setItems(originalItems);
+        setTotal(originalTotal);
+      }
+    } catch {
+      setItems(originalItems);
+      setTotal(originalTotal);
+    }
+  }, [token, authHeaders]);
+
   const updateQuantity = useCallback(async (cartItemId: number, quantity: number) => {
     if (!token) return { success: false, message: 'Not logged in.' };
     
-    const originalItems = [...items];
-    const originalTotal = total;
+    const currentItems = itemsRef.current;
+    const currentTotal = totalRef.current;
+    const item = currentItems.find(i => i.cart_item_id === cartItemId);
+
+    if (!item) return { success: false, message: 'Item not found in cart.' };
 
     if (quantity <= 0) {
       await removeItem(cartItemId);
       return { success: true, message: 'Item removed.' };
     }
 
-    const item = items.find(i => i.cart_item_id === cartItemId);
-    if (item && quantity > item.stock) {
+    if (quantity > item.stock) {
       return { success: false, message: `Only ${item.stock} items available.` };
     }
 
     // --- Optimistic Update ---
+    const price = parseFloat(item.price) || 0;
+    const diff = (quantity - item.quantity) * price;
+    const newTotal = (parseFloat(currentTotal) + diff).toFixed(2);
+
+    setTotal(newTotal);
     setItems(prev => prev.map(i => i.cart_item_id === cartItemId ? { ...i, quantity } : i));
-    // Recalculate total optimistically if possible (simple version)
-    if (item) {
-      const diff = (quantity - item.quantity) * parseFloat(item.price);
-      setTotal((parseFloat(total) + diff).toFixed(2));
-    }
 
     try {
       const res = await fetchWithTimeout(`${API_URL}/cart/items/${cartItemId}`, {
@@ -120,52 +160,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ quantity }),
       });
       const data = await res.json();
-      if (data.success) {
-        await fetchCart(true); // Silent sync with server
-        return { success: true, message: 'Quantity updated.' };
+      if (!data.success) {
+        setItems(currentItems);
+        setTotal(currentTotal);
+        return { success: false, message: data.message || 'Update failed.' };
       }
-      // Revert if failed
-      setItems(originalItems);
-      setTotal(originalTotal);
-      return { success: false, message: data.message || 'Update failed.' };
+      return { success: true, message: 'Quantity updated.' };
     } catch {
-      setItems(originalItems);
-      setTotal(originalTotal);
+      setItems(currentItems);
+      setTotal(currentTotal);
       return { success: false, message: 'Error updating quantity.' };
     }
-  }, [token, authHeaders, fetchCart, items, total, removeItem]);
+  }, [token, authHeaders, removeItem]);
 
-  const removeItem = useCallback(async (cartItemId: number) => {
-    if (!token) return;
-    
-    const originalItems = [...items];
-    const originalTotal = total;
-    const itemToRemove = items.find(i => i.cart_item_id === cartItemId);
 
-    // --- Optimistic Update ---
-    setItems(prev => prev.filter(i => i.cart_item_id !== cartItemId));
-    if (itemToRemove) {
-      const diff = itemToRemove.quantity * parseFloat(itemToRemove.price);
-      setTotal((parseFloat(total) - diff).toFixed(2));
-    }
 
-    try {
-      const res = await fetchWithTimeout(`${API_URL}/cart/items/${cartItemId}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        await fetchCart(true); // Silent sync
-      } else {
-        setItems(originalItems);
-        setTotal(originalTotal);
-      }
-    } catch {
-      setItems(originalItems);
-      setTotal(originalTotal);
-    }
-  }, [token, authHeaders, fetchCart, items, total]);
 
   const clearCart = useCallback(async () => {
     if (!token) return;
