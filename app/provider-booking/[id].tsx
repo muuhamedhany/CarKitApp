@@ -1,16 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useTheme } from '@/hooks/useTheme';
+import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+
 import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
 import { providerService } from '@/services/api/provider.service';
 import { ProviderBookingDetail } from '@/types/api.types';
-import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { CenteredHeader, GradientButton, OutlinedButton, GetDirectionsButton, GlassView } from '@/components';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
 
 const { width } = Dimensions.get('window');
 
@@ -50,9 +55,10 @@ const getStatusTint = (status: string, colors: any) => {
 
 const canMoveForward = (status: string) => {
     const normalized = (status || '').toLowerCase();
-    if (normalized === 'pending') return { label: 'Confirm Booking', next: 'confirmed' };
-    if (normalized === 'confirmed') return { label: 'Mark In Progress', next: 'in-progress' };
-    if (normalized === 'in-progress') return { label: 'Mark Completed', next: 'completed' };
+    if (normalized === 'pending') return { label: 'Confirm', next: 'confirmed', icon: 'check-circle-outline' };
+    if (normalized === 'confirmed') return { label: 'Start Service', next: 'in-progress', icon: 'play-circle-outline' };
+    if (normalized === 'in-progress') return { label: 'Complete', next: 'completed', icon: 'flag-checkered' };
+
     return null;
 };
 
@@ -168,11 +174,11 @@ export default function ProviderBookingDetailScreen() {
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
-                    
+
                     <Animated.View entering={FadeInDown.delay(100).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 30 : 50} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 30 : 50}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.heroCard, { borderColor: colors.cardBorder }]}
                         >
                             <View style={styles.heroHeader}>
@@ -194,9 +200,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInDown.delay(200).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 20 : 40} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 20 : 40}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.card, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Progress</Text>
@@ -224,9 +230,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInUp.delay(300).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 20 : 40} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 20 : 40}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.card, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer</Text>
@@ -247,9 +253,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInUp.delay(400).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 20 : 40} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 20 : 40}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.card, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service</Text>
@@ -264,9 +270,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInUp.delay(500).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 20 : 40} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 20 : 40}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.card, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Schedule</Text>
@@ -294,9 +300,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInUp.delay(600).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 20 : 40} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 20 : 40}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.card, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Address</Text>
@@ -322,9 +328,9 @@ export default function ProviderBookingDetailScreen() {
                     </Animated.View>
 
                     <Animated.View entering={FadeInUp.delay(700).duration(800)}>
-                        <GlassView 
-                            intensity={isDark ? 30 : 60} 
-                            tint={isDark ? 'dark' : 'light'} 
+                        <GlassView
+                            intensity={isDark ? 30 : 60}
+                            tint={isDark ? 'dark' : 'light'}
                             style={[styles.priceCard, { borderColor: colors.cardBorder }]}
                         >
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Total Amount</Text>
@@ -334,9 +340,9 @@ export default function ProviderBookingDetailScreen() {
 
                     {booking.notes ? (
                         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
-                            <GlassView 
-                                intensity={isDark ? 20 : 40} 
-                                tint={isDark ? 'dark' : 'light'} 
+                            <GlassView
+                                intensity={isDark ? 20 : 40}
+                                tint={isDark ? 'dark' : 'light'}
                                 style={[styles.card, { borderColor: colors.cardBorder }]}
                             >
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Notes</Text>
@@ -345,34 +351,50 @@ export default function ProviderBookingDetailScreen() {
                         </Animated.View>
                     ) : null}
 
-                    <View style={styles.actionsRow}>
-                        {statusAction ? (
-                            <GradientButton
-                                title={statusAction.label}
-                                onPress={() => updateStatus(statusAction.next)}
-                                style={{ flex: 1 }}
-                            />
-                        ) : null}
-                        {canCancel(booking.status) ? (
-                            <OutlinedButton
-                                title="Cancel"
-                                onPress={requestCancel}
-                                style={{ flex: 1 }}
-                            />
-                        ) : null}
-                    </View>
-
-                    <View style={styles.supportRow}>
-                        <OutlinedButton
-                            title="Support"
-                            onPress={() => router.push('/support' as any)}
-                            style={{ flex: 1 }}
-                        />
-                    </View>
-
-                    {updating ? <ActivityIndicator color={colors.pink} style={{ marginTop: Spacing.md }} /> : null}
                 </ScrollView>
             )}
+
+            {!loading && booking && (statusAction || canCancel(booking.status)) && (
+                <Animated.View
+                    entering={FadeInDown.delay(400)}
+                    style={[
+                        styles.floatingActions, 
+                        { bottom: Platform.OS === 'ios' ? 40 : 20 }
+                    ]}
+                >
+                    <GlassView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+                        <View style={styles.actionsRow}>
+                            {statusAction ? (
+                                <GradientButton
+                                    title={statusAction.label}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        updateStatus(statusAction.next);
+                                    }}
+                                    style={{ flex: 1.5 }}
+                                    loading={updating}
+                                    icon={statusAction.icon as any}
+                                />
+                            ) : null}
+                            {canCancel(booking.status) ? (
+                                <Pressable 
+                                    onPress={() => {
+                                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                                        requestCancel();
+                                    }}
+                                    style={styles.cancelBtn}
+                                >
+                                    <View style={[styles.cancelInner, { backgroundColor: colors.error + '10' }]}>
+                                        <Text style={[styles.cancelText, { color: colors.error }]}>Cancel</Text>
+                                    </View>
+                                </Pressable>
+                            ) : null}
+                        </View>
+
+                    </GlassView>
+                </Animated.View>
+            )}
+
         </View>
     );
 }
@@ -444,6 +466,32 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     priceValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xl },
-    actionsRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
+    floatingActions: {
+        position: 'absolute',
+        left: Spacing.lg,
+        right: Spacing.lg,
+        ...Shadows.xl,
+    },
+    buttonBlur: {
+        borderRadius: 35,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.15)',
+        overflow: 'hidden',
+        padding: 12,
+        paddingHorizontal: 16,
+    },
+    actionsRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
+    cancelBtn: { flex: 1, height: 50 },
+    cancelInner: { 
+        flex: 1, 
+        borderRadius: BorderRadius.full, 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.2)',
+    },
+    cancelText: { fontFamily: Fonts.bold, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5 },
     supportRow: { marginBottom: Spacing.md },
 });
+
+

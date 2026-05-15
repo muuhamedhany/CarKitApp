@@ -79,6 +79,7 @@ export default function ProviderDashboard() {
                 icon: 'calendar-check',
                 color: '#F97316',
                 subtitle: 'Scheduled today',
+                onPress: () => router.push('/(provider-tabs)/bookings')
             },
             {
                 label: 'Total Customers',
@@ -86,6 +87,7 @@ export default function ProviderDashboard() {
                 icon: 'account-group',
                 color: '#818CF8',
                 subtitle: 'Served customers',
+                onPress: () => router.push('/(provider-tabs)/bookings')
             },
             {
                 label: 'Revenue',
@@ -93,6 +95,7 @@ export default function ProviderDashboard() {
                 icon: 'cash-multiple',
                 color: colors.pink,
                 subtitle: 'All time',
+                onPress: () => router.push('/provider-analytics')
             },
             {
                 label: 'Growth',
@@ -100,7 +103,9 @@ export default function ProviderDashboard() {
                 icon: 'trending-up',
                 color: '#10B981',
                 subtitle: 'Vs previous period',
+                onPress: () => router.push('/provider-analytics')
             },
+
         ]
         : [];
 
@@ -155,21 +160,32 @@ export default function ProviderDashboard() {
                                 <Animated.View
                                     key={stat.label}
                                     entering={FadeInDown.delay(100 * index).duration(600)}
-                                    style={{ flex: 1, minWidth: '45%' }}
+                                    style={styles.statWrapper}
                                 >
-                                    <GlassView
-                                        intensity={isDark ? 20 : 40}
-                                        tint={isDark ? 'dark' : 'light'}
-                                        style={[styles.statCard, { borderColor: colors.cardBorder }]}
+                                    <Pressable
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            stat.onPress();
+                                        }}
+                                        style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
                                     >
-                                        <View style={[styles.iconContainer, { backgroundColor: `${stat.color}18` }]}>
-                                            <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
-                                        </View>
-                                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
-                                        <Text style={[styles.statLabel, { color: colors.textPrimary }]}>{stat.label}</Text>
-                                        <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{stat.subtitle}</Text>
-                                    </GlassView>
+                                        <GlassView
+                                            intensity={isDark ? 20 : 40}
+                                            tint={isDark ? 'dark' : 'light'}
+                                            style={[styles.statCard, { borderColor: colors.cardBorder }]}
+                                        >
+                                            <View style={[styles.iconContainer, { backgroundColor: `${stat.color}15` }]}>
+                                                <MaterialCommunityIcons name={stat.icon as any} size={24} color={stat.color} />
+                                            </View>
+                                            <View style={styles.statInfo}>
+                                                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                                                <Text style={[styles.statLabel, { color: colors.textPrimary }]}>{stat.label}</Text>
+                                                <Text style={[styles.statSubtitle, { color: colors.textSecondary }]}>{stat.subtitle}</Text>
+                                            </View>
+                                        </GlassView>
+                                    </Pressable>
                                 </Animated.View>
+
                             ))}
                         </View>
 
@@ -359,6 +375,9 @@ const styles = StyleSheet.create({
         gap: Spacing.sm,
         marginBottom: Spacing.md,
     },
+    statWrapper: {
+        width: '48%',
+    },
     statCard: {
         padding: Spacing.md,
         borderRadius: BorderRadius.xl,
@@ -367,22 +386,28 @@ const styles = StyleSheet.create({
         ...Shadows.md,
     },
     iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: 12,
+    },
+    statInfo: {
+        gap: 2,
     },
     statValue: {
         fontFamily: Fonts.bold,
-        fontSize: FontSizes.xl,
-        marginBottom: Spacing.xs,
+        fontSize: FontSizes.lg,
     },
     statLabel: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.sm,
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        opacity: 0.8,
     },
+
     statSubtitle: {
         fontFamily: Fonts.regular,
         fontSize: FontSizes.xs,

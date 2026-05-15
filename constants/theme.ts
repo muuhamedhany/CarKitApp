@@ -163,7 +163,7 @@ export const GreenDarkColors = {
 // ═══════════════════════════════════
 export const LightColors = {
   // Backgrounds - Switched from stark white to warm off-white
-  background: '#FAFAFC', 
+  background: '#FAFAFC',
   backgroundSecondary: '#FFFFFF',
   card: 'rgba(255, 255, 255, 0.98)',
   cardBorder: 'rgba(205, 66, 168, 0.12)',
@@ -181,7 +181,7 @@ export const LightColors = {
   // Gradient - Softer pastels
   gradientStart: '#6D28D9',
   gradientEnd: '#CD42A8',
-  bgGradientStart: '#F5F3FF', 
+  bgGradientStart: '#F5F3FF',
   bgGradientEnd: '#FAFAFC',
 
   // Text - Softened Slate instead of near-black
@@ -220,7 +220,7 @@ export const LightColors = {
 // ═══════════════════════════════════
 export const GreenLightColors = {
   ...LightColors,
-  background: '#F7FEE7', 
+  background: '#F7FEE7',
   backgroundSecondary: '#FFFFFF',
   card: 'rgba(255, 255, 255, 0.95)',
   surface: '#FFFFFF',

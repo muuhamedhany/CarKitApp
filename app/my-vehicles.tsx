@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 type Vehicle = {
   vehicle_id: number;
@@ -94,42 +94,30 @@ export default function MyVehiclesScreen() {
           showsVerticalScrollIndicator={false}
         >
           {vehicles.length === 0 ? (
-            <Animated.View
-              entering={FadeInDown.delay(200).springify()}
-              style={styles.emptyContainer}
-            >
-              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyGlass}>
-                <View style={styles.emptyIconBox}>
-                  <MaterialCommunityIcons name="car-outline" size={80} color={colors.pink} />
-                  <View style={[styles.emptyPlusBadge, { backgroundColor: colors.pink }]}>
-                    <MaterialCommunityIcons name="plus" size={24} color="#FFF" />
-                  </View>
-                </View>
-                
-                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Vehicles Registered</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                  Connect your vehicle to access specialized services, track service history, and get custom maintenance alerts.
-                </Text>
-                
-                <Pressable
-                  onPress={handleAddVehicle}
-                  style={({ pressed }) => [
-                    styles.mainActionBtn,
-                    { transform: [{ scale: pressed ? 0.96 : 1 }] }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={[colors.pink, colors.purple]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.mainActionGradient}
-                  >
-                    <Text style={styles.mainActionText}>Add Your Vehicle</Text>
-                  </LinearGradient>
-                </Pressable>
+            <Animated.View entering={FadeInDown} style={styles.emptyWrapper}>
+              <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconCircle, { borderColor: 'rgba(255,255,255,0.1)' }]}>
+                <MaterialCommunityIcons name="car-outline" size={56} color={colors.pink} />
               </GlassView>
+              
+              <Text style={[styles.emptyTitleText, { color: colors.textPrimary }]}>Garage is Empty</Text>
+              <Text style={[styles.emptySubtitleText, { color: colors.textSecondary }]}>
+                Register your vehicle to unlock personalized maintenance schedules and history.
+              </Text>
+              
+              <Pressable onPress={handleAddVehicle}>
+                <LinearGradient
+                  colors={[colors.pink, colors.purple]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.pillButton}
+                >
+                  <MaterialCommunityIcons name="plus" size={20} color="white" />
+                  <Text style={styles.pillButtonText}>Add New Vehicle</Text>
+                </LinearGradient>
+              </Pressable>
             </Animated.View>
           ) : (
+
             <View style={styles.listContainer}>
               {vehicles.map((v, index) => (
                 <Animated.View
@@ -389,62 +377,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Empty State Design
-  emptyContainer: {
-    marginTop: 40,
-  },
-  emptyGlass: {
-    borderRadius: 35,
-    padding: 30,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  emptyIconBox: {
-    position: 'relative',
-    marginBottom: 25,
-  },
-  emptyPlusBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: -5,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  emptyTitle: {
-    fontFamily: Fonts.extraBold,
-    fontSize: 24,
-    textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: -0.5,
-  },
-  emptySubtitle: {
-    fontFamily: Fonts.medium,
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 24,
-    opacity: 0.7,
-    marginBottom: 35,
-  },
-  mainActionBtn: {
-    width: '100%',
-    height: 60,
-  },
-  mainActionGradient: {
+  // Redesigned Empty State
+  emptyWrapper: {
     flex: 1,
-    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: height * 0.1,
   },
-  mainActionText: {
-    color: '#FFF',
-    fontFamily: Fonts.extraBold,
+  emptyIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  emptyTitleText: {
+    fontFamily: Fonts.bold,
+    fontSize: 24,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtitleText: {
+    fontFamily: Fonts.medium,
     fontSize: 16,
-    letterSpacing: 0.5,
+    textAlign: 'center',
+    opacity: 0.6,
+    lineHeight: 24,
+    marginBottom: Spacing.xl,
+  },
+  pillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderRadius: 30,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 14,
+    ...Shadows.md,
+  },
+  pillButtonText: {
+    color: 'white',
+    fontFamily: Fonts.bold,
+    fontSize: 16,
   },
 });
+

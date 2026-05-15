@@ -9,16 +9,16 @@ export { default as OutlinedButton } from './common/OutlinedButton';
 export { default as PickerModal } from './common/PickerModal';
 export { default as PrimaryButton } from './common/PrimaryButton';
 export { default as ProductForm } from './common/ProductForm';
+export { RatingAnalysis } from './common/RatingAnalysis';
 export { default as SecondaryButton } from './common/SecondaryButton';
 export { default as SocialButton } from './common/SocialButton';
 export { StarRating } from './common/StarRating';
-export { RatingAnalysis } from './common/RatingAnalysis';
 export { default as ThirdButton } from './common/ThirdButton';
 
 export { AdSlideshow } from './layout/AdSlideshow';
+export { AnalyticsSkeleton } from './layout/AnalyticsSkeleton';
 export { default as BackButton } from './layout/BackButton';
 export { CartSkeleton } from './layout/CartSkeleton';
-export { AnalyticsSkeleton } from './layout/AnalyticsSkeleton';
 export { default as CategoryPill } from './layout/CategoryPill';
 export { default as CenteredHeader } from './layout/CenteredHeader';
 export { default as CustomTabBar } from './layout/CustomTabBar';
@@ -33,3 +33,4 @@ export { default as VendorTabBar } from './layout/VendorTabBar';
 
 export { default as GetDirectionsButton } from './GetDirectionsButton';
 export { default as CountUp } from './ui/CountUp';
+

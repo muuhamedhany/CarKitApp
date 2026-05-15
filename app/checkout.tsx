@@ -86,6 +86,8 @@ export default function CheckoutScreen() {
     );
     const [preferredDeliveryDate, setPreferredDeliveryDate] = useState(formatDateValue(estimatedStartDate));
 
+
+
     const totalNumber = useMemo(() => Number(total) || 0, [total]);
     const totalWithShipping = useMemo(() => totalNumber + SHIPPING_FEE, [totalNumber]);
     const cardNumberDigits = useMemo(() => cardNumber.replace(/\s/g, ''), [cardNumber]);
@@ -228,6 +230,8 @@ export default function CheckoutScreen() {
         }
     };
 
+
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <ExpoLinearGradient
@@ -240,35 +244,110 @@ export default function CheckoutScreen() {
             <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
 
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
-                <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Animated.Text>
+            <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />
 
-                {loadingAddresses ? (
-                    <ActivityIndicator size="small" color={colors.pink} />
-                ) : addresses.length === 0 ? (
-                    <Animated.View entering={FadeInDown.delay(200)}>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+
+                {/* Section: Shipping */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                        <View style={styles.sectionHeaderLeft}>
+                            <View style={[styles.sectionIcon, { backgroundColor: colors.pink + '15' }]}>
+                                <MaterialCommunityIcons name="truck-delivery-outline" size={20} color={colors.pink} />
+                            </View>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
+                        </View>
                         <Pressable
-                            style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+                            style={({ pressed }) => [
+                                styles.addAddressBtn,
+                                { backgroundColor: colors.pink + '15', opacity: pressed ? 0.7 : 1 }
+                            ]}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                router.push('/profile/addresses');
+                                router.push({ pathname: '/profile/addresses', params: { add: 'true' } });
                             }}
                         >
-                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
-                                <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                                <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
-                            </GlassView>
+                            <MaterialCommunityIcons name="plus" size={18} color={colors.pink} />
                         </Pressable>
-                    </Animated.View>
-                ) : (
-                    addresses.map((address, idx) => {
-                        const active = selectedAddressId === address.address_id;
+                    </View>
+
+
+
+                    {loadingAddresses ? (
+                        <ActivityIndicator size="small" color={colors.pink} />
+                    ) : addresses.length === 0 ? (
+                        <Animated.View entering={FadeInDown.delay(200)}>
+                            <Pressable
+                                style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push('/profile/addresses');
+                                }}
+                            >
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                    <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
+                                    <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
+                                </GlassView>
+                            </Pressable>
+                        </Animated.View>
+                    ) : (
+                        addresses.map((address, idx) => {
+                            const active = selectedAddressId === address.address_id;
+                            return (
+                                <Animated.View key={address.address_id} entering={FadeInDown.delay(200 + idx * 50)}>
+                                    <Pressable
+                                        style={[
+                                            styles.addressCard,
+                                            {
+                                                backgroundColor: active ? colors.pink + '15' : 'transparent',
+                                                borderColor: active ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setSelectedAddressId(address.address_id);
+                                        }}
+                                    >
+                                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                            <View style={styles.addressHeader}>
+                                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
+                                                    {address.title || 'Address'}
+                                                </Text>
+                                                {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
+                                            </View>
+                                            <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                                                {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
+                                            </Text>
+                                        </GlassView>
+                                    </Pressable>
+                                </Animated.View>
+                            );
+                        })
+                    )}
+                </View>
+
+
+                {/* Section: Payment */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                        <View style={styles.sectionHeaderLeft}>
+                            <View style={[styles.sectionIcon, { backgroundColor: colors.purple + '15' }]}>
+                                <MaterialCommunityIcons name="credit-card-outline" size={20} color={colors.purple} />
+                            </View>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Payment Method</Text>
+                        </View>
+                    </View>
+
+
+
+                    {paymentMethods.map((method, idx) => {
+                        const active = paymentMethod === method.value;
                         return (
-                            <Animated.View key={address.address_id} entering={FadeInDown.delay(200 + idx * 50)}>
+                            <Animated.View key={method.value} entering={FadeInDown.delay(450 + idx * 50)}>
                                 <Pressable
                                     style={[
-                                        styles.addressCard,
+                                        styles.methodCard,
                                         {
                                             backgroundColor: active ? colors.pink + '15' : 'transparent',
                                             borderColor: active ? colors.pink : colors.cardBorder,
@@ -276,56 +355,21 @@ export default function CheckoutScreen() {
                                     ]}
                                     onPress={() => {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setSelectedAddressId(address.address_id);
+                                        setPaymentMethod(method.value);
                                     }}
                                 >
-                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
-                                        <View style={styles.addressHeader}>
-                                            <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
-                                                {address.title || 'Address'}
-                                            </Text>
-                                            {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
+                                        <View style={styles.methodLeft}>
+                                            <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textSecondary} />
+                                            <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
                                         </View>
-                                        <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                                            {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
-                                        </Text>
+                                        {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
                                     </GlassView>
                                 </Pressable>
                             </Animated.View>
                         );
-                    })
-                )}
-
-                <Animated.Text entering={FadeInDown.delay(400)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Animated.Text>
-
-                {paymentMethods.map((method, idx) => {
-                    const active = paymentMethod === method.value;
-                    return (
-                        <Animated.View key={method.value} entering={FadeInDown.delay(450 + idx * 50)}>
-                            <Pressable
-                                style={[
-                                    styles.methodCard,
-                                    {
-                                        backgroundColor: active ? colors.pink + '15' : 'transparent',
-                                        borderColor: active ? colors.pink : colors.cardBorder,
-                                    },
-                                ]}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setPaymentMethod(method.value);
-                                }}
-                            >
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
-                                    <View style={styles.methodLeft}>
-                                        <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textSecondary} />
-                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
-                                    </View>
-                                    {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
-                                </GlassView>
-                            </Pressable>
-                        </Animated.View>
-                    );
-                })}
+                    })}
+                </View>
 
                 {(paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') ? (
                     <Animated.View entering={FadeInUp}>
@@ -398,73 +442,147 @@ export default function CheckoutScreen() {
                     </Animated.View>
                 ) : null}
 
-                <Animated.Text entering={FadeInDown.delay(700)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Arrival Date</Animated.Text>
-                <Animated.View entering={FadeInDown.delay(750)}>
-                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Window</Text>
-                        <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>From {formatReadableDate(formatDateValue(estimatedStartDate))} to {formatReadableDate(formatDateValue(estimatedEndDate))}</Text>
-                    </GlassView>
-                </Animated.View>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
-                    {deliveryChoices.map((dateValue, idx) => {
-                        const selected = preferredDeliveryDate === dateValue;
-                        return (
-                            <Animated.View key={dateValue} entering={FadeInDown.delay(800 + idx * 50)}>
-                                <Pressable
-                                    style={[
-                                        styles.dateChip,
-                                        {
-                                            backgroundColor: selected ? colors.pink + '15' : 'transparent',
-                                            borderColor: selected ? colors.pink : colors.cardBorder,
-                                        },
-                                    ]}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setPreferredDeliveryDate(dateValue);
-                                    }}
-                                >
-                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
-                                        <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>Preferred</Text>
-                                        <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
-                                    </GlassView>
-                                </Pressable>
-                            </Animated.View>
-                        );
-                    })}
-                </ScrollView>
+
+
+                {/* Section: Delivery Details */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                        <View style={styles.sectionHeaderLeft}>
+                            <View style={[styles.sectionIcon, { backgroundColor: '#4CAF5015' }]}>
+                                <MaterialCommunityIcons name="calendar-clock-outline" size={20} color="#4CAF50" />
+                            </View>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Arrival Window</Text>
+                        </View>
+                    </View>
+
+
+
+
+
+                    <Animated.View entering={FadeInDown.delay(750)}>
+                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
+                            <View style={styles.estimatedHeader}>
+                                <MaterialCommunityIcons name="calendar-range" size={20} color={colors.pink} />
+                                <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Delivery</Text>
+                            </View>
+                            <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>
+                                Between {formatReadableDate(formatDateValue(estimatedStartDate))} and {formatReadableDate(formatDateValue(estimatedEndDate))}
+                            </Text>
+                        </GlassView>
+                    </Animated.View>
+
+                    <Text style={[styles.dateSelectionLabel, { color: colors.textSecondary }]}>Select Preferred Day</Text>
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
+                        {deliveryChoices.map((dateValue, idx) => {
+                            const selected = preferredDeliveryDate === dateValue;
+                            return (
+                                <Animated.View key={dateValue} entering={FadeInDown.delay(800 + idx * 50)}>
+                                    <Pressable
+                                        style={[
+                                            styles.dateChip,
+                                            {
+                                                backgroundColor: selected ? colors.pink + '15' : 'transparent',
+                                                borderColor: selected ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setPreferredDeliveryDate(dateValue);
+                                        }}
+                                    >
+                                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
+                                            <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>{selected ? 'Selected' : 'Preferred'}</Text>
+                                            <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
+                                        </GlassView>
+                                    </Pressable>
+                                </Animated.View>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+
 
                 <Animated.View entering={FadeInUp.delay(1000)}>
                     <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
-                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Items: {items.length}</Text>
-                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Preferred arrival: {formatReadableDate(preferredDeliveryDate)}</Text>
-                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Subtotal: {totalNumber.toFixed(2)} EGP</Text>
-                        <Text style={[styles.summaryLine, { color: colors.textSecondary }]}>Shipping: {SHIPPING_FEE.toFixed(2)} EGP</Text>
-                        <Text style={[styles.summaryTotal, { color: colors.textPrimary }]}>Total: {totalWithShipping.toFixed(2)} EGP</Text>
+                        <View style={styles.receiptHeader}>
+                            <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
+                            <MaterialCommunityIcons name="receipt-outline" size={24} color={colors.textSecondary} />
+                        </View>
+
+                        <View style={styles.summaryTable}>
+                            <View style={styles.summaryRow}>
+                                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Items ({items.length})</Text>
+                                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{totalNumber.toFixed(2)} EGP</Text>
+                            </View>
+                            <View style={styles.summaryRow}>
+                                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
+                                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{SHIPPING_FEE.toFixed(2)} EGP</Text>
+                            </View>
+                            <View style={styles.divider} />
+                            <View style={styles.summaryRow}>
+                                <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Grand Total</Text>
+                                <Text 
+                                    style={[styles.totalValue, { color: colors.pink }]}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                >
+                                    {totalWithShipping.toFixed(2)} EGP
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.deliveryBadge}>
+                            <MaterialCommunityIcons name="clock-fast" size={16} color={colors.pink} />
+                            <Text style={[styles.deliveryBadgeText, { color: colors.pink }]}>
+                                Arrival by {formatReadableDate(preferredDeliveryDate)}
+                            </Text>
+                        </View>
                     </GlassView>
                 </Animated.View>
+
             </ScrollView>
 
-            <Animated.View entering={FadeInUp.delay(1200)} style={[styles.bottomBar, { borderTopColor: colors.cardBorder, backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
-                <GlassView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
+            <Animated.View 
+                entering={FadeInUp.delay(1200)} 
+                style={[
+                    styles.bottomBar, 
+                    { bottom: insets.bottom + 20 }
+                ]}
+            >
+                <GlassView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={styles.buttonBlur}>
                     <Pressable
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                             handlePlaceOrder();
                         }}
                         disabled={!canPlaceOrder}
-                        style={[styles.placeButton, { backgroundColor: colors.pink, opacity: canPlaceOrder ? 1 : 0.45 }]}
+                        style={({ pressed }) => [
+                            styles.placeButtonWrapper,
+                            { opacity: canPlaceOrder ? (pressed ? 0.9 : 1) : 0.45, transform: [{ scale: pressed ? 0.98 : 1 }] }
+                        ]}
                     >
-                        {placingOrder ? (
-                            <ActivityIndicator color={colors.white} />
-                        ) : (
-                            <Text style={styles.placeButtonText}>Place Order</Text>
-                        )}
+                        <LinearGradient
+                            colors={[colors.pink, colors.purple]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.placeButton}
+                        >
+                            {placingOrder ? (
+                                <ActivityIndicator color={colors.white} />
+                            ) : (
+                                <Text style={styles.placeButtonText}>Place Order</Text>
+                            )}
+                        </LinearGradient>
                     </Pressable>
                 </GlassView>
             </Animated.View>
+
         </View>
+
+
+
     );
 }
 
@@ -478,10 +596,38 @@ const styles = StyleSheet.create({
         opacity: 0.4,
     },
     content: { paddingHorizontal: Spacing.md, paddingBottom: 180 },
+    section: {
+        marginBottom: Spacing.xl,
+    },
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.md,
+    },
+    sectionHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    addAddressBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    sectionIcon: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     sectionTitle: {
         fontFamily: Fonts.extraBold,
-        fontSize: 22,
-        marginBottom: Spacing.sm,
+        fontSize: 18,
         letterSpacing: -0.5,
     },
     infoCard: {
@@ -491,40 +637,48 @@ const styles = StyleSheet.create({
         ...Shadows.sm,
     },
     blurWrap: {
-        padding: Spacing.md,
+        padding: Spacing.lg,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.md,
     },
     infoText: {
         fontFamily: Fonts.medium,
         fontSize: FontSizes.sm,
+        opacity: 0.8,
     },
     addressCard: {
-        borderRadius: BorderRadius.xl,
+        borderRadius: 20,
         borderWidth: 1,
         marginBottom: Spacing.sm,
         overflow: 'hidden',
-        ...Shadows.sm,
     },
     addressHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        marginBottom: 6,
     },
-    addressTitle: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
-    addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.xs },
+    addressTitle: {
+        fontFamily: Fonts.bold,
+        fontSize: 15,
+        letterSpacing: -0.3,
+    },
+    addressText: {
+        fontFamily: Fonts.medium,
+        fontSize: 13,
+        opacity: 0.7,
+        lineHeight: 18,
+    },
     methodCard: {
-        borderRadius: BorderRadius.xl,
+        borderRadius: 20,
         borderWidth: 1,
         marginBottom: Spacing.sm,
         overflow: 'hidden',
-        ...Shadows.sm,
     },
     methodBlur: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -532,165 +686,235 @@ const styles = StyleSheet.create({
     methodLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: 14,
     },
     methodLabel: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.sm,
+        fontFamily: Fonts.bold,
+        fontSize: 15,
     },
     paymentDetailsCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.xl,
-        padding: Spacing.lg,
-        marginTop: Spacing.xs,
+        borderRadius: 24,
+        padding: Spacing.xl,
+        marginTop: Spacing.sm,
+        marginBottom: Spacing.lg,
         overflow: 'hidden',
         ...Shadows.md,
     },
+
     paymentDetailsTitle: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.sm,
-        marginBottom: Spacing.xs,
+        fontFamily: Fonts.bold,
+        fontSize: 16,
+        marginBottom: Spacing.sm,
     },
     paymentDetailsText: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
-        marginBottom: Spacing.sm,
+        fontFamily: Fonts.medium,
+        fontSize: 13,
+        marginBottom: Spacing.lg,
+        opacity: 0.7,
     },
     uploadButton: {
         borderWidth: 1.5,
-        borderRadius: BorderRadius.full,
-        paddingVertical: 14,
+        borderRadius: 16,
+        paddingVertical: 16,
         paddingHorizontal: Spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: Spacing.sm,
+        gap: 10,
         marginTop: Spacing.sm,
+        backgroundColor: 'rgba(205, 66, 168, 0.05)',
     },
     uploadButtonText: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
+        fontFamily: Fonts.bold,
+        fontSize: 14,
     },
     uploadPreviewWrap: {
-        marginTop: Spacing.sm,
-        alignItems: 'flex-start',
+        marginTop: Spacing.md,
+        alignItems: 'center',
     },
     uploadPreview: {
-        width: 120,
-        height: 120,
-        borderRadius: BorderRadius.sm,
-        marginBottom: 6,
+        width: '100%',
+        height: 180,
+        borderRadius: 16,
+        marginBottom: 8,
     },
     uploadSuccess: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
+        fontFamily: Fonts.bold,
+        fontSize: 12,
     },
     uploadHint: {
-        marginTop: Spacing.xs,
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: BorderRadius.lg,
-        paddingVertical: 14,
-        paddingHorizontal: Spacing.md,
-        marginBottom: Spacing.md,
+        marginTop: Spacing.sm,
         fontFamily: Fonts.medium,
-        fontSize: FontSizes.md,
+        fontSize: 12,
+        textAlign: 'center',
     },
     rowInputs: {
         flexDirection: 'row',
-        gap: Spacing.sm,
-    },
-    halfInput: {
-        flex: 1,
+        gap: Spacing.md,
     },
     summaryCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.xl,
+        borderRadius: 28,
         padding: Spacing.xl,
         marginTop: Spacing.xl,
         overflow: 'hidden',
-        ...Shadows.lg,
+        ...Shadows.xl,
+    },
+    receiptHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    summaryTable: {
+        gap: 12,
+    },
+    summaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    summaryLabel: {
+        fontFamily: Fonts.medium,
+        fontSize: 15,
+        opacity: 0.8,
+    },
+    summaryValue: {
+        fontFamily: Fonts.bold,
+        fontSize: 15,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        marginVertical: 8,
+    },
+    totalLabel: {
+        fontFamily: Fonts.extraBold,
+        fontSize: 18,
+    },
+    totalValue: {
+        fontFamily: Fonts.extraBold,
+        fontSize: 22,
+        letterSpacing: -0.5,
+    },
+    deliveryBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(205, 66, 168, 0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        marginTop: Spacing.xl,
+        alignSelf: 'flex-start',
+    },
+    deliveryBadgeText: {
+        fontFamily: Fonts.bold,
+        fontSize: 12,
     },
     estimatedCard: {
         borderWidth: 1,
-        borderRadius: BorderRadius.xl,
+        borderRadius: 20,
         padding: Spacing.lg,
         overflow: 'hidden',
+        marginBottom: Spacing.md,
+    },
+    estimatedHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
     },
     estimatedTitle: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.sm,
-        marginBottom: 4,
+        fontFamily: Fonts.bold,
+        fontSize: 14,
     },
     estimatedText: {
-        fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
+        fontFamily: Fonts.medium,
+        fontSize: 13,
+        opacity: 0.7,
+    },
+    dateSelectionLabel: {
+        fontFamily: Fonts.bold,
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: Spacing.sm,
+        marginTop: Spacing.sm,
+        opacity: 0.6,
     },
     dateRow: {
-        gap: Spacing.sm,
-        marginTop: Spacing.sm,
+        gap: 12,
         paddingBottom: Spacing.xs,
     },
+
     dateChip: {
-        borderRadius: BorderRadius.xl,
+        borderRadius: 18,
         borderWidth: 1,
-        minWidth: 130,
+        minWidth: 120,
         overflow: 'hidden',
-        ...Shadows.sm,
+    },
+    checkoutBtn: {
+        flexDirection: 'row',
+        paddingVertical: 14,
+        paddingHorizontal: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     dateBlur: {
-        paddingVertical: Spacing.md,
-        paddingHorizontal: Spacing.lg,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        alignItems: 'center',
     },
     dateChipLabel: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
-        marginBottom: 2,
+        fontFamily: Fonts.bold,
+        fontSize: 11,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 4,
     },
     dateChipValue: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.sm,
+        fontFamily: Fonts.bold,
+        fontSize: 14,
     },
     summaryTitle: {
         fontFamily: Fonts.extraBold,
-        fontSize: 20,
-        marginBottom: Spacing.md,
-        letterSpacing: -0.5,
-    },
-    summaryLine: { fontFamily: Fonts.medium, fontSize: FontSizes.md, marginBottom: 4 },
-    summaryTotal: {
-        marginTop: Spacing.lg,
-        fontFamily: Fonts.extraBold,
-        fontSize: 24,
-        letterSpacing: -1,
+        fontSize: 22,
+        letterSpacing: -0.8,
     },
     bottomBar: {
         position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderTopWidth: 1,
-        overflow: 'hidden',
+        left: Spacing.lg,
+        right: Spacing.lg,
+        ...Shadows.xl,
     },
+
     buttonBlur: {
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.md,
-        paddingBottom: 40,
+        borderRadius: 35,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.15)',
+        overflow: 'hidden',
+        padding: 12,
+    },
+
+    placeButtonWrapper: {
+        borderRadius: BorderRadius.xl,
+        overflow: 'hidden',
+        width: '100%',
     },
     placeButton: {
-        borderRadius: BorderRadius.full,
-        alignItems: 'center',
+        height: 56,
         justifyContent: 'center',
-        minHeight: 56,
-        ...Shadows.md,
+        alignItems: 'center',
+        width: '100%',
     },
+
     placeButtonText: {
         color: '#FFFFFF',
-        fontFamily: Fonts.bold,
-        fontSize: FontSizes.md,
+        fontFamily: Fonts.extraBold,
+        fontSize: 18,
+        letterSpacing: -0.5,
     },
 });
 

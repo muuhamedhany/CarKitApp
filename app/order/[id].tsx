@@ -8,12 +8,13 @@ import {
     Alert,
     Dimensions,
     Pressable,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { ReviewModal } from '@/components/ReviewModal';

@@ -23,10 +23,10 @@ import {
 import Animated, {
   FadeInDown,
   FadeInUp,
-  FadeOut,
-  Layout
+  FadeOut
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+const TypedFlashList = FlashList as any;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
@@ -39,21 +39,26 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
   onRemove: (id: number) => void;
 }) => {
   const { colors, isDark } = useTheme();
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
+
   const showImage = !!item.image_url && !imgError;
 
   return (
     <Animated.View
       entering={FadeInUp.delay(index * 50).duration(400)}
       exiting={FadeOut.duration(300)}
-      layout={Layout.springify().damping(20)}
     >
+
       <GlassView
         intensity={isDark ? 20 : 40}
         tint={isDark ? 'dark' : 'light'}
         style={[styles.cartItem, { borderColor: colors.cardBorder }]}
       >
-        <View style={[styles.itemImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+        <Pressable
+          onPress={() => router.push(`/product/${item.product_id_fk}`)}
+          style={[styles.itemImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+        >
           {showImage ? (
             <Image
               source={{ uri: item.image_url! }}
@@ -64,7 +69,8 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
           ) : (
             <MaterialCommunityIcons name="car-cog" size={28} color={colors.textMuted} />
           )}
-        </View>
+        </Pressable>
+
 
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -167,8 +173,18 @@ export default function CartScreen() {
     router.push('/checkout');
   };
 
+  const renderItem = useCallback(({ item, index }: { item: CartItem; index: number }) => (
+    <CartItemRow
+      item={item}
+      index={index}
+      onUpdate={handleUpdateQuantity}
+      onRemove={handleRemoveItem}
+    />
+  ), [handleUpdateQuantity, handleRemoveItem]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+
       <LinearGradient
         colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
@@ -216,32 +232,27 @@ export default function CartScreen() {
           </View>
         </Animated.View>
       ) : (
-        <FlashList
+        <TypedFlashList
           ref={listRef}
           data={items}
           estimatedItemSize={120}
-          keyExtractor={(item) => item.cart_item_id.toString()}
-          renderItem={({ item, index }) => (
-            <CartItemRow
-              item={item}
-              index={index}
-              onUpdate={handleUpdateQuantity}
-              onRemove={handleRemoveItem}
-            />
-          )}
+          keyExtractor={(item: CartItem, index: number) => item.cart_item_id?.toString() || index.toString()}
+          renderItem={renderItem}
           contentContainerStyle={{
+
             paddingHorizontal: Spacing.lg,
             paddingTop: 10,
             paddingBottom: androidTabOffset + 200
           }}
           showsVerticalScrollIndicator={false}
         />
+
       )}
 
       {items.length > 0 && (
         <Animated.View
           entering={FadeInUp.delay(400).duration(800)}
-          style={[styles.bottomContainer, { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 15 }]}
+          style={[styles.bottomContainer, { bottom: insets.bottom + TAB_BAR_HEIGHT + 20 }]}
         >
           <GlassView
             intensity={isDark ? 30 : 50}
@@ -251,25 +262,39 @@ export default function CartScreen() {
             <View style={styles.bottomBar}>
               <View style={{ alignItems: 'flex-start', flexShrink: 1, marginRight: Spacing.md }}>
                 <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>TOTAL AMOUNT</Text>
-                <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{parseFloat(total).toLocaleString()} EGP</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                    <Text 
+                        style={[styles.totalValue, { color: colors.textPrimary }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                    >
+                        {parseFloat(total).toLocaleString()}
+                    </Text>
+                    <Text style={[styles.currencyLabel, { color: colors.pink }]}> EGP</Text>
+                </View>
+
               </View>
               <Pressable
                 onPress={handleCheckout}
                 style={({ pressed }) => [
-                  styles.checkoutBtn,
-                  {
-                    backgroundColor: colors.pink,
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }]
-                  }
+                  styles.checkoutBtnWrapper,
+                  { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }
                 ]}
               >
-                <Text style={styles.checkoutText}>Checkout</Text>
-                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+                <LinearGradient
+                  colors={[colors.pink, colors.purple]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.checkoutBtn}
+                >
+                  <Text style={styles.checkoutText}>Checkout</Text>
+                  <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+                </LinearGradient>
               </Pressable>
             </View>
           </GlassView>
         </Animated.View>
+
       )}
     </View>
   );
@@ -376,25 +401,26 @@ const styles = StyleSheet.create({
 
   bottomContainer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: Spacing.md,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    ...Shadows.xl,
   },
+
   bottomBlur: {
-    borderRadius: BorderRadius.xxl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 35,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.15)',
     overflow: 'hidden',
-    ...Shadows.lg,
   },
+
   bottomBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
   },
+
   totalLabel: {
     fontFamily: Fonts.extraBold,
     fontSize: 10,
@@ -409,20 +435,29 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
+  currencyLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: 12,
+    marginLeft: 2,
+  },
+  checkoutBtnWrapper: {
+    borderRadius: 25,
+    overflow: 'hidden',
+    ...Shadows.lg,
+  },
   checkoutBtn: {
     flexDirection: 'row',
-    borderRadius: BorderRadius.xl,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.lg,
   },
   checkoutText: {
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.md,
     color: '#FFFFFF'
   },
+
 
   emptyIconCircle: {
     width: 100,

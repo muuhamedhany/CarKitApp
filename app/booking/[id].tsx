@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     Alert,
     Dimensions,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,

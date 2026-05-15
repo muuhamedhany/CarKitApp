@@ -150,6 +150,8 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
             indicatorStyle
           ]} 
         />
+
+
         
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
@@ -213,6 +215,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     left: Spacing.md,
   },
+
+
   tab: {
     flex: 1,
     alignItems: 'center',
@@ -225,9 +229,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 10,
+    fontSize: 9.5,
     marginTop: 2,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
+
 });
