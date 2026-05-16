@@ -21,6 +21,7 @@ import {
     View
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Address = {
     address_id: number;
@@ -62,6 +63,7 @@ const formatReadableDate = (isoDate: string) => {
 
 export default function CheckoutScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { items, total, fetchCart } = useCart();
