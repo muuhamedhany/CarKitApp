@@ -319,9 +319,12 @@ export default function HomeScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+          <View style={[styles.orb, { top: SCREEN_HEIGHT * 0.4, left: -150, backgroundColor: colors.purple + '10' }]} />
+        </>
+      )}
 
       <Animated.ScrollView
         ref={scrollRef}
@@ -447,8 +450,8 @@ export default function HomeScreen() {
             style={[
               styles.promoBanner,
               {
-                backgroundColor: isDark ? 'rgba(205, 66, 168, 0.1)' : 'rgba(205, 66, 168, 0.03)',
-                borderColor: colors.pink + '40'
+                backgroundColor: colors.accentSoft,
+                borderColor: colors.accentBorder
               }
             ]}
           >
@@ -472,7 +475,7 @@ export default function HomeScreen() {
             style={({ pressed }) => [
               styles.activityCard,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                backgroundColor: colors.surfaceElevated,
                 borderColor: colors.cardBorder,
                 opacity: pressed ? 0.8 : 1
               }
@@ -529,7 +532,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flex: 1 },
   greetingLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.7 },
-  greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4, letterSpacing: -1 },
+  greetingName: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: -4 },
   notificationBtn: {
     width: 52, height: 52, borderRadius: BorderRadius.full,
     justifyContent: 'center', alignItems: 'center',
@@ -568,7 +571,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.lg,
-    letterSpacing: -0.5,
   },
   seeAllText: {
     fontFamily: Fonts.bold,
@@ -601,13 +603,11 @@ const styles = StyleSheet.create({
   promoTitle: {
     fontFamily: Fonts.extraBold,
     fontSize: 20,
-    letterSpacing: -0.5,
     marginBottom: 4,
   },
   promoSub: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.sm,
-    letterSpacing: 0.5,
   },
   promoIconContainer: {
     width: 48,

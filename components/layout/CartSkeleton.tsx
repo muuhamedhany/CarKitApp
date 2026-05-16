@@ -5,14 +5,14 @@ import { Skeleton } from '../common/Skeleton';
 import { useTheme } from '@/hooks/useTheme';
 
 export function CartSkeleton() {
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
   
   return (
     <View style={styles.container}>
       {[1, 2, 3].map((i) => (
         <View key={i} style={[styles.item, { 
-          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+          backgroundColor: colors.surfaceMuted,
+          borderColor: colors.cardBorder
         }]}>
           <Skeleton width={80} height={80} borderRadius={16} />
           <View style={styles.content}>

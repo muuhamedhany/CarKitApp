@@ -242,8 +242,12 @@ export default function BookingConfirmationScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+          <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+        </>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -287,8 +291,8 @@ export default function BookingConfirmationScreen() {
                   style={[
                     styles.dateChip,
                     {
-                      backgroundColor: selected ? colors.pink + '20' : 'rgba(255,255,255,0.05)',
-                      borderColor: selected ? colors.pink : 'rgba(255,255,255,0.1)',
+                      backgroundColor: selected ? colors.accentSoft : colors.surfaceMuted,
+                      borderColor: selected ? colors.pink : colors.cardBorder,
                     },
                   ]}
                   onPress={() => {
@@ -320,8 +324,8 @@ export default function BookingConfirmationScreen() {
                     style={[
                       styles.timeSlot,
                       {
-                        backgroundColor: selected ? colors.pink + '20' : 'rgba(255,255,255,0.05)',
-                        borderColor: selected ? colors.pink : 'rgba(255,255,255,0.1)',
+                        backgroundColor: selected ? colors.accentSoft : colors.surfaceMuted,
+                        borderColor: selected ? colors.pink : colors.cardBorder,
                       },
                     ]}
                     onPress={() => {
@@ -372,7 +376,7 @@ export default function BookingConfirmationScreen() {
                   <GlassView
                     intensity={active ? 40 : 20}
                     tint={isDark ? 'dark' : 'light'}
-                    style={[styles.addressCard, { borderColor: active ? colors.pink : 'rgba(255,255,255,0.1)' }]}
+                    style={[styles.addressCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
                   >
                     <View style={styles.addressHeader}>
                       <View style={styles.addressInfo}>
@@ -408,9 +412,9 @@ export default function BookingConfirmationScreen() {
                 <GlassView
                   intensity={active ? 40 : 20}
                   tint={isDark ? 'dark' : 'light'}
-                  style={[styles.methodCard, { borderColor: active ? colors.pink : 'rgba(255,255,255,0.1)' }]}
+                  style={[styles.methodCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
                 >
-                  <View style={[styles.methodIcon, { backgroundColor: active ? colors.pink + '20' : 'rgba(255,255,255,0.05)' }]}>
+                  <View style={[styles.methodIcon, { backgroundColor: active ? colors.accentSoft : colors.surfaceMuted }]}>
                     <MaterialCommunityIcons
                       name={method.icon as any}
                       size={24}

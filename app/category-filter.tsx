@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FormInput, GlassView, GradientButton } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, Colors, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Category, ServiceCategory } from '@/types/api.types';
@@ -267,7 +267,7 @@ export default function CategoryFilterScreen() {
         {filteredProducts.length === 0 && filteredServices.length === 0 && (
            <View style={styles.emptyState}>
               <MaterialCommunityIcons name="magnify-close" size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No categories found for "{searchQuery}"</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No categories found for {searchQuery}</Text>
            </View>
         )}
       </ScrollView>

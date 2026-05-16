@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
-import { Fonts, FontSizes, Spacing, BorderRadius, Shadows, Colors } from '@/constants/theme';
+import { Fonts, FontSizes, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 
 type CategoryPillProps = {
   label: string;
@@ -43,7 +43,7 @@ export default function CategoryPill({ label, isActive = false, onPress }: Categ
       style={[
         styles.pill,
         { 
-          backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', 
+          backgroundColor: colors.surfaceMuted,
           borderColor: colors.cardBorder 
         },
         isActive && [
@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.xs,
-    letterSpacing: 0.2,
   },
   activeLabel: {
     color: '#FFFFFF',

@@ -184,9 +184,12 @@ export default function ProviderAnalyticsScreen() {
           />
         }
       >
-        {/* Decorative Orbs */}
-        <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-        <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+        {isDark && (
+          <>
+            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+          </>
+        )}
 
         <View style={[styles.headerRow]}>
           <Pressable
@@ -201,7 +204,7 @@ export default function ProviderAnalyticsScreen() {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
         </View>
 
-        <View style={[styles.rangeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+        <View style={[styles.rangeToggle, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}
         >
           {RANGE_OPTIONS.map((option) => {
             const isActive = option.value === range;
@@ -220,7 +223,7 @@ export default function ProviderAnalyticsScreen() {
                 <Text
                   style={[
                     styles.rangeLabel,
-                    { color: isActive ? '#E9DEF8' : colors.textSecondary },
+                    { color: isActive ? '#FFFFFF' : colors.textSecondary },
                   ]}
                 >
                   {option.label}
@@ -246,13 +249,13 @@ export default function ProviderAnalyticsScreen() {
                   onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed bookings in the selected period. The percentage change is compared to the previous period.')}
                   hitSlop={8}
                 >
-                  <MaterialCommunityIcons name="information-outline" size={18} color="rgba(255,255,255,0.7)" />
+                  <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                 </Pressable>
                 <View style={{ flex: 1, marginRight: Spacing.md }}>
-                  <Text style={[styles.revenueLabel, { color: '#E9DEF8' }]}>Revenue</Text>
+                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Revenue</Text>
                     <CountUp
                       value={analytics.revenue.total}
-                      style={[styles.revenueValue, { color: '#E9DEF8' }]}
+                      style={[styles.revenueValue, { color: colors.textPrimary }]}
                       formatter={(val) => {
                         'worklet';
                         return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} EGP`;
@@ -263,9 +266,9 @@ export default function ProviderAnalyticsScreen() {
                   <MaterialCommunityIcons
                     name={analytics.revenue.change_pct >= 0 ? 'trending-up' : 'trending-down'}
                     size={16}
-                    color={'#E9DEF8'}
+                    color={'#FFFFFF'}
                   />
-                  <Text selectable style={[styles.changeText, { color: '#E9DEF8' }]}>
+                  <Text selectable style={[styles.changeText, { color: '#FFFFFF' }]}>
                     {formatPercent(analytics.revenue.change_pct)}
                   </Text>
                 </View>

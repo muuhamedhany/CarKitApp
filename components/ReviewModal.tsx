@@ -166,7 +166,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               />
               <TextInput
                 style={[styles.textInput, {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                  backgroundColor: colors.surfaceMuted,
                   color: colors.textPrimary,
                   borderColor: colors.cardBorder
                 }]}
@@ -196,7 +196,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                     />
                     <TextInput
                       style={[styles.smallTextInput, {
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        backgroundColor: colors.surfaceMuted,
                         color: colors.textPrimary,
                         borderColor: colors.cardBorder
                       }]}

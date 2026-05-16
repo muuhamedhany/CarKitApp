@@ -65,7 +65,7 @@ export default function SecondaryButton({
     <View style={[
       styles.glassContainer,
       {
-        backgroundColor: colors.glass,
+        backgroundColor: colors.surfaceMuted,
         borderColor: colors.cardBorder,
       }
     ]}>
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: FontSizes.md,
     fontFamily: Fonts.semiBold,
-    letterSpacing: 0.3,
   },
   content: {
     flexDirection: 'row',

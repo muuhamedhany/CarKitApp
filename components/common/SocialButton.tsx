@@ -9,15 +9,15 @@ type SocialButtonProps = {
 };
 
 export default function SocialButton({ provider, actionText, onPress }: SocialButtonProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
-    <Pressable style={[styles.button, { backgroundColor: isDark ? '#FFFFFF' : '#0B0217', borderColor: isDark ? 'transparent' : colors.border, borderWidth: isDark ? 0 : 1 }]} onPress={onPress}>
+    <Pressable style={[styles.button, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]} onPress={onPress}>
       <Image 
         source={{ uri: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png' }} 
         style={styles.logo} 
       />
-      <Text style={[styles.text, { color: isDark ? '#0B0217' : '#FFFFFF' }]}>{actionText}</Text>
+      <Text style={[styles.text, { color: colors.textPrimary }]}>{actionText}</Text>
     </Pressable>
   );
 }
@@ -29,6 +29,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: BorderRadius.full,
     paddingVertical: 14,
+    borderWidth: 1,
   },
   logo: {
     width: 24,

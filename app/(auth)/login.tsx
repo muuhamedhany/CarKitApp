@@ -24,7 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView } from '@/components';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows, Colors } from '@/constants/theme';
+import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 
 const { height } = Dimensions.get('window');
 
@@ -103,9 +103,12 @@ export default function LoginScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '20' }]} />
-      <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '20' }]} />
+          <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
+        </>
+      )}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -225,7 +228,6 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: FontSizes.xxxl,
     fontFamily: Fonts.extraBoldItalic,
-    letterSpacing: -1,
   },
   welcomeSubtitle: {
     fontSize: FontSizes.sm,
@@ -242,7 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: Colors.glass,
+    backgroundColor: 'transparent',
   },
   label: {
     fontSize: FontSizes.sm,

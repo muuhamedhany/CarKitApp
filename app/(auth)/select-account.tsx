@@ -60,7 +60,7 @@ export default function SelectAccountScreen() {
               <View style={styles.cardText}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Customer</Text>
                 <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                  Find trusted mechanics, buy parts, and track your vehicle's health.
+                  Find trusted mechanics, buy parts, and track your vehicle health.
                 </Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />

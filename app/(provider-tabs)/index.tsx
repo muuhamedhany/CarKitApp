@@ -234,7 +234,7 @@ export default function ProviderDashboard() {
 
                         <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.section}>
                             <View style={styles.sectionHeader}>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Appointments</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today Appointments</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/bookings')}>
                                     <Text style={[styles.sectionLink, { color: colors.pink }]}>See All</Text>
                                 </Pressable>

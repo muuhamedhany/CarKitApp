@@ -92,7 +92,7 @@ export default function ProfileScreen() {
           style={({ pressed }) => [
             styles.quickActionCard,
             {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              backgroundColor: colors.surfaceElevated,
               borderColor: colors.cardBorder,
               opacity: pressed ? 0.8 : 1
             },
@@ -128,7 +128,7 @@ export default function ProfileScreen() {
           else if (item.onPress) item.onPress();
         }}
       >
-        <View style={[styles.menuIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+        <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
           <MaterialCommunityIcons name={item.icon as any} size={20} color={colors.textPrimary} />
         </View>
         <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
@@ -144,9 +144,12 @@ export default function ProfileScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+          <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+        </>
+      )}
 
       <ScrollView
         ref={scrollRef}
@@ -168,7 +171,7 @@ export default function ProfileScreen() {
             {/* User Info */}
             <View style={styles.userInfoSection}>
               <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name || 'User'}</Text>
-              <View style={[styles.emailPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+              <View style={[styles.emailPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}>
                 <MaterialCommunityIcons name="email-outline" size={13} color={colors.textMuted} />
                 <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">{user?.email}</Text>
               </View>
@@ -207,7 +210,7 @@ export default function ProfileScreen() {
               style={styles.menuItem}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/settings'); }}
             >
-              <View style={[styles.menuIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+              <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
                 <MaterialCommunityIcons name="cog-outline" size={20} color={colors.textPrimary} />
               </View>
               <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Settings</Text>
@@ -297,7 +300,6 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
-    letterSpacing: -0.5,
     textAlign: 'center',
   },
   emailPill: {
@@ -313,7 +315,7 @@ const styles = StyleSheet.create({
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 5,
     borderRadius: 20, gap: 5, borderWidth: 1,
   },
-  memberBadgeText: { fontFamily: Fonts.bold, fontSize: 9, letterSpacing: 0.8 },
+  memberBadgeText: { fontFamily: Fonts.bold, fontSize: 9 },
   editProfileBtn: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -330,7 +332,7 @@ const styles = StyleSheet.create({
 
   groupLabel: {
     fontFamily: Fonts.extraBold, fontSize: 11,
-    letterSpacing: 1.5, marginBottom: Spacing.md, marginLeft: 4,
+    marginBottom: Spacing.md, marginLeft: 4,
     textTransform: 'uppercase',
     opacity: 0.6,
   },
