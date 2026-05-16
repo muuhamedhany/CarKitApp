@@ -139,11 +139,22 @@ export default function MyOrdersScreen() {
         <View style={[styles.orderDivider, { backgroundColor: colors.border }]} />
 
         <View style={styles.orderFooter}>
-          <View>
+          <View style={styles.totalBlock}>
             <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total amount</Text>
-            <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{item.total_amount} EGP</Text>
+            <View style={styles.totalAmountRow}>
+              <Text
+                style={[styles.totalValue, { color: colors.textPrimary }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.82}
+              >
+                {Number(item.total_amount || 0).toLocaleString('en-EG')}
+              </Text>
+              <Text style={[styles.currencyLabel, { color: colors.pink }]}> EGP</Text>
+            </View>
           </View>
           <Pressable
+            style={styles.detailsPressable}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({ pathname: '/order/[id]', params: { id: String(item.order_id), role: 'customer' } } as any);
@@ -295,9 +306,13 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: BorderRadius.full },
   statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
   orderDivider: { height: 1, marginVertical: Spacing.lg, opacity: 0.1 },
-  orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.md },
+  totalBlock: { flex: 1, minWidth: 0 },
   totalLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6 },
   totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.xl, marginTop: 2 },
+  totalAmountRow: { flexDirection: 'row', alignItems: 'baseline' },
+  currencyLabel: { fontFamily: Fonts.bold, fontSize: 12, marginLeft: 2 },
+  detailsPressable: { flexShrink: 0 },
   viewDetailsBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: BorderRadius.full, gap: 6 },
   viewDetailsText: { color: 'white', fontFamily: Fonts.bold, fontSize: FontSizes.sm },
 
