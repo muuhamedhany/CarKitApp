@@ -20,7 +20,7 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 
 // ═══════════════════════════════════
@@ -53,7 +53,7 @@ const TOAST_CONFIGS: Record<ToastType, ToastConfig> = {
   },
   info: {
     icon: 'information',
-    accentColor: Colors.purpleLight,
+    accentColor: '#7C3CC7',
     bgGlow: 'rgba(156, 39, 176, 0.15)',
   },
 };
@@ -128,7 +128,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
   }));
 
   const isAndroid = Platform.OS === 'android';
-  const androidBg = isDark ? colors.backgroundSecondary : '#FFFFFF';
+  const solidBg = isDark ? colors.backgroundSecondary : colors.surfaceElevated;
 
   return (
     <Animated.View style={[styles.toastContainer, animatedStyle]}>
@@ -136,11 +136,11 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
         <View style={[
           styles.toastInner, 
           { 
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            backgroundColor: isAndroid ? androidBg : 'transparent'
+            borderColor: colors.toastBorder,
+            backgroundColor: isAndroid || !isDark ? solidBg : 'transparent'
           }
         ]}>
-          {!isAndroid && (
+          {!isAndroid && isDark && (
             <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
           )}
           {/* Accent bar on left */}
@@ -219,7 +219,7 @@ function AlertDialog({
   return (
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
       <Pressable style={styles.alertOverlay} onPress={() => handlePress({ text: 'dismiss' })}>
-        <Animated.View style={[styles.alertDialog, animatedDialogStyle, { backgroundColor: colors.surface, borderColor: isDark ? 'rgba(156, 39, 176, 0.25)' : 'rgba(156, 39, 176, 0.15)' }]}>
+        <Animated.View style={[styles.alertDialog, animatedDialogStyle, { backgroundColor: colors.surfaceElevated, borderColor: colors.accentBorder, shadowColor: colors.shadowColor }]}>
           <Pressable>
             {/* Icon */}
             <View style={[styles.alertIconContainer, { backgroundColor: config.bgGlow }]}>
@@ -252,7 +252,7 @@ function AlertDialog({
                         colors={
                           isDestructive
                             ? ['#FF4757', '#FF6B81']
-                            : [Colors.gradientStart, Colors.gradientEnd]
+                            : [colors.gradientStart, colors.gradientEnd]
                         }
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
@@ -267,7 +267,7 @@ function AlertDialog({
                 return (
                   <Pressable
                     key={index}
-                    style={[styles.alertButtonSecondary, { borderColor: isDark ? 'rgba(156, 39, 176, 0.3)' : 'rgba(156, 39, 176, 0.2)' }]}
+                    style={[styles.alertButtonSecondary, { borderColor: colors.accentBorder }]}
                     onPress={() => handlePress(button)}
                   >
                     <Text style={[styles.alertButtonSecondaryText, { color: colors.textSecondary }]}>{button.text}</Text>
@@ -382,12 +382,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toastTitle: {
-    color: Colors.white,
     fontSize: FontSizes.sm,
     fontFamily: Fonts.bold,
   },
   toastMessage: {
-    color: Colors.textSecondary,
     fontSize: FontSizes.xs,
     fontFamily: Fonts.regular,
     marginTop: 2,
@@ -405,13 +403,10 @@ const styles = StyleSheet.create({
   alertDialog: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: Colors.backgroundSecondary,
     borderRadius: BorderRadius.xl,
     padding: Spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(156, 39, 176, 0.25)',
     alignItems: 'center',
-    shadowColor: Colors.purple,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 24,
@@ -426,14 +421,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   alertTitle: {
-    color: Colors.white,
     fontSize: FontSizes.xl,
     fontFamily: Fonts.bold,
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   alertMessage: {
-    color: Colors.textSecondary,
     fontSize: FontSizes.md,
     fontFamily: Fonts.regular,
     textAlign: 'center',
@@ -454,7 +447,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   alertButtonPrimaryText: {
-    color: Colors.white,
+    color: '#FFFFFF',
     fontSize: FontSizes.md,
     fontFamily: Fonts.bold,
   },
@@ -467,7 +460,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   alertButtonSecondaryText: {
-    color: Colors.textSecondary,
     fontSize: FontSizes.md,
     fontFamily: Fonts.semiBold,
   },

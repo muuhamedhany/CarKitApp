@@ -28,13 +28,13 @@ export default function OutlinedButton({
 }: OutlinedButtonProps) {
   const { colors } = useTheme();
   const activeColor = textColor || colors.pink;
-  const borderCol = borderColor || activeColor;
+  const borderCol = borderColor || colors.accentBorder;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={[styles.button, { borderColor: borderCol, backgroundColor: colors.transparent }, (disabled || loading) && styles.disabled, style]}
+      style={[styles.button, { borderColor: borderCol, backgroundColor: colors.surfaceElevated }, (disabled || loading) && styles.disabled, style]}
     >
       {loading ? (
         <ActivityIndicator color={activeColor} />

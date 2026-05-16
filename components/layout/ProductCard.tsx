@@ -1,4 +1,4 @@
-import { BorderRadius, Colors, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -79,7 +79,7 @@ export default function ProductCard({
         onPressOut={handlePressOut}
       >
         {/* Image / Placeholder */}
-        <View style={[styles.imageContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F5F5F7' }]}>
+        <View style={[styles.imageContainer, { backgroundColor: colors.imagePlaceholder, borderBottomColor: colors.dividerLine }]}>
           {showImage ? (
             <>
               <Image
@@ -97,7 +97,7 @@ export default function ProductCard({
             </>
           ) : (
             <LinearGradient
-              colors={isDark ? [colors.backgroundSecondary, colors.background] : ['#F8F0FF', '#EBE0FF']}
+              colors={isDark ? [colors.backgroundSecondary, colors.background] : [colors.surfaceMuted, colors.accentSoft]}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -112,7 +112,7 @@ export default function ProductCard({
             <Pressable
               style={[
                 styles.favoriteCardIcon,
-                { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)' }
+                { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : colors.surfaceElevated, borderColor: colors.cardBorder }
               ]}
               onPress={handleToggleWishlist}
               hitSlop={8}
@@ -120,7 +120,7 @@ export default function ProductCard({
               <MaterialCommunityIcons
                 name={isWishlisted ? "cards-heart" : "cards-heart-outline"}
                 size={18}
-                color={isWishlisted ? colors.pink : (isDark ? '#FFF' : '#000')}
+                color={isWishlisted ? colors.pink : colors.textPrimary}
               />
             </Pressable>
           )}
@@ -195,7 +195,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   placeholderIcon: {
     flex: 1,
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.04)',
   },
   info: { padding: Spacing.md },
-  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2, letterSpacing: -0.3 },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
   vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.5 },
   bottomRow: {
     flexDirection: 'row',
@@ -217,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.md
   },
-  price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md, letterSpacing: -0.5 },
+  price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
   currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.6 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   reviewCount: { fontFamily: Fonts.bold, fontSize: 10, marginLeft: 2, opacity: 0.6 },
@@ -236,7 +235,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
     ...Shadows.sm,
   },
 });

@@ -21,27 +21,28 @@ export default function GlassView({
   tint = 'default',
   ...props
 }: GlassViewProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const isAndroid = Platform.OS === 'android';
 
-  // On Android, use solid background colors from the theme instead of blur
-  const androidBg =
+  const solidBg =
     tint === 'dark'
-      ? colors.backgroundSecondary // Deep solid dark
+      ? colors.backgroundSecondary
       : tint === 'light'
-        ? colors.background // Solid light
-        : colors.surface; // Default surface color
+        ? colors.surfaceElevated
+        : colors.surface;
+
+  const shouldBlur = !isAndroid && isDark;
 
   return (
     <View
       style={[
         styles.container,
-        isAndroid && { backgroundColor: androidBg },
+        { backgroundColor: solidBg, borderColor: colors.cardBorder },
         style,
       ]}
       {...props}
     >
-      {!isAndroid && (
+      {shouldBlur && (
         <BlurView
           intensity={intensity}
           tint={tint}
@@ -56,6 +57,5 @@ export default function GlassView({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)', // iOS fallback for non-blur environments
   },
 });

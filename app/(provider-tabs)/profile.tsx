@@ -150,7 +150,7 @@ export default function ProviderProfileScreen() {
           style={({ pressed }) => [
             styles.quickActionCard,
             {
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              backgroundColor: colors.surfaceElevated,
               borderColor: colors.cardBorder,
               opacity: pressed ? 0.8 : 1
             },
@@ -186,7 +186,7 @@ export default function ProviderProfileScreen() {
           else if (item.onPress) item.onPress();
         }}
       >
-        <View style={[styles.menuIconBox, { backgroundColor: item.iconBg || (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)') }]}>
+        <View style={[styles.menuIconBox, { backgroundColor: item.iconBg || colors.surfaceMuted }]}>
           <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor || colors.textPrimary} />
         </View>
         <Text style={[styles.menuLabel, { color: item.textColor || colors.textPrimary }]}>{item.label}</Text>
@@ -202,9 +202,12 @@ export default function ProviderProfileScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+          <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+        </>
+      )}
 
       <ScrollView
         ref={scrollRef}
@@ -224,7 +227,7 @@ export default function ProviderProfileScreen() {
 
             <View style={styles.userInfoSection}>
               <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name || 'Provider'}</Text>
-              <View style={[styles.emailPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+              <View style={[styles.emailPill, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}>
                 <MaterialCommunityIcons name="email-outline" size={13} color={colors.textMuted} />
                 <Text style={[styles.userEmail, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="middle">{user?.email}</Text>
               </View>

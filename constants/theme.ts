@@ -113,12 +113,22 @@ export const DarkColors = {
   transparent: 'transparent',
   overlay: 'rgba(0,0,0,0.8)',
   surface: '#12121A',
+  surfaceElevated: '#171722',
+  surfacePressed: 'rgba(255, 255, 255, 0.08)',
+  surfaceMuted: 'rgba(255, 255, 255, 0.05)',
+  accentSoft: 'rgba(205, 66, 168, 0.16)',
+  accentBorder: 'rgba(205, 66, 168, 0.28)',
+  shadowColor: '#000000',
 
   // Status
   success: '#00C853',
   error: '#FF3D00',
   warning: '#FFAB00',
   info: '#2979FF',
+  successSoft: 'rgba(0, 200, 83, 0.14)',
+  errorSoft: 'rgba(255, 61, 0, 0.14)',
+  warningSoft: 'rgba(255, 171, 0, 0.14)',
+  infoSoft: 'rgba(41, 121, 255, 0.14)',
 
   // Extras
   imagePlaceholder: 'rgba(255, 255, 255, 0.05)',
@@ -150,6 +160,11 @@ export const GreenDarkColors = {
   bgGradientStart: '#0A2418',
   bgGradientEnd: '#050505',
   primary: '#10B981',
+  surfaceElevated: '#102018',
+  surfacePressed: 'rgba(16, 185, 129, 0.10)',
+  surfaceMuted: 'rgba(16, 185, 129, 0.06)',
+  accentSoft: 'rgba(16, 185, 129, 0.16)',
+  accentBorder: 'rgba(16, 185, 129, 0.28)',
   purpleGlow: 'rgba(74, 93, 35, 0.2)',
   pinkGlow: 'rgba(16, 185, 129, 0.2)',
   cardBorder: 'rgba(16, 185, 129, 0.15)',
@@ -162,57 +177,67 @@ export const GreenDarkColors = {
 // Soft Boutique Light Theme Colors
 // ═══════════════════════════════════
 export const LightColors = {
-  // Backgrounds - Switched from stark white to warm off-white
-  background: '#FAFAFC',
+  // Backgrounds - calm solid surfaces for readable light mode
+  background: '#F6F7FB',
   backgroundSecondary: '#FFFFFF',
-  card: 'rgba(255, 255, 255, 0.98)',
-  cardBorder: 'rgba(205, 66, 168, 0.12)',
-  glass: 'rgba(255, 255, 255, 0.85)',
-  glassHighlight: 'rgba(255, 255, 255, 0.95)',
-  FormBg: '#ffffffef',
+  card: '#FFFFFF',
+  cardBorder: '#DDE3EE',
+  glass: '#FFFFFF',
+  glassHighlight: '#F8FAFC',
+  FormBg: '#F8FAFC',
 
   // Primary
-  pink: '#CD42A8',
-  pinkLight: '#E573C4',
-  purple: '#5923A0',
-  purpleDark: '#411977',
-  purpleLight: '#7E57C2',
+  pink: '#B83291',
+  pinkLight: '#D94FB3',
+  purple: '#542099',
+  purpleDark: '#3F1777',
+  purpleLight: '#7C3CC7',
 
-  // Gradient - Softer pastels
-  gradientStart: '#6D28D9',
-  gradientEnd: '#CD42A8',
-  bgGradientStart: '#F5F3FF',
-  bgGradientEnd: '#FAFAFC',
+  // Gradient
+  gradientStart: '#7C2DCA',
+  gradientEnd: '#B83291',
+  bgGradientStart: '#F7F4FF',
+  bgGradientEnd: '#F6F7FB',
 
-  // Text - Softened Slate instead of near-black
-  textPrimary: '#1E293B',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
+  // Text
+  textPrimary: '#172033',
+  textSecondary: '#4B5870',
+  textMuted: '#7A869A',
 
-  border: '#F1F5F9',
-  primary: '#CD42A8',
+  border: '#DDE3EE',
+  primary: '#B83291',
 
   // Utility
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(15, 23, 42, 0.4)',
+  overlay: 'rgba(15, 23, 42, 0.48)',
   surface: '#FFFFFF',
+  surfaceElevated: '#FFFFFF',
+  surfacePressed: '#EEF2F7',
+  surfaceMuted: '#F1F4F8',
+  accentSoft: '#F7E8F3',
+  accentBorder: '#E9B9DC',
+  shadowColor: '#64748B',
 
   // Status
-  success: '#10B981',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  info: '#3B82F6',
+  success: '#047857',
+  error: '#DC2626',
+  warning: '#B45309',
+  info: '#2563EB',
+  successSoft: '#DFF7EC',
+  errorSoft: '#FEE2E2',
+  warningSoft: '#FEF3C7',
+  infoSoft: '#DBEAFE',
 
   // Extras
-  imagePlaceholder: 'rgba(205, 66, 168, 0.03)',
-  purpleGlow: 'rgba(89, 35, 160, 0.03)',
-  pinkGlow: 'rgba(205, 66, 168, 0.03)',
-  dividerLine: 'rgba(0, 0, 0, 0.04)',
-  inputBorder: 'rgba(205, 66, 168, 0.15)',
-  toastBorder: 'rgba(0, 0, 0, 0.03)',
-  itemSeparator: 'rgba(0,0,0,0.03)',
+  imagePlaceholder: '#EEF2F7',
+  purpleGlow: 'rgba(84, 32, 153, 0.06)',
+  pinkGlow: 'rgba(184, 50, 145, 0.06)',
+  dividerLine: '#E6EAF1',
+  inputBorder: '#CBD5E1',
+  toastBorder: '#DDE3EE',
+  itemSeparator: '#E6EAF1',
 };
 
 // ═══════════════════════════════════
@@ -220,21 +245,31 @@ export const LightColors = {
 // ═══════════════════════════════════
 export const GreenLightColors = {
   ...LightColors,
-  background: '#F7FEE7',
+  background: '#F6FAF7',
   backgroundSecondary: '#FFFFFF',
-  card: 'rgba(255, 255, 255, 0.95)',
+  card: '#FFFFFF',
   surface: '#FFFFFF',
-  FormBg: 'rgba(255, 255, 255, 0.9)',
-  pink: '#10B981',
-  pinkLight: '#34D399',
-  purple: '#059669',
+  surfaceElevated: '#FFFFFF',
+  surfacePressed: '#EAF4EE',
+  surfaceMuted: '#EEF7F2',
+  FormBg: '#F8FCFA',
+  pink: '#047857',
+  pinkLight: '#10B981',
+  purple: '#0F766E',
   purpleDark: '#065F46',
-  purpleLight: '#D1FAE5',
-  gradientStart: '#10B981',
-  gradientEnd: '#059669',
+  purpleLight: '#2DD4BF',
+  gradientStart: '#047857',
+  gradientEnd: '#0F766E',
   bgGradientStart: '#F0FDF4',
-  bgGradientEnd: '#F7FEE7',
-  primary: '#10B981',
+  bgGradientEnd: '#F6FAF7',
+  primary: '#047857',
+  cardBorder: '#D6E6DD',
+  border: '#D6E6DD',
+  inputBorder: '#BBD4C6',
+  accentSoft: '#E2F5EA',
+  accentBorder: '#A7E3C4',
+  purpleGlow: 'rgba(15, 118, 110, 0.06)',
+  pinkGlow: 'rgba(4, 120, 87, 0.06)',
 };
 
 export type ThemeColors = typeof DarkColors;

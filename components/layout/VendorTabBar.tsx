@@ -116,10 +116,10 @@ export default function VendorTabBar({ state, navigation }: any) {
           styles.container,
           {
             backgroundColor: isDark ? colors.backgroundSecondary : '#FFFFFF',
-            borderColor: isDark ? colors.cardBorder : '#F0F0F5',
+            borderColor: colors.cardBorder,
             ...Platform.select({
               ios: {
-                shadowColor: isDark ? '#000' : '#888',
+                shadowColor: isDark ? '#000' : colors.shadowColor,
                 shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: isDark ? 0.6 : 0.12,
                 shadowRadius: 20,
@@ -127,7 +127,7 @@ export default function VendorTabBar({ state, navigation }: any) {
               android: {
                 elevation: 0,
                 borderTopWidth: 0.5,
-                borderTopColor: isDark ? colors.dividerLine : 'rgba(0,0,0,0.06)',
+                borderTopColor: colors.dividerLine,
               }
             })
           },
@@ -138,7 +138,7 @@ export default function VendorTabBar({ state, navigation }: any) {
             styles.indicator, 
             { 
               width: tabWidth, 
-              backgroundColor: colors.pink + '10',
+              backgroundColor: colors.accentSoft,
             },
             indicatorStyle
           ]} 
@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 9.5,
     marginTop: 2,
-    letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
 

@@ -57,7 +57,7 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
       >
         <Pressable
           onPress={() => router.push(`/product/${item.product_id_fk}`)}
-          style={[styles.itemImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}
+          style={[styles.itemImage, { backgroundColor: colors.imagePlaceholder }]}
         >
           {showImage ? (
             <Image
@@ -83,7 +83,7 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
               style={({ pressed }) => [
                 styles.qtyBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  backgroundColor: colors.surfaceMuted,
                   opacity: pressed ? 0.6 : 1
                 }
               ]}
@@ -99,7 +99,7 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
               style={({ pressed }) => [
                 styles.qtyBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                  backgroundColor: colors.surfaceMuted,
                   opacity: (pressed || item.quantity >= item.stock) ? 0.4 : 1
                 }
               ]}
@@ -134,6 +134,8 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
     </Animated.View>
   );
 });
+
+CartItemRow.displayName = 'CartItemRow';
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CartScreen() {
@@ -190,9 +192,12 @@ export default function CartScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '12' }]} />
-      <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '08' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '12' }]} />
+          <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '08' }]} />
+        </>
+      )}
 
       <View style={[styles.header, { marginTop: insets.top + 10 }]}>
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>

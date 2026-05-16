@@ -8,7 +8,7 @@ import { PaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -234,14 +234,17 @@ export default function CheckoutScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <ExpoLinearGradient
+            <LinearGradient
                 colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
-            {/* Decorative Orbs */}
-            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
-            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+            {isDark && (
+                <>
+                    <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+                    <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
+                </>
+            )}
 
 
             <CenteredHeader title="Checkout" titleColor={colors.textPrimary} />

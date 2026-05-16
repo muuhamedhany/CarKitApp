@@ -330,7 +330,7 @@ export default function ProductDetailScreen() {
               { icon: 'truck-fast', label: 'Express' },
               { icon: 'refresh', label: 'Easy Returns' },
             ].map((item, i) => (
-              <View key={i} style={[styles.featureItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+              <View key={i} style={[styles.featureItem, { backgroundColor: colors.surfaceMuted }]}>
                 <MaterialCommunityIcons name={item.icon as any} size={22} color={colors.pink} />
                 <Text style={[styles.featureText, { color: colors.textPrimary }]}>{item.label}</Text>
               </View>
@@ -429,7 +429,7 @@ export default function ProductDetailScreen() {
         <GlassView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
           <View style={styles.bottomBarContent}>
             <View style={styles.qtyPriceWrapper}>
-              <View style={[styles.qtySelector, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+              <View style={[styles.qtySelector, { backgroundColor: colors.surfaceMuted }]}>
                 <Pressable onPress={() => setQuantity(q => Math.max(1, q - 1))} style={styles.qtyBtn}>
                   <MaterialCommunityIcons name="minus" size={16} color={colors.textPrimary} />
                 </Pressable>

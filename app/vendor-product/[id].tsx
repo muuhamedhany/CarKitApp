@@ -204,7 +204,7 @@ export default function VendorProductDetailScreen() {
               <Text style={{ fontFamily: Fonts.semiBold, color: '#3B82F6', fontSize: FontSizes.md }}>Pending Approval</Text>
             </View>
             <Text style={{ fontFamily: Fonts.regular, color: '#9E9E9E', fontSize: FontSizes.sm, marginTop: Spacing.xs, lineHeight: 20 }}>
-              This product is under review. You'll be notified once it's approved.
+              This product is under review. You will be notified once it is approved.
             </Text>
           </View>
         )}

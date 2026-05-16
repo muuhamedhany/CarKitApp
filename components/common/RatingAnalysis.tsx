@@ -58,7 +58,7 @@ export const RatingAnalysis: React.FC<RatingAnalysisProps> = ({ reviews, totalRa
             return (
               <View key={star} style={styles.barRow}>
                 <Text style={[styles.starLabel, { color: colors.textSecondary }]}>{star}</Text>
-                <View style={[styles.barBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+                <View style={[styles.barBg, { backgroundColor: colors.surfaceMuted }]}>
                   <View 
                     style={[
                       styles.barFill, 

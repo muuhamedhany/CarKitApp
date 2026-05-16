@@ -304,14 +304,14 @@ export default function ServiceDetailScreen() {
 
           {/* Stats Grid */}
           <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.statsGrid}>
-            <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+            <View style={[styles.statItem, { backgroundColor: colors.surfaceMuted }]}>
               <MaterialCommunityIcons name="clock-outline" size={24} color={colors.pink} />
               <View>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} min</Text>
               </View>
             </View>
-            <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+            <View style={[styles.statItem, { backgroundColor: colors.surfaceMuted }]}>
               <MaterialCommunityIcons name="shield-check-outline" size={24} color={colors.pink} />
               <View>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Protection</Text>
@@ -326,7 +326,7 @@ export default function ServiceDetailScreen() {
               <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>Available Slots</Text>
               <View style={styles.slotsGrid}>
                 {service.available_times.map((time, i) => (
-                  <View key={i} style={[styles.slotChip, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.cardBorder }]}>
+                  <View key={i} style={[styles.slotChip, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}>
                     <MaterialCommunityIcons name="clock-check-outline" size={12} color={colors.pink} style={{ marginRight: 6 }} />
                     <Text style={[styles.slotText, { color: colors.textPrimary }]}>{time}</Text>
                   </View>

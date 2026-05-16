@@ -192,7 +192,7 @@ export default function WishlistScreen() {
             </GlassView>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No items yet</Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Heart products you love and they'll appear here.
+              Heart products you love and they will appear here.
             </Text>
             <Pressable
               onPress={() => router.push('/(tabs)/' as any)}

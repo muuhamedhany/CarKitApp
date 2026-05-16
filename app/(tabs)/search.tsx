@@ -251,15 +251,18 @@ export default function SearchScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative Orbs */}
-      <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
-      <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+      {isDark && (
+        <>
+          <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
+          <View style={[styles.orb, { bottom: 100, left: -150, backgroundColor: colors.purple + '10' }]} />
+        </>
+      )}
 
       <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top }]}>
         <GlassView
           intensity={isDark ? 20 : 40}
           tint={isDark ? 'dark' : 'light'}
-          style={[styles.headerContent, { borderRadius: BorderRadius.xl, borderColor: colors.glassHighlight, borderWidth: 1, overflow: 'hidden' }]}
+          style={[styles.headerContent, { borderRadius: BorderRadius.xl, borderColor: colors.cardBorder, borderWidth: 1, overflow: 'hidden' }]}
         >
           {/* Search Input */}
           <FormInput
@@ -288,7 +291,7 @@ export default function SearchScreen() {
         >
           {/* Ad filter banner */}
           {adFilter && (
-            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}>
+            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}>
               <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
               <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
                 Results from <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || 'Sponsored Ad'}</Text>
@@ -300,7 +303,7 @@ export default function SearchScreen() {
           )}
           {/* Mode toggle */}
           <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
-            <View style={[styles.toggleContainer, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}>
+            <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
               {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
                 <Pressable
                   key={mode}
@@ -323,7 +326,7 @@ export default function SearchScreen() {
 
             {/* Category Filter Button */}
             <Pressable
-              style={[styles.filterBtn, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '30' }]}
+              style={[styles.filterBtn, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push({
@@ -399,11 +402,11 @@ export default function SearchScreen() {
 
           {searched && products.length === 0 && services.length === 0 && (
             <Animated.View entering={FadeInUp} style={styles.emptyState}>
-              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.emptyIconBlur}>
+              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconBlur, { borderColor: colors.cardBorder }]}>
                 <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
               </GlassView>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you're looking for.</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you need.</Text>
 
               <Pressable
                 style={[styles.resetBtn, { backgroundColor: colors.pink }]}
@@ -490,7 +493,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 0.5
   },
   filterBtn: {
     width: 52,
@@ -542,7 +544,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   emptyTitle: {
     fontFamily: Fonts.extraBold,

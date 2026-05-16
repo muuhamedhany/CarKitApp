@@ -1,4 +1,4 @@
-import { BorderRadius, Colors, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -70,7 +70,7 @@ export default function ServiceCard({
         onPressOut={handlePressOut}
       >
         {/* Image banner */}
-        <View style={[styles.imageBanner, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F5F5F7' }]}>
+        <View style={[styles.imageBanner, { backgroundColor: colors.imagePlaceholder, borderBottomColor: colors.dividerLine }]}>
           {showImage ? (
             <>
               <Image
@@ -87,12 +87,12 @@ export default function ServiceCard({
                 end={{ x: 0, y: 1 }}
               />
               {imgLoading && (
-                <ActivityIndicator size="small" color={colors.pink} style={styles.loader} />
+                <ActivityIndicator size="small" color={colors.pink} style={[styles.loader, { backgroundColor: colors.overlay }]} />
               )}
             </>
           ) : (
             <LinearGradient
-              colors={isDark ? [colors.backgroundSecondary, colors.background] : ['#F8F0FF', '#EBE0FF']}
+              colors={isDark ? [colors.backgroundSecondary, colors.background] : [colors.surfaceMuted, colors.accentSoft]}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -169,7 +169,7 @@ export default function ServiceCard({
                   styles.viewButton,
                   {
                     borderColor: colors.cardBorder,
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+                    backgroundColor: colors.surfaceMuted,
                     opacity: pressed ? 0.8 : 1,
                     transform: [{ scale: pressed ? 0.96 : 1 }]
                   }
@@ -203,13 +203,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   loader: {
     ...StyleSheet.absoluteFillObject as any,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   placeholderInner: {
     justifyContent: 'center',
@@ -229,11 +227,10 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.extraBold,
     fontSize: 12,
     color: '#FFFFFF',
-    letterSpacing: -0.3,
   },
   body: { padding: Spacing.md },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md + 2, letterSpacing: -0.5 },
+  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md + 2 },
   provider: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.5, marginTop: 3 },
   ratingBadge: {
     flexDirection: 'row',
