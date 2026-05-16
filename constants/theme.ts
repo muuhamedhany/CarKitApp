@@ -57,6 +57,13 @@ export const Shadows = {
     shadowRadius: 16,
     elevation: androidElevation(8),
   },
+  xl: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: androidElevation(12),
+  },
   pink: {
     shadowColor: '#CD42A8',
     shadowOffset: { width: 0, height: 0 },

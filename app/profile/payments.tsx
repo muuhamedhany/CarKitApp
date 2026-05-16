@@ -48,7 +48,7 @@ export default function PaymentsScreen() {
                     style={styles.cardTypeBadge}
                 >
                     <MaterialCommunityIcons
-                        name={card.type === 'visa' ? 'visa' : 'credit-card'}
+                        name="credit-card"
                         size={20}
                         color="white"
                     />

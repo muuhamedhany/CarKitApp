@@ -514,6 +514,10 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: HERO_HEIGHT,
   },
+  heroImageWrapper: {
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
+  },
   heroGradient: {
     position: 'absolute',
     bottom: 0, left: 0, right: 0,
