@@ -384,6 +384,31 @@ export default function HomeScreen() {
           </Animated.View>
         )}
 
+        <Animated.View entering={FadeInDown.delay(560).duration(800)}>
+          <Pressable
+            style={({ pressed }) => [styles.emergencyButton, { opacity: pressed ? 0.88 : 1 }]}
+            onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              router.push('/emergency-services' as any);
+            }}
+          >
+            <LinearGradient
+              colors={['#D92D20', '#7A271A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.emergencyIcon}>
+              <MaterialCommunityIcons name="car-emergency" size={26} color="#FFFFFF" />
+            </View>
+            <View style={styles.emergencyTextGroup}>
+              <Text style={styles.emergencyTitle}>Emergency Services</Text>
+              <Text style={styles.emergencySub}>Roadside help from nearby providers</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color="#FFFFFF" />
+          </Pressable>
+        </Animated.View>
+
         {/* Featured Services */}
         <Animated.View entering={FadeInDown.delay(600).duration(800)}>
           <View style={styles.sectionHeader}>
@@ -623,6 +648,38 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     ...Shadows.sm,
+  },
+  emergencyButton: {
+    minHeight: 92,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+    ...Shadows.md,
+  },
+  emergencyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emergencyTextGroup: { flex: 1 },
+  emergencyTitle: {
+    color: '#FFFFFF',
+    fontFamily: Fonts.extraBold,
+    fontSize: FontSizes.lg,
+    textTransform: 'uppercase',
+  },
+  emergencySub: {
+    color: 'rgba(255,255,255,0.78)',
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    marginTop: 3,
   },
   activityIcon: {
     width: 48,
