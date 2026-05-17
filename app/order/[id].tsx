@@ -72,7 +72,7 @@ const canVendorCancel = (status: string) => {
 
 const canCustomerCancel = (status: string) => {
     const normalized = normalizeStatus(status);
-    return normalized === 'pending' || normalized === 'processing';
+    return normalized === 'pending';
 };
 
 export default function OrderDetailScreen() {
@@ -158,6 +158,10 @@ export default function OrderDetailScreen() {
 
     const handleCustomerCancelOrder = () => {
         if (!order) return;
+        if (!canCustomerCancel(order.status)) {
+            showToast('warning', 'Cancel Unavailable', 'Orders can only be cancelled before processing starts.');
+            return;
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
         Alert.alert(
