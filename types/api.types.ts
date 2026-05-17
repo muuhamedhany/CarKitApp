@@ -291,6 +291,7 @@ export type Service = {
   price: string | number;
   duration: number;
   is_active: boolean;
+  is_emergency?: boolean;
   status?: 'pending' | 'active' | 'rejected' | string;
   service_cat_id_fk?: number;
   category_name?: string;
@@ -318,6 +319,7 @@ export type ServiceFormPayload = {
   image_url_3: string | null;
   location_type: 'both' | 'mobile' | 'in-shop';
   available_times: string[];
+  is_emergency?: boolean;
 };
 
 // ─── Provider Dashboard ───────────────────────────────────────────────────────

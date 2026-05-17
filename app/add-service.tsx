@@ -48,7 +48,7 @@ export default function AddServiceScreen() {
 
     const [currentStep, setCurrentStep] = useState(0);
     const [submitting, setSubmitting] = useState(false);
-    const [form, setForm] = useState({ name: '', description: '', price: '', duration: '', category: '' });
+    const [form, setForm] = useState({ name: '', description: '', price: '', duration: '', category: '', is_emergency: false });
     const [imageUri, setImageUri] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<string | null>(null);
     const [CATEGORIES, setCategories] = useState<string[]>([]);
@@ -83,7 +83,7 @@ export default function AddServiceScreen() {
                 description: form.description,
                 price: parseFloat(form.price),
                 duration: parseInt(form.duration),
-                image_url: imageUrl, service_cat_id_fk: 1, is_active: true, image_url_2: null, image_url_3: null, provider_id_fk: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+                image_url: imageUrl, service_cat_id_fk: 1, is_active: true, is_emergency: form.is_emergency, image_url_2: null, image_url_3: null, provider_id_fk: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
             } as any);
             if (res.success) {
                 showToast('success', 'Service Submitted', 'Pending admin approval.');
@@ -139,6 +139,20 @@ export default function AddServiceScreen() {
                                     multiline
                                     numberOfLines={3}
                                 />
+                                <Pressable
+                                    onPress={() => setForm(f => ({ ...f, is_emergency: !f.is_emergency }))}
+                                    style={[styles.toggleRow, { borderColor: colors.cardBorder, backgroundColor: form.is_emergency ? colors.errorSoft : 'transparent' }]}
+                                >
+                                    <MaterialCommunityIcons
+                                        name={form.is_emergency ? 'toggle-switch' : 'toggle-switch-off-outline'}
+                                        size={34}
+                                        color={form.is_emergency ? colors.error : colors.textMuted}
+                                    />
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Emergency service</Text>
+                                        <Text style={[styles.toggleHint, { color: colors.textSecondary }]}>Only appears in the emergency request flow.</Text>
+                                    </View>
+                                </Pressable>
                             </View>
                         )}
                         {currentStep === 1 && (
@@ -186,6 +200,9 @@ const styles = StyleSheet.create({
     textArea: { minHeight: 120 },
     imageUpload: { height: 200, borderRadius: BorderRadius.lg, borderWidth: 2, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
     previewImage: { width: '100%', height: '100%', borderRadius: BorderRadius.lg },
+    toggleRow: { borderWidth: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+    toggleTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    toggleHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2 },
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.md, flexDirection: 'row', gap: Spacing.md },
     navButton: { padding: Spacing.md, borderRadius: BorderRadius.full },
     nextButton: { flex: 1, padding: Spacing.md, borderRadius: BorderRadius.full, alignItems: 'center' }

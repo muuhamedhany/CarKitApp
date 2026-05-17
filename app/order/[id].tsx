@@ -52,7 +52,7 @@ const normalizeStatus = (status?: string) => String(status || '').toLowerCase();
 const getStatusPalette = (status: string, colors: any) => {
     const value = normalizeStatus(status);
     if (value === 'delivered') return { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' };
-    if (value === 'shipped') return { bg: 'rgba(249,115,22,0.2)', fg: '#F97316' };
+    if (value === 'ready_for_pickup' || value === 'in_transit') return { bg: 'rgba(249,115,22,0.2)', fg: '#F97316' };
     if (value === 'processing') return { bg: 'rgba(99,102,241,0.2)', fg: '#818CF8' };
     if (value === 'cancelled') return { bg: 'rgba(239,83,80,0.2)', fg: colors.error };
     return { bg: colors.pink + '20', fg: colors.pink };
@@ -61,8 +61,7 @@ const getStatusPalette = (status: string, colors: any) => {
 const getVendorPrimaryAction = (status: string) => {
     const normalized = normalizeStatus(status);
     if (normalized === 'pending') return { label: 'Mark as Processing', nextStatus: 'processing', icon: 'progress-clock' };
-    if (normalized === 'processing') return { label: 'Mark as Shipped', nextStatus: 'shipped', icon: 'truck-delivery-outline' };
-    if (normalized === 'shipped') return { label: 'Mark as Delivered', nextStatus: 'delivered', icon: 'check-circle-outline' };
+    if (normalized === 'processing') return { label: 'Ready for Pickup', nextStatus: 'ready_for_pickup', icon: 'package-check' };
     return null;
 };
 
@@ -197,15 +196,17 @@ export default function OrderDetailScreen() {
     const timelineSteps = [
         { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
         { key: 'processing', label: 'Processing', icon: 'cog-outline' },
-        { key: 'shipped', label: 'Shipped', icon: 'truck-fast-outline' },
+        { key: 'ready_for_pickup', label: 'Ready', icon: 'package-check' },
+        { key: 'in_transit', label: 'In Transit', icon: 'truck-fast-outline' },
         { key: 'delivered', label: 'Delivered', icon: 'check-all' },
     ];
 
     const statusPosition: Record<string, number> = {
         pending: 0,
         processing: 1,
-        shipped: 2,
-        delivered: 3,
+        ready_for_pickup: 2,
+        in_transit: 3,
+        delivered: 4,
     };
 
     const currentPosition = statusPosition[normalizeStatus(order?.status)] ?? 0;
@@ -319,6 +320,12 @@ export default function OrderDetailScreen() {
                                             <MaterialCommunityIcons name="message-text-outline" size={20} color={colors.purple} />
                                         </Pressable>
                                     </View>
+                                </View>
+                                <View style={[styles.vendorPickupNote, { backgroundColor: colors.infoSoft }]}>
+                                    <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
+                                    <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
+                                        Once marked as ready, a delivery driver will pick this up.
+                                    </Text>
                                 </View>
                             </GlassView>
                         </Animated.View>
@@ -552,6 +559,8 @@ const styles = StyleSheet.create({
     customerHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
     iconGroup: { flexDirection: 'row', gap: Spacing.sm },
     iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    vendorPickupNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md, marginTop: Spacing.md },
+    vendorPickupNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
 
     addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
     addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },

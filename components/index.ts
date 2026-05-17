@@ -32,5 +32,6 @@ export { ServiceDetailSkeleton } from './layout/ServiceDetailSkeleton';
 export { default as VendorTabBar } from './layout/VendorTabBar';
 
 export { default as GetDirectionsButton } from './GetDirectionsButton';
+export { default as MapLocationPicker } from './MapLocationPicker';
 export { default as CountUp } from './ui/CountUp';
 

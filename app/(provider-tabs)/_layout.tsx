@@ -55,6 +55,14 @@ function IOSTabLayout() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="team">
+        <Label>Team</Label>
+        <Icon
+          sf={{ default: 'person.2', selected: 'person.2.fill' }}
+          androidSrc={<VectorIcon family={MaterialCommunityIcons} name="account-group" />}
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="profile">
         <Label>Profile</Label>
         <Icon
@@ -82,6 +90,7 @@ function AndroidTabLayout() {
       <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="services" options={{ title: 'Services' }} />
       <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
+      <Tabs.Screen name="team" options={{ title: 'Team' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );
