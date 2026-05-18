@@ -125,7 +125,7 @@ export default function VendorDashboard() {
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'} />}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>

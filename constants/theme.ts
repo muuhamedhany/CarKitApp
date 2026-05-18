@@ -152,11 +152,11 @@ export const DarkColors = {
 // ═══════════════════════════════════
 export const GreenDarkColors = {
   ...DarkColors,
-  background: '#040806',
-  backgroundSecondary: '#08120D',
-  card: 'rgba(15, 25, 20, 0.6)',
-  surface: '#0A1A12',
-  FormBg: 'rgba(5, 20, 15, 0.3)',
+  background: '#050B08',
+  backgroundSecondary: '#0C1410',
+  card: 'rgba(12, 20, 16, 0.6)',
+  surface: '#07100D',
+  FormBg: 'rgba(12, 20, 16, 0.35)',
   pink: '#10B981',
   pinkLight: '#34D399',
   purple: '#4A5D23',
@@ -164,10 +164,10 @@ export const GreenDarkColors = {
   purpleLight: '#D1FAE5',
   gradientStart: '#10B981',
   gradientEnd: '#4A5D23',
-  bgGradientStart: '#0A2418',
-  bgGradientEnd: '#050505',
+  bgGradientStart: '#0B2A1B',
+  bgGradientEnd: '#030705',
   primary: '#10B981',
-  surfaceElevated: '#102018',
+  surfaceElevated: '#0C1814',
   surfacePressed: 'rgba(16, 185, 129, 0.10)',
   surfaceMuted: 'rgba(16, 185, 129, 0.06)',
   accentSoft: 'rgba(16, 185, 129, 0.16)',
@@ -279,12 +279,106 @@ export const GreenLightColors = {
   pinkGlow: 'rgba(4, 120, 87, 0.06)',
 };
 
+// ═══════════════════════════════════
+// Navy Theme Colors (Navy, Blue, and Baby Blue)
+// ═══════════════════════════════════
+export const NavyDarkColors = {
+  ...DarkColors,
+  background: '#070B19', // Deep navy black
+  backgroundSecondary: '#0F172A', // Navy slate
+  card: 'rgba(15, 23, 42, 0.6)', // Sleek semi-transparent card
+  cardBorder: 'rgba(56, 189, 248, 0.08)', // Glowing blue border
+  glass: 'rgba(15, 23, 42, 0.4)',
+  glassHighlight: 'rgba(56, 189, 248, 0.05)',
+  FormBg: 'rgba(15, 23, 42, 0.25)',
+
+  // Accents
+  pink: '#38BDF8', // Baby Blue primary accent
+  pinkLight: '#7DD3FC',
+  purple: '#2563EB', // Cobalt Blue secondary accent
+  purpleDark: '#1D4ED8',
+  purpleLight: '#60A5FA',
+
+  // Gradients
+  gradientStart: '#38BDF8', // Baby Blue
+  gradientEnd: '#2563EB', // Cobalt Blue
+  bgGradientStart: '#0B1530', // Deep ocean/navy blue glow
+  bgGradientEnd: '#030712', // Pure deep navy/black
+
+  // Text
+  textPrimary: '#F0F9FF', // Cool icy white
+  textSecondary: '#93C5FD', // Soft sky blue
+  textMuted: '#64748B', // Slate gray
+  border: '#1E293B',
+  primary: '#38BDF8',
+
+  // Surfaces & Utilities
+  surface: '#0B1329',
+  surfaceElevated: '#0F172A',
+  surfacePressed: 'rgba(56, 189, 248, 0.12)',
+  surfaceMuted: 'rgba(56, 189, 248, 0.06)',
+  accentSoft: 'rgba(56, 189, 248, 0.12)',
+  accentBorder: 'rgba(56, 189, 248, 0.25)',
+  purpleGlow: 'rgba(37, 99, 235, 0.15)',
+  pinkGlow: 'rgba(56, 189, 248, 0.15)',
+  dividerLine: 'rgba(56, 189, 248, 0.08)',
+  inputBorder: 'rgba(56, 189, 248, 0.18)',
+  toastBorder: 'rgba(56, 189, 248, 0.12)',
+};
+
+export const NavyLightColors = {
+  ...LightColors,
+  background: '#F0F5FA', // Off-white soft ice blue
+  backgroundSecondary: '#FFFFFF',
+  card: '#FFFFFF',
+  cardBorder: '#D2E2F0', // Soft steel blue border
+  glass: '#FFFFFF',
+  glassHighlight: '#F1F7FC',
+  FormBg: '#F1F7FC',
+
+  // Accents
+  pink: '#0284C7', // Stronger sky blue for light mode contrast
+  pinkLight: '#0EA5E9',
+  purple: '#1E3A8A', // Deep navy
+  purpleDark: '#172554',
+  purpleLight: '#3B82F6',
+
+  // Gradients
+  gradientStart: '#0284C7',
+  gradientEnd: '#1E3A8A',
+  bgGradientStart: '#EBF4FD', // Warm ice blue gradient
+  bgGradientEnd: '#F0F5FA',
+
+  // Text
+  textPrimary: '#0F172A', // Dark slate
+  textSecondary: '#334155', // Medium slate
+  textMuted: '#64748B', // Slate gray
+  border: '#D2E2F0',
+  primary: '#0284C7',
+
+  // Surfaces & Utilities
+  surface: '#FFFFFF',
+  surfaceElevated: '#FFFFFF',
+  surfacePressed: '#E0EEFB',
+  surfaceMuted: '#E6F2FD',
+  accentSoft: '#E0F2FE',
+  accentBorder: '#BAE6FD',
+  purpleGlow: 'rgba(30, 58, 138, 0.05)',
+  pinkGlow: 'rgba(2, 132, 199, 0.05)',
+  dividerLine: '#E2E8F0',
+  inputBorder: '#94A3B8',
+  toastBorder: '#CBD5E1',
+};
+
 export type ThemeColors = typeof DarkColors;
-export type ThemeVariant = 'traditional' | 'green';
+export type ThemeVariant = 'traditional' | 'green' | 'navy';
 
 export function getColors(isDark: boolean, variant: ThemeVariant = 'traditional'): ThemeColors {
   if (variant === 'green') {
     return isDark ? GreenDarkColors : GreenLightColors;
+  }
+  if (variant === 'navy') {
+    return isDark ? NavyDarkColors : NavyLightColors;
   }
   return isDark ? DarkColors : LightColors;
 }

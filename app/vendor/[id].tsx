@@ -129,7 +129,14 @@ export default function VendorPublicProfileScreen() {
             </View>
           </View>
 
-          <Text style={[styles.vendorName, { color: colors.textPrimary }]}>{vendor.name}</Text>
+          <Text 
+            style={[styles.vendorName, { color: colors.textPrimary }]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.65}
+          >
+            {vendor.name}
+          </Text>
           
           <View style={styles.badgeRow}>
             <View style={[styles.typeBadge, { backgroundColor: colors.pink + '15' }]}>
@@ -352,10 +359,11 @@ const styles = StyleSheet.create({
   },
   vendorName: {
     fontFamily: Fonts.extraBold,
-    fontSize: 32,
+    fontSize: 26,
+    lineHeight: 32,
     textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   badgeRow: {
     marginBottom: 24,

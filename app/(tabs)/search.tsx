@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { Product } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -13,9 +14,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View
@@ -67,6 +70,7 @@ export default function SearchScreen() {
   const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, language, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
   const params = useLocalSearchParams<SearchParams>();
@@ -78,6 +82,7 @@ export default function SearchScreen() {
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState<number[]>([]);
   const [selectedServiceCategoryIds, setSelectedServiceCategoryIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searched, setSearched] = useState(false);
   const scrollRef = useRef<Animated.ScrollView>(null);
 
@@ -85,7 +90,7 @@ export default function SearchScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     // Reset search
     setQuery('');
-    search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter);
+    search('', selectedProductCategoryIds, selectedServiceCategoryIds, adFilter, true);
   });
 
   const [adFilter, setAdFilter] = useState<{
@@ -121,6 +126,7 @@ export default function SearchScreen() {
     productCategoryIds: number[],
     serviceCategoryIds: number[],
     adFilterOverride?: typeof adFilter,
+    shouldShuffle = false,
   ) => {
     setLoading(true);
     setSearched(true);
@@ -163,8 +169,17 @@ export default function SearchScreen() {
         fetch(`${API_URL}/services?${serviceParams.toString()}`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
-      if (prodData.success) setProducts(prodData.data || []);
-      if (servData.success) setServices(servData.data || []);
+
+      let fetchedProds = prodData.data || [];
+      let fetchedServs = servData.data || [];
+
+      if (shouldShuffle || (!searchQuery.trim() && productCategoryIds.length === 0 && serviceCategoryIds.length === 0 && !af)) {
+        fetchedProds = [...fetchedProds].sort(() => Math.random() - 0.5);
+        fetchedServs = [...fetchedServs].sort(() => Math.random() - 0.5);
+      }
+
+      if (prodData.success) setProducts(fetchedProds);
+      if (servData.success) setServices(fetchedServs);
     } catch {
       showToast('error', 'Error', 'Could not fetch results.');
     } finally {
@@ -241,6 +256,13 @@ export default function SearchScreen() {
     search(query, selectedProductCategoryIds, selectedServiceCategoryIds, null);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter, true);
+    setRefreshing(false);
+  };
+
   const showProducts = viewMode === 'all' || viewMode === 'products';
   const showServices = viewMode === 'all' || viewMode === 'services';
 
@@ -279,152 +301,176 @@ export default function SearchScreen() {
         </GlassView>
       </Animated.View>
 
-      {loading ? (
+      {loading && products.length === 0 && services.length === 0 ? (
         <SearchSkeleton />
       ) : (
-        <Animated.ScrollView
-          ref={scrollRef}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top }]}
-        >
-          {/* Ad filter banner */}
-          {adFilter && (
-            <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}>
-              <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
-              <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
-                Results from <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || 'Sponsored Ad'}</Text>
-              </Text>
-              <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
-                <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
-              </Pressable>
-            </Animated.View>
-          )}
-          {/* Mode toggle */}
-          <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
-            <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
-              {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
-                <Pressable
-                  key={mode}
-                  style={[
-                    styles.togglePill,
-                    viewMode === mode && { backgroundColor: colors.pink },
-                  ]}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setViewMode(mode); }}
-                >
-                  <Text style={[
-                    styles.toggleText,
-                    { color: colors.textSecondary },
-                    viewMode === mode && { color: '#FFFFFF' },
-                  ]}>
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </Text>
+        <View style={{ flex: 1 }}>
+          <Animated.ScrollView
+            ref={scrollRef}
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.results, { paddingTop: 100 + insets.top }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.pink}
+                colors={[colors.pink]}
+                progressBackgroundColor={isDark ? colors.surfaceElevated : '#FFFFFF'}
+              />
+            }
+          >
+            {/* Ad filter banner */}
+            {adFilter && (
+              <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}>
+                <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
+                <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
+                  Results from <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || 'Sponsored Ad'}</Text>
+                </Text>
+                <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
+                  <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
                 </Pressable>
-              ))}
+              </Animated.View>
+            )}
+            {/* Mode toggle */}
+            <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
+              <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+                {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
+                  <Pressable
+                    key={mode}
+                    style={[
+                      styles.togglePill,
+                      viewMode === mode && { backgroundColor: colors.pink },
+                    ]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setViewMode(mode); }}
+                  >
+                    <Text style={[
+                      styles.toggleText,
+                      { color: colors.textSecondary },
+                      viewMode === mode && { color: '#FFFFFF' },
+                    ]}>
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Category Filter Button */}
+              <Pressable
+                style={[styles.filterBtn, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({
+                    pathname: '/category-filter',
+                    params: {
+                      product_categories: selectedProductCategoryIds.join(','),
+                      service_categories: selectedServiceCategoryIds.join(','),
+                    },
+                  });
+                }}
+              >
+                <MaterialCommunityIcons name="filter-variant" size={20} color={colors.pink} />
+              </Pressable>
             </View>
 
-            {/* Category Filter Button */}
-            <Pressable
-              style={[styles.filterBtn, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({
-                  pathname: '/category-filter',
-                  params: {
-                    product_categories: selectedProductCategoryIds.join(','),
-                    service_categories: selectedServiceCategoryIds.join(','),
-                  },
-                });
-              }}
-            >
-              <MaterialCommunityIcons name="filter-variant" size={20} color={colors.pink} />
-            </Pressable>
-          </View>
+            {showProducts && products.length > 0 && (
+              <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
+                  <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {products.length} product(s)</Text>
+                </View>
+                <View style={styles.productGrid}>
+                  {products.map((p, idx) => (
+                    <Animated.View
+                      entering={FadeInUp.delay(idx * 50).duration(600)}
+                      key={p.product_id}
+                      style={styles.productGridItem}
+                    >
+                      <ProductCard
+                        productId={p.product_id}
+                        name={p.name}
+                        price={p.price}
+                        imageUrl={p.image_url}
+                        vendorName={p.vendor_name}
+                        rating={p.rating}
+                        reviewCount={p.review_count}
+                        onAddToCart={() => handleAddToCart(p.product_id)}
+                        onPress={() => router.push(`/product/${p.product_id}` as any)}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
 
-          {showProducts && products.length > 0 && (
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
-                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {products.length} product(s)</Text>
-              </View>
-              <View style={styles.productGrid}>
-                {products.map((p, idx) => (
+            {showServices && services.length > 0 && (
+              <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
+                  <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {services.length} service(s)</Text>
+                </View>
+                {services.map((s, idx) => (
                   <Animated.View
-                    entering={FadeInUp.delay(idx * 50).duration(600)}
-                    key={p.product_id}
-                    style={styles.productGridItem}
+                    entering={FadeInUp.delay(idx * 100).duration(600)}
+                    key={s.service_id}
+                    style={{ marginBottom: Spacing.md }}
                   >
-                    <ProductCard
-                      productId={p.product_id}
-                      name={p.name}
-                      price={p.price}
-                      imageUrl={p.image_url}
-                      vendorName={p.vendor_name}
-                      rating={p.rating}
-                      reviewCount={p.review_count}
-                      onAddToCart={() => handleAddToCart(p.product_id)}
-                      onPress={() => router.push(`/product/${p.product_id}` as any)}
+                    <ServiceCard
+                      name={s.name}
+                      providerName={s.provider_name}
+                      price={s.price}
+                      imageUrl={s.image_url}
+                      duration={s.duration || undefined}
+                      rating={s.rating}
+                      reviewCount={s.review_count}
+                      onView={() => router.push(`/service/${s.service_id}`)}
+                      onBookNow={() => router.push(`/service/${s.service_id}`)}
                     />
                   </Animated.View>
                 ))}
-              </View>
-            </Animated.View>
-          )}
+              </Animated.View>
+            )}
 
-          {showServices && services.length > 0 && (
-            <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
-                <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {services.length} service(s)</Text>
-              </View>
-              {services.map((s, idx) => (
-                <Animated.View
-                  entering={FadeInUp.delay(idx * 100).duration(600)}
-                  key={s.service_id}
-                  style={{ marginBottom: Spacing.md }}
+            {searched && products.length === 0 && services.length === 0 && (
+              <Animated.View entering={FadeInUp} style={styles.emptyState}>
+                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconBlur, { borderColor: colors.cardBorder }]}>
+                  <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
+                </GlassView>
+                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you need.</Text>
+
+                <Pressable
+                  style={[styles.resetBtn, { backgroundColor: colors.pink }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setQuery('');
+                    setSelectedProductCategoryIds([]);
+                    setSelectedServiceCategoryIds([]);
+                    handleClearAdFilter();
+                  }}
                 >
-                  <ServiceCard
-                    name={s.name}
-                    providerName={s.provider_name}
-                    price={s.price}
-                    imageUrl={s.image_url}
-                    duration={s.duration || undefined}
-                    rating={s.rating}
-                    reviewCount={s.review_count}
-                    onView={() => router.push(`/service/${s.service_id}`)}
-                    onBookNow={() => router.push(`/service/${s.service_id}`)}
-                  />
-                </Animated.View>
-              ))}
-            </Animated.View>
-          )}
+                  <Text style={styles.resetBtnText}>Clear All Filters</Text>
+                </Pressable>
+              </Animated.View>
+            )}
 
-          {searched && products.length === 0 && services.length === 0 && (
-            <Animated.View entering={FadeInUp} style={styles.emptyState}>
-              <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconBlur, { borderColor: colors.cardBorder }]}>
-                <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
+            <View style={{ height: androidTabOffset + Spacing.xl }} />
+          </Animated.ScrollView>
+
+          {/* Glowing Translucent Spinning Circle Overlay */}
+          {loading && (
+            <Animated.View
+              entering={FadeInDown.duration(200)}
+              style={styles.loadingOverlay}
+            >
+              <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={[styles.loadingGlass, { borderColor: colors.cardBorder }]}>
+                <ActivityIndicator size="large" color={colors.pink} />
+                <Text style={[styles.loadingOverlayText, { color: colors.textPrimary }]}>{t('shuffling_feed')}</Text>
               </GlassView>
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you need.</Text>
-
-              <Pressable
-                style={[styles.resetBtn, { backgroundColor: colors.pink }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setQuery('');
-                  setSelectedProductCategoryIds([]);
-                  setSelectedServiceCategoryIds([]);
-                  handleClearAdFilter();
-                }}
-              >
-                <Text style={styles.resetBtnText}>Clear All Filters</Text>
-              </Pressable>
             </Animated.View>
           )}
-
-          <View style={{ height: androidTabOffset + Spacing.xl }} />
-        </Animated.ScrollView>
+        </View>
       )}
     </View>
   );
@@ -568,6 +614,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Fonts.bold,
     fontSize: FontSizes.md,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    zIndex: 999,
+  },
+  loadingGlass: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    gap: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  loadingOverlayText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 4,
   },
 });
 

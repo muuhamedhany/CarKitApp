@@ -18,6 +18,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     View
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -40,6 +41,7 @@ const paymentMethods: { label: string; value: PaymentMethod; icon: string }[] = 
 const MIN_DELIVERY_DAYS = 5;
 const DATE_CHOICES_COUNT = 4;
 const SHIPPING_FEE = 50;
+const WORKSHOP_SERVICE_FEE = 70;
 const INSTAPAY_USERNAME = 'carkit.pay';
 const VODAFONE_CASH_NUMBER = '01004899835';
 
@@ -88,10 +90,25 @@ export default function CheckoutScreen() {
     );
     const [preferredDeliveryDate, setPreferredDeliveryDate] = useState(formatDateValue(estimatedStartDate));
 
+    const [deliveryType, setDeliveryType] = useState<'home_delivery' | 'workshop_fitting'>('home_delivery');
 
+    const deliveryOptions = [
+        { id: 'home_delivery', label: 'Home Delivery', icon: 'truck-delivery-outline', subtitle: 'Delivered to your address' },
+        { id: 'workshop_fitting', label: 'Apply at Workshop', icon: 'wrench-outline', subtitle: 'Fitted at partner center' }
+    ];
 
     const totalNumber = useMemo(() => Number(total) || 0, [total]);
-    const totalWithShipping = useMemo(() => totalNumber + SHIPPING_FEE, [totalNumber]);
+    const shippingCharge = useMemo(() => {
+        return deliveryType === 'home_delivery' ? SHIPPING_FEE : 0;
+    }, [deliveryType]);
+
+    const serviceCharge = useMemo(() => {
+        return deliveryType === 'workshop_fitting' ? WORKSHOP_SERVICE_FEE : 0;
+    }, [deliveryType]);
+
+    const totalWithShipping = useMemo(() => {
+        return totalNumber + shippingCharge + serviceCharge;
+    }, [totalNumber, shippingCharge, serviceCharge]);
     const cardNumberDigits = useMemo(() => cardNumber.replace(/\s/g, ''), [cardNumber]);
 
     const isValidExpiry = (value: string) => {
@@ -118,8 +135,9 @@ export default function CheckoutScreen() {
     }, [paymentMethod, transferScreenshotUri, cardHolderName, cardNumberDigits, cardExpiry, cardCvv]);
 
     const canPlaceOrder = useMemo(() => {
-        return items.length > 0 && Boolean(selectedAddressId) && canSubmitPaymentDetails && !placingOrder;
-    }, [items.length, selectedAddressId, canSubmitPaymentDetails, placingOrder]);
+        const hasAddressIfRequired = deliveryType === 'home_delivery' ? Boolean(selectedAddressId) : true;
+        return items.length > 0 && hasAddressIfRequired && canSubmitPaymentDetails && !placingOrder;
+    }, [items.length, deliveryType, selectedAddressId, canSubmitPaymentDetails, placingOrder]);
 
     const handlePickTransferScreenshot = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -192,8 +210,9 @@ export default function CheckoutScreen() {
             setPlacingOrder(true);
 
             const orderRes = await orderService.createOrder({
-                shipping_address_id: selectedAddressId,
+                shipping_address_id: deliveryType === 'home_delivery' ? selectedAddressId : undefined,
                 preferred_delivery_date: preferredDeliveryDate,
+                delivery_type: deliveryType,
             });
 
             if (!orderRes.success || !orderRes.data) {
@@ -254,83 +273,171 @@ export default function CheckoutScreen() {
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
 
-                {/* Section: Shipping */}
+                {/* Section: Fulfillment Method */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeaderRow}>
                         <View style={styles.sectionHeaderLeft}>
                             <View style={[styles.sectionIcon, { backgroundColor: colors.pink + '15' }]}>
-                                <MaterialCommunityIcons name="truck-delivery-outline" size={20} color={colors.pink} />
+                                <MaterialCommunityIcons name="layers-outline" size={20} color={colors.pink} />
                             </View>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Fulfillment Method</Text>
                         </View>
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.addAddressBtn,
-                                { backgroundColor: colors.pink + '15', opacity: pressed ? 0.7 : 1 }
-                            ]}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                router.push({ pathname: '/profile/addresses', params: { add: 'true' } });
-                            }}
-                        >
-                            <MaterialCommunityIcons name="plus" size={18} color={colors.pink} />
-                        </Pressable>
                     </View>
 
+                    <View style={styles.deliverySelectorRow}>
+                        {deliveryOptions.map((opt) => {
+                            const active = deliveryType === opt.id;
+                            return (
+                                <Pressable
+                                    key={opt.id}
+                                    style={({ pressed }) => [
+                                        styles.deliveryOptionCard,
+                                        {
+                                            borderColor: active ? colors.pink : colors.cardBorder,
+                                            backgroundColor: active ? colors.pink + '10' : 'transparent',
+                                            opacity: pressed ? 0.8 : 1,
+                                        }
+                                    ]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        setDeliveryType(opt.id as any);
+                                    }}
+                                >
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.deliveryOptionBlur}>
+                                        <MaterialCommunityIcons
+                                            name={opt.icon as any}
+                                            size={22}
+                                            color={active ? colors.pink : colors.textSecondary}
+                                        />
+                                        <Text style={[styles.deliveryOptionLabel, { color: colors.textPrimary }]}>
+                                            {opt.label}
+                                        </Text>
+                                        <Text style={[styles.deliveryOptionSub, { color: colors.textSecondary }]}>
+                                            {opt.subtitle}
+                                        </Text>
+                                        {active && (
+                                            <View style={styles.deliveryActiveDot}>
+                                                <MaterialCommunityIcons name="check-circle" size={16} color={colors.pink} />
+                                            </View>
+                                        )}
+                                    </GlassView>
+                                </Pressable>
+                            );
+                        })}
+                    </View>
+                </View>
 
 
-                    {loadingAddresses ? (
-                        <ActivityIndicator size="small" color={colors.pink} />
-                    ) : addresses.length === 0 ? (
-                        <Animated.View entering={FadeInDown.delay(200)}>
+                {deliveryType === 'home_delivery' ? (
+                    /* Section: Shipping Address */
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeaderRow}>
+                            <View style={styles.sectionHeaderLeft}>
+                                <View style={[styles.sectionIcon, { backgroundColor: colors.pink + '15' }]}>
+                                    <MaterialCommunityIcons name="truck-delivery-outline" size={20} color={colors.pink} />
+                                </View>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
+                            </View>
                             <Pressable
-                                style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+                                style={({ pressed }) => [
+                                    styles.addAddressBtn,
+                                    { backgroundColor: colors.pink + '15', opacity: pressed ? 0.7 : 1 }
+                                ]}
                                 onPress={() => {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    router.push('/profile/addresses');
+                                    router.push({ pathname: '/profile/addresses', params: { add: 'true' } });
                                 }}
                             >
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
-                                    <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                                    <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
-                                </GlassView>
+                                <MaterialCommunityIcons name="plus" size={18} color={colors.pink} />
                             </Pressable>
-                        </Animated.View>
-                    ) : (
-                        addresses.map((address, idx) => {
-                            const active = selectedAddressId === address.address_id;
-                            return (
-                                <Animated.View key={address.address_id} entering={FadeInDown.delay(200 + idx * 50)}>
-                                    <Pressable
-                                        style={[
-                                            styles.addressCard,
-                                            {
-                                                backgroundColor: active ? colors.pink + '15' : 'transparent',
-                                                borderColor: active ? colors.pink : colors.cardBorder,
-                                            },
-                                        ]}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            setSelectedAddressId(address.address_id);
-                                        }}
-                                    >
-                                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
-                                            <View style={styles.addressHeader}>
-                                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
-                                                    {address.title || 'Address'}
+                        </View>
+
+                        {loadingAddresses ? (
+                            <ActivityIndicator size="small" color={colors.pink} />
+                        ) : addresses.length === 0 ? (
+                            <Animated.View entering={FadeInDown.delay(200)}>
+                                <Pressable
+                                    style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderColor: colors.cardBorder }]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        router.push('/profile/addresses');
+                                    }}
+                                >
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                        <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
+                                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
+                                    </GlassView>
+                                </Pressable>
+                            </Animated.View>
+                        ) : (
+                            addresses.map((address, idx) => {
+                                const active = selectedAddressId === address.address_id;
+                                return (
+                                    <Animated.View key={address.address_id} entering={FadeInDown.delay(200 + idx * 50)}>
+                                        <Pressable
+                                            style={[
+                                                styles.addressCard,
+                                                {
+                                                    backgroundColor: active ? colors.pink + '15' : 'transparent',
+                                                    borderColor: active ? colors.pink : colors.cardBorder,
+                                                },
+                                            ]}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setSelectedAddressId(address.address_id);
+                                            }}
+                                        >
+                                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
+                                                <View style={styles.addressHeader}>
+                                                    <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
+                                                        {address.title || 'Address'}
+                                                    </Text>
+                                                    {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
+                                                </View>
+                                                <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                                                    {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
                                                 </Text>
-                                                {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
-                                            </View>
-                                            <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                                                {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
-                                            </Text>
-                                        </GlassView>
-                                    </Pressable>
-                                </Animated.View>
-                            );
-                        })
-                    )}
-                </View>
+                                            </GlassView>
+                                        </Pressable>
+                                    </Animated.View>
+                                );
+                            })
+                        )}
+                    </View>
+                ) : (
+                    /* Section: Workshop Fitting Details */
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeaderRow}>
+                            <View style={styles.sectionHeaderLeft}>
+                                <View style={[styles.sectionIcon, { backgroundColor: '#10B981' + '15' }]}>
+                                    <MaterialCommunityIcons name="wrench-outline" size={20} color="#10B981" />
+                                </View>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Workshop Fitting</Text>
+                            </View>
+                        </View>
+
+                        <Animated.View entering={FadeInDown.delay(200)}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.workshopCard, { borderColor: colors.cardBorder }]}>
+                                <View style={styles.workshopHeader}>
+                                    <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.pink} />
+                                    <Text style={[styles.workshopName, { color: colors.textPrimary }]}>CarKit Partner Center</Text>
+                                </View>
+                                <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
+                                    📍 Block 5, Autostrad Rd, Heliopolis, Cairo
+                                </Text>
+                                <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
+                                    📞 19985 (Hotline support)
+                                </Text>
+                                <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
+                                    <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
+                                    <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
+                                        Free complimentary professional fitting & application!
+                                    </Text>
+                                </View>
+                            </GlassView>
+                        </Animated.View>
+                    </View>
+                )}
 
 
                 {/* Section: Payment */}
@@ -509,6 +616,8 @@ export default function CheckoutScreen() {
                 </View>
 
 
+
+
                 <Animated.View entering={FadeInUp.delay(1000)}>
                     <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
                         <View style={styles.receiptHeader}>
@@ -521,14 +630,22 @@ export default function CheckoutScreen() {
                                 <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Items ({items.length})</Text>
                                 <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{totalNumber.toFixed(2)} EGP</Text>
                             </View>
-                            <View style={styles.summaryRow}>
-                                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
-                                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{SHIPPING_FEE.toFixed(2)} EGP</Text>
-                            </View>
+                            {deliveryType === 'home_delivery' ? (
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{shippingCharge.toFixed(2)} EGP</Text>
+                                </View>
+                            ) : (
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Fitting Service</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{serviceCharge.toFixed(2)} EGP</Text>
+                                </View>
+                            )}
+
                             <View style={styles.divider} />
                             <View style={styles.summaryRow}>
                                 <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Grand Total</Text>
-                                <Text 
+                                <Text
                                     style={[styles.totalValue, { color: colors.pink }]}
                                     numberOfLines={1}
                                     adjustsFontSizeToFit
@@ -541,7 +658,7 @@ export default function CheckoutScreen() {
                         <View style={styles.deliveryBadge}>
                             <MaterialCommunityIcons name="clock-fast" size={16} color={colors.pink} />
                             <Text style={[styles.deliveryBadgeText, { color: colors.pink }]}>
-                                Arrival by {formatReadableDate(preferredDeliveryDate)}
+                                {deliveryType === 'home_delivery' ? `Arrival by ${formatReadableDate(preferredDeliveryDate)}` : 'Ready for pickup & fitting instantly!'}
                             </Text>
                         </View>
                     </GlassView>
@@ -549,10 +666,10 @@ export default function CheckoutScreen() {
 
             </ScrollView>
 
-            <Animated.View 
-                entering={FadeInUp.delay(1200)} 
+            <Animated.View
+                entering={FadeInUp.delay(1200)}
                 style={[
-                    styles.bottomBar, 
+                    styles.bottomBar,
                     { bottom: insets.bottom + 20 }
                 ]}
             >
@@ -920,6 +1037,172 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.extraBold,
         fontSize: 18,
         letterSpacing: -0.5,
+    },
+    deliverySelectorRow: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        marginTop: Spacing.sm,
+    },
+    deliveryOptionCard: {
+        flex: 1,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1.5,
+        overflow: 'hidden',
+    },
+    deliveryOptionBlur: {
+        padding: Spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 120,
+    },
+    deliveryOptionLabel: {
+        fontFamily: Fonts.bold,
+        fontSize: 14,
+        marginTop: 8,
+        textAlign: 'center',
+    },
+    deliveryOptionSub: {
+        fontFamily: Fonts.medium,
+        fontSize: 10,
+        opacity: 0.7,
+        marginTop: 4,
+        textAlign: 'center',
+    },
+    deliveryActiveDot: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+    },
+    workshopCard: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg,
+        overflow: 'hidden',
+        marginTop: Spacing.sm,
+    },
+    workshopHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        marginBottom: Spacing.md,
+    },
+    workshopName: {
+        fontFamily: Fonts.bold,
+        fontSize: 16,
+    },
+    workshopDetail: {
+        fontFamily: Fonts.medium,
+        fontSize: 13,
+        marginBottom: Spacing.xs,
+        opacity: 0.9,
+    },
+    workshopBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+        borderWidth: 1,
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        marginTop: Spacing.md,
+    },
+    workshopBadgeText: {
+        fontFamily: Fonts.bold,
+        fontSize: 11,
+        flex: 1,
+    },
+    promoCard: {
+        borderWidth: 1,
+        borderRadius: 20,
+        overflow: 'hidden',
+        ...Shadows.sm,
+        marginTop: Spacing.sm,
+    },
+    promoInputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        gap: Spacing.sm,
+    },
+    promoApplyBtn: {
+        height: 52,
+        paddingHorizontal: 22,
+        borderRadius: BorderRadius.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    promoApplyBtnText: {
+        color: '#FFFFFF',
+        fontFamily: Fonts.bold,
+        fontSize: 14,
+    },
+    promoAppliedRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: Spacing.lg,
+    },
+    promoAppliedLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    promoAppliedTitle: {
+        fontFamily: Fonts.bold,
+        fontSize: 14,
+    },
+    promoAppliedSubtitle: {
+        fontFamily: Fonts.medium,
+        fontSize: 12,
+        marginTop: 2,
+        opacity: 0.8,
+    },
+    removePromoBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    promoInputContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.md,
+        height: 52,
+    },
+    promoInputIcon: {
+        marginRight: Spacing.xs,
+    },
+    promoTextInput: {
+        flex: 1,
+        fontSize: 13,
+        fontFamily: Fonts.medium,
+        height: '100%',
+        paddingVertical: 0,
+    },
+    discountLabelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    summaryPromoBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+        borderWidth: 1,
+    },
+    summaryPromoBadgeText: {
+        fontFamily: Fonts.bold,
+        fontSize: 10,
+        letterSpacing: 0.5,
+    },
+    discountValueText: {
+        fontFamily: Fonts.bold,
+        fontSize: 15,
     },
 });
 

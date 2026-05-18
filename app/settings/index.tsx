@@ -20,9 +20,25 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string; description
   { mode: 'system', label: 'System', icon: 'cellphone', description: 'Follow device settings' },
 ];
 
-const THEME_VARIANTS: { variant: string; label: string; description: string; previewColors: [string, string, ...string[]] }[] = [
-  { variant: 'traditional', label: 'Traditional Neon', description: 'Classic Pink & Purple', previewColors: ['#CD42A8', '#5923A0'] },
-  { variant: 'green', label: 'Emerald Mint', description: 'Olive & Mint Greens', previewColors: ['#10B981', '#4A5D23'] },
+const THEME_VARIANTS = [
+  {
+    variant: 'traditional',
+    label: 'Neon',
+    description: 'Pink & Purple',
+    previewColors: ['#CD42A8', '#7F39FB'],
+  },
+  {
+    variant: 'green',
+    label: 'Emerald',
+    description: 'Green & Mint',
+    previewColors: ['#10B981', '#059669'],
+  },
+  {
+    variant: 'navy',
+    label: 'Ocean',
+    description: 'Navy & Blue',
+    previewColors: ['#1E3A8A', '#3B82F6'],
+  },
 ];
 
 export default function SettingsScreen() {
@@ -132,42 +148,50 @@ export default function SettingsScreen() {
               })}
             </View>
 
-            {isDark && (
-              <View style={styles.variantContainer}>
-                <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
-                <Text style={[styles.subLabel, { color: colors.textMuted }]}>Dark Style Variant</Text>
-                <View style={styles.variantGrid}>
-                  {THEME_VARIANTS.map((option) => {
-                    const isSelected = themeVariant === option.variant;
-                    return (
-                      <Pressable
-                        key={option.variant}
-                        style={styles.variantItem}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                          setThemeVariant(option.variant as any);
-                        }}
-                      >
-                        <View style={[
-                          styles.variantCardInner,
-                          { borderColor: isSelected ? colors.pink : 'rgba(255,255,255,0.1)' }
-                        ]}>
-                          <LinearGradient
-                            colors={option.previewColors}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.variantPreview}
-                          />
+            <View style={styles.variantContainer}>
+              <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+              <Text style={[styles.subLabel, { color: colors.textMuted }]}>Theme Style Variant</Text>
+              <View style={styles.variantGrid}>
+                {THEME_VARIANTS.map((option) => {
+                  const isSelected = themeVariant === option.variant;
+                  return (
+                    <Pressable
+                      key={option.variant}
+                      style={styles.variantItem}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setThemeVariant(option.variant as any);
+                      }}
+                    >
+                      <View style={[
+                        styles.variantCardInner,
+                        {
+                          borderColor: isSelected ? colors.pink : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                          backgroundColor: isSelected
+                            ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)')
+                            : 'transparent'
+                        }
+                      ]}>
+                        <LinearGradient
+                          colors={option.previewColors}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.variantPreview}
+                        />
+                        <View style={{ flex: 1, justifyContent: 'flex-end', width: '100%', alignItems: 'center' }}>
                           <Text style={[styles.variantName, { color: isSelected ? colors.pink : colors.textPrimary }]}>
                             {option.label}
                           </Text>
+                          <Text style={[styles.variantDesc, { color: colors.textMuted }]}>
+                            {option.description}
+                          </Text>
                         </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
-            )}
+            </View>
           </GlassView>
         </Animated.View>
 
@@ -176,8 +200,8 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionLabel, { color: colors.pink }]}>Support & Info</Text>
           <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
             {renderSettingRow('help-circle-outline', 'Help Center', 'FAQs and customer support', () => router.push('/support'))}
-            {renderSettingRow('file-document-outline', 'Terms of Service', 'Read our usage guidelines', () => { })}
-            {renderSettingRow('shield-check-outline', 'Privacy Policy', 'How we protect your data', () => { }, true)}
+            {renderSettingRow('file-document-outline', 'Terms of Service', 'Read our usage guidelines', () => router.push('/settings/terms' as any))}
+            {renderSettingRow('shield-check-outline', 'Privacy Policy', 'How we protect your data', () => router.push('/settings/privacy' as any), true)}
           </GlassView>
         </Animated.View>
 
@@ -334,13 +358,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   themeChipLabel: {
-    fontFamily: Fonts.bold,
-    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
 
   variantContainer: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   divider: {
     height: 1,
@@ -348,11 +373,11 @@ const styles = StyleSheet.create({
   },
   subLabel: {
     fontFamily: Fonts.bold,
-    fontSize: 10,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-    opacity: 0.5,
+    letterSpacing: 1.2,
+    marginBottom: Spacing.md,
+    opacity: 0.8,
   },
   variantGrid: {
     flexDirection: 'row',
@@ -363,20 +388,32 @@ const styles = StyleSheet.create({
   },
   variantCardInner: {
     borderRadius: BorderRadius.lg,
-    padding: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.02)',
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 100,
   },
   variantPreview: {
     width: '100%',
-    height: 30,
-    borderRadius: 6,
-    marginBottom: 8,
+    height: 38,
+    borderRadius: 8,
+    marginBottom: 6,
   },
   variantName: {
     fontFamily: Fonts.bold,
-    fontSize: 10,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  variantDesc: {
+    fontFamily: Fonts.medium,
+    fontSize: 9,
+    textAlign: 'center',
+    opacity: 0.6,
+    lineHeight: 11,
   },
 
   logoutBtn: {

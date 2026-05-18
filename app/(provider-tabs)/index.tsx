@@ -127,7 +127,7 @@ export default function ProviderDashboard() {
 
             <ScrollView
                 contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.md }]}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'} />}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}

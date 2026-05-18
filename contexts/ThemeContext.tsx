@@ -56,7 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (savedMode === 'light' || savedMode === 'dark' || savedMode === 'system') {
           setThemeModeState(savedMode);
         }
-        if (savedVariant === 'traditional' || savedVariant === 'green') {
+        if (savedVariant === 'traditional' || savedVariant === 'green' || savedVariant === 'navy') {
           setThemeVariantState(savedVariant);
         }
       } catch {
