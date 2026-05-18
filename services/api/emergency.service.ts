@@ -1,14 +1,18 @@
 import { apiFetch } from './client';
 import { ApiResponse, Service } from '@/types/api.types';
 
+export type CoordinateValue = number | string | null;
+
 export type EmergencyRequest = {
   request_id: number;
   service_id: number;
   service_name?: string;
   service_type?: string;
   status: 'searching' | 'accepted' | 'arrived' | 'completed' | 'expired' | 'cancelled' | string;
-  customer_lat: number;
-  customer_lng: number;
+  customer_lat: CoordinateValue;
+  customer_lng: CoordinateValue;
+  latitude?: CoordinateValue;
+  longitude?: CoordinateValue;
   customer_address?: string;
   payment_method: string;
   payment_status: string;
@@ -16,10 +20,12 @@ export type EmergencyRequest = {
   employee_full_name?: string;
   employee_name?: string;
   employee_phone?: string;
-  employee_lat?: number;
-  employee_lng?: number;
-  tracking_lat?: number;
-  tracking_lng?: number;
+  employee_lat?: CoordinateValue;
+  employee_lng?: CoordinateValue;
+  employee_last_seen_at?: string;
+  tracking_lat?: CoordinateValue;
+  tracking_lng?: CoordinateValue;
+  tracking_recorded_at?: string;
 };
 
 export type EmergencyEmployee = {
@@ -31,9 +37,14 @@ export type EmergencyEmployee = {
   cancellation_count: number;
 };
 
+export type EmergencyServiceOption = Service & {
+  assigned_employee_count: number;
+  online_employee_count: number;
+};
+
 export const emergencyService = {
   getServices() {
-    return apiFetch<ApiResponse<Array<Service & { online_employee_count: number }>>>('/emergency/services');
+    return apiFetch<ApiResponse<EmergencyServiceOption[]>>('/emergency/services');
   },
 
   createRequest(payload: { service_id: number; lat: number; lng: number; customer_address?: string; payment_method: string }) {
