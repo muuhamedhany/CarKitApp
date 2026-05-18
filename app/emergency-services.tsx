@@ -6,20 +6,36 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CenteredHeader, GlassView } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { emergencyService } from '@/services/api/emergency.service';
-import { Service } from '@/types/api.types';
+import { useToast } from '@/contexts/ToastContext';
+import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
 
 export default function EmergencyServicesScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const [services, setServices] = useState<Array<Service & { online_employee_count: number }>>([]);
+  const { showToast } = useToast();
+  const [services, setServices] = useState<EmergencyServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     emergencyService.getServices()
-      .then((res) => setServices(res.data || []))
-      .finally(() => setLoading(false));
-  }, []);
+      .then((res) => {
+        if (mounted) setServices(res.data || []);
+      })
+      .catch(() => {
+        if (mounted) {
+          setServices([]);
+          showToast('error', 'Emergency Services', 'Could not load emergency services.');
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -34,23 +50,52 @@ export default function EmergencyServicesScreen() {
           </GlassView>
         ) : null}
         {services.map((service) => (
-          <Pressable
+          <EmergencyServiceTile
             key={service.service_id}
-            style={[styles.tile, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}
-            onPress={() => router.push({ pathname: '/emergency-request' as any, params: { serviceId: service.service_id, serviceName: service.name, price: String(service.price || '') } })}
-          >
-            <View style={[styles.iconBox, { backgroundColor: colors.errorSoft }]}>
-              <MaterialCommunityIcons name="wrench-clock" size={26} color={colors.error} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.name, { color: colors.textPrimary }]}>{service.name}</Text>
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>{service.online_employee_count} available now</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
-          </Pressable>
+            service={service}
+            colors={colors}
+            onPress={() => router.push({
+              pathname: '/emergency-request' as any,
+              params: { serviceId: service.service_id, serviceName: service.name, price: String(service.price || '') },
+            })}
+          />
         ))}
       </ScrollView>
     </View>
+  );
+}
+
+function EmergencyServiceTile({
+  service,
+  colors,
+  onPress,
+}: {
+  service: EmergencyServiceOption;
+  colors: ReturnType<typeof useTheme>['colors'];
+  onPress: () => void;
+}) {
+  const onlineCount = service.online_employee_count || 0;
+  const assignedCount = service.assigned_employee_count || 0;
+  const availabilityText = onlineCount > 0
+    ? `${onlineCount} available now`
+    : `${assignedCount} assigned, none online`;
+
+  return (
+    <Pressable
+      style={[styles.tile, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}
+      onPress={onPress}
+    >
+      <View style={[styles.iconBox, { backgroundColor: colors.errorSoft }]}>
+        <MaterialCommunityIcons name="wrench-clock" size={26} color={colors.error} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.name, { color: colors.textPrimary }]}>{service.name}</Text>
+        <Text style={[styles.meta, { color: onlineCount > 0 ? colors.textSecondary : colors.warning }]}>
+          {availabilityText}
+        </Text>
+      </View>
+      <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+    </Pressable>
   );
 }
 

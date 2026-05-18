@@ -1,88 +1,193 @@
-import { useCallback, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-} from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { providerService } from '@/services/api/provider.service';
 import { Service } from '@/types/api.types';
-import { FormInput, GradientButton, GlassView} from '@/components';
+import { FormInput, GlassView } from '@/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { Shadows, Spacing, Fonts, FontSizes, BorderRadius } from '@/constants/theme';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { useTabReload } from '@/hooks/useTabReload';
 
 type Filter = 'all' | 'enabled' | 'disabled' | 'pending';
 type SortMode = 'latest' | 'price-desc' | 'duration-asc';
 
-function ServiceCard({ item, colors, router, onToggle, index, isDark }: {
-    item: Service; colors: any; router: any;
+type ServiceBadge = {
+    label: string;
+    color: string;
+    backgroundColor: string;
+    progressColor: string;
+    locked: boolean;
+};
+
+function getServiceBadge(item: Service): ServiceBadge {
+    const status = String(item.status || '').toLowerCase();
+    const isPending = status === 'pending';
+    const isRejected = status === 'rejected';
+    const isActive = item.is_active && !isPending && !isRejected;
+
+    if (isPending) {
+        return {
+            label: 'Pending',
+            color: '#F59E0B',
+            backgroundColor: 'rgba(245,158,11,0.15)',
+            progressColor: '#F59E0B',
+            locked: true,
+        };
+    }
+
+    if (isRejected) {
+        return {
+            label: 'Rejected',
+            color: '#EF4444',
+            backgroundColor: 'rgba(239,68,68,0.15)',
+            progressColor: '#EF4444',
+            locked: true,
+        };
+    }
+
+    if (isActive) {
+        return {
+            label: 'Enabled',
+            color: '#10B981',
+            backgroundColor: 'rgba(16,185,129,0.15)',
+            progressColor: '#10B981',
+            locked: false,
+        };
+    }
+
+    return {
+        label: 'Disabled',
+        color: '#EF4444',
+        backgroundColor: 'rgba(239,68,68,0.15)',
+        progressColor: '#EF4444',
+        locked: false,
+    };
+}
+
+function ServiceCard({
+    item,
+    colors,
+    router,
+    onToggle,
+    index,
+    isDark,
+    toggling,
+}: {
+    item: Service;
+    colors: any;
+    router: any;
     onToggle: (id: number) => void;
     index: number;
     isDark: boolean;
+    toggling: boolean;
 }) {
-    const isPending = item.status === 'pending';
-    const isRejected = item.status === 'rejected';
-    const isActive = item.is_active && !isPending && !isRejected;
+    const badge = getServiceBadge(item);
+    const canToggle = !badge.locked && !toggling;
+    const showImage = Boolean(item.image_url);
+    const toggleLabel = badge.locked ? badge.label : item.is_active ? 'Disable' : 'Enable';
+    const toggleIcon = badge.locked
+        ? 'lock-outline'
+        : item.is_active
+            ? 'toggle-switch'
+            : 'toggle-switch-off-outline';
 
-    const badgeBg = isPending
-        ? 'rgba(245,158,11,0.15)'
-        : isRejected
-            ? 'rgba(239,68,68,0.15)'
-            : isActive
-                ? 'rgba(16,185,129,0.15)'
-                : 'rgba(239,68,68,0.15)';
+    const handleNavigate = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/provider-service/${item.service_id}`);
+    };
 
-    const badgeColor = isPending ? '#F59E0B' : isRejected ? '#EF4444' : isActive ? '#10B981' : '#EF4444';
-    const badgeLabel = isPending ? 'Pending' : isRejected ? 'Rejected' : isActive ? 'Enabled' : 'Disabled';
+    const handleToggle = () => {
+        if (!canToggle) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        onToggle(item.service_id);
+    };
 
     return (
-        <Animated.View entering={FadeInUp.delay(index * 100).duration(600)}>
-            <GlassView 
-                intensity={isDark ? 20 : 40} 
-                tint={isDark ? 'dark' : 'light'} 
-                style={[styles.card, { borderColor: colors.cardBorder }]}
+        <Animated.View
+            entering={FadeInUp.delay(index * 50).duration(400)}
+            style={styles.cardWrapper}
+        >
+            <GlassView
+                intensity={isDark ? 20 : 40}
+                tint={isDark ? 'dark' : 'light'}
+                style={[styles.serviceCard, { borderColor: colors.cardBorder }]}
             >
-                <View style={styles.cardTop}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.cardName, { color: colors.textPrimary }]}>{item.name}</Text>
-                        <Text style={[styles.cardDuration, { color: colors.textSecondary }]}>{item.duration} min</Text>
-                        <Text style={[styles.cardPrice, { color: colors.pink }]}>
+                <View style={styles.cardTopSection}>
+                    <View style={[styles.serviceImage, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                        {showImage ? (
+                            <Image source={{ uri: item.image_url! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                        ) : (
+                            <MaterialCommunityIcons name="car-wrench" size={32} color={colors.pink} />
+                        )}
+                    </View>
+
+                    <View style={styles.serviceInfo}>
+                        <View style={styles.serviceHeaderRow}>
+                            <Text style={[styles.serviceName, { color: colors.textPrimary }]} numberOfLines={1}>
+                                {item.name}
+                            </Text>
+                            <View style={[styles.statusBadge, { backgroundColor: badge.backgroundColor }]}>
+                                <Text style={[styles.statusBadgeText, { color: badge.color }]}>
+                                    {badge.label}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <Text style={[styles.servicePrice, { color: colors.textSecondary }]}>
                             {Number(item.price).toLocaleString('en-EG')} EGP
                         </Text>
-                    </View>
-                    {/* Badge — tappable only when not pending/rejected */}
-                    <Pressable 
-                        onPress={() => {
-                            if (!isPending && !isRejected) {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                onToggle(item.service_id);
-                            }
-                        }} 
-                        disabled={isPending || isRejected}
-                    >
-                        <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-                            <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeLabel}</Text>
+
+                        <View style={styles.serviceMetaRow}>
+                            <View style={[styles.serviceMetaTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                                <View style={[styles.serviceMetaFill, { backgroundColor: badge.progressColor }]} />
+                            </View>
+                            <Text style={[styles.durationText, { color: badge.color }]}>{item.duration} min</Text>
                         </View>
-                    </Pressable>
+                    </View>
                 </View>
-                <GradientButton
-                    title="View Details"
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        router.push(`/provider-service/${item.service_id}`);
-                    }}
-                    style={{ marginTop: Spacing.md }}
-                />
+
+                <View style={[styles.cardBottomSection, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                    <View style={styles.actionRow}>
+                        <Pressable
+                            style={[
+                                styles.serviceControls,
+                                {
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                                    opacity: badge.locked ? 0.65 : 1,
+                                },
+                            ]}
+                            disabled={!canToggle}
+                            onPress={handleToggle}
+                        >
+                            {toggling ? (
+                                <ActivityIndicator size="small" color={colors.pink} style={styles.toggleLoader} />
+                            ) : (
+                                <>
+                                    <MaterialCommunityIcons name={toggleIcon as any} size={20} color={badge.locked ? colors.textMuted : badge.color} />
+                                    <Text style={[styles.serviceControlText, { color: badge.locked ? colors.textMuted : colors.textPrimary }]}>
+                                        {toggleLabel}
+                                    </Text>
+                                </>
+                            )}
+                        </Pressable>
+
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.viewDetailsBtn,
+                                { backgroundColor: colors.purple, opacity: pressed ? 0.8 : 1 },
+                            ]}
+                            onPress={handleNavigate}
+                        >
+                            <Text style={styles.viewDetailsBtnText}>View Details</Text>
+                        </Pressable>
+                    </View>
+                </View>
             </GlassView>
         </Animated.View>
     );
@@ -100,55 +205,79 @@ export default function ServicesScreen() {
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState<Filter>('all');
     const [sortMode, setSortMode] = useState<SortMode>('latest');
+    const [togglingId, setTogglingId] = useState<number | null>(null);
+    const listRef = useRef<FlatList<Service>>(null);
+    const hasLoaded = useRef(false);
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (isSilent = false) => {
         try {
-            setLoading(true);
+            if (!isSilent && !hasLoaded.current) setLoading(true);
             const res = await providerService.getMyServices();
             if (res.success && res.data) {
                 setServices(res.data);
+                hasLoaded.current = true;
             }
         } catch (err: any) {
             showToast('error', 'Error', err?.message || 'Failed to load services.');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     }, [showToast]);
 
-    useFocusEffect(useCallback(() => { load(); }, [load]));
+    useFocusEffect(useCallback(() => { load(hasLoaded.current); }, [load]));
 
-    const onRefresh = useCallback(async () => {
+    const onRefresh = useCallback(() => {
         setRefreshing(true);
-        await load();
-        setRefreshing(false);
+        load(true);
     }, [load]);
 
-    const handleToggle = async (id: number) => {
+    useTabReload('services', () => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+        onRefresh();
+    });
+
+    const handleToggle = useCallback(async (id: number) => {
+        if (togglingId !== null) return;
+
+        setTogglingId(id);
         try {
             const res = await providerService.toggleServiceActive(id);
             if (res.success && res.data) {
-                setServices(prev => prev.map(s => s.service_id === id ? res.data! : s));
+                setServices(prev => prev.map(service => service.service_id === id ? res.data! : service));
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
         } catch {
             showToast('error', 'Error', 'Failed to toggle service.');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } finally {
+            setTogglingId(null);
         }
-    };
+    }, [showToast, togglingId]);
 
-    const filtered = services
-        .filter((service) => {
-            const matchQ = service.name.toLowerCase().includes(query.toLowerCase());
-            if (filter === 'pending') return matchQ && service.status === 'pending';
-            if (filter === 'enabled') return matchQ && service.is_active && service.status !== 'pending';
-            if (filter === 'disabled') return matchQ && !service.is_active && service.status !== 'pending';
-            return matchQ;
-        })
-        .sort((left, right) => {
-            if (sortMode === 'price-desc') return Number(right.price) - Number(left.price);
-            if (sortMode === 'duration-asc') return Number(left.duration) - Number(right.duration);
-            return Number(right.service_id) - Number(left.service_id);
-        });
+    const filtered = useMemo(() => {
+        const normalizedQuery = query.trim().toLowerCase();
 
-    const totals = services.reduce(
+        return services
+            .filter((service) => {
+                const status = String(service.status || '').toLowerCase();
+                const matchQuery =
+                    service.name.toLowerCase().includes(normalizedQuery) ||
+                    (service.category_name || '').toLowerCase().includes(normalizedQuery);
+
+                if (filter === 'pending') return matchQuery && status === 'pending';
+                if (filter === 'enabled') return matchQuery && service.is_active && status !== 'pending';
+                if (filter === 'disabled') return matchQuery && !service.is_active && status !== 'pending';
+                return matchQuery;
+            })
+            .sort((left, right) => {
+                if (sortMode === 'price-desc') return Number(right.price) - Number(left.price);
+                if (sortMode === 'duration-asc') return Number(left.duration) - Number(right.duration);
+                return Number(right.service_id) - Number(left.service_id);
+            });
+    }, [filter, query, services, sortMode]);
+
+    const totals = useMemo(() => services.reduce(
         (acc, service) => {
             acc.total += 1;
             if (service.is_active) acc.enabled += 1;
@@ -156,7 +285,7 @@ export default function ServicesScreen() {
             return acc;
         },
         { total: 0, enabled: 0, disabled: 0 }
-    );
+    ), [services]);
 
     const filterOptions: { key: Filter; label: string }[] = [
         { key: 'all', label: 'All' },
@@ -165,6 +294,18 @@ export default function ServicesScreen() {
         { key: 'disabled', label: 'Disabled' },
     ];
 
+    const renderServiceItem = useCallback(({ item, index }: { item: Service; index: number }) => (
+        <ServiceCard
+            item={item}
+            colors={colors}
+            router={router}
+            onToggle={handleToggle}
+            index={index}
+            isDark={isDark}
+            toggling={togglingId === item.service_id}
+        />
+    ), [colors, handleToggle, isDark, router, togglingId]);
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
@@ -172,36 +313,25 @@ export default function ServicesScreen() {
                 style={StyleSheet.absoluteFill}
             />
 
-            {/* Decorative Orbs */}
-            <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
-            <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
+            <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
+            <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
             <FlatList
+                ref={listRef}
                 data={filtered}
-                keyExtractor={(i) => String(i.service_id)}
-                contentContainerStyle={styles.list}
+                renderItem={renderServiceItem}
+                keyExtractor={(item) => String(item.service_id)}
+                contentContainerStyle={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
-                ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />
+                }
                 ListHeaderComponent={
-                    <View style={{ gap: Spacing.md }}>
-                        {/* Header */}
-                        <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-                            <Text style={[styles.title, { color: colors.textPrimary }]}>Services Management</Text>
-
-                            <View style={styles.statsRow}>
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                                    <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
-                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total</Text>
-                                </GlassView>
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                                    <Text style={[styles.statsValue, { color: '#10B981' }]}>{totals.enabled}</Text>
-                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Enabled</Text>
-                                </GlassView>
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
-                                    <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
-                                    <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Disabled</Text>
-                                </GlassView>
+                    <View style={styles.header}>
+                        <View style={styles.headerTop}>
+                            <View>
+                                <Text style={[styles.title, { color: colors.textPrimary }]}>Services</Text>
+                                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your service catalog</Text>
                             </View>
 
                             <Pressable
@@ -212,12 +342,26 @@ export default function ServicesScreen() {
                                 hitSlop={8}
                                 style={[styles.headerAction, { backgroundColor: colors.pink }]}
                             >
-                                <MaterialCommunityIcons name="plus" size={16} color={colors.white} />
-                                <Text style={[styles.headerActionText, { color: colors.white }]}>Add Service</Text>
+                                <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
+                                <Text style={[styles.headerActionText, { color: colors.white }]}>Add</Text>
                             </Pressable>
-                        </Animated.View>
+                        </View>
 
-                        {/* Search */}
+                        <View style={styles.statsRow}>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
+                                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total Services</Text>
+                            </GlassView>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.enabled}</Text>
+                                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Enabled</Text>
+                            </GlassView>
+                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
+                                <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.disabled}</Text>
+                                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Disabled</Text>
+                            </GlassView>
+                        </View>
+
                         <View style={styles.searchWrap}>
                             <FormInput
                                 icon="magnify"
@@ -227,101 +371,83 @@ export default function ServicesScreen() {
                             />
                         </View>
 
-                        {/* Filter pills */}
-                        <View style={styles.controlsWrap}>
-                            <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.filterRow}
-                            >
-                                {filterOptions.map((f) => {
-                                    const active = filter === f.key;
-                                    return (
-                                        <Pressable
-                                            key={f.key}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setFilter(f.key);
-                                            }}
-                                        >
-                                            <GlassView
-                                                intensity={active ? 100 : (isDark ? 20 : 40)}
-                                                tint={isDark ? 'dark' : 'light'}
-                                                style={[
-                                                    styles.filterChip,
-                                                    {
-                                                        backgroundColor: active ? colors.pink : 'transparent',
-                                                        borderColor: active ? colors.pink : colors.cardBorder,
-                                                    },
-                                                ]}
-                                            >
-                                                <Text style={[
-                                                    styles.filterChipText,
-                                                    { color: active ? colors.white : colors.textPrimary },
-                                                ]}>
-                                                    {f.label}
-                                                </Text>
-                                            </GlassView>
-                                        </Pressable>
-                                    );
-                                })}
-                            </ScrollView>
-                        </View>
+                        <ScrollView
+                            style={styles.controlsScroll}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.filterRow}
+                        >
+                            {filterOptions.map((option) => {
+                                const isActive = filter === option.key;
+                                return (
+                                    <Pressable
+                                        key={option.key}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setFilter(option.key);
+                                        }}
+                                        style={[
+                                            styles.filterChip,
+                                            {
+                                                backgroundColor: isActive ? colors.pink : (isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)'),
+                                                borderColor: isActive ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={[styles.filterText, { color: isActive ? colors.white : colors.textPrimary }]}>
+                                            {option.label}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </ScrollView>
 
-                        <View style={styles.controlsWrap}>
-                            <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.sortRow}
-                            >
-                                {([
-                                    { key: 'latest', label: 'Latest' },
-                                    { key: 'price-desc', label: 'Price' },
-                                    { key: 'duration-asc', label: 'Duration' },
-                                ] as const).map((option) => {
-                                    const active = sortMode === option.key;
-                                    return (
-                                        <Pressable
-                                            key={option.key}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setSortMode(option.key);
-                                            }}
-                                        >
-                                            <GlassView
-                                                intensity={active ? 100 : (isDark ? 20 : 40)}
-                                                tint={isDark ? 'dark' : 'light'}
-                                                style={[
-                                                    styles.sortChip,
-                                                    {
-                                                        backgroundColor: active ? colors.backgroundSecondary : 'transparent',
-                                                        borderColor: active ? colors.pink : colors.cardBorder,
-                                                    },
-                                                ]}
-                                            >
-                                                <MaterialCommunityIcons name="sort" size={14} color={active ? colors.pink : colors.textSecondary} />
-                                                <Text style={[styles.sortText, { color: active ? colors.pink : colors.textSecondary }]}>{option.label}</Text>
-                                            </GlassView>
-                                        </Pressable>
-                                    );
-                                })}
-                            </ScrollView>
-                        </View>
+                        <ScrollView
+                            style={styles.controlsScroll}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.sortRow}
+                        >
+                            {([
+                                { key: 'latest', label: 'Latest' },
+                                { key: 'price-desc', label: 'Price' },
+                                { key: 'duration-asc', label: 'Duration' },
+                            ] as const).map((option) => {
+                                const isActive = sortMode === option.key;
+                                return (
+                                    <Pressable
+                                        key={option.key}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setSortMode(option.key);
+                                        }}
+                                        style={[
+                                            styles.sortChip,
+                                            {
+                                                backgroundColor: isActive ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') : 'transparent',
+                                                borderColor: isActive ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                    >
+                                        <MaterialCommunityIcons name="sort" size={14} color={isActive ? colors.pink : colors.textMuted} />
+                                        <Text style={[styles.sortText, { color: isActive ? colors.pink : colors.textMuted }]}>{option.label}</Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </ScrollView>
                     </View>
                 }
-
-                renderItem={({ item, index }) => (
-                    <ServiceCard item={item} colors={colors} router={router} onToggle={handleToggle} index={index} isDark={isDark} />
-                )}
                 ListEmptyComponent={
-                    !loading ? (
-                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.empty, { borderColor: colors.cardBorder }]}>
-                            <MaterialCommunityIcons name="wrench-outline" size={52} color={colors.textMuted} />
+                    loading ? (
+                        <ActivityIndicator size="large" color={colors.pink} style={styles.loadingState} />
+                    ) : (
+                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
+                            <MaterialCommunityIcons name="wrench-outline" size={64} color={colors.textMuted} />
                             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                                {query ? 'No services match your search.' : 'No services yet. Tap + to add one.'}
+                                {query ? 'No services match your search.' : 'No services found'}
                             </Text>
                         </GlassView>
-                    ) : null
+                    )
                 }
             />
         </View>
@@ -329,7 +455,9 @@ export default function ServicesScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: {
+        flex: 1,
+    },
     orb: {
         position: 'absolute',
         width: 300,
@@ -337,122 +465,232 @@ const styles = StyleSheet.create({
         borderRadius: 150,
         opacity: 0.5,
     },
-    header: {
-        paddingHorizontal: Spacing.md,
-        paddingBottom: Spacing.md,
-        gap: Spacing.md,
+    listContent: {
+        padding: Spacing.md,
+        paddingBottom: 100,
     },
-    title: { 
-        fontFamily: Fonts.extraBold, 
+    header: {
+        marginBottom: Spacing.lg,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    title: {
+        fontFamily: Fonts.extraBold,
         fontSize: 32,
         letterSpacing: -1,
     },
+    subtitle: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.sm,
+        marginTop: 4,
+    },
     headerAction: {
-        paddingHorizontal: Spacing.md,
-        minHeight: 42,
-        borderRadius: BorderRadius.full,
         flexDirection: 'row',
-        gap: 6,
         alignItems: 'center',
-        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: BorderRadius.full,
+        gap: 4,
     },
     headerActionText: {
-        fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.sm,
-    },
-    searchWrap: {
-        paddingHorizontal: Spacing.md,
+        fontFamily: Fonts.bold,
+        fontSize: 12,
     },
     statsRow: {
         flexDirection: 'row',
         gap: Spacing.sm,
-        marginBottom: Spacing.sm,
+        marginBottom: Spacing.lg,
     },
     statsCard: {
         flex: 1,
+        padding: Spacing.md,
         borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        padding: Spacing.md,
-        overflow: 'hidden',
-        ...Shadows.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...Shadows.sm,
     },
     statsValue: {
         fontFamily: Fonts.bold,
-        fontSize: FontSizes.xl,
+        fontSize: FontSizes.lg,
     },
     statsLabel: {
         fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
-        marginTop: 2,
+        fontSize: 10,
+        textAlign: 'center',
     },
-    controlsWrap: {
-        marginBottom: Spacing.xs,
+    searchWrap: {
+        marginBottom: Spacing.md,
+    },
+    controlsScroll: {
+        marginHorizontal: -Spacing.md,
+        marginBottom: Spacing.sm,
     },
     filterRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: Spacing.sm,
         paddingHorizontal: Spacing.md,
-        paddingBottom: Spacing.sm,
+        gap: Spacing.sm,
+        paddingBottom: 4,
     },
     filterChip: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 7,
-        minHeight: 40,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
-        alignSelf: 'flex-start',
-        overflow: 'hidden',
     },
-    filterChipText: {
+    filterText: {
         fontFamily: Fonts.semiBold,
-        fontSize: FontSizes.xs,
+        fontSize: FontSizes.sm,
     },
     sortRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: Spacing.sm,
         paddingHorizontal: Spacing.md,
-        paddingBottom: Spacing.sm,
+        gap: Spacing.sm,
+        paddingBottom: 4,
     },
     sortChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 7,
-        minHeight: 40,
-        overflow: 'hidden',
+        gap: 4,
     },
     sortText: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.xs,
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
     },
-    list: { paddingHorizontal: Spacing.md, paddingBottom: 140, paddingTop: Spacing.md },
-
-    card: { 
-        borderRadius: BorderRadius.xl, 
-        borderWidth: 1, 
-        padding: Spacing.md,
-        overflow: 'hidden',
-        ...Shadows.md,
+    cardWrapper: {
+        marginBottom: Spacing.md,
     },
-    cardTop: { flexDirection: 'row', alignItems: 'flex-start' },
-    cardName: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 2 },
-    cardDuration: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 4 },
-    cardPrice: { fontFamily: Fonts.semiBold, fontSize: FontSizes.md },
-    badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: BorderRadius.full },
-    badgeText: { fontFamily: Fonts.semiBold, fontSize: FontSizes.xs, textTransform: 'capitalize' },
-    empty: {
-        padding: Spacing.xxl, 
-        borderRadius: BorderRadius.xl, 
+    serviceCard: {
+        borderRadius: BorderRadius.xl,
         borderWidth: 1,
-        alignItems: 'center', 
-        marginTop: Spacing.xl,
+        padding: Spacing.md,
+        ...Shadows.sm,
+    },
+    cardTopSection: {
+        flexDirection: 'row',
+        marginBottom: Spacing.md,
+    },
+    serviceImage: {
+        width: 80,
+        height: 80,
+        borderRadius: BorderRadius.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
     },
-    emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md, marginTop: Spacing.md, textAlign: 'center' },
+    serviceInfo: {
+        flex: 1,
+        marginLeft: Spacing.md,
+        justifyContent: 'space-between',
+    },
+    serviceHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: Spacing.sm,
+    },
+    serviceName: {
+        flex: 1,
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.md,
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: BorderRadius.full,
+    },
+    statusBadgeText: {
+        fontFamily: Fonts.bold,
+        fontSize: 10,
+    },
+    servicePrice: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+        marginTop: 2,
+        marginBottom: 8,
+    },
+    serviceMetaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    serviceMetaTrack: {
+        flex: 1,
+        height: 6,
+        borderRadius: 3,
+        overflow: 'hidden',
+    },
+    serviceMetaFill: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 3,
+    },
+    durationText: {
+        fontFamily: Fonts.medium,
+        fontSize: 12,
+        minWidth: 48,
+        textAlign: 'right',
+    },
+    cardBottomSection: {
+        paddingTop: Spacing.md,
+        borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+    },
+    serviceControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.lg,
+        paddingHorizontal: 10,
+        height: 40,
+        minWidth: 104,
+        gap: 6,
+    },
+    serviceControlText: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
+    },
+    toggleLoader: {
+        minWidth: 72,
+    },
+    viewDetailsBtn: {
+        flex: 1,
+        height: 40,
+        borderRadius: BorderRadius.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    viewDetailsBtnText: {
+        color: '#FFF',
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.sm,
+    },
+    loadingState: {
+        marginTop: 100,
+    },
+    emptyState: {
+        padding: Spacing.xl,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        overflow: 'hidden',
+        marginTop: 50,
+    },
+    emptyText: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.md,
+        marginTop: Spacing.md,
+        textAlign: 'center',
+    },
 });
-
