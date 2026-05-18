@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Platform,
   Pressable,
@@ -168,15 +169,23 @@ export default function HomeScreen() {
       if (token) headers.Authorization = `Bearer ${token}`;
 
       const [prodRes, servRes, catRes] = await Promise.all([
-        fetch(`${API_URL}/products?page=1&pageSize=6`, { headers }),
-        fetch(`${API_URL}/services?page=1&pageSize=4`, { headers }),
+        fetch(`${API_URL}/products?page=1&pageSize=50`, { headers }),
+        fetch(`${API_URL}/services?page=1&pageSize=30`, { headers }),
         fetch(`${API_URL}/categories`, { headers }),
       ]);
       const [prodData, servData, catData] = await Promise.all([
         prodRes.json(), servRes.json(), catRes.json(),
       ]);
-      if (prodData.success) setProducts(prodData.data || []);
-      if (servData.success) setServices(servData.data || []);
+
+      let prodList = prodData.data || [];
+      let servList = servData.data || [];
+
+      // Dynamic Shuffling: shuffle items randomly and pick a subset to render
+      prodList = [...prodList].sort(() => Math.random() - 0.5).slice(0, 6);
+      servList = [...servList].sort(() => Math.random() - 0.5).slice(0, 4);
+
+      if (prodData.success) setProducts(prodList);
+      if (servData.success) setServices(servList);
       if (catData.success) setProductCategories(catData.data || []);
 
       try {
@@ -333,7 +342,15 @@ export default function HomeScreen() {
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.pink}
+            colors={[colors.pink]}
+            progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
+          />
+        }
       >
         {/* Main Header */}
         <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.header}>
@@ -377,37 +394,52 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Sponsored Ads */}
-        {activeAds.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(500).duration(800)}>
-            <AdSlideshow ads={activeAds} onAdPress={handleAdPress} />
-          </Animated.View>
-        )}
-
-        <Animated.View entering={FadeInDown.delay(560).duration(800)}>
+        <Animated.View entering={FadeInDown.delay(500).duration(800)}>
           <Pressable
-            style={({ pressed }) => [styles.emergencyButton, { opacity: pressed ? 0.88 : 1 }]}
+            style={({ pressed }) => [styles.emergencyButton, { opacity: pressed ? 0.9 : 1 }]}
             onPress={() => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
               router.push('/emergency-services' as any);
             }}
           >
             <LinearGradient
-              colors={['#D92D20', '#7A271A']}
+              colors={isDark ? ['#E61E1E', '#A00D0D'] : ['#DC2626', '#9E1A1A']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <View style={styles.emergencyIcon}>
-              <MaterialCommunityIcons name="car-emergency" size={26} color="#FFFFFF" />
+            {/* Ambient subtle light flare */}
+            <View style={styles.emergencyGlowOrb} />
+
+            <View style={styles.emergencyIconContainer}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.25)', 'rgba(255,255,255,0.02)']}
+                style={StyleSheet.absoluteFill}
+              />
+              <MaterialCommunityIcons name="car-emergency" size={28} color="#FFFFFF" />
             </View>
+
             <View style={styles.emergencyTextGroup}>
-              <Text style={styles.emergencyTitle}>Emergency Services</Text>
-              <Text style={styles.emergencySub}>Roadside help from nearby providers</Text>
+              <View style={styles.emergencyBadgeRow}>
+                <View style={styles.emergencyLiveDot} />
+                <Text style={styles.emergencyLiveText}>24/7 ROADSIDE RESCUE</Text>
+              </View>
+              <Text style={styles.emergencyTitle}>Emergency Help</Text>
+              <Text style={styles.emergencySub}>Tap for instant professional towing & repair</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color="#FFFFFF" />
+
+            <View style={styles.emergencyArrowCircle}>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={isDark ? '#E61E1E' : '#DC2626'} />
+            </View>
           </Pressable>
         </Animated.View>
+
+        {/* Sponsored Ads */}
+        {activeAds.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(560).duration(800)}>
+            <AdSlideshow ads={activeAds} onAdPress={handleAdPress} />
+          </Animated.View>
+        )}
 
         {/* Featured Services */}
         <Animated.View entering={FadeInDown.delay(600).duration(800)}>
@@ -472,24 +504,48 @@ export default function HomeScreen() {
         {/* Promotional Banner — modernized glass design */}
         <Animated.View entering={FadeInDown.delay(800).duration(800)}>
           <Pressable
-            style={[
+            style={({ pressed }) => [
               styles.promoBanner,
               {
-                backgroundColor: colors.accentSoft,
-                borderColor: colors.accentBorder
+                borderColor: colors.accentBorder,
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.4)' : '#FFFFFF',
+                opacity: pressed ? 0.92 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }]
               }
             ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
           >
             <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-            <View style={styles.promoContent}>
-              <View style={styles.promoTextGroup}>
-                <Text style={[styles.promoTitle, { color: colors.textPrimary }]}>20% OFF FIRST SERVICE</Text>
-                <Text style={[styles.promoSub, { color: colors.pink }]}>Use code: CARKITNEON</Text>
+            <LinearGradient
+              colors={[colors.pink + '22', colors.purple + '12']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.promoGradient}
+            >
+              <View style={styles.promoContent}>
+                <View style={styles.promoTextGroup}>
+                  <View style={[styles.promoBadge, { backgroundColor: colors.pink, shadowColor: colors.pink }]}>
+                    <Text style={styles.promoBadgeText}>Special Offer</Text>
+                  </View>
+                  <Text style={[styles.promoTitle, { color: colors.textPrimary }]}>FREE SHIPPING ON FIRST ORDER</Text>
+                  <Text style={[styles.promoSub, { color: colors.textSecondary }]}>
+                    Enjoy premium delivery on us, applied automatically
+                  </Text>
+                </View>
+                <View style={[styles.promoIconOuter, { borderColor: colors.pink + '30', backgroundColor: colors.pink + '15', shadowColor: colors.pink }]}>
+                  <LinearGradient
+                    colors={[colors.pink, colors.purple]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.promoIconInner}
+                  >
+                    <MaterialCommunityIcons name="truck-delivery" size={26} color="#FFFFFF" />
+                  </LinearGradient>
+                </View>
               </View>
-              <View style={[styles.promoIconContainer, { backgroundColor: colors.pink + '20' }]}>
-                <MaterialCommunityIcons name="ticket-percent" size={28} color={colors.pink} />
-              </View>
-            </View>
+            </LinearGradient>
           </Pressable>
         </Animated.View>
 
@@ -616,28 +672,67 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xxl,
     overflow: 'hidden',
     borderWidth: 1,
-    ...Shadows.md,
+    ...Shadows.lg,
+  },
+  promoGradient: {
+    paddingVertical: 22,
+    paddingHorizontal: 20,
   },
   promoContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.lg,
   },
-  promoTextGroup: { flex: 1 },
+  promoTextGroup: {
+    flex: 1,
+    paddingRight: Spacing.sm,
+  },
+  promoBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  promoBadgeText: {
+    fontFamily: Fonts.extraBold,
+    fontSize: 9,
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
   promoTitle: {
     fontFamily: Fonts.extraBold,
     fontSize: 20,
-    marginBottom: 4,
+    lineHeight: 26,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   promoSub: {
-    fontFamily: Fonts.bold,
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.medium,
+    fontSize: 12,
+    opacity: 0.8,
   },
-  promoIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+  promoIconOuter: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  promoIconInner: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -650,7 +745,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   emergencyButton: {
-    minHeight: 92,
+    minHeight: 100,
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     flexDirection: 'row',
@@ -660,26 +755,75 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     ...Shadows.md,
   },
-  emergencyIcon: {
+  emergencyGlowOrb: {
+    position: 'absolute',
+    right: -25,
+    top: -25,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  emergencyIconContainer: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   emergencyTextGroup: { flex: 1 },
+  emergencyBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: 4,
+  },
+  emergencyLiveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00C853',
+    shadowColor: '#00C853',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  emergencyLiveText: {
+    color: 'rgba(255,255,255,0.95)',
+    fontFamily: Fonts.extraBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+  },
   emergencyTitle: {
     color: '#FFFFFF',
     fontFamily: Fonts.extraBold,
     fontSize: FontSizes.lg,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   emergencySub: {
-    color: 'rgba(255,255,255,0.78)',
+    color: 'rgba(255,255,255,0.85)',
     fontFamily: Fonts.medium,
     fontSize: FontSizes.xs,
-    marginTop: 3,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  emergencyArrowCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   activityIcon: {
     width: 48,
@@ -698,5 +842,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.xl,
     opacity: 0.5,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    zIndex: 999,
+  },
+  loadingGlass: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    gap: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  loadingOverlayText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 4,
   },
 });

@@ -21,7 +21,12 @@ const makePoint = (point: RouteCoordinate) => ({
   lng: Number(point.longitude.toFixed(7)),
 });
 
-function buildRouteMapHtml(customer: RouteCoordinate, employee: RouteCoordinate | null, isDark: boolean) {
+function buildRouteMapHtml(
+  customer: RouteCoordinate,
+  employee: RouteCoordinate | null,
+  isDark: boolean,
+  colors: ReturnType<typeof useTheme>['colors']
+) {
   const tileUrl = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -32,9 +37,9 @@ function buildRouteMapHtml(customer: RouteCoordinate, employee: RouteCoordinate 
   const employeePoint = employee ? makePoint(employee) : null;
   const surface = isDark ? '#111119' : '#FFFFFF';
   const text = isDark ? '#F8F7FF' : '#172033';
-  const employeeColor = isDark ? '#00C853' : '#047857';
-  const customerColor = isDark ? '#CD42A8' : '#B83291';
-  const routeColor = isDark ? '#2979FF' : '#2563EB';
+  const employeeColor = colors.success || '#047857';
+  const customerColor = colors.pink || '#B83291';
+  const routeColor = colors.pink || '#B83291';
 
   return `
 <!DOCTYPE html>
@@ -102,19 +107,57 @@ function buildRouteMapHtml(customer: RouteCoordinate, employee: RouteCoordinate 
 
     if (employee) {
       L.marker(employee, { icon: markerIcon('${employeeColor}', 'EMP') }).addTo(map);
-      L.polyline([customer, employee], {
+      
+      // Fallback dashed line in case OSRM routing is slow or fails
+      var activePolyline = L.polyline([customer, employee], {
         color: '${routeColor}',
         weight: 4,
-        opacity: 0.78,
+        opacity: 0.5,
         dashArray: '8, 10',
         lineCap: 'round'
       }).addTo(map);
 
+      // Fit initial bounds to fallback straight line
       if (customer[0] === employee[0] && customer[1] === employee[1]) {
         map.setView(customer, 16);
       } else {
         map.fitBounds(L.latLngBounds([customer, employee]), { padding: [34, 34], maxZoom: 16 });
       }
+
+      // Fetch dynamic street-following route from free OpenStreetMap OSRM routing service
+      var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + 
+                    employee[1] + ',' + employee[0] + ';' + 
+                    customer[1] + ',' + customer[0] + 
+                    '?overview=full&geometries=geojson';
+
+      fetch(osrmUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.routes && data.routes.length > 0) {
+            // Remove the fallback dashed line
+            map.removeLayer(activePolyline);
+
+            // OSRM returns coordinates as [lng, lat], convert to Leaflet [lat, lng] format
+            var routePoints = data.routes[0].geometry.coordinates.map(function(coord) {
+              return [coord[1], coord[0]];
+            });
+
+            // Render beautiful street-following route polyline!
+            activePolyline = L.polyline(routePoints, {
+              color: '${routeColor}',
+              weight: 5,
+              opacity: 0.88,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+
+            // Adjust view bounds to frame the actual driving route beautifully
+            map.fitBounds(activePolyline.getBounds(), { padding: [34, 34], maxZoom: 16 });
+          }
+        })
+        .catch(function(err) {
+          console.warn('OSRM routing failed, using straight-line polyline:', err);
+        });
     }
   </script>
 </body>
@@ -127,8 +170,8 @@ export default function EmergencyRouteMap({ customer, employee = null, style }: 
   const [loading, setLoading] = useState(true);
 
   const html = useMemo(
-    () => (customer ? buildRouteMapHtml(customer, employee, isDark) : null),
-    [customer, employee, isDark]
+    () => (customer ? buildRouteMapHtml(customer, employee, isDark, colors) : null),
+    [customer, employee, isDark, colors]
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 
 import { useToast } from '@/contexts/ToastContext';
@@ -12,9 +12,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 
+import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 
 
 const { width } = Dimensions.get('window');
@@ -358,7 +358,7 @@ export default function ProviderBookingDetailScreen() {
                 <Animated.View
                     entering={FadeInDown.delay(400)}
                     style={[
-                        styles.floatingActions, 
+                        styles.floatingActions,
                         { bottom: Platform.OS === 'ios' ? 40 : 20 }
                     ]}
                 >
@@ -377,7 +377,7 @@ export default function ProviderBookingDetailScreen() {
                                 />
                             ) : null}
                             {canCancel(booking.status) ? (
-                                <Pressable 
+                                <Pressable
                                     onPress={() => {
                                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                                         requestCancel();
@@ -482,10 +482,10 @@ const styles = StyleSheet.create({
     },
     actionsRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
     cancelBtn: { flex: 1, height: 50 },
-    cancelInner: { 
-        flex: 1, 
-        borderRadius: BorderRadius.full, 
-        alignItems: 'center', 
+    cancelInner: {
+        flex: 1,
+        borderRadius: BorderRadius.full,
+        alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.2)',

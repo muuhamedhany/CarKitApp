@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { CenteredHeader, GlassView } from '@/components';
+import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CenteredHeader, GlassView } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function EmergencyServicesScreen() {
   const router = useRouter();

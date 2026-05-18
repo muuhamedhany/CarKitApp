@@ -8,11 +8,10 @@ import {
     Alert,
     Dimensions,
     Pressable,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
-    View,
+    View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 

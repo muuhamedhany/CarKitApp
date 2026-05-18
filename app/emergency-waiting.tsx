@@ -154,15 +154,15 @@ export default function EmergencyWaitingScreen() {
             </>
           ) : (
             <>
-              <MaterialCommunityIcons name="car-clock" size={42} color={colors.success} />
+              <MaterialCommunityIcons name="car-clock" size={42} color={colors.pink} />
               <Text style={[styles.title, { color: colors.textPrimary }]}>
                 {status === 'arrived' ? 'Employee has arrived' : `${employeeName} is on the way`}
               </Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{employeePhone || 'Phone unavailable'}</Text>
               <View style={styles.statusRow}>
                 {['accepted', 'arrived', 'completed'].map((step) => (
-                  <View key={step} style={[styles.statusStep, { backgroundColor: step === status ? colors.successSoft : colors.surfaceMuted }]}>
-                    <Text style={[styles.statusText, { color: step === status ? colors.success : colors.textMuted }]}>{step}</Text>
+                  <View key={step} style={[styles.statusStep, { backgroundColor: step === status ? colors.accentSoft : colors.surfaceMuted }]}>
+                    <Text style={[styles.statusText, { color: step === status ? colors.pink : colors.textMuted }]}>{step}</Text>
                   </View>
                 ))}
               </View>
@@ -182,7 +182,7 @@ export default function EmergencyWaitingScreen() {
                 <MaterialCommunityIcons
                   name={employeeCoordinate ? 'crosshairs-gps' : 'crosshairs-question'}
                   size={16}
-                  color={employeeCoordinate ? colors.success : colors.warning}
+                  color={employeeCoordinate ? colors.pink : colors.warning}
                 />
                 <Text style={[styles.locationMetaText, { color: colors.textSecondary }]}>
                   {employeeCoordinate ? locationAge : 'Waiting for employee GPS'}
@@ -195,7 +195,7 @@ export default function EmergencyWaitingScreen() {
                   style={({ pressed }) => [
                     styles.actionButton,
                     {
-                      backgroundColor: colors.success,
+                      backgroundColor: colors.pink,
                       opacity: !employeePhone ? 0.45 : pressed ? 0.82 : 1,
                     },
                   ]}

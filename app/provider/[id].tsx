@@ -126,7 +126,14 @@ export default function ProviderPublicProfileScreen() {
             </View>
           </View>
 
-          <Text style={[styles.providerName, { color: colors.textPrimary }]}>{provider.name}</Text>
+          <Text 
+            style={[styles.providerName, { color: colors.textPrimary }]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.65}
+          >
+            {provider.name}
+          </Text>
           
           <View style={styles.badgeRow}>
             <View style={[styles.typeBadge, { backgroundColor: colors.purple + '15' }]}>
@@ -348,10 +355,11 @@ const styles = StyleSheet.create({
   },
   providerName: {
     fontFamily: Fonts.extraBold,
-    fontSize: 32,
+    fontSize: 26,
+    lineHeight: 32,
     textAlign: 'center',
     marginBottom: 8,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   badgeRow: {
     marginBottom: 24,

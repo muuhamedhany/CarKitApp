@@ -125,6 +125,8 @@ export default function NotificationsScreen() {
       router.push(`/order/${notification.entity_id}`);
     } else if (notification.entity_type === 'booking' && notification.entity_id) {
       router.push(`/booking/${notification.entity_id}`);
+    } else if (notification.entity_type === 'emergency' || notification.entity_type === 'emergency_request') {
+      router.push('/emergency-waiting');
     }
   };
 
@@ -132,6 +134,7 @@ export default function NotificationsScreen() {
     switch (type.toLowerCase()) {
       case 'order': return 'package-variant-closed';
       case 'booking': return 'calendar-check';
+      case 'emergency': return 'car-emergency';
       case 'alert': return 'alert-circle';
       case 'promo': return 'tag-heart';
       default: return 'bell';
@@ -142,6 +145,7 @@ export default function NotificationsScreen() {
     switch (type.toLowerCase()) {
       case 'order': return '#A855F7';
       case 'booking': return '#10B981';
+      case 'emergency': return '#EF4444';
       case 'alert': return '#EF4444';
       case 'promo': return colors.pink;
       default: return colors.pink;

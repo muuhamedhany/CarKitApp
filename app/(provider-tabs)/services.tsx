@@ -324,7 +324,7 @@ export default function ServicesScreen() {
                 contentContainerStyle={[styles.listContent, { paddingTop: insets.top + Spacing.md }]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'} />
                 }
                 ListHeaderComponent={
                     <View style={styles.header}>

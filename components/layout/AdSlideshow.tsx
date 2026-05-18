@@ -138,9 +138,7 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
         />
 
         <View style={adStyles.adBadgeWrapper}>
-          <GlassView intensity={20} tint="dark" style={adStyles.adBadgeBlur}>
-            <Text style={adStyles.adBadgeText}>Ad</Text>
-          </GlassView>
+          <Text style={adStyles.adBadgeText}>Ad</Text>
         </View>
 
       </Pressable>
@@ -174,7 +172,7 @@ function Dot({ index, scrollX, width, activeColor }: { index: number; scrollX: S
 }
 
 const adStyles = StyleSheet.create({
-  wrapper: { 
+  wrapper: {
     marginBottom: Spacing.xl,
     marginHorizontal: -Spacing.md, // Counteract parent padding in HomeScreen
   },
@@ -200,20 +198,19 @@ const adStyles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    borderRadius: BorderRadius.sm,
-    overflow: 'hidden',
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.16)',
-  },
-  adBadgeBlur: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   adBadgeText: {
-    color: '#fff',
-    fontFamily: Fonts.extraBold,
+    color: '#FFFFFF',
+    fontFamily: Fonts.bold,
     fontSize: 9,
     letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   slideContent: {
     position: 'absolute',

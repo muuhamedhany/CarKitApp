@@ -3,6 +3,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -24,7 +25,7 @@ import 'react-native-reanimated';
 SplashScreen.preventAutoHideAsync();
 
 function InnerLayout() {
-  const { isDark, isThemeLoaded } = useThemeContext();
+  const { isDark, isThemeLoaded, colors } = useThemeContext();
 
   useEffect(() => {
     if (isThemeLoaded) {
@@ -36,8 +37,8 @@ function InnerLayout() {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
       ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-      background: isDark ? '#050505' : '#F8F9FD',
-      card: isDark ? '#050505' : '#F8F9FD',
+      background: colors.background,
+      card: colors.background,
     },
   };
 
@@ -46,7 +47,7 @@ function InnerLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: isDark ? '#050505' : '#F8F9FD' },
+          contentStyle: { backgroundColor: colors.background },
           animation: 'fade_from_bottom',
           animationDuration: 200,
         }}
@@ -121,15 +122,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <ToastProvider>
-              <WishlistProvider>
-                <InnerLayout />
-              </WishlistProvider>
-            </ToastProvider>
-          </CartProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <ToastProvider>
+                <WishlistProvider>
+                  <InnerLayout />
+                </WishlistProvider>
+              </ToastProvider>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

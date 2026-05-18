@@ -1,10 +1,9 @@
-import { GlassView } from '@/components';
 import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View, Dimensions, Platform, DeviceEventEmitter } from 'react-native';
+import { DeviceEventEmitter, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -140,19 +139,19 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
           },
         ]}
       >
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.indicator, 
-            { 
-              width: tabWidth, 
+            styles.indicator,
+            {
+              width: tabWidth,
               backgroundColor: colors.accentSoft,
             },
             indicatorStyle
-          ]} 
+          ]}
         />
 
 
-        
+
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
 
