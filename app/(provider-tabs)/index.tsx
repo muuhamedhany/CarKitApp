@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -42,13 +42,16 @@ export default function ProviderDashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const hasLoaded = useRef(false);
 
     const loadDashboard = useCallback(async () => {
+        if (!user) return;
         try {
-            setLoading(true);
+            if (!hasLoaded.current) setLoading(true);
             const res = await providerService.getDashboard();
             if (res.success && res.data) {
                 setDashboard(res.data);
+                hasLoaded.current = true;
             }
             try {
                 const unreadRes = await notificationService.getUnreadCount();
@@ -207,28 +210,6 @@ export default function ProviderDashboard() {
                                     <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Services</Text>
                                 </LinearGradient>
                             </Pressable>
-
-                            <Pressable
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    router.push('/provider-employees' as any);
-                                }}
-                                style={({ pressed }) => [
-                                    styles.teamAction,
-                                    {
-                                        backgroundColor: colors.glass,
-                                        borderColor: colors.cardBorder,
-                                        transform: [{ scale: pressed ? 0.98 : 1 }],
-                                    },
-                                ]}
-                            >
-                                <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.pink} />
-                                <View style={styles.teamActionTextBlock}>
-                                    <Text style={[styles.teamActionTitle, { color: colors.textPrimary }]}>Manage Team</Text>
-                                    <Text style={[styles.teamActionSubtitle, { color: colors.textSecondary }]}>Employees and assignments</Text>
-                                </View>
-                                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
-                            </Pressable>
                         </Animated.View>
 
                         <Animated.View entering={FadeInUp.delay(500).duration(800)}>
@@ -254,7 +235,33 @@ export default function ProviderDashboard() {
                             </Pressable>
                         </Animated.View>
 
-                        <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.section}>
+                        <Animated.View entering={FadeInUp.delay(550).duration(800)}>
+                            <Pressable
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push('/provider-employees' as any);
+                                }}
+                                style={({ pressed }) => [
+                                    styles.teamCard,
+                                    {
+                                        borderColor: colors.pink,
+                                        transform: [{ scale: pressed ? 0.98 : 1 }],
+                                    },
+                                ]}
+                            >
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+                                <View style={[styles.teamIconWrap, { backgroundColor: colors.pink + '15' }]}>
+                                    <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.pink} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.teamCardTitle, { color: colors.textPrimary }]}>Manage Team</Text>
+                                    <Text style={[styles.teamCardSub, { color: colors.textSecondary }]}>Employees & assignments</Text>
+                                </View>
+                                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
+                            </Pressable>
+                        </Animated.View>
+
+                        <Animated.View entering={FadeInUp.delay(600).duration(800)} style={[styles.section, { marginTop: Spacing.lg }]}>
                             <View style={styles.sectionHeader}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today Appointments</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/bookings')}>
@@ -315,18 +322,27 @@ export default function ProviderDashboard() {
 
                             {dashboard?.popular_services.length ? (
                                 dashboard.popular_services.map((service) => (
-                                    <GlassView key={service.service_id} intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
-                                        <View style={[styles.productThumbPlaceholder, { backgroundColor: colors.pink + '20' }]}>
-                                            <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
-                                        </View>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
-                                            <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{service.booking_count} bookings</Text>
-                                        </View>
-                                        <Text style={[styles.productRevenue, { color: colors.pink }]}>
-                                            {Number(service.revenue).toLocaleString('en-EG')} EGP
-                                        </Text>
-                                    </GlassView>
+                                    <Pressable
+                                        key={service.service_id}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            router.push(`/provider-service/${service.service_id}`);
+                                        }}
+                                        style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] })}
+                                    >
+                                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.productRow, { borderColor: colors.cardBorder }]}>
+                                            <View style={[styles.productThumbPlaceholder, { backgroundColor: colors.pink + '20' }]}>
+                                                <MaterialCommunityIcons name="wrench" size={18} color={colors.pink} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
+                                                <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{service.booking_count} bookings</Text>
+                                            </View>
+                                            <Text style={[styles.productRevenue, { color: colors.pink }]}>
+                                                {Number(service.revenue).toLocaleString('en-EG')} EGP
+                                            </Text>
+                                        </GlassView>
+                                    </Pressable>
                                 ))
                             ) : (
                                 <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
@@ -460,29 +476,32 @@ const styles = StyleSheet.create({
         flexShrink: 1,
         textAlign: 'center',
     },
-    teamAction: {
-        minHeight: 58,
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
-        paddingVertical: Spacing.sm,
-        paddingHorizontal: Spacing.md,
+    teamCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: Spacing.md,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        marginBottom: Spacing.sm,
         overflow: 'hidden',
-        ...Shadows.sm,
+        ...Shadows.md,
     },
-    teamActionTextBlock: {
-        flex: 1,
+    teamIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    teamActionTitle: {
+    teamCardTitle: {
         fontFamily: Fonts.semiBold,
         fontSize: FontSizes.md,
         marginBottom: 2,
     },
-    teamActionSubtitle: {
+    teamCardSub: {
         fontFamily: Fonts.regular,
-        fontSize: FontSizes.xs,
+        fontSize: FontSizes.sm,
     },
     analyticsCard: {
         flexDirection: 'row',

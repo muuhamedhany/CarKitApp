@@ -1,4 +1,4 @@
-import { GlassView } from '@/components';
+import GlassView from '../common/GlassView';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad } from '@/services/api/ad.service';

@@ -72,7 +72,8 @@ export default function SignUpCustomerScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >            <CenteredHeader title="Create Account" titleColor={colors.pink} />
+      >
+        <CenteredHeader title="Create Account" titleColor={colors.pink} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}

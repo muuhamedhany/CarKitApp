@@ -3,7 +3,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View, Dimensions, Platform, DeviceEventEmitter } from 'react-native';
+import { DeviceEventEmitter, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -15,17 +15,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TabItem = {
-    name: string;
-    label: string;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
-    iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
+  name: string;
+  label: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
 };
 
 const TABS: TabItem[] = [
-    { name: 'index', label: 'Dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
-    { name: 'services', label: 'Services', icon: 'wrench-outline', iconFilled: 'wrench' },
-    { name: 'bookings', label: 'Bookings', icon: 'calendar-check-outline', iconFilled: 'calendar-check' },
-    { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
+  { name: 'index', label: 'Dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
+  { name: 'services', label: 'Services', icon: 'wrench-outline', iconFilled: 'wrench' },
+  { name: 'bookings', label: 'Bookings', icon: 'calendar-check-outline', iconFilled: 'calendar-check' },
+  { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
 function TabButton({
@@ -41,7 +41,7 @@ function TabButton({
   const scale = useSharedValue(1);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(isFocused ? 1.15 : 1, { damping: 12, stiffness: 300 }) }],
+    transform: [{ scale: withSpring(isFocused ? 1.15 : 1, { damping: 15, stiffness: 400 }) }],
   }));
 
   const handlePressIn = () => {
@@ -96,9 +96,9 @@ export default function ProviderTabBar({ state, navigation }: any) {
 
   useEffect(() => {
     indicatorPosition.value = withSpring(state.index * tabWidth, {
-      damping: 18,
-      stiffness: 280,
-      mass: 0.8,
+      damping: 20,
+      stiffness: 350,
+      mass: 0.6,
     });
   }, [indicatorPosition, state.index, tabWidth]);
 
@@ -108,7 +108,7 @@ export default function ProviderTabBar({ state, navigation }: any) {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay(500).duration(1000)}
+      entering={FadeInDown.delay(300).duration(600)}
       style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 16) }]}
     >
       <View
@@ -125,25 +125,24 @@ export default function ProviderTabBar({ state, navigation }: any) {
                 shadowRadius: 20,
               },
               android: {
-                elevation: 0,
-                borderTopWidth: 0.5,
-                borderTopColor: colors.dividerLine,
+                elevation: 12,
+                shadowColor: '#000',
               }
             })
           },
         ]}
       >
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.indicator, 
-            { 
-              width: tabWidth, 
+            styles.indicator,
+            {
+              width: tabWidth,
               backgroundColor: colors.accentSoft,
             },
             indicatorStyle
-          ]} 
+          ]}
         />
-        
+
         {TABS.map((tab, index) => {
           const isFocused = state.index === index;
 
@@ -197,8 +196,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     ...Shadows.lg,
-    elevation: 0,
-    borderTopWidth: 0,
   },
   indicator: {
     position: 'absolute',

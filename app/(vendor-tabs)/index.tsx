@@ -37,6 +37,7 @@ export default function VendorDashboard() {
   });
 
   const loadDashboard = useCallback(async () => {
+    if (!user) return;
     try {
       if (!hasLoaded.current) setLoading(true);
       const res = await vendorService.getDashboard();

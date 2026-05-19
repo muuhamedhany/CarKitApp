@@ -70,7 +70,8 @@ export default function SignUpVendorScreen() {
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.flex}
-      >            <CenteredHeader title="Vendor Account" titleColor={colors.pink} />
+      >
+        <CenteredHeader title="Vendor Account" titleColor={colors.pink} />
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
@@ -113,7 +114,7 @@ export default function SignUpVendorScreen() {
                   ]}
                   onPress={() => handleToggle('service_provider')}
                 >
-                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'service_provider' && { color: colors.pink }]}>Service{'\n'}Provider</Text>
+                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'service_provider' && { color: colors.pink }]}>Service Provider</Text>
                 </Pressable>
               </View>
 
@@ -248,11 +249,12 @@ const styles = StyleSheet.create({
   toggleButton: {
     flex: 1, 
     paddingVertical: Spacing.md, 
+    paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.lg,
     borderWidth: 1.5, 
     alignItems: 'center', 
     justifyContent: 'center',
-    height: 60,
+    minHeight: 52,
   },
   toggleText: { fontSize: 13, fontFamily: Fonts.bold, textAlign: 'center' },
   continueBtn: {

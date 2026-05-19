@@ -252,7 +252,9 @@ export default function ProviderProfileScreen() {
         </Animated.View>
 
         {/* Provider ID & Info */}
-        <Animated.Text entering={FadeInDown.delay(700).duration(600)} style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Animated.Text>
+        <Animated.View entering={FadeInDown.delay(700).duration(600)}>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Text>
+        </Animated.View>
         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
           <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
             <View style={styles.infoRow}>

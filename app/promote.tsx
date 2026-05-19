@@ -119,7 +119,9 @@ export default function PromoteScreen() {
             </Pressable>
           </Animated.View>
 
-          <Animated.Text entering={FadeInUp.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your History</Animated.Text>
+          <Animated.View entering={FadeInUp.delay(200)}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your History</Text>
+          </Animated.View>
           {ads.length > 0 ? (
             ads.map((ad, index) => <AdCard key={ad.ad_id} ad={ad} colors={colors} isDark={isDark} index={index} />)
           ) : (

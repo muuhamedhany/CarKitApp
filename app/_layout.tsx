@@ -58,7 +58,10 @@ function InnerLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="(vendor-tabs)" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="(provider-tabs)" options={{ headerShown: false, title: '' }} />
-        <Stack.Screen name="settings" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="settings/index" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="settings/password" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="settings/privacy" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="settings/terms" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-orders" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="my-bookings" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="booking-confirmation" options={{ headerShown: false, title: '' }} />

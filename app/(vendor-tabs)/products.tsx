@@ -36,6 +36,7 @@ export default function VendorProductsScreen() {
   const hasLoaded = useRef(false);
 
   const fetchProducts = useCallback(async (isSilent = false) => {
+    if (!user) return;
     try {
       if (!isSilent && !hasLoaded.current) setLoading(true);
       const res = await apiFetch(`/products?vendor_id=${user?.vendor_id}`);
