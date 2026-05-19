@@ -155,7 +155,9 @@ export default function AdPaymentScreen() {
           </GlassView>
         </Animated.View>
 
-        <Animated.Text entering={FadeInDown.delay(200)} style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Animated.Text>
+        <Animated.View entering={FadeInDown.delay(200)}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Text>
+        </Animated.View>
         <View style={styles.methodList}>
           {PAYMENT_METHODS.map((pm, idx) => {
             const active = method === pm.value;

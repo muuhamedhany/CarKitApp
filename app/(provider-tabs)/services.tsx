@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { providerService } from '@/services/api/provider.service';
 import { Service } from '@/types/api.types';
 import { FormInput, GlassView } from '@/components';
@@ -198,6 +199,7 @@ export default function ServicesScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showToast } = useToast();
+    const { user } = useAuth();
 
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
@@ -210,6 +212,7 @@ export default function ServicesScreen() {
     const hasLoaded = useRef(false);
 
     const load = useCallback(async (isSilent = false) => {
+        if (!user) return;
         try {
             if (!isSilent && !hasLoaded.current) setLoading(true);
             const res = await providerService.getMyServices();

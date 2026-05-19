@@ -58,6 +58,7 @@ export default function VendorOrdersScreen() {
     const isLoadingRef = useRef(false);
 
     const loadOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
+        if (!user) return;
         if (isLoadingRef.current && !isRefresh) return;
         
         const currentSearch = debouncedSearchRef.current;

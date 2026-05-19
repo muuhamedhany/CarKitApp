@@ -93,7 +93,9 @@ export default function CreateAdScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader title="Create Ad" titleColor={colors.textPrimary} />
-        <Animated.Text entering={FadeInDown.delay(100)} style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose a Tier</Animated.Text>
+        <Animated.View entering={FadeInDown.delay(100)}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Choose a Tier</Text>
+        </Animated.View>
         
         <View style={styles.tierGrid}>
           {AD_TIERS.map((tier, idx) => {

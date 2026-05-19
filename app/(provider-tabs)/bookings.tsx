@@ -10,6 +10,7 @@ import { GradientButton, OutlinedButton } from '@/components';
 import { providerService } from '@/services/api/provider.service';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
 import { useTabReload } from '@/hooks/useTabReload';
@@ -186,6 +187,7 @@ export default function ProviderBookingsScreen() {
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const router = useRouter();
+    const { user } = useAuth();
 
     const [filter, setFilter] = useState<StatusFilter>('all');
     const [bookings, setBookings] = useState<ProviderBooking[]>([]);
@@ -209,6 +211,7 @@ export default function ProviderBookingsScreen() {
     }, [searchQuery]);
 
     const loadBookings = useCallback(async (pageNum = 1, isRefresh = false) => {
+        if (!user) return;
         try {
             if (pageNum === 1 && !isRefresh) setLoading(true);
             if (pageNum > 1) setLoadingMore(true);

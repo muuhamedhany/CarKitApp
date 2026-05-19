@@ -196,13 +196,17 @@ export default function ProfileScreen() {
         </Animated.View>
 
         {/* Quick Access */}
-        <Animated.Text entering={FadeInDown.delay(400).duration(600)} style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>QUICK ACCESS</Animated.Text>
+        <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>QUICK ACCESS</Text>
+        </Animated.View>
         <View style={styles.quickActionsGrid}>
           {quickActions.map(renderQuickAction)}
         </View>
 
         {/* Account & General */}
-        <Animated.Text entering={FadeInDown.delay(700).duration(600)} style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Animated.Text>
+        <Animated.View entering={FadeInDown.delay(700).duration(600)}>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Text>
+        </Animated.View>
         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
           <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
             {personalItems.map((item, idx) => renderMenuItem(item, idx, false))}

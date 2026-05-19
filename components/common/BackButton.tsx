@@ -1,4 +1,4 @@
-import { GlassView } from '@/components';
+import GlassView from './GlassView';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
