@@ -23,6 +23,29 @@ export interface PaymentRecord {
     created_at: string;
 }
 
+export interface SavedPaymentMethod {
+    payment_method_id: number;
+    user_id_fk: number;
+    type: 'credit_card';
+    brand: 'visa' | 'mastercard' | 'amex' | 'discover' | 'card' | string;
+    last4: string;
+    expiry_month: number;
+    expiry_year: number;
+    holder_name: string;
+    is_default: boolean;
+    created_at: string;
+    updated_at?: string;
+}
+
+export interface SavedPaymentMethodPayload {
+    brand: string;
+    last4: string;
+    expiry_month: number;
+    expiry_year: number;
+    holder_name: string;
+    is_default?: boolean;
+}
+
 export const paymentService = {
     async createPayment(data: PaymentPayload) {
         return apiFetch<ApiResponse<PaymentRecord>>('/payments', {
@@ -33,5 +56,28 @@ export const paymentService = {
 
     async getMyPayments() {
         return apiFetch<ApiResponse<PaymentRecord[]>>('/payments/my');
+    },
+
+    async getPaymentMethods() {
+        return apiFetch<ApiResponse<SavedPaymentMethod[]>>('/payments/methods');
+    },
+
+    async addPaymentMethod(data: SavedPaymentMethodPayload) {
+        return apiFetch<ApiResponse<SavedPaymentMethod>>('/payments/methods', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    },
+
+    async setDefaultPaymentMethod(id: number) {
+        return apiFetch<ApiResponse<SavedPaymentMethod>>(`/payments/methods/${id}/default`, {
+            method: 'PATCH',
+        });
+    },
+
+    async deletePaymentMethod(id: number) {
+        return apiFetch<ApiResponse<{ payment_method_id: number }>>(`/payments/methods/${id}`, {
+            method: 'DELETE',
+        });
     },
 };
