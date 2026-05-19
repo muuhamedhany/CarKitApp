@@ -81,6 +81,7 @@ const getStatusPalette = (status: string, colors: any) => {
 
 const getStatusLabel = (status: string, isWorkshopFitting: boolean, role: OrderRole) => {
     const normalized = normalizeStatus(status);
+    if (normalized === 'ready_for_customer') return 'Ready for Customer';
     if (normalized === 'ready_for_pickup') {
         if (isWorkshopFitting) return 'Ready for Customer';
         return role === 'vendor' ? 'Ready for Driver' : 'Ready for Delivery';
@@ -121,7 +122,7 @@ const getVendorPrimaryAction = (status: string, isWorkshopFitting: boolean) => {
     }
     if (normalized === 'processing') {
         return isWorkshopFitting
-            ? { label: 'Ready for Customer', nextStatus: 'delivered', icon: 'check-circle-outline' }
+            ? { label: 'Ready for Customer', nextStatus: 'ready_for_customer', icon: 'check-circle-outline' }
             : { label: 'Ready for Driver', nextStatus: 'ready_for_pickup', icon: 'package-check' };
     }
     return null;
