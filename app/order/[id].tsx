@@ -79,10 +79,52 @@ const getStatusPalette = (status: string, colors: any) => {
     return { bg: colors.pink + '20', fg: colors.pink };
 };
 
-const getVendorPrimaryAction = (status: string) => {
+const getStatusLabel = (status: string, isWorkshopFitting: boolean, role: OrderRole) => {
     const normalized = normalizeStatus(status);
-    if (normalized === 'pending') return { label: 'Mark as Processing', nextStatus: 'processing', icon: 'progress-clock' };
-    if (normalized === 'processing') return { label: 'Ready for Pickup', nextStatus: 'ready_for_pickup', icon: 'package-check' };
+    if (normalized === 'ready_for_pickup') {
+        if (isWorkshopFitting) return 'Ready for Customer';
+        return role === 'vendor' ? 'Ready for Driver' : 'Ready for Delivery';
+    }
+    if (normalized === 'processing') {
+        return isWorkshopFitting ? 'Installation in Progress' : 'Processing';
+    }
+    if (normalized === 'in_transit') return 'In Transit';
+    if (normalized === 'delivered') return isWorkshopFitting ? 'Installation Complete' : 'Delivered';
+    if (normalized === 'cancelled') return 'Cancelled';
+    return 'Pending';
+};
+
+const getCustomerStatusNote = (order: OrderDetail, isWorkshopFitting: boolean, hasQueue: boolean) => {
+    const status = normalizeStatus(order.status);
+
+    if (isWorkshopFitting) {
+        if (status === 'processing') return 'Installation is in progress at the vendor workshop.';
+        if (status === 'ready_for_pickup') return 'Ready at the workshop. You can go to the vendor location.';
+        if (status === 'delivered') return 'Installation has been completed.';
+        if (status === 'cancelled') return 'This workshop installation order was cancelled.';
+        if (hasQueue && order.queue?.show_up_at) return `Show up: ${formatQueueTime(order.queue.show_up_at)}`;
+        return `Estimated fitting: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`;
+    }
+
+    if (status === 'ready_for_pickup') return 'The vendor has prepared the order for driver pickup.';
+    if (status === 'in_transit') return 'Your order is with the driver.';
+    if (status === 'delivered') return 'Your order has been delivered.';
+    if (status === 'cancelled') return 'This delivery order was cancelled.';
+    return `Estimated delivery: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`;
+};
+
+const getVendorPrimaryAction = (status: string, isWorkshopFitting: boolean) => {
+    const normalized = normalizeStatus(status);
+    if (normalized === 'pending') {
+        return isWorkshopFitting
+            ? { label: 'Start Installation', nextStatus: 'processing', icon: 'wrench-outline' }
+            : { label: 'Start Preparing', nextStatus: 'processing', icon: 'progress-clock' };
+    }
+    if (normalized === 'processing') {
+        return isWorkshopFitting
+            ? { label: 'Ready for Customer', nextStatus: 'ready_for_pickup', icon: 'car-wrench' }
+            : { label: 'Ready for Driver', nextStatus: 'ready_for_pickup', icon: 'package-check' };
+    }
     return null;
 };
 
@@ -112,12 +154,21 @@ export default function OrderDetailScreen() {
     const [reviewModalVisible, setReviewModalVisible] = useState(false);
     const [isReviewed, setIsReviewed] = useState(false);
 
-    const subtotal = useMemo(() => Number(order?.total_amount || 0), [order?.total_amount]);
+    const orderAmount = useMemo(() => Number(order?.total_amount || 0), [order?.total_amount]);
+    const itemSubtotal = useMemo(() => {
+        if (!order?.items?.length) return 0;
+        return order.items.reduce((sum, item) => sum + (Number(item.price_each || 0) * Number(item.quantity || 0)), 0);
+    }, [order?.items]);
     const isWorkshopFitting = order?.delivery_type === 'workshop_fitting' || order?.shipping_address_fk === null;
-    const totalWithShipping = subtotal + (isWorkshopFitting ? 0 : SHIPPING_FEE);
+    const showCustomerWorkshopQueue = role === 'customer' && isWorkshopFitting && Boolean(order?.queue);
+    const subtotal = itemSubtotal || orderAmount;
+    const workshopFittingFee = isWorkshopFitting ? Math.max(0, orderAmount - subtotal) : 0;
+    const totalWithShipping = isWorkshopFitting ? orderAmount : orderAmount + SHIPPING_FEE;
     const workshopLatitude = Number(order?.queue?.center_latitude ?? order?.workshop_latitude);
     const workshopLongitude = Number(order?.queue?.center_longitude ?? order?.workshop_longitude);
     const hasWorkshopCoordinates = Number.isFinite(workshopLatitude) && Number.isFinite(workshopLongitude);
+    const displayStatus = getStatusLabel(order?.status || 'pending', isWorkshopFitting, role);
+    const customerStatusNote = order ? getCustomerStatusNote(order, isWorkshopFitting, showCustomerWorkshopQueue) : '';
 
     const loadOrder = useCallback(async () => {
         if (!orderId) {
@@ -172,7 +223,7 @@ export default function OrderDetailScreen() {
                 return;
             }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast('success', 'Status Updated', `Order status changed to ${status}.`);
+            showToast('success', 'Status Updated', `Order status changed to ${getStatusLabel(status, isWorkshopFitting, role)}.`);
             await loadOrder();
         } catch {
             showToast('error', 'Status Update', 'Could not update order status.');
@@ -220,25 +271,62 @@ export default function OrderDetailScreen() {
     };
 
     const statusPalette = getStatusPalette(order?.status || 'pending', colors);
-    const primaryAction = getVendorPrimaryAction(order?.status || '');
+    const primaryAction = getVendorPrimaryAction(order?.status || '', isWorkshopFitting);
 
-    const timelineSteps = [
+    const customerDeliveryTimelineSteps = [
         { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
         { key: 'processing', label: 'Processing', icon: 'cog-outline' },
-        { key: 'ready_for_pickup', label: 'Ready', icon: 'package-check' },
+        { key: 'ready_for_pickup', label: 'Ready for Delivery', icon: 'package-check' },
         { key: 'in_transit', label: 'In Transit', icon: 'truck-fast-outline' },
         { key: 'delivered', label: 'Delivered', icon: 'check-all' },
     ];
+    const customerWorkshopTimelineSteps = [
+        { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
+        { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
+        { key: 'ready_for_pickup', label: 'Ready for Customer', icon: 'check-circle-outline' },
+        { key: 'delivered', label: 'Installation Complete', icon: 'check-all' },
+    ];
+    const vendorWorkshopTimelineSteps = [
+        { key: 'pending', label: 'Order Received', icon: 'package-variant' },
+        { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
+        { key: 'ready_for_pickup', label: 'Ready for Customer', icon: 'check-circle-outline' },
+    ];
+    const vendorDeliveryTimelineSteps = [
+        { key: 'pending', label: 'Order Received', icon: 'package-variant' },
+        { key: 'processing', label: 'Preparing Items', icon: 'package-variant-closed' },
+        { key: 'ready_for_pickup', label: 'Ready for Driver Pickup', icon: 'package-check' },
+        { key: 'in_transit', label: 'With Driver', icon: 'truck-fast-outline' },
+        { key: 'delivered', label: 'Delivered to Customer', icon: 'check-all' },
+    ];
+    const timelineSteps = role === 'vendor'
+        ? (isWorkshopFitting ? vendorWorkshopTimelineSteps : vendorDeliveryTimelineSteps)
+        : (isWorkshopFitting ? customerWorkshopTimelineSteps : customerDeliveryTimelineSteps);
 
-    const statusPosition: Record<string, number> = {
+    const customerStatusPosition: Record<string, number> = {
         pending: 0,
         processing: 1,
         ready_for_pickup: 2,
         in_transit: 3,
         delivered: 4,
     };
+    const vendorWorkshopStatusPosition: Record<string, number> = {
+        pending: 0,
+        processing: 1,
+        ready_for_pickup: 2,
+        delivered: 2,
+    };
+    const customerWorkshopStatusPosition: Record<string, number> = {
+        pending: 0,
+        processing: 1,
+        ready_for_pickup: 2,
+        delivered: 3,
+    };
+    const statusPosition = isWorkshopFitting
+        ? (role === 'vendor' ? vendorWorkshopStatusPosition : customerWorkshopStatusPosition)
+        : customerStatusPosition;
 
     const currentPosition = statusPosition[normalizeStatus(order?.status)] ?? 0;
+    const customerAddressText = `${order?.shipping_street || 'No street address'}${order?.shipping_street && order?.shipping_city ? ', ' : ''}${order?.shipping_city || ''}`;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -270,30 +358,67 @@ export default function OrderDetailScreen() {
                                     <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
                                 </View>
                                 <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
-                                    <Text style={[styles.statusText, { color: statusPalette.fg }]}>{order.status}</Text>
+                                    <Text style={[styles.statusText, { color: statusPalette.fg }]}>{displayStatus}</Text>
                                 </View>
                             </View>
 
                             <View style={[styles.deliveryInfo, { borderTopColor: colors.cardBorder }]}>
-                                <View style={styles.infoRow}>
-                                    <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
-                                        {isWorkshopFitting ? 'Preferred fitting day' : 'Preferred arrival'}: {formatDate(order.preferred_delivery_date)}
-                                    </Text>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <MaterialCommunityIcons name="calendar-range" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.deliveryText, { color: colors.textMuted }]}>
-                                        {isWorkshopFitting && order.queue
-                                            ? `Show up: ${formatQueueTime(order.queue.show_up_at)}`
-                                            : `Estimated: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`}
-                                    </Text>
-                                </View>
+                                {role === 'vendor' ? (
+                                    <>
+                                        <View style={styles.infoRow}>
+                                            <MaterialCommunityIcons
+                                                name={isWorkshopFitting ? 'car-wrench' : 'truck-delivery-outline'}
+                                                size={14}
+                                                color={colors.textMuted}
+                                            />
+                                            <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                                Fulfillment: {isWorkshopFitting ? 'Workshop installation' : 'Home delivery'}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialCommunityIcons name="calendar-clock-outline" size={14} color={colors.textMuted} />
+                                            <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                                {isWorkshopFitting ? 'Customer fitting day' : 'Customer delivery day'}: {formatDate(order.preferred_delivery_date)}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialCommunityIcons
+                                                name={isWorkshopFitting ? 'account-wrench-outline' : 'package-variant-closed'}
+                                                size={14}
+                                                color={colors.textMuted}
+                                            />
+                                            <Text style={[styles.deliveryText, { color: colors.textMuted }]}>
+                                                {isWorkshopFitting
+                                                    ? 'Customer comes to your workshop. No delivery handoff needed.'
+                                                    : 'Prepare the order and mark it ready when driver pickup can happen.'}
+                                            </Text>
+                                        </View>
+                                    </>
+                                ) : (
+                                    <>
+                                        <View style={styles.infoRow}>
+                                            <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
+                                            <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                                {isWorkshopFitting ? 'Fitting day' : 'Preferred delivery day'}: {formatDate(order.preferred_delivery_date)}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.infoRow}>
+                                            <MaterialCommunityIcons
+                                                name={isWorkshopFitting ? 'map-marker-check-outline' : 'calendar-range'}
+                                                size={14}
+                                                color={colors.textMuted}
+                                            />
+                                            <Text style={[styles.deliveryText, { color: colors.textMuted }]}>
+                                                {customerStatusNote}
+                                            </Text>
+                                        </View>
+                                    </>
+                                )}
                             </View>
                         </GlassView>
                     </Animated.View>
 
-                    {isWorkshopFitting && order.queue ? (
+                    {showCustomerWorkshopQueue && order.queue ? (
                         <Animated.View entering={FadeInDown.delay(150).springify()}>
                             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                                 <View style={styles.sectionHeader}>
@@ -359,7 +484,7 @@ export default function OrderDetailScreen() {
                                             <View style={styles.timelineLabelCol}>
                                                 <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{step.label}</Text>
                                                 <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
-                                                    {reached ? (index === 0 ? formatDate(order.order_date) : 'Completed') : 'Pending'}
+                                                    {reached ? (index === 0 ? formatDate(order.order_date) : active ? 'Current step' : 'Completed') : 'Pending'}
                                                 </Text>
                                             </View>
                                         </View>
@@ -372,11 +497,19 @@ export default function OrderDetailScreen() {
                     {role === 'vendor' && (
                         <Animated.View entering={FadeInDown.delay(300).springify()}>
                             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Customer Details</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                                    {isWorkshopFitting ? 'Workshop Job' : 'Delivery Job'}
+                                </Text>
                                 <View style={styles.vendorCustomerRow}>
                                     <View style={styles.vendorCustomerText}>
-                                        <Text style={[styles.customerName, { color: colors.textPrimary }]}>{order.shipping_title || 'Customer Name'}</Text>
-                                        <Text style={[styles.customerHint, { color: colors.textSecondary }]}>Standard fulfillment requested.</Text>
+                                        <Text style={[styles.customerName, { color: colors.textPrimary }]}>
+                                            {order.customer_name || order.shipping_title || 'Customer'}
+                                        </Text>
+                                        <Text style={[styles.customerHint, { color: colors.textSecondary }]}>
+                                            {isWorkshopFitting
+                                                ? 'Install the ordered items when the customer arrives at your workshop.'
+                                                : 'Pack the ordered items and prepare them for driver pickup.'}
+                                        </Text>
                                     </View>
                                     <View style={styles.iconGroup}>
                                         <Pressable style={[styles.iconBubble, { backgroundColor: colors.pink + '15' }]} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
@@ -387,10 +520,24 @@ export default function OrderDetailScreen() {
                                         </Pressable>
                                     </View>
                                 </View>
+                                <View style={styles.vendorOpsGrid}>
+                                    <View style={[styles.vendorOpsTile, { backgroundColor: colors.pink + '10' }]}>
+                                        <MaterialCommunityIcons name="calendar-check-outline" size={16} color={colors.pink} />
+                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>Due day</Text>
+                                        <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{formatDate(order.preferred_delivery_date)}</Text>
+                                    </View>
+                                    <View style={[styles.vendorOpsTile, { backgroundColor: colors.purple + '10' }]}>
+                                        <MaterialCommunityIcons name="basket-outline" size={16} color={colors.purple} />
+                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>Items</Text>
+                                        <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{order.items.length}</Text>
+                                    </View>
+                                </View>
                                 <View style={[styles.vendorPickupNote, { backgroundColor: colors.infoSoft }]}>
                                     <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
                                     <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
-                                        Once marked as ready, a delivery driver will pick this up.
+                                        {isWorkshopFitting
+                                            ? 'Use Start Installation when work begins, then Ready for Customer when fitting is finished.'
+                                            : 'Use Start Preparing while packing, then Ready for Driver when the package can be picked up.'}
                                     </Text>
                                 </View>
                             </GlassView>
@@ -402,17 +549,21 @@ export default function OrderDetailScreen() {
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
-                                    {isWorkshopFitting ? 'Workshop Location' : 'Shipping Address'}
+                                    {isWorkshopFitting
+                                        ? (role === 'vendor' ? 'Your Workshop' : 'Workshop Location')
+                                        : (role === 'vendor' ? 'Customer Delivery Address' : 'Shipping Address')}
                                 </Text>
                             </View>
                             <View style={{ gap: Spacing.xs, marginTop: Spacing.sm }}>
                                 <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
-                                    {isWorkshopFitting ? (order.queue?.center_name || order.vendor_name || 'Vendor Workshop') : (order.shipping_title || 'Default Address')}
+                                    {isWorkshopFitting
+                                        ? (order.queue?.center_name || order.vendor_name || 'Vendor Workshop')
+                                        : (role === 'vendor' ? (order.customer_name || order.shipping_title || 'Customer') : (order.shipping_title || 'Default Address'))}
                                 </Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
                                     {isWorkshopFitting
                                         ? (order.queue?.center_address || order.workshop_address || 'Workshop address unavailable')
-                                        : `${order.shipping_street || 'No street address'}${order.shipping_street && order.shipping_city ? ', ' : ''}${order.shipping_city || ''}`}
+                                        : customerAddressText}
                                 </Text>
                                 {(order.shipping_building || order.shipping_apartment_floor) && (
                                     <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
@@ -485,7 +636,7 @@ export default function OrderDetailScreen() {
                                         {isWorkshopFitting ? 'Workshop fitting' : 'Shipping'}
                                     </Text>
                                     <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                                        {formatMoney(isWorkshopFitting ? 0 : SHIPPING_FEE)}
+                                        {formatMoney(isWorkshopFitting ? workshopFittingFee : SHIPPING_FEE)}
                                     </Text>
                                 </View>
                                 <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
@@ -515,7 +666,7 @@ export default function OrderDetailScreen() {
                         ) : null}
                         {canVendorCancel(order.status) ? (
                             <OutlinedButton
-                                title="Cancel Order"
+                                title="Cancel"
                                 onPress={() => handleVendorStatusUpdate('cancelled')}
                                 disabled={updatingStatus}
                                 textColor={colors.error}
@@ -611,12 +762,12 @@ const styles = StyleSheet.create({
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     orderId: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, letterSpacing: 0.5 },
     orderDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 4, opacity: 0.7 },
-    statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
-    statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+    statusBadge: { maxWidth: 190, paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
+    statusText: { fontFamily: Fonts.bold, fontSize: 10, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 },
 
     deliveryInfo: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, gap: 6 },
     infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    deliveryText: { fontFamily: Fonts.medium, fontSize: 11 },
+    deliveryText: { flex: 1, fontFamily: Fonts.medium, fontSize: 11 },
 
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
     sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5, marginBottom: Spacing.md },
@@ -644,6 +795,10 @@ const styles = StyleSheet.create({
     customerHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
     iconGroup: { flexDirection: 'row', gap: Spacing.sm },
     iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    vendorOpsGrid: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+    vendorOpsTile: { flex: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, gap: 4 },
+    vendorOpsLabel: { fontFamily: Fonts.bold, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5 },
+    vendorOpsValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
     vendorPickupNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md, marginTop: Spacing.md },
     vendorPickupNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
     queueGrid: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
