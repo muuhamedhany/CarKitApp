@@ -18,10 +18,29 @@ export default function BookingSuccessScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
 
-  const bookingId = params.bookingId || 'N/A';
-  const serviceName = params.serviceName || 'Service';
-  const providerName = params.providerName || 'Provider';
-  const price = params.price || '0';
+  const asParam = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+  const bookingId = asParam(params.bookingId) || 'N/A';
+  const serviceName = asParam(params.serviceName) || 'Service';
+  const providerName = asParam(params.providerName) || 'Provider';
+  const price = asParam(params.price) || '0';
+  const queueNumber = asParam(params.queueNumber) ? Number(asParam(params.queueNumber)) : null;
+  const peopleBefore = asParam(params.peopleBefore) ? Number(asParam(params.peopleBefore)) : 0;
+  const waitMinutes = asParam(params.waitMinutes) ? Number(asParam(params.waitMinutes)) : 0;
+
+  const formatQueueTime = (value?: string | string[]) => {
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (!raw) return '-';
+    try {
+      return new Date(raw).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return raw;
+    }
+  };
 
   const scale = useSharedValue(0.5);
 
@@ -85,6 +104,24 @@ export default function BookingSuccessScreen() {
               <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Amount Paid</Text>
               <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>{price} EGP</Text>
             </View>
+
+            {queueNumber ? (
+              <>
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <View style={styles.detailRow}>
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Queue Number</Text>
+                  <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>#{queueNumber}</Text>
+                </View>
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <View style={styles.detailRow}>
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Show Up</Text>
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{formatQueueTime(params.showUpAt)}</Text>
+                </View>
+                <Text style={[styles.queueHint, { color: colors.textSecondary }]}>
+                  {peopleBefore} before you | about {waitMinutes} min wait.
+                </Text>
+              </>
+            ) : null}
           </GlassView>
         </Animated.View>
 
@@ -148,6 +185,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, opacity: 0.05 },
   detailLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.6 },
   detailValue: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
+  queueHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: Spacing.md, lineHeight: 18 },
 
   infoText: {
     fontFamily: Fonts.medium, fontSize: FontSizes.sm,

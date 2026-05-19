@@ -4,7 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, orderService, paymentService } from '@/services/api';
-import { PaymentMethod } from '@/services/api/payment.service';
+import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,6 +56,14 @@ const formatReadableDate = (isoDate: string) => {
     }
 };
 
+const cardBrandLabel = (brand: string) => {
+    if (brand === 'mastercard') return 'Mastercard';
+    if (brand === 'visa') return 'Visa';
+    if (brand === 'amex') return 'Amex';
+    if (brand === 'discover') return 'Discover';
+    return 'Card';
+};
+
 export default function CheckoutScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -67,7 +75,11 @@ export default function CheckoutScreen() {
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
     const [loadingAddresses, setLoadingAddresses] = useState(true);
+    const [loadingSavedCards, setLoadingSavedCards] = useState(true);
     const [placingOrder, setPlacingOrder] = useState(false);
+    const [savedCards, setSavedCards] = useState<SavedPaymentMethod[]>([]);
+    const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
+    const [useNewCard, setUseNewCard] = useState(false);
     const [cardHolderName, setCardHolderName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
@@ -86,17 +98,53 @@ export default function CheckoutScreen() {
 
     const deliveryOptions = [
         { id: 'home_delivery', label: 'Home Delivery', icon: 'truck-delivery-outline', subtitle: 'Delivered to your address' },
-        { id: 'workshop_fitting', label: 'Apply at Workshop', icon: 'wrench-outline', subtitle: 'Fitted at partner center' }
+        { id: 'workshop_fitting', label: 'Apply at Workshop', icon: 'wrench-outline', subtitle: 'Install at vendor workshop' }
     ];
 
     const totalNumber = useMemo(() => Number(total) || 0, [total]);
+    const workshopVendorGroups = useMemo(() => {
+        const groups = new Map<number, {
+            vendorId: number;
+            vendorName: string;
+            workshopAddress?: string | null;
+            installationMinutes?: number | null;
+            itemCount: number;
+            subtotal: number;
+        }>();
+
+        for (const item of items) {
+            const vendorId = Number(item.vendor_id_fk || 0);
+            if (!vendorId) continue;
+            if (!groups.has(vendorId)) {
+                groups.set(vendorId, {
+                    vendorId,
+                    vendorName: item.vendor_name || 'Vendor Workshop',
+                    workshopAddress: item.workshop_address,
+                    installationMinutes: item.installation_duration_minutes,
+                    itemCount: 0,
+                    subtotal: 0,
+                });
+            }
+
+            const group = groups.get(vendorId)!;
+            group.itemCount += item.quantity;
+            group.subtotal += item.quantity * (Number(item.price) || 0);
+        }
+
+        return Array.from(groups.values());
+    }, [items]);
+    const workshopVendorCount = workshopVendorGroups.length;
+    const hasWorkshopVendorGap = useMemo(
+        () => deliveryType === 'workshop_fitting' && items.some((item) => !item.vendor_id_fk),
+        [deliveryType, items]
+    );
     const shippingCharge = useMemo(() => {
         return deliveryType === 'home_delivery' ? SHIPPING_FEE : 0;
     }, [deliveryType]);
 
     const serviceCharge = useMemo(() => {
-        return deliveryType === 'workshop_fitting' ? WORKSHOP_SERVICE_FEE : 0;
-    }, [deliveryType]);
+        return deliveryType === 'workshop_fitting' ? WORKSHOP_SERVICE_FEE * workshopVendorCount : 0;
+    }, [deliveryType, workshopVendorCount]);
 
     const totalWithShipping = useMemo(() => {
         return totalNumber + shippingCharge + serviceCharge;
@@ -114,18 +162,20 @@ export default function CheckoutScreen() {
         if (paymentMethod === 'cash_on_delivery') return true;
 
         if (paymentMethod === 'credit_card') {
+            if (!useNewCard && selectedSavedCardId) return true;
             const hasValidCardNumber = cardNumberDigits.length >= 13 && cardNumberDigits.length <= 19;
             const hasValidCvv = /^\d{3,4}$/.test(cardCvv.trim());
             return cardHolderName.trim().length > 2 && hasValidCardNumber && isValidExpiry(cardExpiry.trim()) && hasValidCvv;
         }
 
         return false;
-    }, [paymentMethod, cardHolderName, cardNumberDigits, cardExpiry, cardCvv]);
+    }, [paymentMethod, useNewCard, selectedSavedCardId, cardHolderName, cardNumberDigits, cardExpiry, cardCvv]);
 
     const canPlaceOrder = useMemo(() => {
         const hasAddressIfRequired = deliveryType === 'home_delivery' ? Boolean(selectedAddressId) : true;
-        return items.length > 0 && hasAddressIfRequired && canSubmitPaymentDetails && !placingOrder;
-    }, [items.length, deliveryType, selectedAddressId, canSubmitPaymentDetails, placingOrder]);
+        const hasWorkshopDestinations = deliveryType === 'workshop_fitting' ? workshopVendorCount > 0 && !hasWorkshopVendorGap : true;
+        return items.length > 0 && hasAddressIfRequired && hasWorkshopDestinations && canSubmitPaymentDetails && !placingOrder;
+    }, [items.length, deliveryType, selectedAddressId, workshopVendorCount, hasWorkshopVendorGap, canSubmitPaymentDetails, placingOrder]);
 
     const loadAddresses = useCallback(async () => {
         try {
@@ -148,10 +198,28 @@ export default function CheckoutScreen() {
         }
     }, [selectedAddressId, showToast]);
 
+    const loadSavedCards = useCallback(async () => {
+        try {
+            setLoadingSavedCards(true);
+            const res = await paymentService.getPaymentMethods();
+            if (res.success && Array.isArray(res.data)) {
+                const methods = res.data;
+                setSavedCards(methods);
+                const defaultCard = methods.find((item) => item.is_default);
+                setSelectedSavedCardId(defaultCard?.payment_method_id || methods[0]?.payment_method_id || null);
+            }
+        } catch {
+            showToast('error', 'Payment Error', 'Could not load saved cards.');
+        } finally {
+            setLoadingSavedCards(false);
+        }
+    }, [showToast]);
+
     useFocusEffect(
         useCallback(() => {
             loadAddresses();
-        }, [loadAddresses])
+            loadSavedCards();
+        }, [loadAddresses, loadSavedCards])
     );
 
     const handlePlaceOrder = async () => {
@@ -160,14 +228,19 @@ export default function CheckoutScreen() {
             return;
         }
 
-        if (!selectedAddressId) {
+        if (deliveryType === 'home_delivery' && !selectedAddressId) {
             showToast('warning', 'Address Required', 'Please add/select a shipping address.');
+            return;
+        }
+
+        if (deliveryType === 'workshop_fitting' && hasWorkshopVendorGap) {
+            showToast('warning', 'Vendor Workshop Required', 'Every workshop fitting item must be assigned to a vendor workshop.');
             return;
         }
 
         if (!canSubmitPaymentDetails) {
             if (paymentMethod === 'credit_card') {
-                showToast('warning', 'Card Details Required', 'Please complete valid credit card details.');
+                showToast('warning', 'Card Details Required', 'Select a saved card or complete valid credit card details.');
                 return;
             }
         }
@@ -176,7 +249,7 @@ export default function CheckoutScreen() {
             setPlacingOrder(true);
 
             const orderRes = await orderService.createOrder({
-                shipping_address_id: deliveryType === 'home_delivery' ? selectedAddressId : undefined,
+                shipping_address_id: deliveryType === 'home_delivery' ? (selectedAddressId ?? undefined) : undefined,
                 preferred_delivery_date: preferredDeliveryDate,
                 delivery_type: deliveryType,
             });
@@ -186,8 +259,10 @@ export default function CheckoutScreen() {
                 return;
             }
 
+            const workshopOrders = Array.isArray(orderRes.data.orders) ? orderRes.data.orders : [];
             const paymentRes = await paymentService.createPayment({
-                order_id: orderRes.data.order_id,
+                order_id: deliveryType === 'workshop_fitting' ? undefined : orderRes.data.order_id,
+                order_group_id: deliveryType === 'workshop_fitting' ? (orderRes.data.order_group_id || undefined) : undefined,
                 method: paymentMethod,
                 amount: totalWithShipping,
             });
@@ -198,6 +273,7 @@ export default function CheckoutScreen() {
                     pathname: '/order-failure' as any,
                     params: {
                         orderId: String(orderRes.data.order_id),
+                        orderGroupId: orderRes.data.order_group_id ? String(orderRes.data.order_group_id) : undefined,
                         amount: String(totalWithShipping),
                         method: paymentMethod,
                     },
@@ -206,9 +282,37 @@ export default function CheckoutScreen() {
             }
 
             await fetchCart();
+            if (deliveryType === 'workshop_fitting' && workshopOrders.length > 0) {
+                router.replace({
+                    pathname: '/order-success' as any,
+                    params: {
+                        orderGroupId: orderRes.data.order_group_id ? String(orderRes.data.order_group_id) : undefined,
+                        orderIds: workshopOrders.map((item) => item.order_id).join(','),
+                        deliveryType: 'workshop_fitting',
+                        orders: JSON.stringify(workshopOrders.map((item) => ({
+                            orderId: item.order_id,
+                            vendorName: item.queue?.center_name || item.vendor_name || 'Vendor Workshop',
+                            workshopAddress: item.queue?.center_address || item.workshop_address || '',
+                            queueNumber: item.queue?.queue_number,
+                            peopleBefore: item.queue?.people_before,
+                            waitMinutes: item.queue?.estimated_wait_minutes,
+                            showUpAt: item.queue?.show_up_at,
+                        }))),
+                    },
+                });
+                return;
+            }
+
             router.replace({
                 pathname: '/order-success' as any,
-                params: { orderId: String(orderRes.data.order_id) },
+                params: {
+                    orderId: String(orderRes.data.order_id),
+                    deliveryType: orderRes.data.delivery_type || deliveryType,
+                    queueNumber: orderRes.data.queue?.queue_number ? String(orderRes.data.queue.queue_number) : undefined,
+                    peopleBefore: orderRes.data.queue?.people_before !== undefined ? String(orderRes.data.queue.people_before) : undefined,
+                    waitMinutes: orderRes.data.queue?.estimated_wait_minutes !== undefined ? String(orderRes.data.queue.estimated_wait_minutes) : undefined,
+                    showUpAt: orderRes.data.queue?.show_up_at || undefined,
+                },
             });
         } catch {
             showToast('error', 'Checkout Error', 'Something went wrong during checkout.');
@@ -382,26 +486,45 @@ export default function CheckoutScreen() {
                             </View>
                         </View>
 
-                        <Animated.View entering={FadeInDown.delay(200)}>
-                            <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.workshopCard, { borderColor: colors.cardBorder }]}>
-                                <View style={styles.workshopHeader}>
-                                    <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.pink} />
-                                    <Text style={[styles.workshopName, { color: colors.textPrimary }]}>CarKit Partner Center</Text>
-                                </View>
-                                <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
-                                    📍 Block 5, Autostrad Rd, Heliopolis, Cairo
-                                </Text>
-                                <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
-                                    📞 19985 (Hotline support)
-                                </Text>
-                                <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
-                                    <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
-                                    <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
-                                        Free complimentary professional fitting & application!
-                                    </Text>
-                                </View>
-                            </GlassView>
-                        </Animated.View>
+                        {hasWorkshopVendorGap ? (
+                            <Text style={[styles.workshopDetail, { color: colors.pink }]}>
+                                One or more cart items are missing a vendor workshop.
+                            </Text>
+                        ) : null}
+
+                        {workshopVendorGroups.map((group, idx) => (
+                            <Animated.View key={group.vendorId} entering={FadeInDown.delay(200 + idx * 60)}>
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.workshopCard, { borderColor: colors.cardBorder }]}>
+                                    <View style={styles.workshopHeader}>
+                                        <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.pink} />
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{group.vendorName}</Text>
+                                            <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
+                                                {group.itemCount} item{group.itemCount === 1 ? '' : 's'} for installation
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.workshopLine}>
+                                        <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textSecondary} />
+                                        <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
+                                            {group.workshopAddress || 'Workshop address will be confirmed by the vendor'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.workshopLine}>
+                                        <MaterialCommunityIcons name="timer-outline" size={16} color={colors.textSecondary} />
+                                        <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
+                                            Estimated fitting time: {group.installationMinutes || 30} minutes
+                                        </Text>
+                                    </View>
+                                    <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
+                                        <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
+                                        <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
+                                            Fitting fee: {WORKSHOP_SERVICE_FEE.toFixed(2)} EGP for this workshop order
+                                        </Text>
+                                    </View>
+                                </GlassView>
+                            </Animated.View>
+                        ))}
                     </View>
                 )}
 
@@ -434,6 +557,9 @@ export default function CheckoutScreen() {
                                     onPress={() => {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                         setPaymentMethod(method.value);
+                                        if (method.value !== 'credit_card') {
+                                            setUseNewCard(false);
+                                        }
                                     }}
                                 >
                                     <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
@@ -453,6 +579,62 @@ export default function CheckoutScreen() {
                     <Animated.View entering={FadeInUp}>
                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
                             <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
+                            {loadingSavedCards ? (
+                                <ActivityIndicator size="small" color={colors.pink} />
+                            ) : savedCards.length > 0 ? (
+                                <View style={{ gap: Spacing.sm, marginBottom: Spacing.md }}>
+                                    {savedCards.map((card) => {
+                                        const active = !useNewCard && selectedSavedCardId === card.payment_method_id;
+                                        return (
+                                            <Pressable
+                                                key={card.payment_method_id}
+                                                style={[
+                                                    styles.methodCard,
+                                                    {
+                                                        backgroundColor: active ? colors.pink + '12' : 'transparent',
+                                                        borderColor: active ? colors.pink : colors.cardBorder,
+                                                        marginBottom: 0,
+                                                    },
+                                                ]}
+                                                onPress={() => {
+                                                    setSelectedSavedCardId(card.payment_method_id);
+                                                    setUseNewCard(false);
+                                                }}
+                                            >
+                                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
+                                                    <View style={styles.methodLeft}>
+                                                        <MaterialCommunityIcons name="credit-card-outline" size={20} color={active ? colors.pink : colors.textSecondary} />
+                                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>
+                                                            {cardBrandLabel(card.brand)} •••• {card.last4}
+                                                        </Text>
+                                                    </View>
+                                                    {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
+                                                </GlassView>
+                                            </Pressable>
+                                        );
+                                    })}
+                                </View>
+                            ) : null}
+                            <Pressable
+                                style={[
+                                    styles.methodCard,
+                                    {
+                                        backgroundColor: useNewCard ? colors.pink + '12' : 'transparent',
+                                        borderColor: useNewCard ? colors.pink : colors.cardBorder,
+                                    },
+                                ]}
+                                onPress={() => setUseNewCard(true)}
+                            >
+                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
+                                    <View style={styles.methodLeft}>
+                                        <MaterialCommunityIcons name="plus-circle-outline" size={20} color={useNewCard ? colors.pink : colors.textSecondary} />
+                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>Use new card</Text>
+                                    </View>
+                                    {useNewCard ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
+                                </GlassView>
+                            </Pressable>
+                            {(!savedCards.length || useNewCard) ? (
+                                <>
                             <FormInput
                                 value={cardHolderName}
                                 onChangeText={setCardHolderName}
@@ -486,7 +668,9 @@ export default function CheckoutScreen() {
                                     />
                                 </View>
                             </View>
-                            <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Complete all fields to unlock Place Order.</Text>
+                                </>
+                            ) : null}
+                            <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Select a saved card or complete all fields to unlock Place Order.</Text>
                         </GlassView>
                     </Animated.View>
                 ) : null}
@@ -513,10 +697,14 @@ export default function CheckoutScreen() {
                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.estimatedCard, { borderColor: colors.cardBorder }]}>
                             <View style={styles.estimatedHeader}>
                                 <MaterialCommunityIcons name="calendar-range" size={20} color={colors.pink} />
-                                <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>Estimated Delivery</Text>
+                                <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>
+                                    {deliveryType === 'home_delivery' ? 'Estimated Delivery' : 'Preferred Installation Day'}
+                                </Text>
                             </View>
                             <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>
-                                Between {formatReadableDate(formatDateValue(estimatedStartDate))} and {formatReadableDate(formatDateValue(estimatedEndDate))}
+                                {deliveryType === 'home_delivery'
+                                    ? `Between ${formatReadableDate(formatDateValue(estimatedStartDate))} and ${formatReadableDate(formatDateValue(estimatedEndDate))}`
+                                    : `Vendor workshop queues will be assigned for ${formatReadableDate(preferredDeliveryDate)}`}
                             </Text>
                         </GlassView>
                     </Animated.View>
@@ -574,7 +762,7 @@ export default function CheckoutScreen() {
                                 </View>
                             ) : (
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Fitting Service</Text>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Fitting Service ({workshopVendorCount})</Text>
                                     <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{serviceCharge.toFixed(2)} EGP</Text>
                                 </View>
                             )}
@@ -595,7 +783,7 @@ export default function CheckoutScreen() {
                         <View style={styles.deliveryBadge}>
                             <MaterialCommunityIcons name="clock-fast" size={16} color={colors.pink} />
                             <Text style={[styles.deliveryBadgeText, { color: colors.pink }]}>
-                                {deliveryType === 'home_delivery' ? `Arrival by ${formatReadableDate(preferredDeliveryDate)}` : 'Ready for pickup & fitting instantly!'}
+                                {deliveryType === 'home_delivery' ? `Arrival by ${formatReadableDate(preferredDeliveryDate)}` : `${workshopVendorCount} vendor workshop queue${workshopVendorCount === 1 ? '' : 's'} assigned after order placement`}
                             </Text>
                         </View>
                     </GlassView>
@@ -1032,6 +1220,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginBottom: Spacing.xs,
         opacity: 0.9,
+    },
+    workshopLine: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: Spacing.xs,
+        marginBottom: Spacing.xs,
     },
     workshopBadge: {
         flexDirection: 'row',

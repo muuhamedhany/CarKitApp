@@ -46,6 +46,28 @@ const formatMoney = (value: string | number) => {
     return `${numberValue.toLocaleString('en-EG')} EGP`;
 };
 
+const formatQueueTime = (value?: string | null) => {
+    if (!value) return '-';
+    try {
+        return new Date(value).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        });
+    } catch {
+        return value;
+    }
+};
+
+const formatMinutes = (value?: number | null) => {
+    const minutes = Number(value || 0);
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+};
+
 const normalizeStatus = (status?: string) => String(status || '').toLowerCase();
 
 const getStatusPalette = (status: string, colors: any) => {
@@ -91,7 +113,11 @@ export default function OrderDetailScreen() {
     const [isReviewed, setIsReviewed] = useState(false);
 
     const subtotal = useMemo(() => Number(order?.total_amount || 0), [order?.total_amount]);
-    const totalWithShipping = subtotal + SHIPPING_FEE;
+    const isWorkshopFitting = order?.delivery_type === 'workshop_fitting' || order?.shipping_address_fk === null;
+    const totalWithShipping = subtotal + (isWorkshopFitting ? 0 : SHIPPING_FEE);
+    const workshopLatitude = Number(order?.queue?.center_latitude ?? order?.workshop_latitude);
+    const workshopLongitude = Number(order?.queue?.center_longitude ?? order?.workshop_longitude);
+    const hasWorkshopCoordinates = Number.isFinite(workshopLatitude) && Number.isFinite(workshopLongitude);
 
     const loadOrder = useCallback(async () => {
         if (!orderId) {
@@ -251,15 +277,52 @@ export default function OrderDetailScreen() {
                             <View style={[styles.deliveryInfo, { borderTopColor: colors.cardBorder }]}>
                                 <View style={styles.infoRow}>
                                     <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>Preferred arrival: {formatDate(order.preferred_delivery_date)}</Text>
+                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                        {isWorkshopFitting ? 'Preferred fitting day' : 'Preferred arrival'}: {formatDate(order.preferred_delivery_date)}
+                                    </Text>
                                 </View>
                                 <View style={styles.infoRow}>
                                     <MaterialCommunityIcons name="calendar-range" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.deliveryText, { color: colors.textMuted }]}>Estimated: {formatDate(order.estimated_delivery_start)} - {formatDate(order.estimated_delivery_end)}</Text>
+                                    <Text style={[styles.deliveryText, { color: colors.textMuted }]}>
+                                        {isWorkshopFitting && order.queue
+                                            ? `Show up: ${formatQueueTime(order.queue.show_up_at)}`
+                                            : `Estimated: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`}
+                                    </Text>
                                 </View>
                             </View>
                         </GlassView>
                     </Animated.View>
+
+                    {isWorkshopFitting && order.queue ? (
+                        <Animated.View entering={FadeInDown.delay(150).springify()}>
+                            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                                <View style={styles.sectionHeader}>
+                                    <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
+                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Workshop Queue</Text>
+                                </View>
+                                <View style={styles.queueGrid}>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.pink }]}>#{order.queue.queue_number}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Your number</Text>
+                                    </View>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{order.queue.people_before}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Before you</Text>
+                                    </View>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(order.queue.estimated_wait_minutes)}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Est. wait</Text>
+                                    </View>
+                                </View>
+                                <View style={[styles.vendorPickupNote, { backgroundColor: colors.infoSoft }]}>
+                                    <MaterialCommunityIcons name="map-marker-check-outline" size={16} color={colors.info} />
+                                    <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
+                                        Show up around {formatQueueTime(order.queue.show_up_at)}. Fitting is expected to finish by {formatQueueTime(order.queue.estimated_finish_at)}.
+                                    </Text>
+                                </View>
+                            </GlassView>
+                        </Animated.View>
+                    ) : null}
 
                     <Animated.View entering={FadeInDown.delay(200).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
@@ -338,12 +401,18 @@ export default function OrderDetailScreen() {
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Shipping Address</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                                    {isWorkshopFitting ? 'Workshop Location' : 'Shipping Address'}
+                                </Text>
                             </View>
                             <View style={{ gap: Spacing.xs, marginTop: Spacing.sm }}>
-                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{order.shipping_title || 'Default Address'}</Text>
+                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
+                                    {isWorkshopFitting ? (order.queue?.center_name || order.vendor_name || 'Vendor Workshop') : (order.shipping_title || 'Default Address')}
+                                </Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                                    {order.shipping_street || 'No street address'}{order.shipping_street && order.shipping_city ? ', ' : ''}{order.shipping_city || ''}
+                                    {isWorkshopFitting
+                                        ? (order.queue?.center_address || order.workshop_address || 'Workshop address unavailable')
+                                        : `${order.shipping_street || 'No street address'}${order.shipping_street && order.shipping_city ? ', ' : ''}${order.shipping_city || ''}`}
                                 </Text>
                                 {(order.shipping_building || order.shipping_apartment_floor) && (
                                     <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
@@ -358,7 +427,16 @@ export default function OrderDetailScreen() {
                                         <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.shipping_notes}</Text>
                                     </View>
                                 )}
-                                {order.shipping_latitude && order.shipping_longitude ? (
+                                {isWorkshopFitting && hasWorkshopCoordinates ? (
+                                    <View style={{ marginTop: Spacing.md }}>
+                                        <GetDirectionsButton
+                                            latitude={workshopLatitude}
+                                            longitude={workshopLongitude}
+                                            label={order.queue?.center_name || order.vendor_name || undefined}
+                                        />
+                                    </View>
+                                ) : null}
+                                {!isWorkshopFitting && order.shipping_latitude && order.shipping_longitude ? (
                                     <View style={{ marginTop: Spacing.md }}>
                                         <GetDirectionsButton
                                             latitude={order.shipping_latitude}
@@ -403,8 +481,12 @@ export default function OrderDetailScreen() {
                                     <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(subtotal)}</Text>
                                 </View>
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
-                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(SHIPPING_FEE)}</Text>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+                                        {isWorkshopFitting ? 'Workshop fitting' : 'Shipping'}
+                                    </Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
+                                        {formatMoney(isWorkshopFitting ? 0 : SHIPPING_FEE)}
+                                    </Text>
                                 </View>
                                 <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
                                 <View style={styles.summaryRow}>
@@ -564,6 +646,16 @@ const styles = StyleSheet.create({
     iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     vendorPickupNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md, marginTop: Spacing.md },
     vendorPickupNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+    queueGrid: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
+    queueStat: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    queueValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
+    queueLabel: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 4, textTransform: 'uppercase' },
 
     addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
     addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },

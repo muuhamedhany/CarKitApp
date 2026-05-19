@@ -1,5 +1,5 @@
 import { apiFetch } from './client';
-import { ApiResponse, OrderDetail } from '@/types/api.types';
+import { ApiResponse, OrderDetail, QueueInfo } from '@/types/api.types';
 
 export interface OrderPayload {
     shipping_address_id?: number;
@@ -9,6 +9,8 @@ export interface OrderPayload {
 
 export interface OrderRecord {
     order_id: number;
+    order_group_id?: number | null;
+    order_group_id_fk?: number | null;
     user_id_fk: number;
     shipping_address_fk: number | null;
     total_amount: string;
@@ -17,6 +19,15 @@ export interface OrderRecord {
     preferred_delivery_date?: string | null;
     estimated_delivery_start?: string | null;
     estimated_delivery_end?: string | null;
+    delivery_type?: 'home_delivery' | 'workshop_fitting' | string;
+    vendor_id_fk?: number | null;
+    vendor_name?: string | null;
+    workshop_address?: string | null;
+    workshop_latitude?: number | null;
+    workshop_longitude?: number | null;
+    workshop_service_fee?: number;
+    queue?: QueueInfo | null;
+    orders?: OrderRecord[];
 }
 
 export const orderService = {

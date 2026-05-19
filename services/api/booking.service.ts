@@ -1,4 +1,4 @@
-import { ApiResponse } from '@/types/api.types';
+import { ApiResponse, QueueInfo } from '@/types/api.types';
 import { apiFetch } from './client';
 import { PaymentMethod } from './payment.service';
 
@@ -45,12 +45,13 @@ export type Booking = {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  queue?: QueueInfo | null;
 };
 
 export const bookingService = {
   // Customer: Create booking
   async createBooking(payload: BookingPayload) {
-    return apiFetch<ApiResponse<{ booking_id: number }>>('/bookings', {
+    return apiFetch<ApiResponse<{ booking_id: number; queue?: QueueInfo | null }>>('/bookings', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

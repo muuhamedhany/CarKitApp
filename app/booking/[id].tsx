@@ -51,6 +51,28 @@ const formatTime = (value?: string | null) => {
 
 const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
 
+const formatQueueTime = (value?: string | null) => {
+    if (!value) return '-';
+    try {
+        return new Date(value).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        });
+    } catch {
+        return value;
+    }
+};
+
+const formatMinutes = (value?: number | null) => {
+    const minutes = Number(value || 0);
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+};
+
 const canCancel = (status?: string | null) => {
     const normalized = String(status || '').toLowerCase();
     return normalized === 'pending' || normalized === 'confirmed' || normalized === 'in-progress';
@@ -233,6 +255,37 @@ export default function BookingDetailScreen() {
                             </View>
                         </GlassView>
                     </Animated.View>
+
+                    {booking.queue ? (
+                        <Animated.View entering={FadeInDown.delay(250).springify()}>
+                            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                                <View style={styles.sectionHeader}>
+                                    <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
+                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Service Queue</Text>
+                                </View>
+                                <View style={styles.queueGrid}>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.pink }]}>#{booking.queue.queue_number}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Your number</Text>
+                                    </View>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{booking.queue.people_before}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Before you</Text>
+                                    </View>
+                                    <View style={styles.queueStat}>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(booking.queue.estimated_wait_minutes)}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Est. wait</Text>
+                                    </View>
+                                </View>
+                                <View style={[styles.queueNote, { backgroundColor: colors.infoSoft }]}>
+                                    <MaterialCommunityIcons name="map-marker-check-outline" size={16} color={colors.info} />
+                                    <Text style={[styles.queueNoteText, { color: colors.textSecondary }]}>
+                                        Show up around {formatQueueTime(booking.queue.show_up_at)}. Service is expected to finish by {formatQueueTime(booking.queue.estimated_finish_at)}.
+                                    </Text>
+                                </View>
+                            </GlassView>
+                        </Animated.View>
+                    ) : null}
 
                     <Animated.View entering={FadeInDown.delay(300).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
@@ -470,6 +523,18 @@ const styles = StyleSheet.create({
 
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
     metaText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.8 },
+    queueGrid: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
+    queueStat: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    queueValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
+    queueLabel: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 4, textTransform: 'uppercase' },
+    queueNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md },
+    queueNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
 
     priceCard: {
         borderRadius: BorderRadius.xl,

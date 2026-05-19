@@ -8,6 +8,7 @@ export type PaymentMethod =
 export interface PaymentPayload {
     order_id?: number;
     booking_id?: number;
+    order_group_id?: number;
     method: PaymentMethod;
     amount: number;
 }
@@ -17,6 +18,7 @@ export interface PaymentRecord {
     user_id_fk: number;
     order_id_fk: number | null;
     booking_id_fk: number | null;
+    order_group_id_fk?: number | null;
     method: PaymentMethod;
     amount: string;
     status: string;

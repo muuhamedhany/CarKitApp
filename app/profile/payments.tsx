@@ -134,18 +134,21 @@ export default function PaymentsScreen() {
     const [holderName, setHolderName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [expiry, setExpiry] = useState('');
+    const [cvv, setCvv] = useState('');
     const [makeDefault, setMakeDefault] = useState(true);
 
     const cardDigits = useMemo(() => cardNumber.replace(/\D/g, ''), [cardNumber]);
     const parsedExpiry = useMemo(() => parseExpiry(expiry), [expiry]);
     const detectedBrand = useMemo(() => detectBrand(cardDigits), [cardDigits]);
     const cardIsValid = cardDigits.length >= 13 && cardDigits.length <= 19 && passesLuhn(cardDigits);
-    const canSave = holderName.trim().length >= 2 && cardIsValid && Boolean(parsedExpiry) && !saving;
+    const cvvIsValid = /^\d{3,4}$/.test(cvv.trim());
+    const canSave = holderName.trim().length >= 2 && cardIsValid && Boolean(parsedExpiry) && cvvIsValid && !saving;
 
     const resetForm = useCallback(() => {
         setHolderName('');
         setCardNumber('');
         setExpiry('');
+        setCvv('');
         setMakeDefault(paymentMethods.length === 0);
     }, [paymentMethods.length]);
 
@@ -179,9 +182,9 @@ export default function PaymentsScreen() {
     );
 
     const handleSaveCard = async () => {
-        if (!parsedExpiry || !cardIsValid || holderName.trim().length < 2) {
+        if (!parsedExpiry || !cardIsValid || holderName.trim().length < 2 || !cvvIsValid) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            showToast('warning', 'Invalid Card', 'Please enter a valid card number, expiry, and holder name.');
+            showToast('warning', 'Invalid Card', 'Please enter a valid card number, expiry, holder name, and CVV.');
             return;
         }
 
@@ -277,9 +280,6 @@ export default function PaymentsScreen() {
             style={styles.cardWrapper}
         >
             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
-                <LinearGradient colors={brandColors(method.brand)} style={styles.cardTypeBadge}>
-                    <MaterialCommunityIcons name="credit-card" size={20} color="white" />
-                </LinearGradient>
 
                 <View style={styles.cardMain}>
                     <View style={styles.cardTitleRow}>
@@ -404,6 +404,15 @@ export default function PaymentsScreen() {
                     onChangeText={(value) => setExpiry(formatExpiryInput(value))}
                     keyboardType="number-pad"
                     maxLength={5}
+                />
+                <FormInput
+                    label="CVV"
+                    icon="shield-lock-outline"
+                    placeholder="CVV"
+                    value={cvv}
+                    onChangeText={(value) => setCvv(value.replace(/\D/g, '').slice(0, 4))}
+                    keyboardType="number-pad"
+                    maxLength={4}
                 />
 
                 <Pressable
@@ -534,7 +543,7 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.extraBold,
         fontSize: 12,
         letterSpacing: 1.5,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.sm,
         opacity: 0.6,
     },
     cardList: { gap: Spacing.md, marginBottom: Spacing.xl },
@@ -591,7 +600,6 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
     },
     cardFooterItem: {
-        flex: 1,
     },
     cardLabel: {
         fontFamily: Fonts.bold,
