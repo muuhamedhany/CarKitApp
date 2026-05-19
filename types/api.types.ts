@@ -30,7 +30,12 @@ export type Product = {
   stock?: number;
   category_id_fk?: number;
   category_name?: string;
+  vendor_id_fk?: number | null;
   vendor_name?: string;
+  workshop_address?: string | null;
+  workshop_latitude?: number | null;
+  workshop_longitude?: number | null;
+  installation_duration_minutes?: number | null;
   image_url?: string | null;
   image_url_2?: string | null;
   image_url_3?: string | null;
@@ -99,6 +104,12 @@ export type CartItem = {
   stock: number;
   item_total: string;
   image_url?: string | null;
+  vendor_id_fk?: number | null;
+  vendor_name?: string | null;
+  workshop_address?: string | null;
+  workshop_latitude?: number | null;
+  workshop_longitude?: number | null;
+  installation_duration_minutes?: number | null;
 };
 
 export type Vendor = {
@@ -267,8 +278,26 @@ export type OrderDetailItem = {
   product_name: string;
 };
 
+export type QueueInfo = {
+  scope: 'provider' | 'vendor' | string;
+  center_name?: string | null;
+  center_address?: string | null;
+  center_latitude?: number | null;
+  center_longitude?: number | null;
+  queue_status?: string | null;
+  queue_number: number;
+  people_before: number;
+  estimated_wait_minutes: number;
+  estimated_service_minutes: number;
+  estimated_start_at?: string | null;
+  estimated_finish_at?: string | null;
+  show_up_at?: string | null;
+};
+
 export type OrderDetail = {
   order_id: number;
+  order_group_id?: number | null;
+  order_group_id_fk?: number | null;
   user_id_fk: number;
   shipping_address_fk: number | null;
   total_amount: string | number;
@@ -279,6 +308,11 @@ export type OrderDetail = {
   estimated_delivery_end?: string | null;
   vendor_id_fk?: number | null;
   vendor_name?: string | null;
+  workshop_address?: string | null;
+  workshop_latitude?: number | null;
+  workshop_longitude?: number | null;
+  delivery_type?: 'home_delivery' | 'workshop_fitting' | string;
+  queue?: QueueInfo | null;
   items: OrderDetailItem[];
 } & OrderAddressSummary;
 

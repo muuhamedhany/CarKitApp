@@ -56,7 +56,7 @@ const getStatusTint = (status: string, colors: any) => {
 const canMoveForward = (status: string) => {
     const normalized = (status || '').toLowerCase();
     if (normalized === 'pending') return { label: 'Confirm', next: 'confirmed', icon: 'check-circle-outline' };
-    if (normalized === 'confirmed') return { label: 'Start Service', next: 'in-progress', icon: 'play-circle-outline' };
+    if (normalized === 'confirmed') return { label: 'Startw3', next: 'in-progress', icon: 'play-circle-outline' };
     if (normalized === 'in-progress') return { label: 'Complete', next: 'completed', icon: 'flag-checkered' };
 
     return null;

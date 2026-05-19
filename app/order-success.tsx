@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,11 +9,58 @@ import { GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 
+type WorkshopOrderSummary = {
+    orderId?: number;
+    vendorName?: string;
+    workshopAddress?: string;
+    queueNumber?: number;
+    peopleBefore?: number;
+    waitMinutes?: number;
+    showUpAt?: string;
+};
+
 export default function OrderSuccessScreen() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
-    const params = useLocalSearchParams<{ orderId?: string }>();
+    const params = useLocalSearchParams<{
+        orderId?: string;
+        deliveryType?: string;
+        queueNumber?: string;
+        peopleBefore?: string;
+        waitMinutes?: string;
+        showUpAt?: string;
+        orderGroupId?: string;
+        orderIds?: string;
+        orders?: string;
+    }>();
+    const isWorkshopFitting = params.deliveryType === 'workshop_fitting';
+    const queueNumber = params.queueNumber ? Number(params.queueNumber) : null;
+    const peopleBefore = params.peopleBefore ? Number(params.peopleBefore) : 0;
+    const waitMinutes = params.waitMinutes ? Number(params.waitMinutes) : 0;
+    const workshopOrders: WorkshopOrderSummary[] = (() => {
+        if (!params.orders) return [];
+        try {
+            const parsed = JSON.parse(String(params.orders));
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    })();
+
+    const formatQueueTime = (value?: string) => {
+        if (!value) return '-';
+        try {
+            return new Date(value).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+            });
+        } catch {
+            return value;
+        }
+    };
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -33,7 +80,9 @@ export default function OrderSuccessScreen() {
                 <Animated.View entering={FadeInDown.delay(400)} style={styles.textSection}>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>Order Placed!</Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        Your order #{params.orderId || '-'} has been submitted successfully.
+                        {isWorkshopFitting && params.orderGroupId
+                            ? `Your workshop order group #${params.orderGroupId} has been submitted successfully.`
+                            : `Your order #${params.orderId || '-'} has been submitted successfully.`}
                     </Text>
                 </Animated.View>
 
@@ -44,10 +93,47 @@ export default function OrderSuccessScreen() {
                             <Text style={[styles.cardText, { color: colors.textPrimary }]}>Processing your order</Text>
                         </View>
                         <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
-                            Our vendor has been notified and will start preparing your items shortly.
+                            {isWorkshopFitting
+                                ? `Your vendor workshop queue${workshopOrders.length === 1 ? '' : 's'} have been assigned.`
+                                : 'Our vendor has been notified and will start preparing your items shortly.'}
                         </Text>
                     </GlassView>
                 </Animated.View>
+
+                {isWorkshopFitting && workshopOrders.length > 0 ? (
+                    <Animated.View entering={FadeInDown.delay(700)} style={styles.cardWrapper}>
+                        {workshopOrders.map((item, index) => (
+                            <GlassView key={`${item.orderId || index}`} intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, index > 0 ? styles.stackedCard : null]}>
+                                <View style={styles.cardRow}>
+                                    <MaterialCommunityIcons name="store-clock-outline" size={20} color={colors.pink} />
+                                    <Text style={[styles.cardText, { color: colors.textPrimary }]}>
+                                        Order #{item.orderId || '-'} · {item.vendorName || 'Vendor Workshop'}
+                                    </Text>
+                                </View>
+                                <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
+                                    Queue #{item.queueNumber || '-'} · {item.peopleBefore || 0} before you · about {item.waitMinutes || 0} min wait.
+                                </Text>
+                                <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
+                                    Show up around {formatQueueTime(item.showUpAt)}{item.workshopAddress ? ` at ${item.workshopAddress}` : ''}.
+                                </Text>
+                            </GlassView>
+                        ))}
+                    </Animated.View>
+                ) : null}
+
+                {isWorkshopFitting && workshopOrders.length === 0 && queueNumber ? (
+                    <Animated.View entering={FadeInDown.delay(700)} style={styles.cardWrapper}>
+                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                            <View style={styles.cardRow}>
+                                <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
+                                <Text style={[styles.cardText, { color: colors.textPrimary }]}>Queue #{queueNumber}</Text>
+                            </View>
+                            <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
+                                {peopleBefore} before you | about {waitMinutes} min wait. Show up around {formatQueueTime(params.showUpAt)}.
+                            </Text>
+                        </GlassView>
+                    </Animated.View>
+                ) : null}
 
                 <Animated.View entering={FadeInDown.delay(800)} style={styles.buttonContainer}>
                     <GradientButton 
@@ -136,6 +222,9 @@ const styles = StyleSheet.create({
         fontSize: 13,
         lineHeight: 18,
         opacity: 0.8,
+    },
+    stackedCard: {
+        marginTop: Spacing.md,
     },
     buttonContainer: {
         width: '100%',

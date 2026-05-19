@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
   Image, ActivityIndicator,
@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService } from '@/services/api/ad.service';
 import { apiFetch } from '@/services/api/client';
-import { PaymentMethod } from '@/services/api/payment.service';
+import { PaymentMethod, SavedPaymentMethod, paymentService } from '@/services/api/payment.service';
 import { CenteredHeader, FormInput, GlassView } from '@/components';
 import { Spacing, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -21,6 +21,14 @@ const PAYMENT_METHODS: { label: string; value: PaymentMethod; icon: string }[] =
   { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash' },
   { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline' },
 ];
+
+const cardBrandLabel = (brand: string) => {
+  if (brand === 'mastercard') return 'Mastercard';
+  if (brand === 'visa') return 'Visa';
+  if (brand === 'amex') return 'Amex';
+  if (brand === 'discover') return 'Discover';
+  return 'Card';
+};
 
 export default function AdPaymentScreen() {
   const router = useRouter();
@@ -45,6 +53,10 @@ export default function AdPaymentScreen() {
     durationDays === 14 ? '14 Days' : '30 Days';
 
   const [method, setMethod] = useState<PaymentMethod>('cash_on_delivery');
+  const [savedCards, setSavedCards] = useState<SavedPaymentMethod[]>([]);
+  const [loadingSavedCards, setLoadingSavedCards] = useState(true);
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
+  const [useNewCard, setUseNewCard] = useState(false);
   const [cardHolderName, setCardHolderName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -62,6 +74,7 @@ export default function AdPaymentScreen() {
   const canPay = useMemo(() => {
     if (method === 'cash_on_delivery') return true;
     if (method === 'credit_card') {
+      if (!useNewCard && selectedSavedCardId) return true;
       return (
         cardHolderName.trim().length > 2 &&
         cardDigits.length >= 13 &&
@@ -70,12 +83,29 @@ export default function AdPaymentScreen() {
       );
     }
     return false;
-  }, [method, cardHolderName, cardDigits, cardExpiry, cardCvv]);
+  }, [method, useNewCard, selectedSavedCardId, cardHolderName, cardDigits, cardExpiry, cardCvv]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingSavedCards(true);
+        const res = await paymentService.getPaymentMethods();
+        if (res.success && Array.isArray(res.data)) {
+          const methods = res.data;
+          setSavedCards(methods);
+          const defaultCard = methods.find((item) => item.is_default);
+          setSelectedSavedCardId(defaultCard?.payment_method_id || methods[0]?.payment_method_id || null);
+        }
+      } finally {
+        setLoadingSavedCards(false);
+      }
+    })();
+  }, []);
 
   const handleConfirmPayment = async () => {
     if (!canPay) {
       if (method === 'credit_card') {
-        showToast('warning', 'Card Details Required', 'Please complete all card fields.');
+        showToast('warning', 'Card Details Required', 'Select a saved card or complete all card fields.');
       }
       return;
     }
@@ -169,7 +199,13 @@ export default function AdPaymentScreen() {
                     borderWidth: active ? 2 : 1,
                     backgroundColor: active ? colors.pink + '08' : 'transparent'
                   }]}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMethod(pm.value); }}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMethod(pm.value);
+                    if (pm.value !== 'credit_card') {
+                      setUseNewCard(false);
+                    }
+                  }}
                 >
                   <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
                     <View style={styles.methodLeft}>
@@ -198,6 +234,61 @@ export default function AdPaymentScreen() {
           {method === 'credit_card' && (
             <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
               <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Card Information</Text>
+              {loadingSavedCards ? (
+                <ActivityIndicator size="small" color={colors.pink} />
+              ) : savedCards.length > 0 ? (
+                <View style={styles.methodList}>
+                  {savedCards.map((card) => {
+                    const active = !useNewCard && selectedSavedCardId === card.payment_method_id;
+                    return (
+                      <Pressable
+                        key={card.payment_method_id}
+                        style={[styles.methodCard, {
+                          borderColor: active ? colors.pink : colors.cardBorder,
+                          borderWidth: active ? 2 : 1,
+                          backgroundColor: active ? colors.pink + '08' : 'transparent'
+                        }]}
+                        onPress={() => {
+                          setSelectedSavedCardId(card.payment_method_id);
+                          setUseNewCard(false);
+                        }}
+                      >
+                        <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
+                          <View style={styles.methodLeft}>
+                            <View style={[styles.methodIcon, { backgroundColor: active ? colors.pink + '15' : colors.cardBorder }]}>
+                              <MaterialCommunityIcons name="credit-card-outline" size={22} color={active ? colors.pink : colors.textSecondary} />
+                            </View>
+                            <Text style={[styles.methodLabel, { color: active ? colors.textPrimary : colors.textSecondary, fontFamily: active ? Fonts.bold : Fonts.medium }]}>
+                              {cardBrandLabel(card.brand)} •••• {card.last4}
+                            </Text>
+                          </View>
+                          <MaterialCommunityIcons name={active ? 'check-circle' : 'circle-outline'} size={24} color={active ? colors.pink : colors.cardBorder} />
+                        </GlassView>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              <Pressable
+                style={[styles.methodCard, {
+                  borderColor: useNewCard ? colors.pink : colors.cardBorder,
+                  borderWidth: useNewCard ? 2 : 1,
+                  backgroundColor: useNewCard ? colors.pink + '08' : 'transparent'
+                }]}
+                onPress={() => setUseNewCard(true)}
+              >
+                <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
+                  <View style={styles.methodLeft}>
+                    <View style={[styles.methodIcon, { backgroundColor: useNewCard ? colors.pink + '15' : colors.cardBorder }]}>
+                      <MaterialCommunityIcons name="plus-circle-outline" size={22} color={useNewCard ? colors.pink : colors.textSecondary} />
+                    </View>
+                    <Text style={[styles.methodLabel, { color: useNewCard ? colors.textPrimary : colors.textSecondary, fontFamily: useNewCard ? Fonts.bold : Fonts.medium }]}>Use new card</Text>
+                  </View>
+                  <MaterialCommunityIcons name={useNewCard ? 'check-circle' : 'circle-outline'} size={24} color={useNewCard ? colors.pink : colors.cardBorder} />
+                </GlassView>
+              </Pressable>
+              {(savedCards.length === 0 || useNewCard) ? (
+                <>
               <FormInput
                 label="Card Holder"
                 value={cardHolderName}
@@ -235,6 +326,8 @@ export default function AdPaymentScreen() {
                   />
                 </View>
               </View>
+                </>
+              ) : null}
             </GlassView>
           )}
         </Animated.View>

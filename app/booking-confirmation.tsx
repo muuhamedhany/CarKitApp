@@ -20,7 +20,7 @@ import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, bookingService, paymentService } from '@/services/api';
-import { PaymentMethod } from '@/services/api/payment.service';
+import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
 
 const { width, height } = Dimensions.get('window');
 
@@ -94,6 +94,14 @@ const paymentMethods: { label: string; value: PaymentMethod; icon: string; descr
   { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline', description: 'Card fields are required before booking.' },
 ];
 
+const cardBrandLabel = (brand: string) => {
+  if (brand === 'mastercard') return 'Mastercard';
+  if (brand === 'visa') return 'Visa';
+  if (brand === 'amex') return 'Amex';
+  if (brand === 'discover') return 'Discover';
+  return 'Card';
+};
+
 export default function BookingConfirmationScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
@@ -114,7 +122,11 @@ export default function BookingConfirmationScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(formatDateValue(addDays(new Date(), 1)));
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [loadingSavedCards, setLoadingSavedCards] = useState(true);
   const [placingBooking, setPlacingBooking] = useState(false);
+  const [savedCards, setSavedCards] = useState<SavedPaymentMethod[]>([]);
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
+  const [useNewCard, setUseNewCard] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
@@ -149,10 +161,28 @@ export default function BookingConfirmationScreen() {
     }
   }, [selectedAddressId, showToast]);
 
+  const loadSavedCards = useCallback(async () => {
+    try {
+      setLoadingSavedCards(true);
+      const response = await paymentService.getPaymentMethods();
+      if (response.success && Array.isArray(response.data)) {
+        const methods = response.data;
+        setSavedCards(methods);
+        const defaultCard = methods.find((item) => item.is_default);
+        setSelectedSavedCardId(defaultCard?.payment_method_id || methods[0]?.payment_method_id || null);
+      }
+    } catch {
+      showToast('error', 'Payment Error', 'Could not load saved cards.');
+    } finally {
+      setLoadingSavedCards(false);
+    }
+  }, [showToast]);
+
   useFocusEffect(
     useCallback(() => {
       loadAddresses();
-    }, [loadAddresses])
+      loadSavedCards();
+    }, [loadAddresses, loadSavedCards])
   );
 
   const selectedAddress = addresses.find((address) => address.address_id === selectedAddressId) || null;
@@ -162,8 +192,9 @@ export default function BookingConfirmationScreen() {
 
   const paymentDetailsValid = useMemo(() => {
     if (paymentMethod === 'cash_on_delivery') return true;
+    if (!useNewCard && selectedSavedCardId) return true;
     return cardNumber.trim().length >= 8 && cardExpiry.trim().length >= 4 && cardCvv.trim().length >= 3;
-  }, [cardCvv, cardExpiry, cardNumber, paymentMethod]);
+  }, [cardCvv, cardExpiry, cardNumber, paymentMethod, useNewCard, selectedSavedCardId]);
 
   const canPlaceBooking = Boolean(selectedAddressId) && Boolean(selectedTime) && paymentDetailsValid && !placingBooking;
 
@@ -218,6 +249,10 @@ export default function BookingConfirmationScreen() {
           serviceName,
           providerName,
           price: String(price),
+          queueNumber: bookingResponse.data.queue?.queue_number ? String(bookingResponse.data.queue.queue_number) : undefined,
+          peopleBefore: bookingResponse.data.queue?.people_before !== undefined ? String(bookingResponse.data.queue.people_before) : undefined,
+          waitMinutes: bookingResponse.data.queue?.estimated_wait_minutes !== undefined ? String(bookingResponse.data.queue.estimated_wait_minutes) : undefined,
+          showUpAt: bookingResponse.data.queue?.show_up_at || undefined,
         },
       });
     } catch {
@@ -399,6 +434,9 @@ export default function BookingConfirmationScreen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setPaymentMethod(method.value);
+                  if (method.value !== 'credit_card') {
+                    setUseNewCard(false);
+                  }
                 }}
               >
                 <GlassView
@@ -427,6 +465,65 @@ export default function BookingConfirmationScreen() {
 
           {paymentMethod === 'credit_card' && (
             <View style={styles.paymentDetailsCard}>
+              {loadingSavedCards ? (
+                <ActivityIndicator size="small" color={colors.pink} />
+              ) : savedCards.length > 0 ? (
+                <View style={{ gap: Spacing.sm, marginBottom: Spacing.md }}>
+                  {savedCards.map((card) => {
+                    const active = !useNewCard && selectedSavedCardId === card.payment_method_id;
+                    return (
+                      <Pressable
+                        key={card.payment_method_id}
+                        style={styles.methodWrapper}
+                        onPress={() => {
+                          setSelectedSavedCardId(card.payment_method_id);
+                          setUseNewCard(false);
+                        }}
+                      >
+                        <GlassView
+                          intensity={active ? 40 : 20}
+                          tint={isDark ? 'dark' : 'light'}
+                          style={[styles.methodCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
+                        >
+                          <View style={[styles.methodIcon, { backgroundColor: active ? colors.accentSoft : colors.surfaceMuted }]}>
+                            <MaterialCommunityIcons name="credit-card-outline" size={24} color={active ? colors.pink : colors.textMuted} />
+                          </View>
+                          <View style={styles.methodTextBlock}>
+                            <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{cardBrandLabel(card.brand)} •••• {card.last4}</Text>
+                            <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>Saved card</Text>
+                          </View>
+                          <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
+                            {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
+                          </View>
+                        </GlassView>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              <Pressable
+                style={styles.methodWrapper}
+                onPress={() => setUseNewCard(true)}
+              >
+                <GlassView
+                  intensity={useNewCard ? 40 : 20}
+                  tint={isDark ? 'dark' : 'light'}
+                  style={[styles.methodCard, { borderColor: useNewCard ? colors.pink : colors.cardBorder }]}
+                >
+                  <View style={[styles.methodIcon, { backgroundColor: useNewCard ? colors.accentSoft : colors.surfaceMuted }]}>
+                    <MaterialCommunityIcons name="plus-circle-outline" size={24} color={useNewCard ? colors.pink : colors.textMuted} />
+                  </View>
+                  <View style={styles.methodTextBlock}>
+                    <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>Use new card</Text>
+                    <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>Enter card details manually</Text>
+                  </View>
+                  <View style={[styles.radioCircle, { borderColor: useNewCard ? colors.pink : colors.textMuted }]}>
+                    {useNewCard && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
+                  </View>
+                </GlassView>
+              </Pressable>
+              {savedCards.length === 0 || useNewCard ? (
+                <>
               <FormInput
                 label="Card Number"
                 value={cardNumber}
@@ -454,6 +551,8 @@ export default function BookingConfirmationScreen() {
                   />
                 </View>
               </View>
+                </>
+              ) : null}
             </View>
           )}
         </Animated.View>
