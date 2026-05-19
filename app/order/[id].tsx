@@ -89,7 +89,7 @@ const getStatusLabel = (status: string, isWorkshopFitting: boolean, role: OrderR
         return isWorkshopFitting ? 'Installation in Progress' : 'Processing';
     }
     if (normalized === 'in_transit') return 'In Transit';
-    if (normalized === 'delivered') return isWorkshopFitting ? 'Installation Complete' : 'Delivered';
+    if (normalized === 'delivered') return isWorkshopFitting ? 'Ready for Customer' : 'Delivered';
     if (normalized === 'cancelled') return 'Cancelled';
     return 'Pending';
 };
@@ -99,8 +99,7 @@ const getCustomerStatusNote = (order: OrderDetail, isWorkshopFitting: boolean, h
 
     if (isWorkshopFitting) {
         if (status === 'processing') return 'Installation is in progress at the vendor workshop.';
-        if (status === 'ready_for_pickup') return 'Ready at the workshop. You can go to the vendor location.';
-        if (status === 'delivered') return 'Installation has been completed.';
+        if (status === 'ready_for_pickup' || status === 'delivered') return 'Installation is complete. The order is closed and ready for the customer.';
         if (status === 'cancelled') return 'This workshop installation order was cancelled.';
         if (hasQueue && order.queue?.show_up_at) return `Show up: ${formatQueueTime(order.queue.show_up_at)}`;
         return `Estimated fitting: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`;
@@ -122,7 +121,7 @@ const getVendorPrimaryAction = (status: string, isWorkshopFitting: boolean) => {
     }
     if (normalized === 'processing') {
         return isWorkshopFitting
-            ? { label: 'Ready for Customer', nextStatus: 'ready_for_pickup', icon: 'car-wrench' }
+            ? { label: 'Ready for Customer', nextStatus: 'delivered', icon: 'check-circle-outline' }
             : { label: 'Ready for Driver', nextStatus: 'ready_for_pickup', icon: 'package-check' };
     }
     return null;
@@ -283,13 +282,12 @@ export default function OrderDetailScreen() {
     const customerWorkshopTimelineSteps = [
         { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
         { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
-        { key: 'ready_for_pickup', label: 'Ready for Customer', icon: 'check-circle-outline' },
-        { key: 'delivered', label: 'Installation Complete', icon: 'check-all' },
+        { key: 'delivered', label: 'Ready for Customer', icon: 'check-circle-outline' },
     ];
     const vendorWorkshopTimelineSteps = [
         { key: 'pending', label: 'Order Received', icon: 'package-variant' },
         { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
-        { key: 'ready_for_pickup', label: 'Ready for Customer', icon: 'check-circle-outline' },
+        { key: 'delivered', label: 'Ready for Customer', icon: 'check-circle-outline' },
     ];
     const vendorDeliveryTimelineSteps = [
         { key: 'pending', label: 'Order Received', icon: 'package-variant' },
@@ -319,7 +317,7 @@ export default function OrderDetailScreen() {
         pending: 0,
         processing: 1,
         ready_for_pickup: 2,
-        delivered: 3,
+        delivered: 2,
     };
     const statusPosition = isWorkshopFitting
         ? (role === 'vendor' ? vendorWorkshopStatusPosition : customerWorkshopStatusPosition)
