@@ -299,6 +299,8 @@ export type OrderDetail = {
   order_group_id?: number | null;
   order_group_id_fk?: number | null;
   user_id_fk: number;
+  customer_name?: string | null;
+  customer_email?: string | null;
   shipping_address_fk: number | null;
   total_amount: string | number;
   status: OrderStatus;
