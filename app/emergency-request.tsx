@@ -3,16 +3,15 @@ import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService } from '@/services/api/emergency.service';
+import { PaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const methods = [
-  { key: 'cash', label: 'Cash', icon: 'cash' },
-  { key: 'instapay', label: 'InstaPay', icon: 'bank-transfer' },
-  { key: 'vodafone_cash', label: 'Vodafone Cash', icon: 'cellphone' },
+const methods: { key: PaymentMethod; label: string; icon: string }[] = [
+  { key: 'cash_on_delivery', label: 'Cash on Delivery', icon: 'cash' },
   { key: 'credit_card', label: 'Credit Card', icon: 'credit-card-outline' },
 ];
 
@@ -23,7 +22,7 @@ export default function EmergencyRequestScreen() {
   const { showToast } = useToast();
   const [pickerVisible, setPickerVisible] = useState(false);
   const [location, setLocation] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {

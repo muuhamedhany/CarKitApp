@@ -1,5 +1,6 @@
 import { apiFetch } from './client';
 import { ApiResponse, Service } from '@/types/api.types';
+import { PaymentMethod } from './payment.service';
 
 export type CoordinateValue = number | string | null;
 
@@ -14,7 +15,7 @@ export type EmergencyRequest = {
   latitude?: CoordinateValue;
   longitude?: CoordinateValue;
   customer_address?: string;
-  payment_method: string;
+  payment_method: PaymentMethod | string;
   payment_status: string;
   expires_at: string;
   employee_full_name?: string;
@@ -47,7 +48,7 @@ export const emergencyService = {
     return apiFetch<ApiResponse<EmergencyServiceOption[]>>('/emergency/services');
   },
 
-  createRequest(payload: { service_id: number; lat: number; lng: number; customer_address?: string; payment_method: string }) {
+  createRequest(payload: { service_id: number; lat: number; lng: number; customer_address?: string; payment_method: PaymentMethod }) {
     return apiFetch<ApiResponse<EmergencyRequest>>('/emergency/requests', {
       method: 'POST',
       body: JSON.stringify(payload),

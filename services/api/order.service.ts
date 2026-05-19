@@ -4,6 +4,7 @@ import { ApiResponse, OrderDetail } from '@/types/api.types';
 export interface OrderPayload {
     shipping_address_id?: number;
     preferred_delivery_date?: string;
+    delivery_type?: 'home_delivery' | 'workshop_fitting';
 }
 
 export interface OrderRecord {

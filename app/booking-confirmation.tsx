@@ -17,7 +17,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, FormInput, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, bookingService, paymentService } from '@/services/api';
@@ -90,10 +89,8 @@ const parseAvailableTimes = (value: string | string[] | undefined) => {
   }
 };
 
-const paymentMethods: Array<{ label: string; value: PaymentMethod; icon: string; description: string }> = [
+const paymentMethods: { label: string; value: PaymentMethod; icon: string; description: string }[] = [
   { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash', description: 'Pay the provider after the service.' },
-  { label: 'InstaPay', value: 'instapay', icon: 'bank-transfer', description: 'Enter your InstaPay reference number.' },
-  { label: 'Vodafone Cash', value: 'vodafone_cash', icon: 'wallet-outline', description: 'Enter the wallet number to confirm payment.' },
   { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline', description: 'Card fields are required before booking.' },
 ];
 
@@ -101,7 +98,6 @@ export default function BookingConfirmationScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
-  const { token } = useAuth();
   const params = useLocalSearchParams<BookingParams>();
 
   const serviceId = Number(asString(params.serviceId));
@@ -119,8 +115,6 @@ export default function BookingConfirmationScreen() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [placingBooking, setPlacingBooking] = useState(false);
-  const [instapayReference, setInstapayReference] = useState('');
-  const [vodafoneNumber, setVodafoneNumber] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
@@ -168,10 +162,8 @@ export default function BookingConfirmationScreen() {
 
   const paymentDetailsValid = useMemo(() => {
     if (paymentMethod === 'cash_on_delivery') return true;
-    if (paymentMethod === 'instapay') return instapayReference.trim().length >= 4;
-    if (paymentMethod === 'vodafone_cash') return vodafoneNumber.trim().length >= 8;
     return cardNumber.trim().length >= 8 && cardExpiry.trim().length >= 4 && cardCvv.trim().length >= 3;
-  }, [cardCvv, cardExpiry, cardNumber, instapayReference, paymentMethod, vodafoneNumber]);
+  }, [cardCvv, cardExpiry, cardNumber, paymentMethod]);
 
   const canPlaceBooking = Boolean(selectedAddressId) && Boolean(selectedTime) && paymentDetailsValid && !placingBooking;
 
@@ -432,29 +424,6 @@ export default function BookingConfirmationScreen() {
               </Pressable>
             );
           })}
-
-          {paymentMethod === 'instapay' && (
-            <View style={styles.paymentDetailsCard}>
-              <FormInput
-                label="InstaPay Reference"
-                value={instapayReference}
-                onChangeText={setInstapayReference}
-                placeholder="Enter reference number"
-              />
-            </View>
-          )}
-
-          {paymentMethod === 'vodafone_cash' && (
-            <View style={styles.paymentDetailsCard}>
-              <FormInput
-                label="Vodafone Cash Number"
-                value={vodafoneNumber}
-                onChangeText={setVodafoneNumber}
-                placeholder="Enter wallet number"
-                keyboardType="phone-pad"
-              />
-            </View>
-          )}
 
           {paymentMethod === 'credit_card' && (
             <View style={styles.paymentDetailsCard}>
