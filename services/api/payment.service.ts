@@ -3,8 +3,6 @@ import { ApiResponse } from '@/types/api.types';
 
 export type PaymentMethod =
     | 'cash_on_delivery'
-    | 'instapay'
-    | 'vodafone_cash'
     | 'credit_card';
 
 export interface PaymentPayload {

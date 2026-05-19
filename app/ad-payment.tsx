@@ -7,26 +7,20 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService } from '@/services/api/ad.service';
 import { apiFetch } from '@/services/api/client';
+import { PaymentMethod } from '@/services/api/payment.service';
 import { CenteredHeader, FormInput, GlassView } from '@/components';
-import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { Spacing, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-type PaymentMethod = 'instapay' | 'vodafone_cash' | 'credit_card';
-
 const PAYMENT_METHODS: { label: string; value: PaymentMethod; icon: string }[] = [
-  { label: 'InstaPay',       value: 'instapay',      icon: 'bank-transfer' },
-  { label: 'Vodafone Cash',  value: 'vodafone_cash', icon: 'wallet-outline' },
-  { label: 'Credit Card',    value: 'credit_card',   icon: 'credit-card-outline' },
+  { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash' },
+  { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline' },
 ];
-
-const INSTAPAY_USERNAME = 'carkit.pay';
-const VODAFONE_CASH_NUMBER = '01004899835';
 
 export default function AdPaymentScreen() {
   const router = useRouter();
@@ -50,8 +44,7 @@ export default function AdPaymentScreen() {
     durationDays === 7  ? '7 Days'  :
     durationDays === 14 ? '14 Days' : '30 Days';
 
-  const [method, setMethod] = useState<PaymentMethod>('instapay');
-  const [transferProofUri, setTransferProofUri] = useState<string | null>(null);
+  const [method, setMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [cardHolderName, setCardHolderName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -67,7 +60,7 @@ export default function AdPaymentScreen() {
   };
 
   const canPay = useMemo(() => {
-    if (method === 'instapay' || method === 'vodafone_cash') return Boolean(transferProofUri);
+    if (method === 'cash_on_delivery') return true;
     if (method === 'credit_card') {
       return (
         cardHolderName.trim().length > 2 &&
@@ -77,23 +70,11 @@ export default function AdPaymentScreen() {
       );
     }
     return false;
-  }, [method, transferProofUri, cardHolderName, cardDigits, cardExpiry, cardCvv]);
-
-  const pickTransferProof = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setTransferProofUri(result.assets[0].uri);
-    }
-  };
+  }, [method, cardHolderName, cardDigits, cardExpiry, cardCvv]);
 
   const handleConfirmPayment = async () => {
     if (!canPay) {
-      if (method !== 'credit_card') {
-        showToast('warning', 'Proof Required', 'Please upload your payment transfer screenshot.');
-      } else {
+      if (method === 'credit_card') {
         showToast('warning', 'Card Details Required', 'Please complete all card fields.');
       }
       return;
@@ -212,47 +193,6 @@ export default function AdPaymentScreen() {
         </View>
 
         <Animated.View entering={FadeInUp.delay(600)}>
-          {(method === 'instapay' || method === 'vodafone_cash') && (
-            <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
-              <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
-              <Text style={[styles.detailsText, { color: colors.textSecondary }]}>
-                Please send the total amount to the following {method === 'instapay' ? 'InstaPay handle' : 'mobile number'}:
-              </Text>
-              <View style={[styles.accountBox, { backgroundColor: colors.pink + '10', borderColor: colors.pink + '30' }]}>
-                <Text style={[styles.accountValue, { color: colors.pink }]}>
-                  {method === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}
-                </Text>
-                <MaterialCommunityIcons name="content-copy" size={20} color={colors.pink} />
-              </View>
-              
-              <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginTop: Spacing.lg }]}>Proof of Payment</Text>
-              <Pressable
-                style={[styles.uploadBtn, { borderColor: colors.pink, backgroundColor: colors.pink + '05' }]}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); pickTransferProof(); }}
-              >
-                {transferProofUri ? (
-                  <View style={styles.proofDone}>
-                    <MaterialCommunityIcons name="check-circle" size={24} color={colors.pink} />
-                    <Text style={[styles.uploadBtnText, { color: colors.pink, fontFamily: Fonts.bold }]}>Screenshot Uploaded</Text>
-                  </View>
-                ) : (
-                  <>
-                    <MaterialCommunityIcons name="cloud-upload-outline" size={24} color={colors.pink} />
-                    <Text style={[styles.uploadBtnText, { color: colors.pink }]}>Upload Screenshot</Text>
-                  </>
-                )}
-              </Pressable>
-              {transferProofUri && (
-                <View style={styles.proofWrap}>
-                  <Image source={{ uri: transferProofUri }} style={styles.proofImage} />
-                  <Pressable style={styles.removeProof} onPress={() => setTransferProofUri(null)}>
-                    <MaterialCommunityIcons name="close-circle" size={24} color="#EF4444" />
-                  </Pressable>
-                </View>
-              )}
-            </GlassView>
-          )}
-
           {method === 'credit_card' && (
             <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
               <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Card Information</Text>
@@ -312,7 +252,9 @@ export default function AdPaymentScreen() {
             {submitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.payBtnText}>Pay {price.toLocaleString('en-EG')} EGP</Text>
+              <Text style={styles.payBtnText}>
+                {method === 'cash_on_delivery' ? 'Confirm' : 'Pay'} {price.toLocaleString('en-EG')} EGP
+              </Text>
             )}
           </Pressable>
         </GlassView>

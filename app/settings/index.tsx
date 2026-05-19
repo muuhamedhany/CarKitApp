@@ -39,7 +39,7 @@ const THEME_VARIANTS = [
     description: 'Navy & Blue',
     previewColors: ['#1E3A8A', '#3B82F6'],
   },
-];
+] as const;
 
 export default function SettingsScreen() {
   const router = useRouter();

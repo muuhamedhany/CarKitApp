@@ -7,18 +7,15 @@ import { addressService, orderService, paymentService } from '@/services/api';
 import { PaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     View
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -33,8 +30,6 @@ type Address = {
 
 const paymentMethods: { label: string; value: PaymentMethod; icon: string }[] = [
     { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash' },
-    { label: 'InstaPay', value: 'instapay', icon: 'bank-transfer' },
-    { label: 'Vodafone Cash', value: 'vodafone_cash', icon: 'wallet-outline' },
     { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline' },
 ];
 
@@ -42,8 +37,6 @@ const MIN_DELIVERY_DAYS = 5;
 const DATE_CHOICES_COUNT = 4;
 const SHIPPING_FEE = 50;
 const WORKSHOP_SERVICE_FEE = 70;
-const INSTAPAY_USERNAME = 'carkit.pay';
-const VODAFONE_CASH_NUMBER = '01004899835';
 
 const addDays = (baseDate: Date, days: number) => {
     const date = new Date(baseDate);
@@ -75,7 +68,6 @@ export default function CheckoutScreen() {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
     const [loadingAddresses, setLoadingAddresses] = useState(true);
     const [placingOrder, setPlacingOrder] = useState(false);
-    const [transferScreenshotUri, setTransferScreenshotUri] = useState<string | null>(null);
     const [cardHolderName, setCardHolderName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
@@ -121,10 +113,6 @@ export default function CheckoutScreen() {
     const canSubmitPaymentDetails = useMemo(() => {
         if (paymentMethod === 'cash_on_delivery') return true;
 
-        if (paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') {
-            return Boolean(transferScreenshotUri);
-        }
-
         if (paymentMethod === 'credit_card') {
             const hasValidCardNumber = cardNumberDigits.length >= 13 && cardNumberDigits.length <= 19;
             const hasValidCvv = /^\d{3,4}$/.test(cardCvv.trim());
@@ -132,24 +120,12 @@ export default function CheckoutScreen() {
         }
 
         return false;
-    }, [paymentMethod, transferScreenshotUri, cardHolderName, cardNumberDigits, cardExpiry, cardCvv]);
+    }, [paymentMethod, cardHolderName, cardNumberDigits, cardExpiry, cardCvv]);
 
     const canPlaceOrder = useMemo(() => {
         const hasAddressIfRequired = deliveryType === 'home_delivery' ? Boolean(selectedAddressId) : true;
         return items.length > 0 && hasAddressIfRequired && canSubmitPaymentDetails && !placingOrder;
     }, [items.length, deliveryType, selectedAddressId, canSubmitPaymentDetails, placingOrder]);
-
-    const handlePickTransferScreenshot = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsMultipleSelection: false,
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets.length > 0) {
-            setTransferScreenshotUri(result.assets[0].uri);
-        }
-    };
 
     const loadAddresses = useCallback(async () => {
         try {
@@ -190,16 +166,6 @@ export default function CheckoutScreen() {
         }
 
         if (!canSubmitPaymentDetails) {
-            if (paymentMethod === 'instapay') {
-                showToast('warning', 'Proof Required', 'Please upload your InstaPay transfer screenshot.');
-                return;
-            }
-
-            if (paymentMethod === 'vodafone_cash') {
-                showToast('warning', 'Proof Required', 'Please upload your Vodafone Cash transfer screenshot.');
-                return;
-            }
-
             if (paymentMethod === 'credit_card') {
                 showToast('warning', 'Card Details Required', 'Please complete valid credit card details.');
                 return;
@@ -482,35 +448,6 @@ export default function CheckoutScreen() {
                         );
                     })}
                 </View>
-
-                {(paymentMethod === 'instapay' || paymentMethod === 'vodafone_cash') ? (
-                    <Animated.View entering={FadeInUp}>
-                        <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
-                            <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Transfer Details</Text>
-                            <Text style={[styles.paymentDetailsText, { color: colors.textSecondary }]}>Send to: {paymentMethod === 'instapay' ? INSTAPAY_USERNAME : VODAFONE_CASH_NUMBER}</Text>
-
-                            <Pressable
-                                style={[styles.uploadButton, { borderColor: colors.pink }]}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    handlePickTransferScreenshot();
-                                }}
-                            >
-                                <MaterialCommunityIcons name="image-plus" size={18} color={colors.pink} />
-                                <Text style={[styles.uploadButtonText, { color: colors.pink }]}>Upload payment screenshot</Text>
-                            </Pressable>
-
-                            {transferScreenshotUri ? (
-                                <View style={styles.uploadPreviewWrap}>
-                                    <Image source={{ uri: transferScreenshotUri }} style={styles.uploadPreview} />
-                                    <Text style={[styles.uploadSuccess, { color: colors.textSecondary }]}>Screenshot uploaded</Text>
-                                </View>
-                            ) : (
-                                <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Required to unlock Place Order.</Text>
-                            )}
-                        </GlassView>
-                    </Animated.View>
-                ) : null}
 
                 {paymentMethod === 'credit_card' ? (
                     <Animated.View entering={FadeInUp}>

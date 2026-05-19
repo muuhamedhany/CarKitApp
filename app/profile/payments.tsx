@@ -139,32 +139,6 @@ export default function PaymentsScreen() {
                     </LinearGradient>
                 </Pressable>
 
-                <View style={styles.divider} />
-
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OTHER METHODS</Text>
-
-                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.methodItem, { borderColor: colors.cardBorder }]}>
-                    <View style={[styles.methodIcon, { backgroundColor: '#4CAF5020' }]}>
-                        <MaterialCommunityIcons name="bank-transfer" size={24} color="#4CAF50" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.methodLabelText, { color: colors.textPrimary }]}>InstaPay</Text>
-                        <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>carkit.pay</Text>
-                    </View>
-                    <MaterialCommunityIcons name="check-circle" size={20} color="#4CAF50" />
-                </GlassView>
-
-                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.methodItem, { borderColor: colors.cardBorder, marginTop: Spacing.md }]}>
-                    <View style={[styles.methodIcon, { backgroundColor: '#E11D4820' }]}>
-                        <MaterialCommunityIcons name="wallet-outline" size={24} color="#E11D48" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.methodLabelText, { color: colors.textPrimary }]}>Vodafone Cash</Text>
-                        <Text style={[styles.methodSubtitle, { color: colors.textSecondary }]}>01004899835</Text>
-                    </View>
-                    <MaterialCommunityIcons name="check-circle" size={20} color="#E11D48" />
-                </GlassView>
-
                 <View style={{ height: 100 }} />
             </ScrollView>
         </View>

@@ -1,5 +1,6 @@
 import { ApiResponse } from '@/types/api.types';
 import { apiFetch } from './client';
+import { PaymentMethod } from './payment.service';
 
 export type BookingPayload = {
   service_id: number;
@@ -11,7 +12,7 @@ export type BookingPayload = {
   location?: string;
   booking_price: number;
   address_id?: number;
-  payment_method?: string;
+  payment_method?: PaymentMethod;
 };
 
 export type Booking = {
