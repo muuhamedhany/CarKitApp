@@ -25,7 +25,6 @@ const TABS: TabItem[] = [
     { name: 'index', label: 'Dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
     { name: 'services', label: 'Services', icon: 'wrench-outline', iconFilled: 'wrench' },
     { name: 'bookings', label: 'Bookings', icon: 'calendar-check-outline', iconFilled: 'calendar-check' },
-    { name: 'team', label: 'Team', icon: 'account-group-outline', iconFilled: 'account-group' },
     { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
@@ -101,7 +100,7 @@ export default function ProviderTabBar({ state, navigation }: any) {
       stiffness: 280,
       mass: 0.8,
     });
-  }, [state.index, tabWidth]);
+  }, [indicatorPosition, state.index, tabWidth]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorPosition.value }],

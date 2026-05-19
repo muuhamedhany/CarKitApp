@@ -19,7 +19,7 @@ import { notificationService } from '@/services/api/notification.service';
 import { ProviderDashboardResponse } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
-import Animated, { FadeInDown, FadeInUp, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { GlassView } from '@/components';
 
@@ -195,7 +195,7 @@ export default function ProviderDashboard() {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                     router.push('/promote' as any);
                                 }}
-                                style={{ flex: 1 }}
+                                style={styles.quickActionButton}
                             >
                                 <LinearGradient
                                     colors={[colors.pink, colors.purple]}
@@ -206,6 +206,28 @@ export default function ProviderDashboard() {
                                     <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
                                     <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Services</Text>
                                 </LinearGradient>
+                            </Pressable>
+
+                            <Pressable
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    router.push('/provider-employees' as any);
+                                }}
+                                style={({ pressed }) => [
+                                    styles.teamAction,
+                                    {
+                                        backgroundColor: colors.glass,
+                                        borderColor: colors.cardBorder,
+                                        transform: [{ scale: pressed ? 0.98 : 1 }],
+                                    },
+                                ]}
+                            >
+                                <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.pink} />
+                                <View style={styles.teamActionTextBlock}>
+                                    <Text style={[styles.teamActionTitle, { color: colors.textPrimary }]}>Manage Team</Text>
+                                    <Text style={[styles.teamActionSubtitle, { color: colors.textSecondary }]}>Employees and assignments</Text>
+                                </View>
+                                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
                             </Pressable>
                         </Animated.View>
 
@@ -415,12 +437,14 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
     quickActions: {
-        flexDirection: 'row',
-        gap: Spacing.md,
+        gap: Spacing.sm,
         marginBottom: Spacing.md,
     },
+    quickActionButton: {
+        width: '100%',
+    },
     quickAction: {
-        flex: 1,
+        width: '100%',
         borderRadius: BorderRadius.full,
         borderWidth: 1,
         paddingVertical: Spacing.md,
@@ -433,6 +457,32 @@ const styles = StyleSheet.create({
     quickActionText: {
         fontFamily: Fonts.semiBold,
         fontSize: FontSizes.sm,
+        flexShrink: 1,
+        textAlign: 'center',
+    },
+    teamAction: {
+        minHeight: 58,
+        borderRadius: BorderRadius.xl,
+        borderWidth: 1,
+        paddingVertical: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    teamActionTextBlock: {
+        flex: 1,
+    },
+    teamActionTitle: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+        marginBottom: 2,
+    },
+    teamActionSubtitle: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.xs,
     },
     analyticsCard: {
         flexDirection: 'row',
