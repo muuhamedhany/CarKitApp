@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export type RouteCoordinate = {
   latitude: number;
@@ -167,6 +168,7 @@ function buildRouteMapHtml(
 
 export default function EmergencyRouteMap({ customer, employee = null, style }: EmergencyRouteMapProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
 
   const html = useMemo(
@@ -181,7 +183,7 @@ export default function EmergencyRouteMap({ customer, employee = null, style }: 
   if (!customer || !html) {
     return (
       <View style={[styles.placeholder, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }, style]}>
-        <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>Location unavailable</Text>
+        <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>{t('map.locationUnavailable')}</Text>
       </View>
     );
   }

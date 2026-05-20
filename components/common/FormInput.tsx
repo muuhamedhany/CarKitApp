@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -49,10 +50,11 @@ export default function FormInput({
   containerStyle,
 }: FormInputProps) {
   const { colors } = useTheme();
+  const { t, isRTL } = useTranslation();
 
   return (
     <View style={[styles.outerContainer, containerStyle]}>
-      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{t(label)}</Text>}
       <View style={[styles.container, {
         borderColor: colors.inputBorder,
         backgroundColor: colors.FormBg,
@@ -69,8 +71,8 @@ export default function FormInput({
           />
         )}
         <TextInput
-          style={[styles.input, { color: colors.textPrimary }, multiline && { textAlignVertical: 'top' }]}
-          placeholder={placeholder}
+          style={[styles.input, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }, multiline && { textAlignVertical: 'top' }]}
+          placeholder={placeholder ? t(placeholder) : undefined}
           placeholderTextColor={colors.textMuted}
           value={value}
           onChangeText={onChangeText}

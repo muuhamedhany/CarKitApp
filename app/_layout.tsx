@@ -3,7 +3,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
-import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageProvider, useTranslation } from '@/contexts/LanguageContext';
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -19,6 +19,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 // Prevent the splash screen from auto-hiding
@@ -26,12 +27,13 @@ SplashScreen.preventAutoHideAsync();
 
 function InnerLayout() {
   const { isDark, isThemeLoaded, colors } = useThemeContext();
+  const { isLanguageLoaded } = useTranslation();
 
   useEffect(() => {
-    if (isThemeLoaded) {
+    if (isThemeLoaded && isLanguageLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isThemeLoaded]);
+  }, [isLanguageLoaded, isThemeLoaded]);
 
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
@@ -100,8 +102,6 @@ function InnerLayout() {
     </NavThemeProvider>
   );
 }
-
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

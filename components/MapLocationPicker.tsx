@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export interface MapPickerResult {
   latitude: number;
@@ -107,6 +108,7 @@ export default function MapLocationPicker({
   onLocationSelected,
 }: MapLocationPickerProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useTranslation();
   const webViewRef = useRef<WebView>(null);
 
   const [loading, setLoading] = useState(true);
@@ -126,7 +128,7 @@ export default function MapLocationPicker({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErrorMsg('Location permission was denied. Using default location (Cairo).');
+        setErrorMsg(t('map.permissionDenied'));
         setInitialCoords({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
         setCurrentCoords({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
         setGpsLoading(false);
@@ -143,13 +145,13 @@ export default function MapLocationPicker({
       setInitialCoords(coords);
       setCurrentCoords(coords);
     } catch {
-      setErrorMsg('Could not get your location. Using default location (Cairo).');
+      setErrorMsg(t('map.locationFailed'));
       setInitialCoords({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
       setCurrentCoords({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
     } finally {
       setGpsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Handle messages from the WebView (marker position updates)
   const handleWebViewMessage = useCallback((event: any) => {
@@ -200,7 +202,7 @@ export default function MapLocationPicker({
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${currentCoords.lat}&lon=${currentCoords.lng}&format=json&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en', 'User-Agent': 'CarKitApp/1.0' } }
+        { headers: { 'Accept-Language': language === 'ar' ? 'ar' : 'en', 'User-Agent': 'CarKitApp/1.0' } }
       );
       const data = await response.json();
 
@@ -232,7 +234,7 @@ export default function MapLocationPicker({
       formattedAddress: `${currentCoords.lat.toFixed(5)}, ${currentCoords.lng.toFixed(5)}`,
     });
     onClose();
-  }, [currentCoords, onLocationSelected, onClose]);
+  }, [currentCoords, language, onLocationSelected, onClose]);
 
   return (
     <Modal
@@ -248,7 +250,7 @@ export default function MapLocationPicker({
           <Pressable onPress={onClose} hitSlop={12}>
             <MaterialCommunityIcons name="close" size={24} color={colors.textPrimary} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Pick Location</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('map.pickLocation')}</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -258,7 +260,7 @@ export default function MapLocationPicker({
             <View style={[styles.loadingContainer, { backgroundColor: colors.backgroundSecondary }]}>
               <ActivityIndicator size="large" color={colors.pink} />
               <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                Getting your location...
+                {t('map.gettingLocation')}
               </Text>
             </View>
           ) : initialCoords ? (
@@ -283,7 +285,7 @@ export default function MapLocationPicker({
             <View style={[styles.mapOverlay, { backgroundColor: colors.backgroundSecondary }]}>
               <ActivityIndicator size="large" color={colors.pink} />
               <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                Loading map...
+                {t('map.loading')}
               </Text>
             </View>
           )}
@@ -302,7 +304,7 @@ export default function MapLocationPicker({
           <View style={styles.instructionRow}>
             <MaterialCommunityIcons name="gesture-tap" size={20} color={colors.pink} />
             <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
-              Tap or drag the pin to set your location
+              {t('map.instruction')}
             </Text>
           </View>
 
@@ -325,7 +327,7 @@ export default function MapLocationPicker({
             ) : (
               <>
                 <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-                <Text style={styles.confirmBtnText}>Confirm Location</Text>
+                <Text style={styles.confirmBtnText}>{t('map.confirmLocation')}</Text>
               </>
             )}
           </Pressable>

@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CenteredHeader, GlassView } from '@/components';
 import EmergencyRouteMap, { RouteCoordinate } from '@/components/EmergencyRouteMap';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService, type CoordinateValue, type EmergencyRequest } from '@/services/api/emergency.service';
 
@@ -70,6 +71,7 @@ const formatLocationAge = (value: string | undefined, now: number) => {
 export default function EmergencyWaitingScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const [request, setRequest] = useState<EmergencyRequest | null>(null);
   const [now, setNow] = useState(Date.now());
 
@@ -87,7 +89,7 @@ export default function EmergencyWaitingScreen() {
 
   const seconds = useMemo(() => Math.max(0, Math.ceil(((request?.expires_at ? new Date(request.expires_at).getTime() : now) - now) / 1000)), [request?.expires_at, now]);
   const status = String(request?.status || '').toLowerCase();
-  const employeeName = request?.employee_full_name || request?.employee_name || 'Employee';
+  const employeeName = request?.employee_full_name || request?.employee_name || t('emergency.waiting.employee');
   const employeePhone = request?.employee_phone?.trim();
   const customerCoordinate = useMemo(
     () => toCoordinate(request?.customer_lat ?? request?.latitude, request?.customer_lng ?? request?.longitude),
@@ -130,35 +132,35 @@ export default function EmergencyWaitingScreen() {
           {!request || status === 'searching' ? (
             <>
               <ActivityIndicator size="large" color={colors.error} />
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Finding someone near you...</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{seconds}s remaining</Text>
-              {request ? <Pressable style={styles.linkButton} onPress={cancel}><Text style={[styles.linkText, { color: colors.error }]}>Cancel</Text></Pressable> : null}
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t('emergency.waiting.finding')}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('emergency.waiting.remaining', { seconds })}</Text>
+              {request ? <Pressable style={styles.linkButton} onPress={cancel}><Text style={[styles.linkText, { color: colors.error }]}>{t('common.cancel')}</Text></Pressable> : null}
             </>
           ) : status === 'completed' ? (
             <>
               <MaterialCommunityIcons name="check-circle-outline" size={46} color={colors.success} />
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Emergency completed.</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your service has been completed.</Text>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t('emergency.waiting.completed')}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('emergency.waiting.completedSub')}</Text>
               <Pressable style={[styles.primaryButton, { backgroundColor: colors.success }]} onPress={() => router.replace('/(tabs)' as any)}>
-                <Text style={styles.primaryText}>Go Home</Text>
+                <Text style={styles.primaryText}>{t('emergency.waiting.goHome')}</Text>
               </Pressable>
             </>
           ) : status === 'expired' ? (
             <>
               <MaterialCommunityIcons name="timer-off-outline" size={42} color={colors.warning} />
-              <Text style={[styles.title, { color: colors.textPrimary }]}>No one was available.</Text>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t('emergency.waiting.noneAvailable')}</Text>
               <Pressable style={[styles.primaryButton, { backgroundColor: colors.error }]} onPress={() => router.replace('/emergency-services' as any)}>
-                <Text style={styles.primaryText}>Try Again</Text>
+                <Text style={styles.primaryText}>{t('common.tryAgain')}</Text>
               </Pressable>
-              <Pressable style={styles.linkButton} onPress={() => router.replace('/(tabs)' as any)}><Text style={[styles.linkText, { color: colors.textSecondary }]}>Go Home</Text></Pressable>
+              <Pressable style={styles.linkButton} onPress={() => router.replace('/(tabs)' as any)}><Text style={[styles.linkText, { color: colors.textSecondary }]}>{t('emergency.waiting.goHome')}</Text></Pressable>
             </>
           ) : (
             <>
               <MaterialCommunityIcons name="car-clock" size={42} color={colors.pink} />
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {status === 'arrived' ? 'Employee has arrived' : `${employeeName} is on the way`}
+                {status === 'arrived' ? t('emergency.waiting.arrived') : t('emergency.waiting.onWay', { name: employeeName })}
               </Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{employeePhone || 'Phone unavailable'}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{employeePhone || t('emergency.waiting.phoneUnavailable')}</Text>
               <View style={styles.statusRow}>
                 {['accepted', 'arrived', 'completed'].map((step) => (
                   <View key={step} style={[styles.statusStep, { backgroundColor: step === status ? colors.accentSoft : colors.surfaceMuted }]}>
@@ -168,12 +170,12 @@ export default function EmergencyWaitingScreen() {
               </View>
               <View style={[styles.tripSummary, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}>
                 <View style={styles.tripMetric}>
-                  <Text style={[styles.tripLabel, { color: colors.textMuted }]}>ETA</Text>
+                  <Text style={[styles.tripLabel, { color: colors.textMuted }]}>{t('emergency.waiting.eta')}</Text>
                   <Text style={[styles.tripValue, { color: colors.textPrimary }]}>{arrival.eta}</Text>
                 </View>
                 <View style={[styles.tripDivider, { backgroundColor: colors.dividerLine }]} />
                 <View style={styles.tripMetric}>
-                  <Text style={[styles.tripLabel, { color: colors.textMuted }]}>Distance</Text>
+                  <Text style={[styles.tripLabel, { color: colors.textMuted }]}>{t('emergency.waiting.distance')}</Text>
                   <Text style={[styles.tripValue, { color: colors.textPrimary }]}>{arrival.distance}</Text>
                 </View>
               </View>
@@ -185,7 +187,7 @@ export default function EmergencyWaitingScreen() {
                   color={employeeCoordinate ? colors.pink : colors.warning}
                 />
                 <Text style={[styles.locationMetaText, { color: colors.textSecondary }]}>
-                  {employeeCoordinate ? locationAge : 'Waiting for employee GPS'}
+                  {employeeCoordinate ? locationAge : t('emergency.waiting.gpsWaiting')}
                 </Text>
               </View>
               <View style={styles.actionRow}>
@@ -201,7 +203,7 @@ export default function EmergencyWaitingScreen() {
                   ]}
                 >
                   <MaterialCommunityIcons name="phone" size={19} color="#fff" />
-                  <Text style={styles.actionButtonText}>Call</Text>
+                  <Text style={styles.actionButtonText}>{t('emergency.waiting.call')}</Text>
                 </Pressable>
                 <Pressable
                   disabled={!employeeCoordinate && !customerCoordinate}
@@ -217,7 +219,7 @@ export default function EmergencyWaitingScreen() {
                   ]}
                 >
                   <MaterialCommunityIcons name="map-marker-path" size={19} color={colors.textPrimary} />
-                  <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>Map</Text>
+                  <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>{t('emergency.waiting.map')}</Text>
                 </Pressable>
               </View>
             </>

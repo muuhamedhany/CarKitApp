@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -35,6 +36,7 @@ export default function ServiceCard({
   onView,
 }: ServiceCardProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
   const [imgLoading, setImgLoading] = useState(!!imageUrl);
 
@@ -105,7 +107,7 @@ export default function ServiceCard({
 
           {/* Price badge overlaid on image */}
           <View style={[styles.priceBadge, { backgroundColor: colors.pink }]}>
-            <Text style={styles.priceBadgeText}>{typeof price === 'number' ? price.toLocaleString() : price} EGP</Text>
+            <Text style={styles.priceBadgeText}>{typeof price === 'number' ? price.toLocaleString() : price} {t('service.card.currency')}</Text>
           </View>
         </View>
 
@@ -134,7 +136,7 @@ export default function ServiceCard({
             {duration !== undefined && (
               <View style={styles.metaItem}>
                 <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textSecondary} />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{duration} min</Text>
+                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{duration} {t('service.card.minute')}</Text>
               </View>
             )}
             
@@ -156,7 +158,7 @@ export default function ServiceCard({
                   }
                 ]}
               >
-                <Text style={styles.bookButtonText}>Book Now</Text>
+                <Text style={styles.bookButtonText}>{t('service.card.bookNow')}</Text>
               </Pressable>
             )}
             {onView && (
@@ -175,7 +177,7 @@ export default function ServiceCard({
                   }
                 ]}
               >
-                <Text style={[styles.viewButtonText, { color: colors.textPrimary }]}>Details</Text>
+                <Text style={[styles.viewButtonText, { color: colors.textPrimary }]}>{t('service.card.details')}</Text>
               </Pressable>
             )}
           </View>

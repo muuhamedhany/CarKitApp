@@ -4,31 +4,29 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Dimensions,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
+import { CenteredHeader, FormInput, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { userService } from '@/services/api';
-
-const { width, height } = Dimensions.get('window');
+import { textAlign } from '@/utils/rtl';
 
 export default function PasswordScreen() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  const { t, isRTL } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -39,17 +37,17 @@ export default function PasswordScreen() {
   const handleUpdatePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return showToast('error', 'Missing fields', 'Please fill out all fields.');
+      return showToast('error', t('common.missingFields'), t('settings.password.missing'));
     }
 
     if (newPassword !== confirmPassword) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return showToast('error', 'Passwords do not match', 'New password and confirm password must match.');
+      return showToast('error', t('settings.password.mismatchTitle'), t('settings.password.mismatch'));
     }
 
     if (newPassword.length < 6) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return showToast('error', 'Weak Password', 'New password must be at least 6 characters.');
+      return showToast('error', t('settings.password.weakTitle'), t('settings.password.weak'));
     }
 
     setLoading(true);
@@ -58,13 +56,13 @@ export default function PasswordScreen() {
       const res = await userService.changePassword({ oldPassword: currentPassword, newPassword });
       if (res.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        showToast('success', 'Password Updated', 'Your password has been changed successfully.');
+        showToast('success', t('settings.password.updatedTitle'), t('settings.password.updated'));
         router.back();
       } else {
-        showToast('error', 'Update Failed', res.message || 'Could not update password.');
+        showToast('error', t('common.updateFailed'), res.message || t('settings.password.updateFailed'));
       }
     } catch (error: any) {
-      showToast('error', 'Update Failed', error.message || 'Something went wrong.');
+      showToast('error', t('common.updateFailed'), error.message || t('common.tryAgain'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +80,7 @@ export default function PasswordScreen() {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <CenteredHeader
-          title="Change Password"
+          title={t('settings.password.title')}
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -92,14 +90,14 @@ export default function PasswordScreen() {
               <View style={[styles.iconWrap, { backgroundColor: colors.pink + '20' }]}>
                 <MaterialCommunityIcons name="shield-lock-outline" size={28} color={colors.pink} />
               </View>
-              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Secure Your Account</Text>
-              <Text style={[styles.headerDesc, { color: colors.textMuted }]}>Choose a strong password to keep your data safe.</Text>
+              <Text style={[styles.headerTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('settings.password.header')}</Text>
+              <Text style={[styles.headerDesc, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>{t('settings.password.description')}</Text>
             </View>
 
             <FormInput
-              label="Current Password"
+              label={t('settings.password.currentLabel')}
               icon="lock-outline"
-              placeholder="Enter current password"
+              placeholder={t('settings.password.currentPlaceholder')}
               secureTextEntry={!showPassword}
               value={currentPassword}
               onChangeText={setCurrentPassword}
@@ -111,18 +109,18 @@ export default function PasswordScreen() {
             />
 
             <FormInput
-              label="New Password"
+              label={t('auth.reset.newPasswordLabel')}
               icon="lock-plus-outline"
-              placeholder="Enter new password"
+              placeholder={t('settings.password.newPlaceholder')}
               secureTextEntry={!showPassword}
               value={newPassword}
               onChangeText={setNewPassword}
             />
 
             <FormInput
-              label="Confirm New Password"
+              label={t('auth.reset.confirmPasswordLabel')}
               icon="lock-check-outline"
-              placeholder="Confirm new password"
+              placeholder={t('settings.password.confirmPlaceholder')}
               secureTextEntry={!showPassword}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -132,14 +130,14 @@ export default function PasswordScreen() {
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <GradientButton
-            title="Update Password"
+            title={t('settings.password.update')}
             onPress={handleUpdatePassword}
             loading={loading}
             style={{ marginTop: Spacing.xl }}
             icon="key-change"
           />
           <OutlinedButton
-            title="Cancel"
+            title={t('common.cancel')}
             onPress={() => router.back()}
             style={{ marginTop: Spacing.md }}
             textColor={colors.textMuted}

@@ -1,11 +1,11 @@
-import GlassView from '../common/GlassView';
 import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad } from '@/services/api/ad.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Dimensions,
   Image,
@@ -36,7 +36,6 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
   const { colors, isDark } = useTheme();
   const scrollRef = useRef<ScrollView>(null);
   const indexRef = useRef(0);
-  const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useSharedValue(0);
 
   const adWidth = SCREEN_WIDTH;
@@ -46,7 +45,6 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
     const timer = setInterval(() => {
       indexRef.current = (indexRef.current + 1) % ads.length;
       scrollRef.current?.scrollTo({ x: indexRef.current * adWidth, animated: true });
-      setActiveIndex(indexRef.current);
     }, AD_SLIDE_INTERVAL);
     return () => clearInterval(timer);
   }, [ads.length, adWidth]);
@@ -67,7 +65,6 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
         onMomentumScrollEnd={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / adWidth);
           indexRef.current = idx;
-          setActiveIndex(idx);
         }}
       >
         {ads.map((ad, index) => (
@@ -94,6 +91,7 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
 }
 
 function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number; colors: any; isDark: boolean; onPress: () => void }) {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -138,7 +136,7 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
         />
 
         <View style={adStyles.adBadgeWrapper}>
-          <Text style={adStyles.adBadgeText}>Ad</Text>
+          <Text style={adStyles.adBadgeText}>{t('search.sponsoredAd')}</Text>
         </View>
 
       </Pressable>

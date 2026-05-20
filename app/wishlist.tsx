@@ -2,10 +2,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Image,
   Platform,
@@ -16,17 +15,15 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredHeader, GlassView } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
-
-const { width, height } = Dimensions.get('window');
 
 type WishlistProduct = {
   product_id: number;
@@ -40,19 +37,22 @@ type WishlistProduct = {
 
 export default function WishlistScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { wishlist, toggleWishlist, refreshWishlist } = useWishlist();
   const { addToCart } = useCart();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [products, setProducts] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const wishlistIds = Object.entries(wishlist)
-    .filter(([, isWishlisted]) => isWishlisted)
-    .map(([id]) => Number(id));
+  const wishlistIds = useMemo(
+    () => Object.entries(wishlist)
+      .filter(([, isWishlisted]) => isWishlisted)
+      .map(([id]) => Number(id)),
+    [wishlist]
+  );
 
   const fetchWishlistProducts = useCallback(async () => {
     try {
@@ -71,7 +71,7 @@ export default function WishlistScreen() {
     } catch (error) {
       console.error('Error fetching wishlist products:', error);
     }
-  }, [JSON.stringify(wishlistIds)]);
+  }, [wishlistIds]);
 
   useEffect(() => {
     setLoading(true);
@@ -94,9 +94,9 @@ export default function WishlistScreen() {
   const handleAddToCart = async (product: WishlistProduct) => {
     const result = await addToCart(product.product_id);
     if (result.success) {
-      showToast('success', 'Added to Cart', `${product.name} added to your cart.`);
+      showToast('success', t('wishlist.addedTitle'), t('wishlist.addedMessage', { productName: product.name }));
     } else {
-      showToast('error', 'Error', result.message);
+      showToast('error', t('common.error'), result.message);
     }
   };
 
@@ -185,12 +185,12 @@ export default function WishlistScreen() {
         </View>
       ) : products.length === 0 ? (
         <View style={{ flex: 1 }}>
-          <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
+          <CenteredHeader title={t('wishlist.title')} titleColor={colors.textPrimary} />
           <Animated.View entering={FadeInDown} style={styles.center}>
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
               <MaterialCommunityIcons name="cards-heart-outline" size={56} color={colors.pink} />
             </GlassView>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No items yet</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('wishlist.emptyTitle')}</Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
               Heart products you love and they will appear here.
             </Text>
@@ -204,7 +204,7 @@ export default function WishlistScreen() {
                 style={styles.shopBtn}
               >
                 <MaterialCommunityIcons name="shopping-outline" size={18} color="white" />
-                <Text style={styles.shopBtnText}>Browse Products</Text>
+                <Text style={styles.shopBtnText}>{t('wishlist.browseProducts')}</Text>
               </LinearGradient>
             </Pressable>
           </Animated.View>
@@ -225,7 +225,7 @@ export default function WishlistScreen() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View>
-              <CenteredHeader title="My Wishlist" titleColor={colors.textPrimary} />
+              <CenteredHeader title={t('wishlist.title')} titleColor={colors.textPrimary} />
               <Text style={[styles.listLabel, { color: colors.textMuted }]}>
                 {products.length} item{products.length !== 1 ? 's' : ''} saved
               </Text>

@@ -6,16 +6,15 @@ import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Dimensions,
     Pressable,
     ScrollView,
     StyleSheet,
-    Text,
     View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
+import Text from '@/components/common/LocalizedText';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +25,6 @@ import { reviewService } from '@/services/api/review.service';
 import { vendorService } from '@/services/api/vendor.service';
 import { OrderDetail } from '@/types/api.types';
 
-const { width, height } = Dimensions.get('window');
 const SHIPPING_FEE = 50;
 
 type OrderRole = 'customer' | 'vendor';

@@ -1,5 +1,6 @@
 import { CenteredHeader, GlassView } from '@/components';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
@@ -13,6 +14,7 @@ export default function EmergencyServicesScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [services, setServices] = useState<EmergencyServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +48,7 @@ export default function EmergencyServicesScreen() {
         {!loading && services.length === 0 ? (
           <GlassView intensity={isDark ? 30 : 50} style={styles.empty} {...{} as any}>
             <MaterialCommunityIcons name="alert-circle-outline" size={34} color={colors.warning} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No emergency services available right now. Please try again later or call 123 for assistance.</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('emergency.services.empty')}</Text>
           </GlassView>
         ) : null}
         {services.map((service) => (
@@ -54,6 +56,7 @@ export default function EmergencyServicesScreen() {
             key={service.service_id}
             service={service}
             colors={colors}
+            t={t}
             onPress={() => router.push({
               pathname: '/emergency-request' as any,
               params: { serviceId: service.service_id, serviceName: service.name, price: String(service.price || '') },
@@ -69,16 +72,18 @@ function EmergencyServiceTile({
   service,
   colors,
   onPress,
+  t,
 }: {
   service: EmergencyServiceOption;
   colors: ReturnType<typeof useTheme>['colors'];
   onPress: () => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   const onlineCount = service.online_employee_count || 0;
   const assignedCount = service.assigned_employee_count || 0;
   const availabilityText = onlineCount > 0
-    ? `${onlineCount} available now`
-    : `${assignedCount} assigned, none online`;
+    ? t('emergency.services.availableNow', { count: onlineCount })
+    : t('emergency.services.assignedNoneOnline', { count: assignedCount });
 
   return (
     <Pressable

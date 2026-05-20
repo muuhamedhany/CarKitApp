@@ -13,7 +13,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
-  withDelay,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
@@ -21,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 
 // ═══════════════════════════════════
@@ -113,14 +113,14 @@ function ToastItem({ toast, onDismiss }: { toast: ToastData; onDismiss: (id: num
   React.useEffect(() => {
     translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) });
     opacity.value = withTiming(1, { duration: 300 });
-  }, []);
+  }, [opacity, translateY]);
 
   const dismiss = useCallback(() => {
     translateY.value = withTiming(-150, { duration: 300, easing: Easing.in(Easing.ease) });
     opacity.value = withTiming(0, { duration: 300 }, () => {
       runOnJS(onDismiss)(toast.id);
     });
-  }, [toast.id, onDismiss]);
+  }, [opacity, toast.id, onDismiss, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -178,7 +178,8 @@ function AlertDialog({
   options: AlertOptions | null;
   onClose: () => void;
 }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const { t } = useTranslation();
   const scale = useSharedValue(0.85);
   const dialogOpacity = useSharedValue(0);
 
@@ -187,7 +188,7 @@ function AlertDialog({
       scale.value = withSpring(1, { damping: 15, stiffness: 150 });
       dialogOpacity.value = withTiming(1, { duration: 200 });
     }
-  }, [visible]);
+  }, [dialogOpacity, scale, visible]);
 
   const animatedDialogStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -198,7 +199,7 @@ function AlertDialog({
 
   const baseConfig = TOAST_CONFIGS[options.type || 'info'];
   const config = (options.type || 'info') === 'info' ? { ...baseConfig, accentColor: colors.purpleLight } : baseConfig;
-  const buttons = options.buttons || [{ text: 'OK', onPress: undefined }];
+  const buttons: AlertButton[] = options.buttons ?? [{ text: t('common.ok') }];
 
   const handlePress = (button: AlertButton) => {
     // Trigger exit animation
@@ -287,6 +288,7 @@ function AlertDialog({
 // ═══════════════════════════════════
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertOptions, setAlertOptions] = useState<AlertOptions | null>(null);
@@ -295,13 +297,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (type: ToastType, title: string, message?: string, duration: number = 3500) => {
       const id = ++toastIdRef.current;
-      setToasts((prev) => [...prev, { id, type, title, message }]);
+      setToasts((prev) => [...prev, { id, type, title: t(title), message: message ? t(message) : message }]);
 
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, duration);
     },
-    []
+    [t]
   );
 
   const dismissToast = useCallback((id: number) => {
@@ -309,9 +311,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showAlert = useCallback((options: AlertOptions) => {
-    setAlertOptions(options);
+    setAlertOptions({
+      ...options,
+      title: t(options.title),
+      message: t(options.message),
+      buttons: options.buttons?.map((button) => ({ ...button, text: t(button.text) })),
+    });
     setAlertVisible(true);
-  }, []);
+  }, [t]);
 
   const closeAlert = useCallback(() => {
     setAlertVisible(false);

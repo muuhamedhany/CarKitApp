@@ -1,5 +1,6 @@
 import GlassView from './GlassView';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -35,6 +36,7 @@ export default function SecondaryButton({
   iconSize = 20,
 }: SecondaryButtonProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -74,7 +76,7 @@ export default function SecondaryButton({
       ) : (
         <View style={styles.content}>
           {icon && <MaterialCommunityIcons name={icon} size={iconSize} color={colors.textPrimary} style={styles.icon} />}
-          <Text style={[styles.text, { color: colors.textPrimary }]}>{title}</Text>
+          <Text style={[styles.text, { color: colors.textPrimary }]}>{t(title)}</Text>
         </View>
       )}
     </View>

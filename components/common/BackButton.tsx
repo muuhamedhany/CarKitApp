@@ -1,11 +1,13 @@
 import GlassView from './GlassView';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { arrowBack } from '@/utils/rtl';
 
 type BackButtonProps = {
   onPress?: () => void;
@@ -15,6 +17,7 @@ export default function BackButton({ onPress }: BackButtonProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { isRTL } = useTranslation();
 
   return (
     <View style={[styles.container, { top: Platform.OS === 'ios' ? insets.top : insets.top + 10 }]}>
@@ -32,7 +35,7 @@ export default function BackButton({ onPress }: BackButtonProps) {
         {Platform.OS === 'ios' && (
           <GlassView intensity={35} tint="dark" style={StyleSheet.absoluteFill} />
         )}
-        <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
+        <MaterialCommunityIcons name={arrowBack(isRTL) as any} size={22} color={colors.textPrimary} />
       </Pressable>
     </View>
   );

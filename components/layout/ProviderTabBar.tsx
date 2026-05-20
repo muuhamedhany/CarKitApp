@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,16 +17,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TabItem = {
   name: string;
-  label: string;
+  labelKey: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
 };
 
 const TABS: TabItem[] = [
-  { name: 'index', label: 'Dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
-  { name: 'services', label: 'Services', icon: 'wrench-outline', iconFilled: 'wrench' },
-  { name: 'bookings', label: 'Bookings', icon: 'calendar-check-outline', iconFilled: 'calendar-check' },
-  { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
+  { name: 'index', labelKey: 'tabs.dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
+  { name: 'services', labelKey: 'tabs.services', icon: 'wrench-outline', iconFilled: 'wrench' },
+  { name: 'bookings', labelKey: 'tabs.bookings', icon: 'calendar-check-outline', iconFilled: 'calendar-check' },
+  { name: 'profile', labelKey: 'tabs.profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
 function TabButton({
@@ -38,6 +39,7 @@ function TabButton({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
@@ -78,7 +80,7 @@ function TabButton({
           },
         ]}
       >
-        {tab.label}
+        {t(tab.labelKey)}
       </Text>
     </Pressable>
   );

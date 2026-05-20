@@ -1,12 +1,16 @@
-export const formatCurrency = (amount: number, currency: string = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
+import type { Language } from '@/contexts/LanguageContext';
+
+const localeForLanguage = (language: Language = 'en') => (language === 'ar' ? 'ar-EG' : 'en-US');
+
+export const formatCurrency = (amount: number, currency: string = 'USD', language: Language = 'en') => {
+  return new Intl.NumberFormat(localeForLanguage(language), {
     style: 'currency',
     currency,
   }).format(amount);
 };
 
-export const formatDate = (dateString: string) => {
-  return new Intl.DateTimeFormat('en-US', {
+export const formatDate = (dateString: string, language: Language = 'en') => {
+  return new Intl.DateTimeFormat(localeForLanguage(language), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

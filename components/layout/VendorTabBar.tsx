@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,16 +17,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TabItem = {
     name: string;
-    label: string;
+    labelKey: string;
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
     iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
 };
 
 const TABS: TabItem[] = [
-    { name: 'index', label: 'Dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
-    { name: 'products', label: 'Inventory', icon: 'package-variant-closed', iconFilled: 'package-variant' },
-    { name: 'orders', label: 'Orders', icon: 'receipt-text-outline', iconFilled: 'receipt-text' },
-    { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
+    { name: 'index', labelKey: 'tabs.dashboard', icon: 'view-dashboard-outline', iconFilled: 'view-dashboard' },
+    { name: 'products', labelKey: 'tabs.inventory', icon: 'package-variant-closed', iconFilled: 'package-variant' },
+    { name: 'orders', labelKey: 'tabs.orders', icon: 'receipt-text-outline', iconFilled: 'receipt-text' },
+    { name: 'profile', labelKey: 'tabs.profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
 function TabButton({
@@ -38,6 +39,7 @@ function TabButton({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
@@ -78,7 +80,7 @@ function TabButton({
           },
         ]}
       >
-        {tab.label}
+        {t(tab.labelKey)}
       </Text>
     </Pressable>
   );
@@ -100,7 +102,7 @@ export default function VendorTabBar({ state, navigation }: any) {
       stiffness: 350,
       mass: 0.6,
     });
-  }, [state.index, tabWidth]);
+  }, [indicatorPosition, state.index, tabWidth]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorPosition.value }],

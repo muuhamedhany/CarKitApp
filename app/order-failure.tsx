@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { paymentService, PaymentMethod } from '@/services/api/payment.service';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 
@@ -12,6 +13,7 @@ export default function OrderFailureScreen() {
     const router = useRouter();
     const { colors } = useTheme();
     const { showToast } = useToast();
+    const { t } = useTranslation();
     const [retrying, setRetrying] = useState(false);
 
     const params = useLocalSearchParams<{ orderId?: string; amount?: string; method?: string }>();
@@ -44,17 +46,17 @@ export default function OrderFailureScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <MaterialCommunityIcons name="alert-circle" size={72} color={colors.error} />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Payment Failed</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('order.failure.title')}</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Order #{orderId || '-'} was created, but payment could not be completed.
+                {t('order.failure.subtitle', { id: orderId || '-' })}
             </Text>
 
             <Pressable style={[styles.button, { backgroundColor: colors.pink }]} onPress={retryPayment} disabled={retrying}>
-                {retrying ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Retry Payment</Text>}
+                {retrying ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('order.failure.retry')}</Text>}
             </Pressable>
 
             <Pressable style={[styles.secondary, { borderColor: colors.cardBorder }]} onPress={() => router.replace('/my-orders')}>
-                <Text style={[styles.secondaryText, { color: colors.textPrimary }]}>Continue to Orders</Text>
+                <Text style={[styles.secondaryText, { color: colors.textPrimary }]}>{t('order.failure.continueOrders')}</Text>
             </Pressable>
         </View>
     );

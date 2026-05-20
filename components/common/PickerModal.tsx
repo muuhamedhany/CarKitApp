@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 type PickerItem = {
   id: number;
@@ -34,6 +35,7 @@ export default function PickerModal({
   onClose,
 }: PickerModalProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -44,7 +46,7 @@ export default function PickerModal({
         <View style={[styles.sheet, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t(title)}</Text>
             <Pressable onPress={onClose} hitSlop={12}>
               <MaterialCommunityIcons name="close" size={24} color={colors.textMuted} />
             </Pressable>
@@ -74,7 +76,7 @@ export default function PickerModal({
                 );
               }}
               ListEmptyComponent={
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>No options available</Text>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.noOptions')}</Text>
               }
             />
           </View>

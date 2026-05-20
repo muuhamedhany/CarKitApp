@@ -1,23 +1,24 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-
-const { height } = Dimensions.get('window');
+import { textAlign } from '@/utils/rtl';
 
 export default function SignUpCustomerScreen() {
   const router = useRouter();
   const { register } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,17 +31,17 @@ export default function SignUpCustomerScreen() {
 
   const handleSignUp = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
-      showToast('warning', 'Missing Fields', 'Please fill in all fields.');
+      showToast('warning', t('common.missingFields'), t('auth.missingFieldsMessage'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
     if (password !== confirmPassword) {
-      showToast('error', 'Mismatch', 'Passwords do not match.');
+      showToast('error', t('auth.signup.mismatchTitle'), t('auth.signup.mismatch'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     if (password.length < 6) {
-      showToast('warning', 'Weak Password', 'Password must be at least 6 characters.');
+      showToast('warning', t('auth.signup.weakTitle'), t('auth.signup.weak'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -54,7 +55,7 @@ export default function SignUpCustomerScreen() {
       router.replace('/add-vehicle-prompt');
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Sign Up Failed', result.message);
+      showToast('error', t('auth.signup.failed'), result.message);
     }
   };
 
@@ -73,7 +74,7 @@ export default function SignUpCustomerScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
       >
-        <CenteredHeader title="Create Account" titleColor={colors.pink} />
+        <CenteredHeader title={t('auth.signup.title')} titleColor={colors.pink} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -81,8 +82,8 @@ export default function SignUpCustomerScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Join CarKit and experience premium car care
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+              {t('auth.signup.subtitle')}
             </Text>
           </Animated.View>
 
@@ -97,18 +98,18 @@ export default function SignUpCustomerScreen() {
               ]}
             >
               <FormInput
-                label="Full Name"
+                label={t('auth.signup.fullNameLabel')}
                 icon="account-outline"
-                placeholder="John Doe"
+                placeholder={t('auth.signup.namePlaceholder')}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
               />
 
               <FormInput
-                label="Email Address"
+                label={t('auth.signup.emailLabel')}
                 icon="email-outline"
-                placeholder="john@example.com"
+                placeholder={t('auth.signup.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -116,16 +117,16 @@ export default function SignUpCustomerScreen() {
               />
 
               <FormInput
-                label="Phone Number"
+                label={t('auth.signup.phoneLabel')}
                 icon="phone-outline"
-                placeholder="+1 234 567 890"
+                placeholder={t('auth.signup.phonePlaceholder')}
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
               />
 
               <FormInput
-                label="Password"
+                label={t('auth.signup.passwordLabel')}
                 icon="lock-outline"
                 placeholder="••••••••"
                 value={password}
@@ -136,7 +137,7 @@ export default function SignUpCustomerScreen() {
               />
 
               <FormInput
-                label="Confirm Password"
+                label={t('auth.signup.confirmPasswordLabel')}
                 icon="lock-outline"
                 placeholder="••••••••"
                 value={confirmPassword}
@@ -147,17 +148,17 @@ export default function SignUpCustomerScreen() {
               />
 
               <GradientButton
-                title="Create Account"
+                title={t('auth.signup.submit')}
                 onPress={handleSignUp}
                 loading={loading}
                 style={styles.signupBtn}
               />
 
-              <Divider text="OR" />
+              <Divider text={t('auth.divider.or')} />
 
               <SocialButton
                 provider="google"
-                actionText="Sign up with Google"
+                actionText={t('auth.signup.google')}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }}
@@ -167,8 +168,8 @@ export default function SignUpCustomerScreen() {
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>
             <AuthFooter
-              message="Already have an account?"
-              actionText="Login"
+              message={t('auth.signup.haveAccount')}
+              actionText={t('auth.selectAccount.login')}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/(auth)/login');

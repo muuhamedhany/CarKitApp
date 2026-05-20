@@ -2,6 +2,7 @@ import { CenteredHeader, GlassView } from '@/components';
 import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { bookingService } from '@/services/api/booking.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -53,6 +54,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function MyBookingsScreen() {
   const { colors, isDark } = useTheme();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('upcoming');
@@ -114,11 +116,11 @@ export default function MyBookingsScreen() {
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return d.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch { return dateStr; }
   };
 
-  const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
+  const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-EG')} ${t('common.currency.egp')}`;
 
   const formatTime = (value?: string | null) => {
     if (!value) return '-';
@@ -147,7 +149,7 @@ export default function MyBookingsScreen() {
           </View>
           <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '20' }]}>
             <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              {t(`status.${item.status}`)}
             </Text>
           </View>
         </View>
@@ -155,7 +157,7 @@ export default function MyBookingsScreen() {
         <View style={styles.infoRow}>
           <MaterialCommunityIcons name="map-marker-outline" size={14} color={colors.textSecondary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {item.location || 'No location selected'}
+            {item.location || t('bookings.noLocation')}
           </Text>
         </View>
 
@@ -176,7 +178,7 @@ export default function MyBookingsScreen() {
 
         <View style={styles.footer}>
           <View>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total Amount</Text>
+            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t('cart.totalAmount')}</Text>
             <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{formatMoney(item.booking_price)}</Text>
           </View>
 
@@ -193,7 +195,7 @@ export default function MyBookingsScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.viewDetailsBtn}
             >
-              <Text style={styles.viewDetailsText}>Details</Text>
+              <Text style={styles.viewDetailsText}>{t('common.details')}</Text>
               <MaterialCommunityIcons name="chevron-right" size={16} color="white" />
             </LinearGradient>
           </Pressable>
@@ -216,7 +218,7 @@ export default function MyBookingsScreen() {
 
       {/* Static Header & Tabs - Always Visible */}
       <View style={styles.staticHeader}>
-        <CenteredHeader title="My Bookings" titleColor={colors.textPrimary} />
+        <CenteredHeader title="bookings.myBookings" titleColor={colors.textPrimary} />
         <View style={styles.tabContainer}>
           <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <Pressable
@@ -229,7 +231,7 @@ export default function MyBookingsScreen() {
               {tab === 'upcoming' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'upcoming' ? 'white' : colors.textSecondary }]}>Upcoming</Text>
+              <Text style={[styles.tabText, { color: tab === 'upcoming' ? 'white' : colors.textSecondary }]}>{t('bookings.upcoming')}</Text>
             </Pressable>
             <Pressable
               style={[styles.tab]}
@@ -241,7 +243,7 @@ export default function MyBookingsScreen() {
               {tab === 'completed' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>Completed</Text>
+              <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>{t('status.completed')}</Text>
             </Pressable>
           </GlassView>
         </View>
@@ -281,8 +283,8 @@ export default function MyBookingsScreen() {
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
               <MaterialCommunityIcons name="calendar-blank" size={48} color={colors.pink} />
             </GlassView>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} bookings</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} service bookings will appear here.</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('bookings.emptyTitle', { status: t(tab === 'upcoming' ? 'bookings.upcomingLower' : 'status.completedLower') })}</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('bookings.emptySubtitle', { status: t(tab === 'upcoming' ? 'bookings.upcomingLower' : 'status.completedLower') })}</Text>
           </Animated.View>
         </ScrollView>
       ) : (

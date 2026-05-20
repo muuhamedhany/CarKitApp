@@ -6,23 +6,20 @@ import { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
-    Dimensions,
     ScrollView,
     StyleSheet,
-    Text,
     View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, OutlinedButton } from '@/components';
+import Text from '@/components/common/LocalizedText';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { bookingService, type Booking } from '@/services/api/booking.service';
 import { reviewService } from '@/services/api/review.service';
-
-const { width, height } = Dimensions.get('window');
 
 type BookingDetail = Booking;
 
@@ -32,18 +29,6 @@ const formatDate = (value?: string | null) => {
         return new Date(value).toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
         });
-    } catch {
-        return value;
-    }
-};
-
-const formatTime = (value?: string | null) => {
-    if (!value) return '-';
-    try {
-        const [hours, minutes] = value.split(':').map((part) => Number(part));
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     } catch {
         return value;
     }
@@ -85,7 +70,7 @@ export default function BookingDetailScreen() {
     const { showToast } = useToast();
     const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
     const [loading, setLoading] = useState(true);
-    const [updating, setUpdating] = useState(false);
+    const [, setUpdating] = useState(false);
     const [reviewModalVisible, setReviewModalVisible] = useState(false);
     const [isReviewed, setIsReviewed] = useState(false);
 
