@@ -1,5 +1,5 @@
 import { useTheme } from '@/hooks/useTheme';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,12 +7,13 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
 import { GlassView } from '@/components';
-
-const { height } = Dimensions.get('window');
+import { useTranslation } from '@/contexts/LanguageContext';
+import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
 
 export default function SelectAccountScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
 
   const handlePress = (path: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -35,9 +36,9 @@ export default function SelectAccountScreen() {
           entering={FadeInUp.delay(200).duration(800)}
           style={styles.header}
         >
-          <Text style={[styles.title, { color: colors.pink }]}>Choose Account Type</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            How would you like to use CarKit?
+          <Text style={[styles.title, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('auth.selectAccount.title')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+            {t('auth.selectAccount.subtitle')}
           </Text>
         </Animated.View>
 
@@ -52,18 +53,18 @@ export default function SelectAccountScreen() {
             <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
-              style={[styles.card, { borderColor: colors.cardBorder }, Shadows.md]}
+              style={[styles.card, { flexDirection: rowDirection(isRTL), borderColor: colors.cardBorder }, Shadows.md]}
             >
               <View style={[styles.cardIcon, { backgroundColor: colors.pinkGlow }]}>
                 <MaterialCommunityIcons name="account-outline" size={28} color={colors.pink} />
               </View>
               <View style={styles.cardText}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Customer</Text>
-                <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                  Find trusted mechanics, buy parts, and track your vehicle health.
+                <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('auth.selectAccount.customer')}</Text>
+                <Text style={[styles.cardDescription, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+                  {t('auth.selectAccount.customerDesc')}
                 </Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+              <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={24} color={colors.textMuted} />
             </GlassView>
           </Pressable>
         </Animated.View>
@@ -79,29 +80,29 @@ export default function SelectAccountScreen() {
             <GlassView
               intensity={isDark ? 40 : 60}
               tint={isDark ? 'dark' : 'light'}
-              style={[styles.card, { borderColor: colors.cardBorder }, Shadows.md]}
+              style={[styles.card, { flexDirection: rowDirection(isRTL), borderColor: colors.cardBorder }, Shadows.md]}
             >
               <View style={[styles.cardIcon, { backgroundColor: colors.purpleGlow }]}>
                 <MaterialCommunityIcons name="store-outline" size={28} color={colors.purple} />
               </View>
               <View style={styles.cardText}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Vendor / Provider</Text>
-                <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-                  Showcase your services, sell products, and manage your business.
+                <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('auth.selectAccount.vendorProvider')}</Text>
+                <Text style={[styles.cardDescription, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+                  {t('auth.selectAccount.vendorProviderDesc')}
                 </Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+              <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={24} color={colors.textMuted} />
             </GlassView>
           </Pressable>
         </Animated.View>
 
         <Animated.View 
           entering={FadeInDown.delay(800).duration(800)}
-          style={styles.bottomLink}
+          style={[styles.bottomLink, { flexDirection: rowDirection(isRTL) }]}
         >
-          <Text style={[styles.bottomLinkText, { color: colors.textSecondary }]}>Already have an account? </Text>
+          <Text style={[styles.bottomLinkText, { color: colors.textSecondary }]}>{t('auth.selectAccount.haveAccount')}</Text>
           <Pressable onPress={() => handlePress('/login')}>
-            <Text style={[styles.bottomLinkAction, { color: colors.pink }]}>Login</Text>
+            <Text style={[styles.bottomLinkAction, { color: colors.pink }]}>{t('auth.selectAccount.login')}</Text>
           </Pressable>
         </Animated.View>
       </View>

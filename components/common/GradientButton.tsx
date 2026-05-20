@@ -13,7 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Spacing, FontSizes, BorderRadius, Fonts, Shadows, Animations } from '@/constants/theme';
+import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 type GradientButtonProps = {
   title: string;
@@ -37,6 +38,7 @@ export default function GradientButton({
   iconSize = 20,
 }: GradientButtonProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -87,7 +89,7 @@ export default function GradientButton({
           ) : (
             <View style={styles.content}>
               {icon && <MaterialCommunityIcons name={icon} size={iconSize} color="#FFFFFF" style={styles.icon} />}
-              <Text style={styles.text}>{title}</Text>
+              <Text style={styles.text}>{t(title)}</Text>
             </View>
           )}
         </LinearGradient>

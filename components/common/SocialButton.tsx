@@ -1,6 +1,7 @@
-import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { Text, Pressable, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 type SocialButtonProps = {
   provider: 'google';
@@ -10,6 +11,7 @@ type SocialButtonProps = {
 
 export default function SocialButton({ provider, actionText, onPress }: SocialButtonProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Pressable style={[styles.button, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]} onPress={onPress}>
@@ -17,7 +19,7 @@ export default function SocialButton({ provider, actionText, onPress }: SocialBu
         source={{ uri: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png' }} 
         style={styles.logo} 
       />
-      <Text style={[styles.text, { color: colors.textPrimary }]}>{actionText}</Text>
+      <Text style={[styles.text, { color: colors.textPrimary }]}>{t(actionText)}</Text>
     </Pressable>
   );
 }

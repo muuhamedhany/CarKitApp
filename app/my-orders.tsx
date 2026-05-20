@@ -3,6 +3,7 @@ import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
@@ -12,7 +13,6 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   StyleSheet,
   Text,
@@ -25,8 +25,6 @@ import Animated, {
   LinearTransition
 } from 'react-native-reanimated';
 const TypedFlashList = FlashList as any;
-
-const { width } = Dimensions.get('window');
 
 type Order = {
   order_id: number;
@@ -49,6 +47,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function MyOrdersScreen() {
   const { colors, isDark } = useTheme();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { token } = useAuth();
   const [tab, setTab] = useState<TabType>('active');
@@ -112,7 +111,7 @@ export default function MyOrdersScreen() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
+      return new Date(dateStr).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
       });
     } catch { return dateStr; }
@@ -126,12 +125,12 @@ export default function MyOrdersScreen() {
       <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.orderCard}>
         <View style={styles.orderHeader}>
           <View>
-            <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{item.order_id}</Text>
+            <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('orders.orderNumber', { id: item.order_id })}</Text>
             <Text style={[styles.orderDate, { color: colors.textMuted }]}>{formatDate(item.order_date)}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '20' }]}>
             <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              {t(`status.${item.status}`)}
             </Text>
           </View>
         </View>
@@ -140,7 +139,7 @@ export default function MyOrdersScreen() {
 
         <View style={styles.orderFooter}>
           <View style={styles.totalBlock}>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total amount</Text>
+            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t('cart.totalAmount')}</Text>
             <View style={styles.totalAmountRow}>
               <Text
                 style={[styles.totalValue, { color: colors.textPrimary }]}
@@ -150,7 +149,7 @@ export default function MyOrdersScreen() {
               >
                 {Number(item.total_amount || 0).toLocaleString('en-EG')}
               </Text>
-              <Text style={[styles.currencyLabel, { color: colors.pink }]}> EGP</Text>
+              <Text style={[styles.currencyLabel, { color: colors.pink }]}> {t('common.currency.egp')}</Text>
             </View>
           </View>
           <Pressable
@@ -166,7 +165,7 @@ export default function MyOrdersScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.viewDetailsBtn}
             >
-              <Text style={styles.viewDetailsText}>Details</Text>
+              <Text style={styles.viewDetailsText}>{t('common.details')}</Text>
               <MaterialCommunityIcons name="chevron-right" size={18} color="white" />
             </LinearGradient>
           </Pressable>
@@ -188,7 +187,7 @@ export default function MyOrdersScreen() {
 
       {/* Static Header & Tabs - Always Visible */}
       <View style={styles.staticHeader}>
-        <CenteredHeader title="My Orders" titleColor={colors.textPrimary} />
+        <CenteredHeader title="orders.myOrders" titleColor={colors.textPrimary} />
         <View style={styles.tabContainer}>
           <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.tabRow, { borderColor: 'rgba(255,255,255,0.1)' }]}>
             <Pressable
@@ -201,7 +200,7 @@ export default function MyOrdersScreen() {
               {tab === 'active' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'active' ? 'white' : colors.textSecondary }]}>Active</Text>
+              <Text style={[styles.tabText, { color: tab === 'active' ? 'white' : colors.textSecondary }]}>{t('orders.active')}</Text>
             </Pressable>
             <Pressable
               style={styles.tab}
@@ -213,7 +212,7 @@ export default function MyOrdersScreen() {
               {tab === 'delivered' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>Delivered</Text>
+              <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>{t('status.delivered')}</Text>
             </Pressable>
           </GlassView>
         </View>
@@ -248,8 +247,8 @@ export default function MyOrdersScreen() {
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
               <MaterialCommunityIcons name="package-variant" size={48} color={colors.pink} />
             </GlassView>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No {tab} orders</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Your {tab} product orders will appear here.</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('orders.emptyTitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('orders.emptySubtitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}</Text>
           </Animated.View>
         </ScrollView>
       ) : (

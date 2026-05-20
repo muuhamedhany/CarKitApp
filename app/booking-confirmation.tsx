@@ -17,12 +17,13 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, FormInput, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, bookingService, paymentService } from '@/services/api';
 import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type Address = {
   address_id: number;
@@ -52,10 +53,10 @@ const addDays = (baseDate: Date, days: number) => {
 
 const formatDateValue = (date: Date) => date.toISOString().split('T')[0];
 
-const formatReadableDate = (isoDate: string) => {
+const formatReadableDate = (isoDate: string, language: 'en' | 'ar' = 'en') => {
   try {
     const date = new Date(`${isoDate}T00:00:00`);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   } catch {
     return isoDate;
   }
@@ -106,6 +107,7 @@ export default function BookingConfirmationScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
   const params = useLocalSearchParams<BookingParams>();
 
   const serviceId = Number(asString(params.serviceId));
@@ -135,9 +137,9 @@ export default function BookingConfirmationScreen() {
     () => Array.from({ length: 5 }, (_, index) => {
       const date = addDays(new Date(), index + 1);
       const value = formatDateValue(date);
-      return { value, label: formatReadableDate(value) };
+      return { value, label: formatReadableDate(value, language) };
     }),
-    []
+    [language]
   );
 
   const loadAddresses = useCallback(async () => {
@@ -281,7 +283,7 @@ export default function BookingConfirmationScreen() {
         showsVerticalScrollIndicator={false}
       >
         <CenteredHeader
-          title="Confirm Booking"
+          title="booking.confirm.title"
           titleColor={colors.textPrimary}
         />
         <Animated.View entering={FadeInDown.delay(100).springify()}>
@@ -289,26 +291,26 @@ export default function BookingConfirmationScreen() {
             <View style={styles.summaryHeader}>
               <View style={styles.summaryInfo}>
                 <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>{serviceName}</Text>
-                <Text style={[styles.summaryProvider, { color: colors.textSecondary }]}>by {providerName}</Text>
+                <Text style={[styles.summaryProvider, { color: colors.textSecondary }]}>{t('booking.confirm.byProvider', { provider: providerName })}</Text>
               </View>
-              <Text style={[styles.summaryPrice, { color: colors.pink }]}>{price} EGP</Text>
+              <Text style={[styles.summaryPrice, { color: colors.pink }]}>{price} {t('common.currency.egp')}</Text>
             </View>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.summaryFooter}>
               <View style={styles.footerItem}>
                 <MaterialCommunityIcons name="clock-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>{duration} min</Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>{duration} {t('service.card.minute')}</Text>
               </View>
               <View style={styles.footerItem}>
                 <MaterialCommunityIcons name="shield-check-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.footerText, { color: colors.textSecondary }]}>Certified</Text>
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('booking.confirm.certified')}</Text>
               </View>
             </View>
           </GlassView>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Select Date</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('booking.confirm.selectDate')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
             {dateChoices.map((date) => {
               const selected = selectedDate === date.value;
@@ -340,7 +342,7 @@ export default function BookingConfirmationScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Select Time</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('booking.confirm.selectTime')}</Text>
           {availableTimes.length > 0 ? (
             <View style={styles.timeGrid}>
               {availableTimes.map((time) => {
@@ -370,13 +372,13 @@ export default function BookingConfirmationScreen() {
           ) : (
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
               <MaterialCommunityIcons name="clock-alert-outline" size={20} color={colors.pink} />
-              <Text style={[styles.infoText, { color: colors.textSecondary }]}>No provider time slots available for this service.</Text>
+              <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('booking.confirm.noSlots')}</Text>
             </GlassView>
           )}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Address</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('checkout.address')}</Text>
           {loadingAddresses ? (
             <ActivityIndicator size="small" color={colors.pink} />
           ) : addresses.length === 0 ? (
@@ -385,7 +387,7 @@ export default function BookingConfirmationScreen() {
             >
               <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
                 <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('checkout.noAddress')}</Text>
               </GlassView>
             </Pressable>
           ) : (
@@ -407,7 +409,7 @@ export default function BookingConfirmationScreen() {
                   >
                     <View style={styles.addressHeader}>
                       <View style={styles.addressInfo}>
-                        <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{address.title || 'Address'}</Text>
+                        <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{address.title || t('checkout.address')}</Text>
                         <Text style={[styles.addressText, { color: colors.textSecondary }]}>
                           {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
                         </Text>
@@ -424,7 +426,7 @@ export default function BookingConfirmationScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(500).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('checkout.paymentMethod')}</Text>
           {paymentMethods.map((method) => {
             const active = paymentMethod === method.value;
             return (
@@ -452,8 +454,8 @@ export default function BookingConfirmationScreen() {
                     />
                   </View>
                   <View style={styles.methodTextBlock}>
-                    <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
-                    <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>{method.description}</Text>
+                    <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{t(method.label)}</Text>
+                    <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>{t(method.description)}</Text>
                   </View>
                   <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
                     {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
@@ -490,7 +492,7 @@ export default function BookingConfirmationScreen() {
                           </View>
                           <View style={styles.methodTextBlock}>
                             <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{cardBrandLabel(card.brand)} •••• {card.last4}</Text>
-                            <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>Saved card</Text>
+                            <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>{t('booking.confirm.savedCard')}</Text>
                           </View>
                           <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
                             {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
@@ -514,8 +516,8 @@ export default function BookingConfirmationScreen() {
                     <MaterialCommunityIcons name="plus-circle-outline" size={24} color={useNewCard ? colors.pink : colors.textMuted} />
                   </View>
                   <View style={styles.methodTextBlock}>
-                    <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>Use new card</Text>
-                    <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>Enter card details manually</Text>
+                    <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{t('checkout.useNewCard')}</Text>
+                    <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>{t('booking.confirm.enterCardDetails')}</Text>
                   </View>
                   <View style={[styles.radioCircle, { borderColor: useNewCard ? colors.pink : colors.textMuted }]}>
                     {useNewCard && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
@@ -563,11 +565,11 @@ export default function BookingConfirmationScreen() {
       <GlassView intensity={Platform.OS === 'ios' ? 80 : 100} tint={isDark ? 'dark' : 'light'} style={styles.bottomBar} {...{} as any}>
         <View style={styles.totalContainer}>
           <View style={styles.totalInfo}>
-            <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Price</Text>
-            <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{price} EGP</Text>
+            <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>{t('booking.confirm.totalPrice')}</Text>
+            <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{price} {t('common.currency.egp')}</Text>
           </View>
           <GradientButton
-            title={placingBooking ? "Booking..." : "Confirm Booking"}
+            title={placingBooking ? 'booking.confirm.booking' : 'booking.confirm.title'}
             onPress={handlePlaceBooking}
             loading={placingBooking}
             disabled={!canPlaceBooking}

@@ -1,15 +1,16 @@
-import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function Divider({ text = 'Or' }: { text?: string }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
       <View style={[styles.line, { backgroundColor: colors.dividerLine }]} />
-      <Text style={[styles.text, { color: colors.textMuted }]}>{text}</Text>
+      <Text style={[styles.text, { color: colors.textMuted }]}>{t(text)}</Text>
       <View style={[styles.line, { backgroundColor: colors.dividerLine }]} />
     </View>
   );

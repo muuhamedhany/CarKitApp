@@ -15,49 +15,52 @@ import Animated, {
 
 import { GlassView, GradientButton } from '@/components';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface Slide {
   id: string;
   type: 'image' | 'cards';
-  title: string;
-  subtitle: string;
-  buttonText: string;
+  titleKey: string;
+  subtitleKey: string;
+  buttonKey: string;
   image?: any;
-  cards?: { iconName: string; title: string; description: string }[];
+  cards?: { iconName: string; titleKey: string; descriptionKey: string }[];
 }
 
 const slides: Slide[] = [
   {
     id: '1', type: 'image',
-    title: 'Your Complete Car\nCare in One Kit',
-    subtitle: 'Find authentic spare parts, trusted mechanics, and premium car services—all at transparent prices.',
-    buttonText: 'Next',
+    titleKey: 'onboarding.slide1.title',
+    subtitleKey: 'onboarding.slide1.subtitle',
+    buttonKey: 'common.next',
     image: require('@/assets/images/onboarding/onboarding1.png'),
   },
   {
     id: '2', type: 'cards',
-    title: 'All Your Car Needs,\nOne App',
-    subtitle: 'Everything you need to keep your vehicle in peak performance, organized in one premium hub.',
-    buttonText: 'Continue',
+    titleKey: 'onboarding.slide2.title',
+    subtitleKey: 'onboarding.slide2.subtitle',
+    buttonKey: 'common.continue',
     cards: [
-      { iconName: 'wrench', title: 'Find Certified Service', description: 'Easily book appointments with our network of trusted mechanics.' },
-      { iconName: 'cart-outline', title: 'Shop Genuine Parts', description: 'Explore a vast marketplace for OEM and quality aftermarket parts.' },
-      { iconName: 'shield-check-outline', title: 'Trusted & Transparent', description: 'See reviews, ratings, and transparent pricing before you book.' },
+      { iconName: 'wrench', titleKey: 'onboarding.card.service.title', descriptionKey: 'onboarding.card.service.description' },
+      { iconName: 'cart-outline', titleKey: 'onboarding.card.parts.title', descriptionKey: 'onboarding.card.parts.description' },
+      { iconName: 'shield-check-outline', titleKey: 'onboarding.card.trust.title', descriptionKey: 'onboarding.card.trust.description' },
     ],
   },
   {
     id: '3', type: 'image',
-    title: 'Grow Your Business',
-    subtitle: 'Join as a vendor or service provider to reach thousands of customers and grow your automotive business.',
-    buttonText: 'Explore Now',
+    titleKey: 'onboarding.slide3.title',
+    subtitleKey: 'onboarding.slide3.subtitle',
+    buttonKey: 'onboarding.exploreNow',
     image: require('@/assets/images/onboarding/onboarding3.png'),
   },
 ];
 
-function FeatureCard({ iconName, title, description, colors, isDark }: { iconName: string; title: string; description: string; colors: any; isDark: boolean }) {
+function FeatureCard({ iconName, titleKey, descriptionKey, colors, isDark }: { iconName: string; titleKey: string; descriptionKey: string; colors: any; isDark: boolean }) {
+  const { t, isRTL } = useTranslation();
+
   return (
     <GlassView
       intensity={isDark ? 20 : 40}
@@ -68,8 +71,8 @@ function FeatureCard({ iconName, title, description, colors, isDark }: { iconNam
         <MaterialCommunityIcons name={iconName as any} size={24} color={colors.pink} />
       </View>
       <View style={cardStyles.textContainer}>
-        <Text style={[cardStyles.title, { color: colors.textPrimary }]}>{title}</Text>
-        <Text style={[cardStyles.description, { color: colors.textSecondary }]}>{description}</Text>
+        <Text style={[cardStyles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>{t(titleKey)}</Text>
+        <Text style={[cardStyles.description, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>{t(descriptionKey)}</Text>
       </View>
     </GlassView>
   );
@@ -108,6 +111,7 @@ const dotStyles = StyleSheet.create({
 export default function OnboardingScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -165,14 +169,14 @@ export default function OnboardingScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(400).duration(800)}>
-          <Text style={[styles.title, { color: colors.pink }]}>{item.title}</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
+          <Text style={[styles.title, { color: colors.pink }]}>{t(item.titleKey)}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t(item.subtitleKey)}</Text>
         </Animated.View>
 
         {item.type === 'cards' && (
           <Animated.View entering={FadeInRight.delay(600).duration(800)} style={styles.cardsContainer}>
             {item.cards?.map((card, i) => (
-              <FeatureCard key={i} iconName={card.iconName} title={card.title} description={card.description} colors={colors} isDark={isDark} />
+              <FeatureCard key={i} iconName={card.iconName} titleKey={card.titleKey} descriptionKey={card.descriptionKey} colors={colors} isDark={isDark} />
             ))}
           </Animated.View>
         )}
@@ -191,10 +195,10 @@ export default function OnboardingScreen() {
       <View style={[styles.orb, { top: -50, right: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 100, left: -100, backgroundColor: colors.purple + '10' }]} />
 
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]}>
         {activeIndex < slides.length - 1 && (
           <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip</Text>
+            <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
           </Pressable>
         )}
       </View>
@@ -221,7 +225,7 @@ export default function OnboardingScreen() {
         </View>
 
         <GradientButton
-          title={slides[activeIndex].buttonText}
+          title={slides[activeIndex].buttonKey}
           onPress={handleNext}
           style={styles.mainButton}
         />
@@ -235,7 +239,6 @@ const styles = StyleSheet.create({
   topNav: {
     height: 100,
     justifyContent: 'center',
-    alignItems: 'flex-end',
     paddingHorizontal: Spacing.lg,
     paddingTop: 40,
     zIndex: 10,

@@ -9,6 +9,7 @@ import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
@@ -20,9 +21,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Dimensions,
   Platform,
   Pressable,
@@ -39,17 +39,9 @@ import Animated, {
   useSharedValue
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { arrowForward, rowDirection, textAlign } from '@/utils/rtl';
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
-const SEARCH_PHRASES = [
-  'Premium engine oils...',
-  'Professional detailing...',
-  'Tire rotation experts...',
-  'Quick battery replacement...',
-  'Advanced AC recharge...',
-  'Best oil change nearby...',
-];
-
 function useTypewriter(phrases: string[]) {
   const [displayed, setDisplayed] = useState('');
   const [showCursor, setShowCursor] = useState(true);
@@ -94,9 +86,9 @@ function useTypewriter(phrases: string[]) {
   return { displayed, showCursor };
 }
 
-function TypewriterSearchBar({ textColor }: { textColor: string }) {
+function TypewriterSearchBar({ textColor, phrases }: { textColor: string; phrases: string[] }) {
   const { colors } = useTheme();
-  const { displayed, showCursor } = useTypewriter(SEARCH_PHRASES);
+  const { displayed, showCursor } = useTypewriter(phrases);
   return (
     <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.sm, marginLeft: Spacing.sm, color: textColor, flex: 1 }}>
       {displayed}
@@ -106,7 +98,6 @@ function TypewriterSearchBar({ textColor }: { textColor: string }) {
 }
 
 // ─── HomeScreen Component ───────────────────────────────────────────────────────
-type Category = { category_id: number; name: string; description?: string };
 type Product = {
   product_id: number; name: string; price: string; description?: string;
   category_name?: string; vendor_name?: string;
@@ -123,7 +114,7 @@ type Service = {
   review_count?: number;
 };
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 90;
 
 export default function HomeScreen() {
@@ -132,17 +123,25 @@ export default function HomeScreen() {
   const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [productCategories, setProductCategories] = useState<Category[]>([]);
   const [activeAds, setActiveAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
+  const searchPhrases = useMemo(() => [
+    t('home.search.premiumOils'),
+    t('home.search.detailing'),
+    t('home.search.tireRotation'),
+    t('home.search.battery'),
+    t('home.search.ac'),
+    t('home.search.oilChange'),
+  ], [t]);
 
   const [latestUpdate, setLatestUpdate] = useState<{
     title: string;
@@ -168,13 +167,12 @@ export default function HomeScreen() {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const [prodRes, servRes, catRes] = await Promise.all([
+      const [prodRes, servRes] = await Promise.all([
         fetch(`${API_URL}/products?page=1&pageSize=50`, { headers }),
         fetch(`${API_URL}/services?page=1&pageSize=30`, { headers }),
-        fetch(`${API_URL}/categories`, { headers }),
       ]);
-      const [prodData, servData, catData] = await Promise.all([
-        prodRes.json(), servRes.json(), catRes.json(),
+      const [prodData, servData] = await Promise.all([
+        prodRes.json(), servRes.json(),
       ]);
 
       let prodList = prodData.data || [];
@@ -186,7 +184,6 @@ export default function HomeScreen() {
 
       if (prodData.success) setProducts(prodList);
       if (servData.success) setServices(servList);
-      if (catData.success) setProductCategories(catData.data || []);
 
       try {
         const adsRes = await adService.getActiveAds();
@@ -229,25 +226,27 @@ export default function HomeScreen() {
           }
 
           if (updateType === 'booking') {
+            const status = latest.status.charAt(0).toUpperCase() + latest.status.slice(1);
             setLatestUpdate({
-              title: `Booking ${latest.status.charAt(0).toUpperCase() + latest.status.slice(1)}`,
-              description: `Your ${latest.service_name} is ${latest.status.toLowerCase()}.`,
+              title: t('home.bookingStatusTitle', { status }),
+              description: t('home.bookingStatusDescription', { serviceName: latest.service_name, status: latest.status.toLowerCase() }),
               icon: 'calendar-check',
               route: '/my-bookings',
               color: colors.pink,
             });
           } else if (updateType === 'order') {
+            const status = latest.status.charAt(0).toUpperCase() + latest.status.slice(1);
             setLatestUpdate({
-              title: `Order ${latest.status.charAt(0).toUpperCase() + latest.status.slice(1)}`,
-              description: `Order #${latest.order_id} is ${latest.status.toLowerCase()}.`,
+              title: t('home.orderStatusTitle', { status }),
+              description: t('home.orderStatusDescription', { orderId: latest.order_id, status: latest.status.toLowerCase() }),
               icon: 'package-variant-closed',
               route: '/my-orders',
               color: colors.purple || '#8B5CF6',
             });
           } else {
             setLatestUpdate({
-              title: 'Neon Redesign Live!',
-              description: 'Explore our premium new look across the entire app.',
+              title: t('home.redesignTitle'),
+              description: t('home.redesignDescription'),
               icon: 'alert-decagram-outline',
               route: '/notifications',
               color: colors.pink,
@@ -256,8 +255,8 @@ export default function HomeScreen() {
         } catch { /* non-blocking */ }
       } else {
         setLatestUpdate({
-          title: 'Neon Redesign Live!',
-          description: 'Explore our premium new look across the entire app.',
+          title: t('home.redesignTitle'),
+          description: t('home.redesignDescription'),
           icon: 'alert-decagram-outline',
           route: '/notifications',
           color: colors.pink,
@@ -269,7 +268,7 @@ export default function HomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, colors.pink, colors.purple]);
+  }, [colors.pink, colors.purple, t, token]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -280,7 +279,7 @@ export default function HomeScreen() {
     if (product) {
       const itemInCart = cartItems.find(i => i.product_id_fk === productId);
       if (itemInCart && itemInCart.quantity >= (product.stock || 0)) {
-        showToast('warning', 'Limit Reached', `You already have all ${product.stock} available units in your cart.`);
+        showToast('warning', t('home.limitReached'), t('home.stockLimitMessage', { stock: product.stock }));
         return;
       }
     }
@@ -289,10 +288,10 @@ export default function HomeScreen() {
     const result = await addToCart(productId);
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('success', 'Added!', 'Product added to your cart.');
+      showToast('success', t('home.addedTitle'), t('home.productAdded'));
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Error', result.message);
+      showToast('error', t('common.error'), result.message);
     }
   };
 
@@ -353,10 +352,10 @@ export default function HomeScreen() {
         }
       >
         {/* Main Header */}
-        <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.header}>
+        <Animated.View entering={FadeInUp.delay(200).duration(800)} style={[styles.header, { flexDirection: rowDirection(isRTL) }]}>
           <View style={styles.headerLeft}>
-            <Text style={[styles.greetingLabel, { color: colors.textSecondary }]}>Welcome back,</Text>
-            <Text style={[styles.greetingName, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Member'}</Text>
+            <Text style={[styles.greetingLabel, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('home.welcomeBack')}</Text>
+            <Text style={[styles.greetingName, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{user?.name?.split(' ')[0] || t('home.member')}</Text>
           </View>
           <Pressable
             style={[styles.notificationBtn, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}
@@ -389,14 +388,14 @@ export default function HomeScreen() {
             }}
           >
             <MaterialCommunityIcons name="magnify" size={22} color={colors.pink} />
-            <TypewriterSearchBar textColor={colors.textSecondary} />
+            <TypewriterSearchBar textColor={colors.textSecondary} phrases={searchPhrases} />
 
           </Pressable>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(500).duration(800)}>
           <Pressable
-            style={({ pressed }) => [styles.emergencyButton, { opacity: pressed ? 0.9 : 1 }]}
+            style={({ pressed }) => [styles.emergencyButton, { flexDirection: rowDirection(isRTL), opacity: pressed ? 0.9 : 1 }]}
             onPress={() => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
               router.push('/emergency-services' as any);
@@ -422,14 +421,14 @@ export default function HomeScreen() {
             <View style={styles.emergencyTextGroup}>
               <View style={styles.emergencyBadgeRow}>
                 <View style={styles.emergencyLiveDot} />
-                <Text style={styles.emergencyLiveText}>24/7 ROADSIDE RESCUE</Text>
+                <Text style={styles.emergencyLiveText}>{t('home.roadsideRescue')}</Text>
               </View>
-              <Text style={styles.emergencyTitle}>Emergency Help</Text>
-              <Text style={styles.emergencySub}>Tap for instant professional towing & repair</Text>
+              <Text style={[styles.emergencyTitle, { textAlign: textAlign(isRTL) }]}>{t('home.emergencyHelp')}</Text>
+              <Text style={[styles.emergencySub, { textAlign: textAlign(isRTL) }]}>{t('home.emergencySub')}</Text>
             </View>
 
             <View style={styles.emergencyArrowCircle}>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={isDark ? '#E61E1E' : '#DC2626'} />
+              <MaterialCommunityIcons name={arrowForward(isRTL) as any} size={22} color={isDark ? '#E61E1E' : '#DC2626'} />
             </View>
           </Pressable>
         </Animated.View>
@@ -444,9 +443,9 @@ export default function HomeScreen() {
         {/* Featured Services */}
         <Animated.View entering={FadeInDown.delay(600).duration(800)}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Featured Services</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('home.featuredServices')}</Text>
             <Pressable onPress={() => router.push('/(tabs)/search?type=services')}>
-              <Text style={[styles.seeAllText, { color: colors.pink }]}>See All</Text>
+              <Text style={[styles.seeAllText, { color: colors.pink }]}>{t('home.seeAll')}</Text>
             </Pressable>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
@@ -465,7 +464,7 @@ export default function HomeScreen() {
               </View>
             ))}
             {services.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noServices')}</Text>
             )}
           </ScrollView>
         </Animated.View>
@@ -473,9 +472,9 @@ export default function HomeScreen() {
         {/* Featured Products */}
         <Animated.View entering={FadeInDown.delay(700).duration(800)}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shop Parts</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('home.shopParts')}</Text>
             <Pressable onPress={() => router.push('/(tabs)/search?type=products')}>
-              <Text style={[styles.seeAllText, { color: colors.pink }]}>See All</Text>
+              <Text style={[styles.seeAllText, { color: colors.pink }]}>{t('home.seeAll')}</Text>
             </Pressable>
           </View>
 
@@ -496,7 +495,7 @@ export default function HomeScreen() {
               </View>
             ))}
             {products.length === 0 && (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products yet</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noProducts')}</Text>
             )}
           </ScrollView>
         </Animated.View>
@@ -524,14 +523,14 @@ export default function HomeScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.promoGradient}
             >
-              <View style={styles.promoContent}>
+              <View style={[styles.promoContent, { flexDirection: rowDirection(isRTL) }]}>
                 <View style={styles.promoTextGroup}>
                   <View style={[styles.promoBadge, { backgroundColor: colors.pink, shadowColor: colors.pink }]}>
-                    <Text style={styles.promoBadgeText}>Special Offer</Text>
+                    <Text style={styles.promoBadgeText}>{t('home.specialOffer')}</Text>
                   </View>
-                  <Text style={[styles.promoTitle, { color: colors.textPrimary }]}>FREE SHIPPING ON FIRST ORDER</Text>
+                  <Text style={[styles.promoTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('home.freeShipping')}</Text>
                   <Text style={[styles.promoSub, { color: colors.textSecondary }]}>
-                    Enjoy premium delivery on us, applied automatically
+                    {t('home.freeShippingSub')}
                   </Text>
                 </View>
                 <View style={[styles.promoIconOuter, { borderColor: colors.pink + '30', backgroundColor: colors.pink + '15', shadowColor: colors.pink }]}>
@@ -551,11 +550,12 @@ export default function HomeScreen() {
 
         {/* Recent Activity */}
         <Animated.View entering={FadeInDown.delay(900).duration(800)}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.lg, marginBottom: Spacing.md }]}>Updates</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.lg, marginBottom: Spacing.md, textAlign: textAlign(isRTL) }]}>{t('home.updates')}</Text>
           <Pressable
             style={({ pressed }) => [
               styles.activityCard,
               {
+                flexDirection: rowDirection(isRTL),
                 backgroundColor: colors.surfaceElevated,
                 borderColor: colors.cardBorder,
                 opacity: pressed ? 0.8 : 1
@@ -577,10 +577,10 @@ export default function HomeScreen() {
             </View>
             <View style={styles.activityInfo}>
               <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>
-                {latestUpdate?.title || 'Neon Redesign Live!'}
+                {latestUpdate?.title || t('home.redesignTitle')}
               </Text>
               <Text style={[styles.activitySub, { color: colors.textSecondary }]}>
-                {latestUpdate?.description || 'Explore our premium new look across the entire app.'}
+                {latestUpdate?.description || t('home.redesignDescription')}
               </Text>
             </View>
           </Pressable>

@@ -1,4 +1,5 @@
 import { CustomTabBar } from '@/components';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
@@ -8,6 +9,7 @@ import { Platform } from 'react-native';
 // iOS: Keep the NativeTabs exactly as before
 function IOSTabLayout() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <NativeTabs
@@ -31,7 +33,7 @@ function IOSTabLayout() {
       }}
     >
       <NativeTabs.Trigger name="index">
-        <Label>Home</Label>
+        <Label>{t('tabs.home')}</Label>
         <Icon
           sf={{ default: 'house', selected: 'house.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="home" />}
@@ -39,7 +41,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="search">
-        <Label>Search</Label>
+        <Label>{t('tabs.search')}</Label>
         <Icon
           sf="magnifyingglass"
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="magnify" />}
@@ -47,7 +49,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="cart">
-        <Label>Cart</Label>
+        <Label>{t('tabs.cart')}</Label>
         <Icon
           sf={{ default: 'cart', selected: 'cart.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="cart" />}
@@ -55,7 +57,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
-        <Label>Profile</Label>
+        <Label>{t('tabs.profile')}</Label>
         <Icon
           sf={{ default: 'person', selected: 'person.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="account" />}
@@ -68,6 +70,7 @@ function IOSTabLayout() {
 // Android: Custom floating tab bar matching the design
 function AndroidTabLayout() {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -77,10 +80,10 @@ function AndroidTabLayout() {
         sceneStyle: { backgroundColor: isDark ? '#050505' : '#F8F9FD' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="search" options={{ title: 'Search' }} />
-      <Tabs.Screen name="cart" options={{ title: 'Cart' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.home') }} />
+      <Tabs.Screen name="search" options={{ title: t('tabs.search') }} />
+      <Tabs.Screen name="cart" options={{ title: t('tabs.cart') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
     </Tabs>
   );
 }

@@ -1,4 +1,5 @@
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { reviewService } from '@/services/api/review.service';
@@ -55,6 +56,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
 
   // State for entity rating
@@ -74,7 +76,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const handleSubmit = async () => {
     if (entityRating === 0) {
-      showToast('error', 'Rating Required', `Please provide a rating for ${entityName}`);
+      showToast('error', t('review.ratingRequired'), t('review.ratingRequiredMessage', { entityName }));
       return;
     }
 
@@ -84,7 +86,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       // Check if anything was rated
       const hasItemRating = items.some(item => item.rating > 0);
       if (entityRating === 0 && !hasItemRating) {
-        showToast('error', 'No Rating', 'Please provide at least one rating.');
+        showToast('error', t('review.noRating'), t('review.noRatingMessage'));
         setSubmitting(false);
         return;
       }
@@ -115,11 +117,11 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         }
       }
 
-      showToast('success', 'Review Submitted', 'Thank you for your feedback!');
+      showToast('success', t('review.submitted'), t('review.thanks'));
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      showToast('error', 'Submission Failed', error.message || 'Could not submit your review.');
+      showToast('error', t('review.submissionFailed'), error.message || t('review.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +148,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           <View style={[styles.handle, { backgroundColor: colors.cardBorder }]} />
 
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Rate Your Experience</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('review.title')}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </Pressable>
@@ -156,7 +158,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             {/* Entity Rating */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {entityType === 'vendor' ? 'Vendor' : 'Provider'}: {entityName}
+                {t(entityType === 'vendor' ? 'review.vendor' : 'review.provider')}: {entityName}
               </Text>
               <StarRating
                 rating={entityRating}
@@ -170,7 +172,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                   color: colors.textPrimary,
                   borderColor: colors.cardBorder
                 }]}
-                placeholder={`Share your experience with this ${entityType}...`}
+                placeholder={t('review.entityPlaceholder', { entity: t(entityType === 'vendor' ? 'review.vendorLower' : 'review.providerLower') })}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={3}
@@ -183,7 +185,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             {items.length > 0 && (
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>
-                  {items[0].type === 'product' ? 'Products' : 'Service'}
+                  {t(items[0].type === 'product' ? 'search.products' : 'booking.success.service')}
                 </Text>
                 {items.map((item) => (
                   <View key={item.id} style={styles.itemContainer}>
@@ -200,7 +202,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                         color: colors.textPrimary,
                         borderColor: colors.cardBorder
                       }]}
-                      placeholder="Comment (optional)..."
+                      placeholder={t('review.commentPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                       value={item.comment}
                       onChangeText={(c) => handleItemCommentChange(item.id, c)}
@@ -213,7 +215,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
 
           <View style={styles.footer}>
             <GradientButton
-              title={submitting ? "Submitting..." : "Submit Review"}
+              title={submitting ? 'review.submitting' : 'review.submit'}
               onPress={handleSubmit}
               loading={submitting}
               icon="check"

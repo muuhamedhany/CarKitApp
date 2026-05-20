@@ -1,29 +1,30 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-
-const { height } = Dimensions.get('window');
+import { textAlign } from '@/utils/rtl';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      showToast('warning', 'Missing Email', 'Please enter your email address.');
+      showToast('warning', t('auth.forgot.missingEmailTitle'), t('auth.forgot.missingEmail'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -34,10 +35,10 @@ export default function ForgotPasswordScreen() {
 
     if (!result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Error', result.message);
+      showToast('error', t('common.error'), result.message);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('success', 'Code Sent', 'Please check your email for the 4-digit recovery code.');
+      showToast('success', t('auth.forgot.codeSentTitle'), t('auth.forgot.codeSent'));
       router.push({
         pathname: '/otp-verification',
         params: { email: email.trim() }
@@ -59,7 +60,7 @@ export default function ForgotPasswordScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      ><CenteredHeader title="Reset Password" titleColor={colors.pink} />
+      ><CenteredHeader title={t('auth.forgot.title')} titleColor={colors.pink} />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -67,8 +68,8 @@ export default function ForgotPasswordScreen() {
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
             
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Enter your email to receive a 4-digit recovery code.
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+              {t('auth.forgot.subtitle')}
             </Text>
           </Animated.View>
 
@@ -83,9 +84,9 @@ export default function ForgotPasswordScreen() {
               ]}
             >
               <FormInput
-                label="Email Address"
+                label={t('auth.forgot.emailLabel')}
                 icon="email-outline"
-                placeholder="yourname@mail.com"
+                placeholder={t('auth.forgot.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -93,7 +94,7 @@ export default function ForgotPasswordScreen() {
               />
 
               <GradientButton
-                title="Send Recovery Code"
+                title={t('auth.forgot.submit')}
                 onPress={handleResetPassword}
                 loading={loading}
               />
@@ -102,8 +103,8 @@ export default function ForgotPasswordScreen() {
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>
             <AuthFooter
-              message="Remember your password?"
-              actionText="Back to Login"
+              message={t('auth.forgot.remember')}
+              actionText={t('auth.forgot.backToLogin')}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.replace('/login');

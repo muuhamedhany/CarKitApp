@@ -15,7 +15,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Platform,
   Pressable,
   RefreshControl,
@@ -24,17 +23,14 @@ import {
   View
 } from 'react-native';
 import Animated, {
-  Extrapolate,
   FadeInDown,
   FadeInUp,
-  interpolate,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { rowDirection, textAlign } from '@/utils/rtl';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
 type Service = {
@@ -70,7 +66,7 @@ export default function SearchScreen() {
   const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
-  const { t, language, isRTL } = useTranslation();
+  const { t, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
   const params = useLocalSearchParams<SearchParams>();
@@ -103,22 +99,19 @@ export default function SearchScreen() {
   } | null>(null);
 
   const queryRef = useRef(query);
+  const adFilterRef = useRef(adFilter);
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
     queryRef.current = query;
   }, [query]);
 
+  useEffect(() => {
+    adFilterRef.current = adFilter;
+  }, [adFilter]);
+
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
-  });
-
-  const headerStyle = useAnimatedStyle(() => {
-    const borderAlpha = interpolate(scrollY.value, [0, 20], [0, 0.1], Extrapolate.CLAMP);
-    return {
-      borderBottomWidth: 1,
-      borderBottomColor: `rgba(255,255,255,${borderAlpha})`,
-    };
   });
 
   const search = useCallback(async (
@@ -134,7 +127,7 @@ export default function SearchScreen() {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const af = adFilterOverride !== undefined ? adFilterOverride : adFilter;
+      const af = adFilterOverride !== undefined ? adFilterOverride : adFilterRef.current;
 
       const prodParams = new URLSearchParams();
       if (searchQuery.trim()) prodParams.set('search', searchQuery.trim());
@@ -181,11 +174,11 @@ export default function SearchScreen() {
       if (prodData.success) setProducts(fetchedProds);
       if (servData.success) setServices(fetchedServs);
     } catch {
-      showToast('error', 'Error', 'Could not fetch results.');
+      showToast('error', t('common.error'), t('search.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, [showToast, token]);
+  }, [showToast, t, token]);
 
   useEffect(() => {
     const vendorIdRaw = Array.isArray(params.vendor_id) ? params.vendor_id[0] : params.vendor_id;
@@ -219,14 +212,14 @@ export default function SearchScreen() {
     if (params.type) setViewMode(params.type as ViewMode);
 
     search(queryRef.current, parsedProducts, parsedServices, newAdFilter);
-  }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.type]);
+  }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.ad_title, params.type, search]);
 
   const handleAddToCart = async (productId: number) => {
     const product = products.find(p => p.product_id === productId);
     if (product) {
       const itemInCart = cartItems.find(i => i.product_id_fk === productId);
       if (itemInCart && itemInCart.quantity >= (product.stock || 0)) {
-        showToast('warning', 'Limit Reached', `You already have all ${product.stock} available units in your cart.`);
+        showToast('warning', t('home.limitReached'), t('home.stockLimitMessage', { stock: product.stock ?? 0 }));
         return;
       }
     }
@@ -235,10 +228,10 @@ export default function SearchScreen() {
     const result = await addToCart(productId);
     if (result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('success', 'Added!', 'Product added to your cart.');
+      showToast('success', t('home.addedTitle'), t('home.productAdded'));
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Error', result.message);
+      showToast('error', t('common.error'), result.message);
     }
   };
 
@@ -289,7 +282,7 @@ export default function SearchScreen() {
           {/* Search Input */}
           <FormInput
             icon="magnify"
-            placeholder="Search for parts or services..."
+            placeholder={t('search.placeholder')}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={() => search(query, selectedProductCategoryIds, selectedServiceCategoryIds, adFilter)}
@@ -323,10 +316,10 @@ export default function SearchScreen() {
           >
             {/* Ad filter banner */}
             {adFilter && (
-              <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}>
+              <Animated.View entering={FadeInDown} style={[styles.adFilterBanner, { flexDirection: rowDirection(isRTL), backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}>
                 <MaterialCommunityIcons name="bullhorn" size={18} color={colors.pink} />
-                <Text style={[styles.adFilterText, { color: colors.textPrimary }]} numberOfLines={1}>
-                  Results from <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || 'Sponsored Ad'}</Text>
+                <Text style={[styles.adFilterText, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]} numberOfLines={1}>
+                  {t('search.resultsFrom')} <Text style={{ fontFamily: Fonts.semiBold }}>{adFilter.title || t('search.sponsoredAd')}</Text>
                 </Text>
                 <Pressable onPress={handleClearAdFilter} style={styles.closeAdFilter}>
                   <MaterialCommunityIcons name="close" size={18} color={colors.textPrimary} />
@@ -334,7 +327,7 @@ export default function SearchScreen() {
               </Animated.View>
             )}
             {/* Mode toggle */}
-            <View style={[styles.toggleRow, { marginBottom: Spacing.lg }]}>
+            <View style={[styles.toggleRow, { flexDirection: rowDirection(isRTL), marginBottom: Spacing.lg }]}>
               <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
                 {(['all', 'products', 'services'] as ViewMode[]).map((mode) => (
                   <Pressable
@@ -350,7 +343,7 @@ export default function SearchScreen() {
                       { color: colors.textSecondary },
                       viewMode === mode && { color: '#FFFFFF' },
                     ]}>
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      {t(`search.${mode}`)}
                     </Text>
                   </Pressable>
                 ))}
@@ -377,8 +370,8 @@ export default function SearchScreen() {
             {showProducts && products.length > 0 && (
               <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
-                  <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {products.length} product(s)</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('search.products')}</Text>
+                  <Text style={[styles.resultCount, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('search.showingProducts', { count: products.length })}</Text>
                 </View>
                 <View style={styles.productGrid}>
                   {products.map((p, idx) => (
@@ -407,8 +400,8 @@ export default function SearchScreen() {
             {showServices && services.length > 0 && (
               <Animated.View entering={FadeInDown.duration(600)} style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
-                  <Text style={[styles.resultCount, { color: colors.textSecondary }]}>Showing {services.length} service(s)</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('search.services')}</Text>
+                  <Text style={[styles.resultCount, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('search.showingServices', { count: services.length })}</Text>
                 </View>
                 {services.map((s, idx) => (
                   <Animated.View
@@ -437,8 +430,8 @@ export default function SearchScreen() {
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconBlur, { borderColor: colors.cardBorder }]}>
                   <MaterialCommunityIcons name="magnify-close" size={48} color={colors.pink} />
                 </GlassView>
-                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No Results Found</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try adjusting your search or filters to find what you need.</Text>
+                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('search.noResultsTitle')}</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('search.noResultsSubtitle')}</Text>
 
                 <Pressable
                   style={[styles.resetBtn, { backgroundColor: colors.pink }]}
@@ -450,7 +443,7 @@ export default function SearchScreen() {
                     handleClearAdFilter();
                   }}
                 >
-                  <Text style={styles.resetBtnText}>Clear All Filters</Text>
+                  <Text style={styles.resetBtnText}>{t('search.clearFilters')}</Text>
                 </Pressable>
               </Animated.View>
             )}
@@ -466,7 +459,7 @@ export default function SearchScreen() {
             >
               <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={[styles.loadingGlass, { borderColor: colors.cardBorder }]}>
                 <ActivityIndicator size="large" color={colors.pink} />
-                <Text style={[styles.loadingOverlayText, { color: colors.textPrimary }]}>{t('shuffling_feed')}</Text>
+                <Text style={[styles.loadingOverlayText, { color: colors.textPrimary }]}>{t('search.shuffling')}</Text>
               </GlassView>
             </Animated.View>
           )}

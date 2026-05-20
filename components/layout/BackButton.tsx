@@ -4,6 +4,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
+import { useTranslation } from '@/contexts/LanguageContext';
+import { arrowBack } from '@/utils/rtl';
 
 type BackButtonProps = {
   onPress?: () => void;
@@ -13,6 +15,7 @@ type BackButtonProps = {
 export default function BackButton({ onPress, noSpacer }: BackButtonProps) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
 
   const handlePress = () => {
@@ -41,7 +44,7 @@ export default function BackButton({ onPress, noSpacer }: BackButtonProps) {
           ]}
           hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
         >
-          <MaterialCommunityIcons name="arrow-left" size={26} color={colors.pink} />
+          <MaterialCommunityIcons name={arrowBack(isRTL) as any} size={26} color={colors.pink} />
         </Pressable>
       </View>
       {!noSpacer && <View style={{ height: (Platform.OS === 'android' ? 60 : 54) + insets.top }} />}

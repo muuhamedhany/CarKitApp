@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { useTranslation } from './LanguageContext';
 import { useToast } from './ToastContext';
 import { API_URL } from '@/constants/config';
 
@@ -21,11 +22,12 @@ export function useWishlist() {
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { token, user } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   
   const [wishlist, setWishlist] = useState<Record<number, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const refreshWishlist = async () => {
+  const refreshWishlist = useCallback(async () => {
     if (!token) {
       setWishlist({});
       return;
@@ -51,16 +53,16 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   // Load wishlist when user logs in or token changes
   useEffect(() => {
     refreshWishlist();
-  }, [token]);
+  }, [refreshWishlist]);
 
   const toggleWishlist = async (productId: number): Promise<boolean> => {
     if (!token || !user) {
-      showToast('error', 'Authentication Required', 'Please log in to add to wishlist.');
+      showToast('error', t('wishlist.authRequiredTitle'), t('wishlist.authRequiredMessage'));
       return false;
     }
 
@@ -88,17 +90,17 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           ...prev,
           [productId]: wasWishlisted
         }));
-        showToast('error', 'Error', data.message || 'Failed to update wishlist');
+        showToast('error', t('common.error'), data.message || t('wishlist.updateFailed'));
         return false;
       }
       return true;
-    } catch (e) {
+    } catch {
       // Revert optimistic update
       setWishlist(prev => ({
         ...prev,
         [productId]: wasWishlisted
       }));
-      showToast('error', 'Network Error', 'Failed to update wishlist');
+      showToast('error', t('common.networkError'), t('wishlist.updateFailed'));
       return false;
     }
   };

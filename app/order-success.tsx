@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 
 type WorkshopOrderSummary = {
@@ -22,6 +23,7 @@ type WorkshopOrderSummary = {
 export default function OrderSuccessScreen() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { t, language } = useTranslation();
     const insets = useSafeAreaInsets();
     const params = useLocalSearchParams<{
         orderId?: string;
@@ -51,7 +53,7 @@ export default function OrderSuccessScreen() {
     const formatQueueTime = (value?: string) => {
         if (!value) return '-';
         try {
-            return new Date(value).toLocaleString('en-US', {
+            return new Date(value).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
                 month: 'short',
                 day: 'numeric',
                 hour: 'numeric',
@@ -78,11 +80,11 @@ export default function OrderSuccessScreen() {
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(400)} style={styles.textSection}>
-                    <Text style={[styles.title, { color: colors.textPrimary }]}>Order Placed!</Text>
+                    <Text style={[styles.title, { color: colors.textPrimary }]}>{t('order.success.title')}</Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                         {isWorkshopFitting && params.orderGroupId
-                            ? `Your workshop order group #${params.orderGroupId} has been submitted successfully.`
-                            : `Your order #${params.orderId || '-'} has been submitted successfully.`}
+                            ? t('order.success.workshopGroup', { id: params.orderGroupId })
+                            : t('order.success.order', { id: params.orderId || '-' })}
                     </Text>
                 </Animated.View>
 
@@ -90,12 +92,12 @@ export default function OrderSuccessScreen() {
                     <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                         <View style={styles.cardRow}>
                             <MaterialCommunityIcons name="package-variant-closed" size={20} color={colors.pink} />
-                            <Text style={[styles.cardText, { color: colors.textPrimary }]}>Processing your order</Text>
+                            <Text style={[styles.cardText, { color: colors.textPrimary }]}>{t('order.success.processing')}</Text>
                         </View>
                         <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
                             {isWorkshopFitting
-                                ? `Your vendor workshop queue${workshopOrders.length === 1 ? '' : 's'} have been assigned.`
-                                : 'Our vendor has been notified and will start preparing your items shortly.'}
+                                ? t(workshopOrders.length === 1 ? 'order.success.queueAssigned' : 'order.success.queuesAssigned')
+                                : t('order.success.vendorNotified')}
                         </Text>
                     </GlassView>
                 </Animated.View>
@@ -107,14 +109,14 @@ export default function OrderSuccessScreen() {
                                 <View style={styles.cardRow}>
                                     <MaterialCommunityIcons name="store-clock-outline" size={20} color={colors.pink} />
                                     <Text style={[styles.cardText, { color: colors.textPrimary }]}>
-                                        Order #{item.orderId || '-'} · {item.vendorName || 'Vendor Workshop'}
+                                        {t('order.success.orderVendor', { id: item.orderId || '-', vendor: item.vendorName || t('checkout.workshopFitting') })}
                                     </Text>
                                 </View>
                                 <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
-                                    Queue #{item.queueNumber || '-'} · {item.peopleBefore || 0} before you · about {item.waitMinutes || 0} min wait.
+                                    {t('order.success.queueDetails', { queue: item.queueNumber || '-', before: item.peopleBefore || 0, minutes: item.waitMinutes || 0 })}
                                 </Text>
                                 <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
-                                    Show up around {formatQueueTime(item.showUpAt)}{item.workshopAddress ? ` at ${item.workshopAddress}` : ''}.
+                                    {t(item.workshopAddress ? 'order.success.showUpAtAddress' : 'order.success.showUpAt', { time: formatQueueTime(item.showUpAt), address: item.workshopAddress || '' })}
                                 </Text>
                             </GlassView>
                         ))}
@@ -126,10 +128,10 @@ export default function OrderSuccessScreen() {
                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.cardRow}>
                                 <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
-                                <Text style={[styles.cardText, { color: colors.textPrimary }]}>Queue #{queueNumber}</Text>
+                                <Text style={[styles.cardText, { color: colors.textPrimary }]}>{t('order.success.queueNumber', { queue: queueNumber })}</Text>
                             </View>
                             <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
-                                {peopleBefore} before you | about {waitMinutes} min wait. Show up around {formatQueueTime(params.showUpAt)}.
+                                {t('order.success.queueHint', { before: peopleBefore, minutes: waitMinutes, time: formatQueueTime(params.showUpAt) })}
                             </Text>
                         </GlassView>
                     </Animated.View>
@@ -137,13 +139,13 @@ export default function OrderSuccessScreen() {
 
                 <Animated.View entering={FadeInDown.delay(800)} style={styles.buttonContainer}>
                     <GradientButton 
-                        title="View My Orders" 
+                        title="order.success.viewOrders" 
                         onPress={() => router.replace('/my-orders')}
                         icon="receipt-text-outline"
                     />
                     
                     <OutlinedButton 
-                        title="Back to Home" 
+                        title="common.backToHome" 
                         onPress={() => router.replace('/(tabs)')}
                         style={{ marginTop: Spacing.md }}
                     />

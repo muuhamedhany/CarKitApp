@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,46 +14,46 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredHeader, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
-
-const { width } = Dimensions.get('window');
+import { rowDirection, textAlign } from '@/utils/rtl';
 
 interface PrivacySection {
   icon: string;
-  title: string;
-  content: string;
+  titleKey: string;
+  contentKey: string;
 }
 
 const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     icon: 'database-search-outline',
-    title: '1. Information We Collect',
-    content: 'CarKit collects essential information to power your automotive marketplace experience. This includes account details (name, email, phone number), vehicle profiles (make, model, year, license plates), secure shipping addresses, and precise real-time geolocation coordinates (necessary for roadside emergency dispatching and tracking booking arrivals).'
+    titleKey: 'settings.privacy.section1.title',
+    contentKey: 'settings.privacy.section1.content',
   },
   {
     icon: 'cog-transfer-outline',
-    title: '2. How We Use Information',
-    content: 'We use your information to facilitate service bookings, process transaction invoices, deliver parts and accessories, and dispatch immediate roadside assistance. Geolocation coordinates are captured dynamically to guide Service Providers to your broken-down vehicle and map delivery arrivals. We do not sell or trade your personal data.'
+    titleKey: 'settings.privacy.section2.title',
+    contentKey: 'settings.privacy.section2.content',
   },
   {
     icon: 'share-variant-outline',
-    title: '3. Data Sharing & Third-Parties',
-    content: 'Your vehicle profile and real-time geolocation are shared with responding Service Providers ONLY during an active scheduled booking or emergency request. Financial information is securely passed to certified payment processors (e.g., Stripe, Google Pay) using industry-standard TLS encryption protocols.'
+    titleKey: 'settings.privacy.section3.title',
+    contentKey: 'settings.privacy.section3.content',
   },
   {
     icon: 'shield-lock-outline',
-    title: '4. Data Security & Encryption',
-    content: 'We prioritize your data security. All server-client communications are encrypted using high-grade Secure Sockets Layer (SSL/TLS) technology. Data storage is secured in isolated cloud backends with rigid access policies. Vehicle location history is aggregated or pruned periodically to uphold strict user confidentiality.'
+    titleKey: 'settings.privacy.section4.title',
+    contentKey: 'settings.privacy.section4.content',
   },
   {
     icon: 'account-cog-outline',
-    title: '5. Your Privacy Controls',
-    content: 'You maintain absolute command over your data. Through account settings, you can edit your profile details, manage active vehicle lists, delete saved addresses, and toggle system permission settings. Disabling location tracking is fully supported, though this will disable emergency roadside dispatch capabilities.'
+    titleKey: 'settings.privacy.section5.title',
+    contentKey: 'settings.privacy.section5.content',
   },
   {
     icon: 'delete-empty-outline',
-    title: '6. Data Deletion & Rights',
-    content: 'You have the right to request a complete export of your personal platform records or permanently close your account. Upon account deletion, all personal profiles, saved vehicles, transaction histories, and active settings will be scrubbed from our active production systems, subject to legal auditing requirements.'
+    titleKey: 'settings.privacy.section6.title',
+    contentKey: 'settings.privacy.section6.content',
   }
 ];
 
@@ -62,6 +61,7 @@ export default function PrivacyScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, isRTL } = useTranslation();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -76,7 +76,7 @@ export default function PrivacyScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader
-          title="Privacy Policy"
+          title={t('settings.privacy.title')}
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -85,9 +85,9 @@ export default function PrivacyScreen() {
           <View style={[styles.iconWrap, { backgroundColor: colors.pink + '15' }]}>
             <MaterialCommunityIcons name="shield-check-outline" size={32} color={colors.pink} />
           </View>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Data Protection</Text>
-          <Text style={[styles.headerDesc, { color: colors.textMuted }]}>
-            We are dedicated to maintaining the trust and safety of our community. Review how we protect your personal files and vehicle data.
+          <Text style={[styles.headerTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('settings.privacy.header')}</Text>
+          <Text style={[styles.headerDesc, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>
+            {t('settings.privacy.description')}
           </Text>
         </Animated.View>
 
@@ -98,14 +98,14 @@ export default function PrivacyScreen() {
               entering={FadeInDown.delay(150 + idx * 50).springify()}
             >
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                <View style={styles.cardHeader}>
+                <View style={[styles.cardHeader, { flexDirection: rowDirection(isRTL) }]}>
                   <View style={[styles.cardIconWrap, { backgroundColor: colors.pink + '12' }]}>
                     <MaterialCommunityIcons name={section.icon as any} size={20} color={colors.pink} />
                   </View>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{section.title}</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t(section.titleKey)}</Text>
                 </View>
-                <Text style={[styles.cardContent, { color: colors.textSecondary }]}>
-                  {section.content}
+                <Text style={[styles.cardContent, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+                  {t(section.contentKey)}
                 </Text>
               </GlassView>
             </Animated.View>
@@ -114,10 +114,10 @@ export default function PrivacyScreen() {
 
         <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.footerSection}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
-            Last updated: May 18, 2026
+            {t('settings.legal.lastUpdated')}
           </Text>
           <GradientButton
-            title="I Consent"
+            title={t('settings.privacy.consent')}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.back();

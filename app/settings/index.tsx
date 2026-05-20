@@ -2,65 +2,71 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Alert, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredHeader, GlassView } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { Language, useTranslation } from '@/contexts/LanguageContext';
 import { ThemeMode } from '@/contexts/ThemeContext';
 import { useTheme } from '@/hooks/useTheme';
+import { supportedLanguages } from '@/locales';
+import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
 
-const { width } = Dimensions.get('window');
-
-const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: string; description: string }[] = [
-  { mode: 'light', label: 'Light', icon: 'white-balance-sunny', description: 'Always use light theme' },
-  { mode: 'dark', label: 'Dark', icon: 'moon-waning-crescent', description: 'Always use dark theme' },
-  { mode: 'system', label: 'System', icon: 'cellphone', description: 'Follow device settings' },
+const THEME_OPTIONS: { mode: ThemeMode; labelKey: string; icon: string; descriptionKey: string }[] = [
+  { mode: 'light', labelKey: 'settings.theme.light', icon: 'white-balance-sunny', descriptionKey: 'settings.theme.lightDesc' },
+  { mode: 'dark', labelKey: 'settings.theme.dark', icon: 'moon-waning-crescent', descriptionKey: 'settings.theme.darkDesc' },
+  { mode: 'system', labelKey: 'settings.theme.system', icon: 'cellphone', descriptionKey: 'settings.theme.systemDesc' },
 ];
 
 const THEME_VARIANTS = [
   {
     variant: 'traditional',
-    label: 'Neon',
-    description: 'Pink & Purple',
+    labelKey: 'settings.variant.neon',
+    descriptionKey: 'settings.variant.neonDesc',
     previewColors: ['#CD42A8', '#7F39FB'],
   },
   {
     variant: 'green',
-    label: 'Emerald',
-    description: 'Green & Mint',
+    labelKey: 'settings.variant.emerald',
+    descriptionKey: 'settings.variant.emeraldDesc',
     previewColors: ['#10B981', '#059669'],
   },
   {
     variant: 'navy',
-    label: 'Ocean',
-    description: 'Navy & Blue',
+    labelKey: 'settings.variant.ocean',
+    descriptionKey: 'settings.variant.oceanDesc',
     previewColors: ['#1E3A8A', '#3B82F6'],
   },
 ] as const;
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { colors, isDark, themeMode, setThemeMode, themeVariant, setThemeVariant } = useTheme();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+  const { t, language, changeLanguage, isRTL } = useTranslation();
 
   const handleThemeChange = (mode: ThemeMode) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setThemeMode(mode);
   };
 
+  const handleLanguageChange = (nextLanguage: Language) => {
+    if (nextLanguage === language) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    changeLanguage(nextLanguage);
+  };
+
   const handleLogout = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of your account?',
+      t('settings.signOut'),
+      t('settings.signOutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sign Out',
+          text: t('settings.signOut'),
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -73,20 +79,33 @@ export default function SettingsScreen() {
 
   const renderSettingRow = (icon: string, label: string, desc: string, onPress: () => void, isLast = false, color?: string) => (
     <Pressable
-      style={[styles.optionRow, !isLast && { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }]}
+      style={[
+        styles.optionRow,
+        { flexDirection: rowDirection(isRTL) },
+        !isLast && { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+      ]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
     >
-      <View style={[styles.optionIcon, { backgroundColor: (color || colors.purple) + '15' }]}>
+      <View
+        style={[
+          styles.optionIcon,
+          {
+            backgroundColor: (color || colors.purple) + '15',
+            marginLeft: isRTL ? Spacing.md : 0,
+            marginRight: isRTL ? 0 : Spacing.md,
+          },
+        ]}
+      >
         <MaterialCommunityIcons name={icon as any} size={22} color={color || colors.pink} />
       </View>
       <View style={styles.optionText}>
-        <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>{label}</Text>
-        <Text style={[styles.optionDesc, { color: colors.textMuted }]}>{desc}</Text>
+        <Text style={[styles.optionLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{label}</Text>
+        <Text style={[styles.optionDesc, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>{desc}</Text>
       </View>
-      <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+      <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={24} color={colors.textMuted} />
     </Pressable>
   );
 
@@ -103,21 +122,21 @@ export default function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader
-          title="Settings"
+          title={t('settings.title')}
           titleColor={colors.textPrimary}
         />
 
         {/* Account Section */}
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Text style={[styles.sectionLabel, { color: colors.pink }]}>Account</Text>
+          <Text style={[styles.sectionLabel, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('settings.account')}</Text>
           <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
-            {renderSettingRow('lock-outline', 'Security', 'Change password and privacy', () => router.push('/settings/password'), true)}
+            {renderSettingRow('lock-outline', t('settings.security'), t('settings.securityDesc'), () => router.push('/settings/password'), true)}
           </GlassView>
         </Animated.View>
 
         {/* Appearance Section */}
         <Animated.View entering={FadeInDown.delay(300).springify()}>
-          <Text style={[styles.sectionLabel, { color: colors.pink }]}>Appearance</Text>
+          <Text style={[styles.sectionLabel, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('settings.appearance')}</Text>
           <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
             <View style={styles.themeSelector}>
               {THEME_OPTIONS.map((option) => {
@@ -141,7 +160,7 @@ export default function SettingsScreen() {
                       numberOfLines={1}
                       adjustsFontSizeToFit
                     >
-                      {option.label}
+                      {t(option.labelKey)}
                     </Text>
                   </Pressable>
                 );
@@ -150,7 +169,7 @@ export default function SettingsScreen() {
 
             <View style={styles.variantContainer}>
               <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
-              <Text style={[styles.subLabel, { color: colors.textMuted }]}>Theme Style Variant</Text>
+              <Text style={[styles.subLabel, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>{t('settings.themeVariant')}</Text>
               <View style={styles.variantGrid}>
                 {THEME_VARIANTS.map((option) => {
                   const isSelected = themeVariant === option.variant;
@@ -180,10 +199,10 @@ export default function SettingsScreen() {
                         />
                         <View style={{ flex: 1, justifyContent: 'flex-end', width: '100%', alignItems: 'center' }}>
                           <Text style={[styles.variantName, { color: isSelected ? colors.pink : colors.textPrimary }]}>
-                            {option.label}
+                            {t(option.labelKey)}
                           </Text>
                           <Text style={[styles.variantDesc, { color: colors.textMuted }]}>
-                            {option.description}
+                            {t(option.descriptionKey)}
                           </Text>
                         </View>
                       </View>
@@ -195,13 +214,49 @@ export default function SettingsScreen() {
           </GlassView>
         </Animated.View>
 
+        {/* Language Section */}
+        <Animated.View entering={FadeInDown.delay(350).springify()}>
+          <Text style={[styles.sectionLabel, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('settings.language.title')}</Text>
+          <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
+            <View style={styles.languageSelector}>
+              {supportedLanguages.map((option) => {
+                const isSelected = language === option.code;
+                return (
+                  <Pressable
+                    key={option.code}
+                    style={[
+                      styles.languageOption,
+                      {
+                        flexDirection: rowDirection(isRTL),
+                        borderColor: isSelected ? colors.pink : colors.cardBorder,
+                        backgroundColor: isSelected ? colors.pink + '18' : 'transparent',
+                      },
+                    ]}
+                    onPress={() => handleLanguageChange(option.code)}
+                  >
+                    <View style={styles.languageTextWrap}>
+                      <Text style={[styles.languageLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>
+                        {t(option.labelKey)}
+                      </Text>
+                      <Text style={[styles.languageNative, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>
+                        {t(option.nativeLabelKey)}
+                      </Text>
+                    </View>
+                    {isSelected && <MaterialCommunityIcons name="check-circle" size={22} color={colors.pink} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </GlassView>
+        </Animated.View>
+
         {/* Support Section */}
         <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <Text style={[styles.sectionLabel, { color: colors.pink }]}>Support & Info</Text>
+          <Text style={[styles.sectionLabel, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('settings.supportInfo')}</Text>
           <GlassView intensity={isDark ? 25 : 45} tint={isDark ? 'dark' : 'light'} style={styles.sectionCard}>
-            {renderSettingRow('help-circle-outline', 'Help Center', 'FAQs and customer support', () => router.push('/support'))}
-            {renderSettingRow('file-document-outline', 'Terms of Service', 'Read our usage guidelines', () => router.push('/settings/terms' as any))}
-            {renderSettingRow('shield-check-outline', 'Privacy Policy', 'How we protect your data', () => router.push('/settings/privacy' as any), true)}
+            {renderSettingRow('help-circle-outline', t('settings.helpCenter'), t('settings.helpCenterDesc'), () => router.push('/support'))}
+            {renderSettingRow('file-document-outline', t('settings.terms'), t('settings.termsDesc'), () => router.push('/settings/terms' as any))}
+            {renderSettingRow('shield-check-outline', t('settings.privacy'), t('settings.privacyDesc'), () => router.push('/settings/privacy' as any), true)}
           </GlassView>
         </Animated.View>
 
@@ -215,14 +270,14 @@ export default function SettingsScreen() {
             ]}
           >
             <MaterialCommunityIcons name="logout" size={22} color="#EF4444" />
-            <Text style={styles.logoutText}>Sign Out</Text>
+            <Text style={styles.logoutText}>{t('settings.signOut')}</Text>
           </Pressable>
         </Animated.View>
 
         {/* Footer Info */}
         <View style={styles.footer}>
-          <Text style={[styles.footerVersion, { color: colors.textMuted }]}>CarKit v1.0.0</Text>
-          <Text style={[styles.footerBuild, { color: colors.textMuted }]}>Build #20240507.1</Text>
+          <Text style={[styles.footerVersion, { color: colors.textMuted }]}>{t('settings.version')}</Text>
+          <Text style={[styles.footerBuild, { color: colors.textMuted }]}>{t('settings.build')}</Text>
         </View>
 
         <View style={{ height: 120 }} />
@@ -414,6 +469,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.6,
     lineHeight: 11,
+  },
+
+  languageSelector: {
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  languageTextWrap: {
+    flex: 1,
+  },
+  languageLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+  },
+  languageNative: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    marginTop: 2,
   },
 
   logoutBtn: {

@@ -2,6 +2,7 @@ import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, View } from 
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 type OutlinedButtonProps = {
   title: string;
@@ -27,6 +28,7 @@ export default function OutlinedButton({
   iconSize = 20,
 }: OutlinedButtonProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const activeColor = textColor || colors.pink;
   const borderCol = borderColor || colors.accentBorder;
 
@@ -41,7 +43,7 @@ export default function OutlinedButton({
       ) : (
         <View style={styles.content}>
           {icon && <MaterialCommunityIcons name={icon} size={iconSize} color={activeColor} style={styles.icon} />}
-          <Text style={[styles.text, { color: activeColor }]}>{title}</Text>
+          <Text style={[styles.text, { color: activeColor }]}>{t(title)}</Text>
         </View>
       )}
     </Pressable>

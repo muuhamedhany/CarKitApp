@@ -14,17 +14,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   FadeInDown,
   FadeInUp,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import { textAlign } from '@/utils/rtl';
 
 const { height } = Dimensions.get('window');
 
@@ -33,6 +32,7 @@ export default function LoginScreen() {
   const { login, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      showToast('warning', 'Missing Fields', 'Please fill in all fields.');
+      showToast('warning', t('common.missingFields'), t('auth.missingFieldsMessage'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -68,7 +68,7 @@ export default function LoginScreen() {
       }
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Login Failed', result.message);
+      showToast('error', t('auth.login.failed'), result.message);
     }
   };
 
@@ -91,7 +91,7 @@ export default function LoginScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace('/(tabs)');
       } else {
-        showToast('error', 'Login Failed', result.message);
+        showToast('error', t('auth.login.failed'), result.message);
       }
     }, 1000);
   };
@@ -123,9 +123,9 @@ export default function LoginScreen() {
             entering={FadeInUp.delay(200).duration(800)}
             style={styles.headerSection}
           >
-            <Text style={[styles.welcomeTitle, { color: colors.pink }]}>Welcome Back!</Text>
-            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
-              Login to your account
+            <Text style={[styles.welcomeTitle, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{t('auth.login.title')}</Text>
+            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+              {t('auth.login.subtitle')}
             </Text>
           </Animated.View>
 
@@ -144,8 +144,8 @@ export default function LoginScreen() {
             >
               <FormInput
                 icon="email-outline"
-                label="Email"
-                placeholder="email@example.com"
+                label={t('auth.login.emailLabel')}
+                placeholder={t('auth.login.emailPlaceholder')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -154,8 +154,8 @@ export default function LoginScreen() {
 
               <FormInput
                 icon="lock-outline"
-                label="Password"
-                placeholder="••••••••"
+                label={t('auth.login.passwordLabel')}
+                placeholder={t('auth.login.passwordPlaceholder')}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -167,21 +167,21 @@ export default function LoginScreen() {
                 style={styles.forgotContainer}
                 onPress={() => router.push('/forgot-password' as any)}
               >
-                <Text style={[styles.forgotText, { color: colors.pink }]}>Forgot Password?</Text>
+                <Text style={[styles.forgotText, { color: colors.pink }]}>{t('auth.login.forgotPassword')}</Text>
               </Pressable>
 
               <GradientButton
-                title="Login"
+                title={t('auth.login.submit')}
                 onPress={handleLogin}
                 loading={loading}
                 style={styles.loginBtn}
               />
 
-              <Divider text="OR" />
+              <Divider text={t('auth.divider.or')} />
 
               <SocialButton
                 provider="google"
-                actionText={googleLoading ? 'Signing in...' : 'Sign in with Google'}
+                actionText={googleLoading ? t('auth.login.signingIn') : t('auth.login.google')}
                 onPress={handleGoogleLogin}
               />
             </GlassView>
@@ -192,8 +192,8 @@ export default function LoginScreen() {
             style={styles.footer}
           >
             <AuthFooter
-              message="New to CarKit?"
-              actionText="Create Account"
+              message={t('auth.login.newTo')}
+              actionText={t('auth.signup.submit')}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/select-account');

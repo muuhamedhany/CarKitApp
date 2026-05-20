@@ -1,7 +1,7 @@
 import { GlassView } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,7 +10,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import {
-  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -23,13 +22,14 @@ import Animated, {
   FadeInUp
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
 type MenuItem = {
   icon: string;
-  label: string;
+  labelKey: string;
+  tone?: 'vehicles' | 'orders' | 'bookings' | 'wishlist';
   route?: string;
   onPress?: () => void;
 };
@@ -37,12 +37,10 @@ type MenuItem = {
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
-  const username = user?.name?.trim() ?? '';
-  const profileInitial = (username.charAt(0) || 'C').toUpperCase();
   const scrollRef = useRef<ScrollView>(null);
 
   useTabReload('profile', () => {
@@ -58,33 +56,33 @@ export default function ProfileScreen() {
   };
 
   const quickActions: MenuItem[] = [
-    { icon: 'package-variant', label: 'Orders', route: '/my-orders' },
-    { icon: 'calendar-check', label: 'Bookings', route: '/my-bookings' },
-    { icon: 'car-sports', label: 'Vehicles', route: '/my-vehicles' },
-    { icon: 'heart-outline', label: 'Wishlist', route: '/wishlist' },
+    { icon: 'package-variant', labelKey: 'profile.orders', tone: 'orders', route: '/my-orders' },
+    { icon: 'calendar-check', labelKey: 'profile.bookings', tone: 'bookings', route: '/my-bookings' },
+    { icon: 'car-sports', labelKey: 'profile.vehicles', tone: 'vehicles', route: '/my-vehicles' },
+    { icon: 'heart-outline', labelKey: 'profile.wishlist', tone: 'wishlist', route: '/wishlist' },
   ];
 
   const personalItems: MenuItem[] = [
-    { icon: 'map-marker-outline', label: 'Addresses', route: '/profile/addresses' },
-    { icon: 'credit-card-outline', label: 'Payments', route: '/profile/payments' },
+    { icon: 'map-marker-outline', labelKey: 'profile.addresses', route: '/profile/addresses' },
+    { icon: 'credit-card-outline', labelKey: 'profile.payments', route: '/profile/payments' },
   ];
 
-  const getIconStyles = (label: string) => {
-    switch (label) {
-      case 'Vehicles': return { color: colors.pink, bg: colors.pink + '26' };
-      case 'Orders': return { color: '#A855F7', bg: 'rgba(168, 85, 247, 0.15)' };
-      case 'Bookings': return { color: '#00D2FF', bg: 'rgba(0, 210, 255, 0.15)' };
-      case 'Wishlist': return { color: '#F7B733', bg: 'rgba(247, 183, 51, 0.15)' };
+  const getIconStyles = (tone?: MenuItem['tone']) => {
+    switch (tone) {
+      case 'vehicles': return { color: colors.pink, bg: colors.pink + '26' };
+      case 'orders': return { color: '#A855F7', bg: 'rgba(168, 85, 247, 0.15)' };
+      case 'bookings': return { color: '#00D2FF', bg: 'rgba(0, 210, 255, 0.15)' };
+      case 'wishlist': return { color: '#F7B733', bg: 'rgba(247, 183, 51, 0.15)' };
       default: return { color: colors.pink, bg: colors.pink + '20' };
     }
   };
 
   const renderQuickAction = (item: MenuItem, index: number) => {
-    const iconStyle = getIconStyles(item.label);
+    const iconStyle = getIconStyles(item.tone);
 
     return (
       <Animated.View
-        key={item.label}
+        key={item.labelKey}
         entering={FadeInUp.delay(500 + index * 100).duration(600)}
         style={styles.quickActionWrapper}
       >
@@ -107,9 +105,9 @@ export default function ProfileScreen() {
             <MaterialCommunityIcons name={item.icon as any} size={24} color={iconStyle.color} />
           </View>
           <View style={styles.quickActionTextWrap}>
-            <Text style={[styles.quickActionTitle, { color: colors.textPrimary }]}>{item.label}</Text>
+            <Text style={[styles.quickActionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t(item.labelKey)}</Text>
             <Text style={[styles.quickActionSubtitle, { color: colors.textSecondary }]}>
-              {item.label === 'Vehicles' ? 'Manage' : item.label === 'Orders' ? 'History' : 'Activity'}
+              {item.tone === 'vehicles' ? t('profile.manage') : item.tone === 'orders' ? t('profile.history') : t('profile.activity')}
             </Text>
           </View>
         </Pressable>
@@ -121,7 +119,7 @@ export default function ProfileScreen() {
     return (
       <Pressable
         key={index}
-        style={[styles.menuItem, !isLast && { borderBottomColor: colors.cardBorder, borderBottomWidth: 1 }]}
+        style={[styles.menuItem, { flexDirection: rowDirection(isRTL) }, !isLast && { borderBottomColor: colors.cardBorder, borderBottomWidth: 1 }]}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           if (item.route) router.push(item.route as any);
@@ -131,8 +129,8 @@ export default function ProfileScreen() {
         <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
           <MaterialCommunityIcons name={item.icon as any} size={20} color={colors.textPrimary} />
         </View>
-        <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
-        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+        <Text style={[styles.menuLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t(item.labelKey)}</Text>
+        <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={20} color={colors.textMuted} />
       </Pressable>
     );
   };
@@ -189,7 +187,7 @@ export default function ProfileScreen() {
                 style={styles.editProfileBtn}
               >
                 <MaterialCommunityIcons name="account-edit-outline" size={16} color="#FFF" />
-                <Text style={styles.editProfileText}>Edit Profile</Text>
+                <Text style={styles.editProfileText}>{t('profile.editProfile')}</Text>
               </LinearGradient>
             </Pressable>
           </GlassView>
@@ -197,7 +195,7 @@ export default function ProfileScreen() {
 
         {/* Quick Access */}
         <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>QUICK ACCESS</Text>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl, textAlign: textAlign(isRTL) }]}>{t('profile.quickAccess')}</Text>
         </Animated.View>
         <View style={styles.quickActionsGrid}>
           {quickActions.map(renderQuickAction)}
@@ -205,20 +203,20 @@ export default function ProfileScreen() {
 
         {/* Account & General */}
         <Animated.View entering={FadeInDown.delay(700).duration(600)}>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>ACCOUNT & SETTINGS</Text>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary, marginTop: Spacing.xl, textAlign: textAlign(isRTL) }]}>{t('profile.accountSettings')}</Text>
         </Animated.View>
         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
           <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
             {personalItems.map((item, idx) => renderMenuItem(item, idx, false))}
             <Pressable
-              style={styles.menuItem}
+              style={[styles.menuItem, { flexDirection: rowDirection(isRTL) }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/settings'); }}
             >
               <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
                 <MaterialCommunityIcons name="cog-outline" size={20} color={colors.textPrimary} />
               </View>
-              <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Settings</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+              <Text style={[styles.menuLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('profile.settings')}</Text>
+              <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={20} color={colors.textMuted} />
             </Pressable>
           </GlassView>
         </Animated.View>
@@ -237,7 +235,7 @@ export default function ProfileScreen() {
             ]}
           >
             <MaterialCommunityIcons name="logout-variant" size={20} color="#FF4D4D" />
-            <Text style={styles.logoutText}>Sign Out</Text>
+            <Text style={styles.logoutText}>{t('profile.signOut')}</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

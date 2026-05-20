@@ -1,6 +1,7 @@
 import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 type ThirdButtonProps = {
   title: string;
@@ -18,6 +19,7 @@ export default function ThirdButton({
   style,
 }: ThirdButtonProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Pressable
@@ -28,7 +30,7 @@ export default function ThirdButton({
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={styles.text}>{t(title)}</Text>
       )}
     </Pressable>
   );

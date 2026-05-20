@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Fonts } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface GetDirectionsButtonProps {
     latitude: number;
@@ -27,6 +28,7 @@ export default function GetDirectionsButton({
     label = 'Service Location',
 }: GetDirectionsButtonProps) {
     const { colors } = useTheme();
+    const { t } = useTranslation();
 
     const openInMaps = useCallback(() => {
         let url: string;
@@ -64,7 +66,7 @@ export default function GetDirectionsButton({
             ]}
         >
             <MaterialCommunityIcons name="navigation-variant-outline" size={20} color={colors.pink} />
-            <Text style={[styles.text, { color: colors.pink }]}>See on Maps</Text>
+            <Text style={[styles.text, { color: colors.pink }]}>{t('map.seeOnMaps')}</Text>
         </Pressable>
     );
 }

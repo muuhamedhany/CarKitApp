@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import BackButton from './BackButton';
 
 type HeaderAction = {
@@ -30,6 +31,7 @@ export default function CenteredHeader({
     rightActions,
 }: CenteredHeaderProps) {
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     // Calculate default padding to align perfectly with the BackButton icon center
     const defaultPaddingTop = Platform.OS === 'android' ? insets.top + 23 : insets.top + 19;
@@ -45,7 +47,7 @@ export default function CenteredHeader({
                 rowStyle
             ]}>
                 <Text style={[styles.title, { color: titleColor }, titleStyle]} numberOfLines={1}>
-                    {title}
+                    {t(title)}
                 </Text>
 
                 <View style={styles.rightActionsContainer}>

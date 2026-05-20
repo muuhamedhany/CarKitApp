@@ -1,240 +1,120 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { I18nManager, Alert } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Alert, I18nManager } from 'react-native';
 
-export type Language = 'en' | 'ar';
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_STORAGE_KEY,
+  LocaleCode,
+  TranslationParams,
+  translations,
+} from '@/locales';
+
+export type Language = LocaleCode;
 
 interface LanguageContextProps {
   language: Language;
   changeLanguage: (lang: Language) => Promise<void>;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslationParams) => string;
   isRTL: boolean;
+  isLanguageLoaded: boolean;
 }
 
-const translations: Record<Language, Record<string, string>> = {
-  en: {
-    // Nav & Tabs
-    'home': 'Home',
-    'search': 'Search',
-    'cart': 'Cart',
-    'profile': 'Profile',
-    'settings': 'Settings',
+I18nManager.allowRTL(true);
+I18nManager.swapLeftAndRightInRTL(true);
 
-    // Home screen
-    'welcome_back': 'Welcome Back',
-    'quick_categories': 'Quick Categories',
-    'emergency_help': 'Emergency Help',
-    'emergency_sub': 'Tap for instant professional towing & repair',
-    'roadside_rescue': '24/7 ROADSIDE RESCUE',
-    'featured_services': 'Featured Services',
-    'featured_products': 'Featured Products',
-    'see_all': 'See All',
-    'search_placeholder': 'Search premium oils, services...',
+const interpolate = (template: string, params?: TranslationParams) => {
+  if (!params) return template;
 
-    // Profile & Settings screen
-    'my_profile': 'My Profile',
-    'my_vehicles': 'My Vehicles',
-    'my_orders': 'My Orders',
-    'my_bookings': 'My Bookings',
-    'edit_profile': 'Edit Profile',
-    'language': 'Language',
-    'select_language': 'Select Language',
-    'english': 'English (EN)',
-    'arabic': 'Arabic (AR)',
-    'appearance': 'Appearance',
-    'dark_mode': 'Dark Mode',
-    'theme_variant': 'Theme Color Mode',
-    'traditional': 'Neon Pink & Purple',
-    'green': 'Boutique Green',
-    'navy': 'Ocean Navy Blue',
-    'save': 'Save Changes',
-    'logout': 'Sign Out',
-    'help_support': 'Help & Support',
-    'privacy_policy': 'Privacy Policy',
-    'terms_conditions': 'Terms & Conditions',
-    'wishlist': 'Wishlist',
-    'addresses': 'Addresses',
-    'payments': 'Payments',
-    'quick_access': 'Quick Access',
-    'account_settings': 'Account & Settings',
-    'security': 'Security',
-    'security_desc': 'Change password and privacy settings',
-    'help_center': 'Help Center',
-    'help_center_desc': 'FAQs and customer support',
-    'terms_of_service': 'Terms of Service',
-    'terms_of_service_desc': 'Read our usage guidelines',
-    'privacy_policy_desc': 'How we protect your data',
-    'signout_confirm': 'Are you sure you want to sign out of your account?',
-    'cancel': 'Cancel',
-    'light': 'Light',
-    'dark': 'Dark',
-    'system': 'System',
-
-    // Product & Services Checkout
-    'add_to_cart': 'Add to Cart',
-    'added_to_cart': 'Added to Cart!',
-    'checkout': 'Checkout',
-    'service_type': 'Service Method',
-    'at_home': 'Home Delivery',
-    'at_workshop': 'Apply at Workshop (+70 EGP)',
-    'towing_fee': 'Towing Service Fee',
-    'delivery_fee': 'Home Delivery Fee',
-    'service_charge': 'Workshop Service Fee',
-    'total': 'Total Amount',
-    'place_order': 'Confirm and Place Order',
-    'queue_number': 'Your Queue Position',
-    'estimated_wait': 'Estimated Wait Time',
-    'mins': 'minutes',
-    'people_before': 'cars before you',
-    'show_up_time': 'Recommended Arrival Time',
-    'shuffling_feed': 'Shuffling Feed...',
-  },
-  ar: {
-    // Nav & Tabs
-    'home': 'الرئيسية',
-    'search': 'البحث',
-    'cart': 'السلة',
-    'profile': 'الحساب',
-    'settings': 'الإعدادات',
-
-    // Home screen
-    'welcome_back': 'مرحباً بك',
-    'quick_categories': 'الأقسام السريعة',
-    'emergency_help': 'مساعدة طارئة',
-    'emergency_sub': 'اضغط للحصول على ونش إنقاذ وإصلاح فوري',
-    'roadside_rescue': 'إنقاذ الطريق ٢٤/٧',
-    'featured_services': 'خدمات مميزة',
-    'featured_products': 'منتجات مميزة',
-    'see_all': 'عرض الكل',
-    'search_placeholder': 'ابحث عن زيوت، فلاتر، خدمات...',
-
-    // Profile & Settings screen
-    'my_profile': 'الملف الشخصي',
-    'my_vehicles': 'سياراتي',
-    'my_orders': 'طلباتي',
-    'my_bookings': 'حجوزاتي',
-    'edit_profile': 'تعديل الحساب',
-    'language': 'اللغة',
-    'select_language': 'اختر اللغة',
-    'english': 'الإنجليزية (EN)',
-    'arabic': 'العربية (AR)',
-    'appearance': 'المظهر',
-    'dark_mode': 'الوضع الداكن',
-    'theme_variant': 'لون المظهر المتناسق',
-    'traditional': 'نيون وردي وبنفسجي',
-    'green': 'أخضر بوتيك هادئ',
-    'navy': 'أزرق كحلي ملكي',
-    'save': 'حفظ التغييرات',
-    'logout': 'تسجيل الخروج',
-    'help_support': 'المساعدة والدعم',
-    'privacy_policy': 'سياسة الخصوصية',
-    'terms_conditions': 'الشروط والأحكام',
-    'wishlist': 'قائمة الأمنيات',
-    'addresses': 'العناوين والنشاط',
-    'payments': 'وسائل الدفع',
-    'quick_access': 'الوصول السريع',
-    'account_settings': 'الحساب والإعدادات',
-    'security': 'الأمان والحماية',
-    'security_desc': 'تغيير كلمة المرور وإعدادات الخصوصية',
-    'help_center': 'مركز المساعدة والدعم',
-    'help_center_desc': 'الأسئلة الشائعة وتواصل معنا',
-    'terms_of_service': 'شروط وأحكام الخدمة',
-    'terms_of_service_desc': 'اقرأ إرشادات استخدام التطبيق',
-    'privacy_policy_desc': 'كيفية حماية وتأمين بياناتك',
-    'signout_confirm': 'هل أنت متأكد من رغبتك في تسجيل الخروج من حسابك؟',
-    'cancel': 'إلغاء',
-    'light': 'مضيء',
-    'dark': 'داكن',
-    'system': 'تلقائي (النظام)',
-
-    // Product & Services Checkout
-    'add_to_cart': 'أضف إلى السلة',
-    'added_to_cart': 'تمت الإضافة للسلة!',
-    'checkout': 'الدفع والطلب',
-    'service_type': 'طريقة الاستلام والخدمة',
-    'at_home': 'توصيل للمنزل',
-    'at_workshop': 'التركيب في الورشة (+٧٠ ج.م)',
-    'towing_fee': 'تكلفة خدمة الونش والإنقاذ',
-    'delivery_fee': 'تكلفة الشحن والتوصيل',
-    'service_charge': 'رسوم الخدمة والتركيب بالورشة',
-    'total': 'المجموع الإجمالي',
-    'place_order': 'تأكيد وإتمام الطلب',
-    'queue_number': 'رقمك في دور الانتظار',
-    'estimated_wait': 'الوقت المتوقع للانتظار',
-    'mins': 'دقيقة',
-    'people_before': 'سيارات متبقية أمامك',
-    'show_up_time': 'وقت الحضور الموصى به',
-    'shuffling_feed': 'جاري ترتيب القائمة...',
-  }
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = params[key];
+    return value === undefined || value === null ? match : String(value);
+  });
 };
 
+const translateKey = (language: Language, key: string, params?: TranslationParams) => {
+  const translated = translations[language]?.[key] ?? translations[DEFAULT_LANGUAGE][key] ?? key;
+  return interpolate(translated, params);
+};
+
+const isSupportedLanguage = (value: string | null): value is Language => value === 'en' || value === 'ar';
+
 const LanguageContext = createContext<LanguageContextProps>({
-  language: 'en',
+  language: DEFAULT_LANGUAGE,
   changeLanguage: async () => {},
-  t: (key: string) => key,
+  t: (key: string, params?: TranslationParams) => translateKey(DEFAULT_LANGUAGE, key, params),
   isRTL: false,
+  isLanguageLoaded: false,
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
+  const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
 
   useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const storedLang = await AsyncStorage.getItem('user_language');
-        if (storedLang === 'en' || storedLang === 'ar') {
-          setLanguageState(storedLang as Language);
-          
-          const isAr = storedLang === 'ar';
-          if (I18nManager.isRTL !== isAr) {
-            I18nManager.forceRTL(isAr);
-          }
+        const storedLang = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const nextLanguage = isSupportedLanguage(storedLang) ? storedLang : DEFAULT_LANGUAGE;
+        const nextRTL = nextLanguage === 'ar';
+
+        setLanguageState(nextLanguage);
+
+        if (I18nManager.isRTL !== nextRTL) {
+          I18nManager.forceRTL(nextRTL);
         }
       } catch (err) {
         console.log('Error loading language', err);
+        setLanguageState(DEFAULT_LANGUAGE);
+      } finally {
+        setIsLanguageLoaded(true);
       }
     };
+
     loadLanguage();
   }, []);
 
-  const changeLanguage = async (newLang: Language) => {
+  const changeLanguage = useCallback(async (newLang: Language) => {
     try {
-      await AsyncStorage.setItem('user_language', newLang);
+      await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, newLang);
       setLanguageState(newLang);
-      
-      const isAr = newLang === 'ar';
-      if (I18nManager.isRTL !== isAr) {
-        I18nManager.forceRTL(isAr);
+
+      const nextRTL = newLang === 'ar';
+      if (I18nManager.isRTL !== nextRTL) {
+        I18nManager.forceRTL(nextRTL);
         Alert.alert(
-          newLang === 'ar' ? 'تغيير اللغة' : 'Language Changed',
-          newLang === 'ar' 
-            ? 'يرجى إغلاق التطبيق وإعادة فتحه لتطبيق اتجاهات وتصميم اللغة العربية بشكل كامل!' 
-            : 'Please restart the app to apply the English layout and direction fully!',
-          [{ text: 'OK' }]
+          translateKey(newLang, 'language.restartTitle'),
+          translateKey(newLang, 'language.restartMessage'),
+          [{ text: translateKey(newLang, 'common.ok') }]
         );
       }
     } catch (err) {
       console.log('Error setting language', err);
     }
-  };
+  }, []);
 
-  const t = (key: string): string => {
-    if (translations[language] && translations[language][key]) {
-      return translations[language][key];
-    }
-    if (translations['en'] && translations['en'][key]) {
-      return translations['en'][key];
-    }
-    return key;
-  };
+  const t = useCallback(
+    (key: string, params?: TranslationParams): string => translateKey(language, key, params),
+    [language]
+  );
 
-  const isRTL = language === 'ar';
+  const value = useMemo(
+    () => ({
+      language,
+      changeLanguage,
+      t,
+      isRTL: language === 'ar',
+      isLanguageLoaded,
+    }),
+    [changeLanguage, isLanguageLoaded, language, t]
+  );
 
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage, t, isRTL }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
 export const useTranslation = () => useContext(LanguageContext);
+export const useLanguage = useTranslation;

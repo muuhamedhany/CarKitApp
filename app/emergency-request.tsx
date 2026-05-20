@@ -1,5 +1,6 @@
 import { CenteredHeader, GlassView, MapLocationPicker } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService } from '@/services/api/emergency.service';
@@ -20,6 +21,7 @@ export default function EmergencyRequestScreen() {
   const params = useLocalSearchParams<{ serviceId: string; serviceName: string; price?: string }>();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [pickerVisible, setPickerVisible] = useState(false);
   const [location, setLocation] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
@@ -53,15 +55,15 @@ export default function EmergencyRequestScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <CenteredHeader title={params.serviceName || 'Emergency Request'} titleColor={colors.textPrimary} />
         <GlassView intensity={isDark ? 30 : 50} style={styles.card} {...{} as any}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Location</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('emergency.request.location')}</Text>
           <Pressable style={[styles.locationBox, { borderColor: colors.cardBorder }]} onPress={() => setPickerVisible(true)}>
             <MaterialCommunityIcons name="map-marker-radius" size={24} color={colors.error} />
-            <Text style={[styles.locationText, { color: colors.textSecondary }]}>{location?.formattedAddress || 'Drop a pin for your current location'}</Text>
+            <Text style={[styles.locationText, { color: colors.textSecondary }]}>{location?.formattedAddress || t('emergency.request.dropPin')}</Text>
           </Pressable>
         </GlassView>
         <GlassView intensity={isDark ? 30 : 50} style={styles.card} {...{} as any}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Payment</Text>
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>Estimated range: {params.price ? `${params.price} EGP` : '50-150 EGP'}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('emergency.request.payment')}</Text>
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('emergency.request.estimatedRange', { amount: params.price ? `${params.price} ${t('common.currency.egp')}` : `50-150 ${t('common.currency.egp')}` })}</Text>
           <View style={styles.methodGrid}>
             {methods.map((method) => (
               <Pressable
@@ -70,13 +72,13 @@ export default function EmergencyRequestScreen() {
                 onPress={() => setPaymentMethod(method.key)}
               >
                 <MaterialCommunityIcons name={method.icon as any} size={22} color={paymentMethod === method.key ? colors.error : colors.textSecondary} />
-                <Text style={[styles.methodText, { color: colors.textPrimary }]}>{method.label}</Text>
+                <Text style={[styles.methodText, { color: colors.textPrimary }]}>{t(method.label)}</Text>
               </Pressable>
             ))}
           </View>
         </GlassView>
         <Pressable style={[styles.submit, { backgroundColor: colors.error }]} onPress={submit} disabled={submitting}>
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Send Request</Text>}
+          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{t('emergency.request.send')}</Text>}
         </Pressable>
       </ScrollView>
       <MapLocationPicker

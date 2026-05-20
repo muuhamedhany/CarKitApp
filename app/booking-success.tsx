@@ -6,15 +6,15 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const { width, height } = Dimensions.get('window');
+import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function BookingSuccessScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { t, language } = useTranslation();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
 
@@ -31,7 +31,7 @@ export default function BookingSuccessScreen() {
     const raw = Array.isArray(value) ? value[0] : value;
     if (!raw) return '-';
     try {
-      return new Date(raw).toLocaleString('en-US', {
+      return new Date(raw).toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
         month: 'short',
         day: 'numeric',
         hour: 'numeric',
@@ -47,7 +47,7 @@ export default function BookingSuccessScreen() {
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     scale.value = withSpring(1, { damping: 10, stiffness: 100 });
-  }, []);
+  }, [scale]);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -69,56 +69,56 @@ export default function BookingSuccessScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Booking Confirmed!</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('booking.success.title')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Your service has been successfully booked
+            {t('booking.success.subtitle')}
           </Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.cardWrapper}>
           <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.detailsCard}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Booking Summary</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('booking.success.summary')}</Text>
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Service</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.service')}</Text>
               <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{serviceName}</Text>
             </View>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Provider</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.provider')}</Text>
               <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{providerName}</Text>
             </View>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Booking ID</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.bookingId')}</Text>
               <Text style={[styles.detailValue, { color: colors.textPrimary }]}>#{bookingId}</Text>
             </View>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Amount Paid</Text>
-              <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>{price} EGP</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.amountPaid')}</Text>
+              <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>{price} {t('common.currency.egp')}</Text>
             </View>
 
             {queueNumber ? (
               <>
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
                 <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Queue Number</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.queueNumber')}</Text>
                   <Text style={[styles.detailValue, { color: colors.pink, fontFamily: Fonts.extraBold }]}>#{queueNumber}</Text>
                 </View>
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
                 <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Show Up</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('booking.success.showUp')}</Text>
                   <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{formatQueueTime(params.showUpAt)}</Text>
                 </View>
                 <Text style={[styles.queueHint, { color: colors.textSecondary }]}>
-                  {peopleBefore} before you | about {waitMinutes} min wait.
+                  {t('booking.success.queueHint', { before: peopleBefore, minutes: waitMinutes })}
                 </Text>
               </>
             ) : null}
@@ -127,7 +127,7 @@ export default function BookingSuccessScreen() {
 
         <Animated.View entering={FadeInDown.delay(800).springify()} style={styles.buttonContainer}>
           <GradientButton
-            title="View My Bookings"
+            title="booking.success.viewBookings"
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.replace('/my-bookings');
@@ -141,7 +141,7 @@ export default function BookingSuccessScreen() {
             }}
             style={styles.homeBtn}
           >
-            <Text style={[styles.homeBtnText, { color: colors.textSecondary }]}>Back to Home</Text>
+            <Text style={[styles.homeBtnText, { color: colors.textSecondary }]}>{t('common.backToHome')}</Text>
           </Pressable>
         </Animated.View>
       </View>

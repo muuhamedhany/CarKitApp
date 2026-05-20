@@ -1,21 +1,22 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
-
-const { height } = Dimensions.get('window');
+import { rowDirection, textAlign } from '@/utils/rtl';
 
 export default function SignUpVendorScreen() {
   const router = useRouter();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   
   const [role, setRole] = useState<'vendor' | 'service_provider'>('vendor');
   const [name, setName] = useState('');
@@ -29,17 +30,17 @@ export default function SignUpVendorScreen() {
 
   const handleContinue = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim() || !password || !confirmPassword) {
-      showToast('warning', 'Missing Fields', 'Please fill in all fields.');
+      showToast('warning', t('common.missingFields'), t('auth.missingFieldsMessage'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
     if (password !== confirmPassword) {
-      showToast('error', 'Mismatch', 'Passwords do not match.');
+      showToast('error', t('auth.signup.mismatchTitle'), t('auth.signup.mismatch'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     if (password.length < 6) {
-      showToast('warning', 'Weak Password', 'Password must be at least 6 characters.');
+      showToast('warning', t('auth.signup.weakTitle'), t('auth.signup.weak'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -71,7 +72,7 @@ export default function SignUpVendorScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.flex}
       >
-        <CenteredHeader title="Creat Account" titleColor={colors.pink} />
+        <CenteredHeader title={t('auth.signup.businessTitle')} titleColor={colors.pink} />
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
@@ -79,8 +80,8 @@ export default function SignUpVendorScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Join our network and grow your automotive business
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+              {t('auth.signup.subtitle')}
             </Text>
           </Animated.View>
 
@@ -94,8 +95,8 @@ export default function SignUpVendorScreen() {
                 Shadows.lg
               ]}
             >
-              <Text style={[styles.label, { color: colors.textPrimary }]}>Choose Account Type</Text>
-              <View style={styles.toggleRow}>
+              <Text style={[styles.label, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('auth.signup.chooseType')}</Text>
+              <View style={[styles.toggleRow, { flexDirection: rowDirection(isRTL) }]}>
                 <Pressable
                   style={[
                     styles.toggleButton, 
@@ -104,7 +105,7 @@ export default function SignUpVendorScreen() {
                   ]}
                   onPress={() => handleToggle('vendor')}
                 >
-                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'vendor' && { color: colors.pink }]}>Vendor</Text>
+                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'vendor' && { color: colors.pink }]}>{t('auth.signup.vendor')}</Text>
                 </Pressable>
                 <Pressable
                   style={[
@@ -114,23 +115,23 @@ export default function SignUpVendorScreen() {
                   ]}
                   onPress={() => handleToggle('service_provider')}
                 >
-                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'service_provider' && { color: colors.pink }]}>Service Provider</Text>
+                  <Text style={[styles.toggleText, { color: colors.textMuted }, role === 'service_provider' && { color: colors.pink }]}>{t('auth.signup.serviceProvider')}</Text>
                 </Pressable>
               </View>
 
               <FormInput 
-                label="Business Name"
+                label={t('auth.signup.businessNameLabel')}
                 icon="domain" 
-                placeholder="CarKit Solutions Ltd." 
+                placeholder={t('auth.signup.businessNamePlaceholder')}
                 value={name} 
                 onChangeText={setName} 
                 autoCapitalize="words" 
               />
 
               <FormInput 
-                label="Business Email"
+                label={t('auth.signup.businessEmailLabel')}
                 icon="email-outline" 
-                placeholder="contact@business.com" 
+                placeholder={t('auth.signup.businessEmailPlaceholder')}
                 value={email} 
                 onChangeText={setEmail} 
                 keyboardType="email-address" 
@@ -138,25 +139,25 @@ export default function SignUpVendorScreen() {
               />
 
               <FormInput 
-                label="Phone Number"
+                label={t('auth.signup.businessPhoneLabel')}
                 icon="phone-outline" 
-                placeholder="+1 234 567 890" 
+                placeholder={t('auth.signup.phonePlaceholder')}
                 value={phone} 
                 onChangeText={setPhone} 
                 keyboardType="phone-pad" 
               />
 
               <FormInput 
-                label="Business Address"
+                label={t('auth.signup.businessAddressLabel')}
                 icon="map-marker-outline" 
-                placeholder="123 Industrial Way" 
+                placeholder={t('auth.signup.addressPlaceholder')}
                 value={address} 
                 onChangeText={setAddress} 
                 autoCapitalize="words" 
               />
 
               <FormInput 
-                label="Password"
+                label={t('auth.signup.passwordLabel')}
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={password} 
@@ -167,7 +168,7 @@ export default function SignUpVendorScreen() {
               />
 
               <FormInput 
-                label="Confirm Password"
+                label={t('auth.signup.confirmPasswordLabel')}
                 icon="lock-outline" 
                 placeholder="••••••••" 
                 value={confirmPassword} 
@@ -178,7 +179,7 @@ export default function SignUpVendorScreen() {
               />
 
               <GradientButton 
-                title="Register Business" 
+                title={t('auth.signup.registerBusiness')}
                 onPress={handleContinue} 
                 style={{...styles.continueBtn,  width: '100%'}}
               />
@@ -187,8 +188,8 @@ export default function SignUpVendorScreen() {
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.footer}>
             <AuthFooter 
-              message="Already have a business account?" 
-              actionText="Login" 
+              message={t('auth.signup.haveAccount')}
+              actionText={t('auth.selectAccount.login')}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/(auth)/login');

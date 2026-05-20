@@ -2,12 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
@@ -41,10 +41,10 @@ const createImageSlots = (imageUrls?: (string | null)[]): ImageSlot[] =>
     });
 
 export default function ProductForm({ screenTitle, submitLabel, initialValues, onSubmit }: ProductFormProps) {
-    const router = useRouter();
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -77,7 +77,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 }
             } catch (error) {
                 console.error('Failed to load categories', error);
-                showToast('error', 'Error', 'Failed to load categories.');
+                showToast('error', t('common.error'), t('forms.product.loadCategoriesFailed'));
             } finally {
                 if (isMounted) {
                     setCategoriesLoading(false);
@@ -90,7 +90,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         return () => {
             isMounted = false;
         };
-    }, [showToast]);
+    }, [showToast, t]);
 
     useEffect(() => {
         if (!selectedCategoryId && categories.length > 0) {
@@ -138,12 +138,12 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const goNextStep = () => {
         if (step === 1) {
             if (!name.trim()) {
-                showToast('warning', 'Missing Fields', 'Product name is required.');
+                showToast('warning', t('common.missingFields'), t('forms.product.nameRequired'));
                 return;
             }
 
             if (!selectedCategoryId) {
-                showToast('warning', 'Category Required', 'Please select a category.');
+                showToast('warning', t('forms.product.categoryRequiredTitle'), t('forms.product.categoryRequired'));
                 return;
             }
 
@@ -153,7 +153,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
         if (step === 2) {
             if (!price.trim()) {
-                showToast('warning', 'Missing Fields', 'Price is required.');
+                showToast('warning', t('common.missingFields'), t('forms.product.priceRequired'));
                 return;
             }
 
@@ -163,7 +163,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
     const handleSubmit = async () => {
         if (!name.trim() || !price.trim() || !selectedCategoryId) {
-            showToast('warning', 'Missing Fields', 'Please complete the required fields before saving.');
+            showToast('warning', t('common.missingFields'), t('forms.product.completeRequired'));
             return;
         }
 
@@ -191,7 +191,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 image_url_3: uploadedUrls[2] || null,
             });
         } catch (error: any) {
-            showToast('error', 'Error', error?.message || 'Failed to save product.');
+            showToast('error', t('common.error'), error?.message || t('forms.product.saveFailed'));
         } finally {
             setSubmitting(false);
         }
@@ -219,7 +219,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={[styles.stepCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.stepLabel, { color: colors.textMuted }]}>Step {step} of 3</Text>
+                    <Text style={[styles.stepLabel, { color: colors.textMuted }]}>{t('forms.product.step', { step })}</Text>
                     <View style={[styles.progressTrack, { backgroundColor: colors.cardBorder }]}>
                         <View style={[styles.progressFill, { backgroundColor: colors.pink, width: progressWidth }]} />
                     </View>
@@ -227,12 +227,12 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                 {step === 1 && (
                     <>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Info</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('forms.product.basicInfo')}</Text>
 
                         <FormInput
-                            label="Product Name"
+                            label={t('forms.product.nameLabel')}
                             icon="format-title"
-                            placeholder="e.g. Premium Engine Oil"
+                            placeholder={t('forms.product.namePlaceholder')}
                             value={name}
                             onChangeText={setName}
                         />
@@ -245,7 +245,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                             <TextInput
                                 style={[styles.textAreaInput, { color: colors.textPrimary }]}
-                                placeholder="Detailed product description..."
+                                placeholder={t('forms.product.descriptionPlaceholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={description}
                                 onChangeText={setDescription}
@@ -255,7 +255,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                         </View>
 
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>{t('forms.product.category')}</Text>
                         {categoriesLoading ? (
                             <ActivityIndicator size="small" color={colors.pink} style={styles.categoryLoader} />
                         ) : (
@@ -288,11 +288,11 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                 {step === 2 && (
                     <>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Inventory</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('forms.product.pricingInventory')}</Text>
                         <View style={styles.row}>
                             <View style={styles.halfWidth}>
                                 <FormInput
-                                    label="Price"
+                                    label={t('forms.product.priceLabel')}
                                     icon="currency-usd"
                                     placeholder="0.00"
                                     keyboardType="numeric"
@@ -302,7 +302,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             </View>
                             <View style={styles.halfWidth}>
                                 <FormInput
-                                    label="Stock"
+                                    label={t('forms.product.stockLabel')}
                                     icon="package-variant"
                                     placeholder="0"
                                     keyboardType="number-pad"
@@ -316,8 +316,8 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                 {step === 3 && (
                     <>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Upload Photos</Text>
-                        <Text style={[styles.helperText, { color: colors.textMuted }]}>Add up to three images for the product listing.</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('forms.product.uploadPhotos')}</Text>
+                        <Text style={[styles.helperText, { color: colors.textMuted }]}>{t('forms.product.uploadHelp')}</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesRow}>
                             {imageSlots.map((slot, index) => {
                                 const hasImage = !!slot.previewUri;
@@ -339,7 +339,9 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                                 )}
                                             </View>
                                             <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
-                                                {index === 0 ? (hasImage ? 'Primary ✦' : 'Main Photo') : (hasImage ? `Photo ${index + 1}` : `Add ${index + 1}`)}
+                                                {index === 0
+                                                    ? (hasImage ? t('forms.product.primaryPhoto') : t('forms.product.mainPhoto'))
+                                                    : (hasImage ? t('forms.product.photo', { index: index + 1 }) : t('forms.product.addPhoto', { index: index + 1 }))}
                                             </Text>
                                         </Pressable>
 
@@ -370,7 +372,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                             onPress={() => setStep((current) => Math.max(1, current - 1))}
                             style={[styles.secondaryButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
                         >
-                            <Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Back</Text>
+                            <Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>{t('common.back')}</Text>
                         </Pressable>
                     ) : (
                         <View style={styles.secondaryButtonSpacer} />
@@ -378,7 +380,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
 
                     <View style={styles.primaryButtonWrapper}>
                         {step < 3 ? (
-                            <GradientButton title="Next" onPress={goNextStep} />
+                            <GradientButton title={t('common.next')} onPress={goNextStep} />
                         ) : (
                             <GradientButton title={submitLabel} onPress={handleSubmit} loading={submitting} />
                         )}

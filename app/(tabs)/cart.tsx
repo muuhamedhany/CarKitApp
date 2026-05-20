@@ -1,6 +1,7 @@
 import { CartSkeleton, GlassView, SecondaryButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
@@ -12,7 +13,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Dimensions,
   Image,
   Platform,
   Pressable,
@@ -26,9 +26,9 @@ import Animated, {
   FadeOut
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { arrowForward, rowDirection, textAlign } from '@/utils/rtl';
 const TypedFlashList = FlashList as any;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;
 
 // ─── Memoized Cart Row Component ─────────────────────────────────────────────
@@ -39,6 +39,7 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
   onRemove: (id: number) => void;
 }) => {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
 
@@ -53,7 +54,7 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
       <GlassView
         intensity={isDark ? 20 : 40}
         tint={isDark ? 'dark' : 'light'}
-        style={[styles.cartItem, { borderColor: colors.cardBorder }]}
+        style={[styles.cartItem, { borderColor: colors.cardBorder, flexDirection: rowDirection(isRTL) }]}
       >
         <Pressable
           onPress={() => router.push(`/product/${item.product_id_fk}`)}
@@ -72,13 +73,13 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
         </Pressable>
 
 
-        <View style={styles.itemInfo}>
-          <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
+        <View style={[styles.itemInfo, { marginLeft: isRTL ? 0 : Spacing.lg, marginRight: isRTL ? Spacing.lg : 0 }]}>
+          <Text style={[styles.itemName, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]} numberOfLines={1}>
             {item.name}
           </Text>
-          <Text style={[styles.itemPrice, { color: colors.pink }]}>{item.price} EGP</Text>
+          <Text style={[styles.itemPrice, { color: colors.pink, textAlign: textAlign(isRTL) }]}>{item.price} {t('common.currency.egp')}</Text>
 
-          <View style={styles.qtyRow}>
+          <View style={[styles.qtyRow, { flexDirection: rowDirection(isRTL) }]}>
             <Pressable
               style={({ pressed }) => [
                 styles.qtyBtn,
@@ -122,6 +123,8 @@ const CartItemRow = memo(({ item, index, onUpdate, onRemove }: {
           style={({ pressed }) => [
             styles.deleteBtn,
             {
+              marginLeft: isRTL ? 0 : Spacing.sm,
+              marginRight: isRTL ? Spacing.sm : 0,
               backgroundColor: isDark ? 'rgba(255, 77, 77, 0.08)' : 'rgba(255, 77, 77, 0.04)',
               opacity: pressed ? 0.5 : 1
             }
@@ -143,6 +146,7 @@ export default function CartScreen() {
   const { items, total, loading, fetchCart, updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
   const androidTabOffset = Platform.OS === 'android' ? insets.bottom + TAB_BAR_HEIGHT : 0;
   const listRef = useRef<any>(null);
@@ -152,15 +156,15 @@ export default function CartScreen() {
     fetchCart();
   });
 
-  useEffect(() => { fetchCart(); }, []);
+  useEffect(() => { fetchCart(); }, [fetchCart]);
 
   const handleUpdateQuantity = useCallback(async (id: number, qty: number) => {
     // Note: The context now handles optimistic updates, so this returns instantly
     const res = await updateQuantity(id, qty);
     if (res && !res.success && res.message) {
-      showToast('error', 'Limit Reached', res.message);
+      showToast('error', t('home.limitReached'), res.message);
     }
-  }, [updateQuantity, showToast]);
+  }, [updateQuantity, showToast, t]);
 
   const handleRemoveItem = useCallback(async (id: number) => {
     await removeItem(id);
@@ -168,7 +172,7 @@ export default function CartScreen() {
 
   const handleCheckout = () => {
     if (items.length === 0) {
-      showToast('warning', 'Empty Cart', 'Add some products first!');
+      showToast('warning', t('cart.emptyToastTitle'), t('cart.emptyToastMessage'));
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -199,11 +203,11 @@ export default function CartScreen() {
         </>
       )}
 
-      <View style={[styles.header, { marginTop: insets.top + 10 }]}>
+      <View style={[styles.header, { flexDirection: rowDirection(isRTL), marginTop: insets.top + 10 }]}>
         <Animated.View entering={FadeInDown.delay(100).duration(600)}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Cart</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {items.length} {items.length === 1 ? 'item' : 'items'} saved
+          <Text style={[styles.headerTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('cart.title')}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+            {t(items.length === 1 ? 'cart.itemSaved' : 'cart.itemsSaved', { count: items.length })}
           </Text>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(200).duration(600)}>
@@ -230,10 +234,10 @@ export default function CartScreen() {
           <View style={[styles.emptyIconCircle, { backgroundColor: colors.pink + '10' }]}>
             <MaterialCommunityIcons name="cart-variant" size={48} color={colors.pink} />
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Explore our shop to find the best parts for your car.</Text>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('cart.empty.title')}</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('cart.empty.subtitle')}</Text>
           <View style={{ marginTop: Spacing.xxl, width: 220 }}>
-            <SecondaryButton title="Start Shopping" onPress={() => router.push('/(tabs)/search')} />
+            <SecondaryButton title={t('cart.empty.cta')} onPress={() => router.push('/(tabs)/search')} />
           </View>
         </Animated.View>
       ) : (
@@ -264,9 +268,9 @@ export default function CartScreen() {
             tint={isDark ? 'dark' : 'light'}
             style={styles.bottomBlur}
           >
-            <View style={styles.bottomBar}>
+            <View style={[styles.bottomBar, { flexDirection: rowDirection(isRTL) }]}>
               <View style={{ alignItems: 'flex-start', flexShrink: 1, marginRight: Spacing.md }}>
-                <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>TOTAL AMOUNT</Text>
+                <Text style={[styles.totalLabel, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('cart.totalAmount')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
                     <Text 
                         style={[styles.totalValue, { color: colors.textPrimary }]}
@@ -275,7 +279,7 @@ export default function CartScreen() {
                     >
                         {parseFloat(total).toLocaleString()}
                     </Text>
-                    <Text style={[styles.currencyLabel, { color: colors.pink }]}> EGP</Text>
+                    <Text style={[styles.currencyLabel, { color: colors.pink }]}> {t('common.currency.egp')}</Text>
                 </View>
 
               </View>
@@ -292,8 +296,8 @@ export default function CartScreen() {
                   end={{ x: 1, y: 1 }}
                   style={styles.checkoutBtn}
                 >
-                  <Text style={styles.checkoutText}>Checkout</Text>
-                  <MaterialCommunityIcons name="arrow-right" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+                  <Text style={styles.checkoutText}>{t('cart.checkout')}</Text>
+                  <MaterialCommunityIcons name={arrowForward(isRTL) as any} size={20} color="#FFF" style={{ marginLeft: isRTL ? 0 : 8, marginRight: isRTL ? 8 : 0 }} />
                 </LinearGradient>
               </Pressable>
             </View>

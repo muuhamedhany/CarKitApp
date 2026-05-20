@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -36,6 +37,7 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
   const [imgError, setImgError] = useState(false);
   const [imgLoading, setImgLoading] = useState(!!imageUrl);
   const { wishlist, toggleWishlist: contextToggleWishlist } = useWishlist();
@@ -147,7 +149,9 @@ export default function ProductCard({
                   </Text>
                 </View>
               )}
-              <Text style={[styles.price, { color: colors.textPrimary }]}>{typeof price === 'number' ? price.toLocaleString() : price} <Text style={styles.currency}>EGP</Text></Text>
+              <Text style={[styles.price, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+                {typeof price === 'number' ? price.toLocaleString() : price} <Text style={styles.currency}>{t('product.card.currency')}</Text>
+              </Text>
             </View>
 
             {onAddToCart && (

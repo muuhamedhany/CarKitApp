@@ -4,10 +4,12 @@ import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@/hooks/useTheme';
 import { ProviderTabBar } from '@/components';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 // iOS: NativeTabs
 function IOSTabLayout() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <NativeTabs
@@ -31,7 +33,7 @@ function IOSTabLayout() {
       }}
     >
       <NativeTabs.Trigger name="index">
-        <Label>Dashboard</Label>
+        <Label>{t('tabs.dashboard')}</Label>
         <Icon
           sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="view-dashboard" />}
@@ -39,7 +41,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="services">
-        <Label>Services</Label>
+        <Label>{t('tabs.services')}</Label>
         <Icon
           sf={{ default: 'wrench', selected: 'wrench.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="wrench" />}
@@ -47,7 +49,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="bookings">
-        <Label>Bookings</Label>
+        <Label>{t('tabs.bookings')}</Label>
         <Icon
           sf={{ default: 'calendar.badge.checkmark', selected: 'calendar.badge.checkmark' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="calendar-check" />}
@@ -55,7 +57,7 @@ function IOSTabLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
-        <Label>Profile</Label>
+        <Label>{t('tabs.profile')}</Label>
         <Icon
           sf={{ default: 'person', selected: 'person.fill' }}
           androidSrc={<VectorIcon family={MaterialCommunityIcons} name="account" />}
@@ -69,6 +71,7 @@ function IOSTabLayout() {
 // Android: Custom floating tab bar matching the design
 function AndroidTabLayout() {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -78,10 +81,10 @@ function AndroidTabLayout() {
         sceneStyle: { backgroundColor: isDark ? '#050505' : '#F8F9FD' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
-      <Tabs.Screen name="services" options={{ title: 'Services' }} />
-      <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.dashboard') }} />
+      <Tabs.Screen name="services" options={{ title: t('tabs.services') }} />
+      <Tabs.Screen name="bookings" options={{ title: t('tabs.bookings') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
     </Tabs>
   );
 }

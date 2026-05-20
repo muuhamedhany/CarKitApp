@@ -1,4 +1,5 @@
 import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,16 +17,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type TabItem = {
   name: string;
-  label: string;
+  labelKey: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   iconFilled: keyof typeof MaterialCommunityIcons.glyphMap;
 };
 
 const TABS: TabItem[] = [
-  { name: 'index', label: 'Home', icon: 'home-outline', iconFilled: 'home' },
-  { name: 'search', label: 'Search', icon: 'magnify', iconFilled: 'magnify' },
-  { name: 'cart', label: 'Cart', icon: 'cart-outline', iconFilled: 'cart' },
-  { name: 'profile', label: 'Profile', icon: 'account-outline', iconFilled: 'account' },
+  { name: 'index', labelKey: 'tabs.home', icon: 'home-outline', iconFilled: 'home' },
+  { name: 'search', labelKey: 'tabs.search', icon: 'magnify', iconFilled: 'magnify' },
+  { name: 'cart', labelKey: 'tabs.cart', icon: 'cart-outline', iconFilled: 'cart' },
+  { name: 'profile', labelKey: 'tabs.profile', icon: 'account-outline', iconFilled: 'account' },
 ];
 
 interface CustomTabBarProps {
@@ -44,6 +45,7 @@ function TabButton({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedIconStyle = useAnimatedStyle(() => ({
@@ -84,7 +86,7 @@ function TabButton({
           },
         ]}
       >
-        {tab.label}
+        {t(tab.labelKey)}
       </Text>
     </Pressable>
   );
@@ -106,7 +108,7 @@ export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
       stiffness: 350,
       mass: 0.6,
     });
-  }, [state.index, tabWidth]);
+  }, [indicatorPosition, state.index, tabWidth]);
 
   const indicatorStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: indicatorPosition.value }],

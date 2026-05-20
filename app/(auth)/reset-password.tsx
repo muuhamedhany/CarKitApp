@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
-
-const { height } = Dimensions.get('window');
+import { textAlign } from '@/utils/rtl';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function ResetPasswordScreen() {
   const { resetPassword } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useTranslation();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,25 +28,25 @@ export default function ResetPasswordScreen() {
 
   const handleUpdatePassword = async () => {
     if (!password.trim() || !confirmPassword.trim()) {
-      showToast('warning', 'Missing Fields', 'Please fill in all fields.');
+      showToast('warning', t('common.missingFields'), t('auth.missingFieldsMessage'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
     if (password !== confirmPassword) {
-      showToast('error', 'Mismatched Passwords', 'The passwords you entered do not match.');
+      showToast('error', t('auth.reset.mismatchTitle'), t('auth.reset.mismatch'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
     if (password.length < 6) {
-      showToast('warning', 'Weak Password', 'Password must be at least 6 characters.');
+      showToast('warning', t('auth.signup.weakTitle'), t('auth.reset.weak'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
     if (!email || !otp) {
-      showToast('error', 'Session Expired', 'Please restart the password reset process.');
+      showToast('error', t('auth.reset.sessionExpiredTitle'), t('auth.reset.sessionExpired'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       router.replace('/forgot-password');
       return;
@@ -57,10 +58,10 @@ export default function ResetPasswordScreen() {
 
     if (!result.success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', 'Update Failed', result.message);
+      showToast('error', t('common.updateFailed'), result.message);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('success', 'Password Updated', 'Your password has been changed. Please login.');
+      showToast('success', t('auth.reset.updatedTitle'), t('auth.reset.updated'));
       router.replace('/login');
     }
   };
@@ -79,7 +80,7 @@ export default function ResetPasswordScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >            <CenteredHeader title="New Password" titleColor={colors.pink} />
+      >            <CenteredHeader title={t('auth.reset.title')} titleColor={colors.pink} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -87,8 +88,8 @@ export default function ResetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Secure your account with a fresh password.
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+              {t('auth.reset.subtitle')}
             </Text>
           </Animated.View>
 
@@ -103,7 +104,7 @@ export default function ResetPasswordScreen() {
               ]}
             >
               <FormInput
-                label="New Password"
+                label={t('auth.reset.newPasswordLabel')}
                 icon="lock-outline"
                 placeholder="••••••••"
                 value={password}
@@ -114,7 +115,7 @@ export default function ResetPasswordScreen() {
               />
 
               <FormInput
-                label="Confirm New Password"
+                label={t('auth.reset.confirmPasswordLabel')}
                 icon="lock-check-outline"
                 placeholder="••••••••"
                 value={confirmPassword}
@@ -123,7 +124,7 @@ export default function ResetPasswordScreen() {
               />
 
               <GradientButton
-                title="Update Password"
+                title={t('auth.reset.submit')}
                 onPress={handleUpdatePassword}
                 loading={loading}
                 style={{ marginTop: Spacing.sm }}

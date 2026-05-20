@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,46 +14,46 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredHeader, GlassView, GradientButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
-
-const { width } = Dimensions.get('window');
+import { rowDirection, textAlign } from '@/utils/rtl';
 
 interface TermSection {
   icon: string;
-  title: string;
-  content: string;
+  titleKey: string;
+  contentKey: string;
 }
 
 const TERMS_SECTIONS: TermSection[] = [
   {
     icon: 'handshake-outline',
-    title: '1. Acceptance of Terms',
-    content: 'Welcome to CarKit. By creating an account or using our mobile application, you agree to comply with and be bound by these Terms of Service. CarKit operates an automotive marketplace that connects vehicle owners ("Clients") with certified service providers ("Providers") and product vendors ("Vendors"). If you do not agree to these terms, please do not use our services.'
+    titleKey: 'settings.terms.section1.title',
+    contentKey: 'settings.terms.section1.content',
   },
   {
     icon: 'calendar-clock',
-    title: '2. Bookings & Services',
-    content: 'Clients can schedule vehicle maintenance, repair, tuning, and washing services directly through the app. A booking represents a binding contract between the Client and the designated Provider. Providers are responsible for the quality, safety, and legality of services rendered. Cancellations and refunds are governed by the respective Provider\'s cancellation policy, which is displayed at the time of booking.'
+    titleKey: 'settings.terms.section2.title',
+    contentKey: 'settings.terms.section2.content',
   },
   {
     icon: 'store-outline',
-    title: '3. Product Orders & Deliveries',
-    content: 'Clients may purchase automotive parts, accessories, and supplies listed by independent Vendors. Vendors are solely responsible for shipping times, product compliance, item descriptions, and fulfilling product returns in accordance with consumer protection guidelines. CarKit acts strictly as an escrow and transactional platform.'
+    titleKey: 'settings.terms.section3.title',
+    contentKey: 'settings.terms.section3.content',
   },
   {
     icon: 'alert-decagram-outline',
-    title: '4. Emergency Roadside Assistance',
-    content: 'CarKit provides on-demand emergency assistance (e.g., roadside battery jumpstarts, tire replacement, towing, fuel delivery). Clients requesting emergency dispatch represent that their vehicle location and condition are accurate. Any abuse of emergency dispatch systems, including false or malicious requests, will result in immediate permanent account termination and potential legal liabilities.'
+    titleKey: 'settings.terms.section4.title',
+    contentKey: 'settings.terms.section4.content',
   },
   {
     icon: 'credit-card-outline',
-    title: '5. Payments, Fees & Billing',
-    content: 'All marketplace payments are secured and processed through integrated gateways. Clients agree to pay all applicable service and product charges, taxes, and platform convenience fees. CarKit reserves the right to charge commissions or service fees to Vendors and Providers on platform transactions. Payouts are conducted according to the standard vendor billing cycles.'
+    titleKey: 'settings.terms.section5.title',
+    contentKey: 'settings.terms.section5.content',
   },
   {
     icon: 'shield-account-outline',
-    title: '6. Limitation of Liability',
-    content: 'CarKit facilitates connections but is not an automotive service provider or vendor. We are not liable for any direct, indirect, incidental, or consequential damages resulting from incomplete services, product malfunctions, roadside assistance delays, or personal injury sustained during service fulfillment. You agree to indemnify and hold CarKit harmless from any claims arising from marketplace interactions.'
+    titleKey: 'settings.terms.section6.title',
+    contentKey: 'settings.terms.section6.content',
   }
 ];
 
@@ -62,6 +61,7 @@ export default function TermsScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t, isRTL } = useTranslation();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -76,7 +76,7 @@ export default function TermsScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader
-          title="Terms of Service"
+          title={t('settings.terms.title')}
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -85,9 +85,9 @@ export default function TermsScreen() {
           <View style={[styles.iconWrap, { backgroundColor: colors.pink + '15' }]}>
             <MaterialCommunityIcons name="file-document-outline" size={32} color={colors.pink} />
           </View>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Usage Guidelines</Text>
-          <Text style={[styles.headerDesc, { color: colors.textMuted }]}>
-            Please review these terms to understand your rights, responsibilities, and guidelines when using the CarKit platform.
+          <Text style={[styles.headerTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('settings.terms.header')}</Text>
+          <Text style={[styles.headerDesc, { color: colors.textMuted, textAlign: textAlign(isRTL) }]}>
+            {t('settings.terms.description')}
           </Text>
         </Animated.View>
 
@@ -98,14 +98,14 @@ export default function TermsScreen() {
               entering={FadeInDown.delay(150 + idx * 50).springify()}
             >
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                <View style={styles.cardHeader}>
+                <View style={[styles.cardHeader, { flexDirection: rowDirection(isRTL) }]}>
                   <View style={[styles.cardIconWrap, { backgroundColor: colors.pink + '12' }]}>
                     <MaterialCommunityIcons name={section.icon as any} size={20} color={colors.pink} />
                   </View>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{section.title}</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t(section.titleKey)}</Text>
                 </View>
-                <Text style={[styles.cardContent, { color: colors.textSecondary }]}>
-                  {section.content}
+                <Text style={[styles.cardContent, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+                  {t(section.contentKey)}
                 </Text>
               </GlassView>
             </Animated.View>
@@ -114,10 +114,10 @@ export default function TermsScreen() {
 
         <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.footerSection}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
-            Last updated: May 18, 2026
+            {t('settings.legal.lastUpdated')}
           </Text>
           <GradientButton
-            title="I Understand"
+            title={t('settings.terms.understand')}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.back();

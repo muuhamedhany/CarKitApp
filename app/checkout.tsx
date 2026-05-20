@@ -1,6 +1,7 @@
 import { CenteredHeader, FormInput, GlassView } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, orderService, paymentService } from '@/services/api';
@@ -47,10 +48,10 @@ const addDays = (baseDate: Date, days: number) => {
 
 const formatDateValue = (date: Date) => date.toISOString().split('T')[0];
 
-const formatReadableDate = (isoDate: string) => {
+const formatReadableDate = (isoDate: string, language: 'en' | 'ar' = 'en') => {
     try {
         const date = new Date(`${isoDate}T00:00:00`);
-        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     } catch {
         return isoDate;
     }
@@ -70,6 +71,7 @@ export default function CheckoutScreen() {
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { items, total, fetchCart } = useCart();
+    const { t, language } = useTranslation();
 
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -97,8 +99,8 @@ export default function CheckoutScreen() {
     const [deliveryType, setDeliveryType] = useState<'home_delivery' | 'workshop_fitting'>('home_delivery');
 
     const deliveryOptions = [
-        { id: 'home_delivery', label: 'Home Delivery', icon: 'truck-delivery-outline', subtitle: 'Delivered to your address' },
-        { id: 'workshop_fitting', label: 'Apply at Workshop', icon: 'wrench-outline', subtitle: 'Install at vendor workshop' }
+        { id: 'home_delivery', label: t('checkout.homeDelivery'), icon: 'truck-delivery-outline', subtitle: t('checkout.homeDeliverySub') },
+        { id: 'workshop_fitting', label: t('checkout.workshopFitting'), icon: 'wrench-outline', subtitle: t('checkout.workshopFittingSub') }
     ];
 
     const totalNumber = useMemo(() => Number(total) || 0, [total]);
@@ -350,7 +352,7 @@ export default function CheckoutScreen() {
                             <View style={[styles.sectionIcon, { backgroundColor: colors.pink + '15' }]}>
                                 <MaterialCommunityIcons name="layers-outline" size={20} color={colors.pink} />
                             </View>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Fulfillment Method</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('checkout.fulfillmentMethod')}</Text>
                         </View>
                     </View>
 
@@ -406,7 +408,7 @@ export default function CheckoutScreen() {
                                 <View style={[styles.sectionIcon, { backgroundColor: colors.pink + '15' }]}>
                                     <MaterialCommunityIcons name="truck-delivery-outline" size={20} color={colors.pink} />
                                 </View>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Shipping Address</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('checkout.shippingAddress')}</Text>
                             </View>
                             <Pressable
                                 style={({ pressed }) => [
@@ -435,7 +437,7 @@ export default function CheckoutScreen() {
                                 >
                                     <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
                                         <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>No address found. Tap to add one.</Text>
+                                        <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('checkout.noAddress')}</Text>
                                     </GlassView>
                                 </Pressable>
                             </Animated.View>
@@ -460,7 +462,7 @@ export default function CheckoutScreen() {
                                             <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
                                                 <View style={styles.addressHeader}>
                                                     <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
-                                                        {address.title || 'Address'}
+                                                        {address.title || t('checkout.address')}
                                                     </Text>
                                                     {active ? <MaterialCommunityIcons name="check-circle" size={18} color={colors.pink} /> : null}
                                                 </View>
@@ -482,13 +484,13 @@ export default function CheckoutScreen() {
                                 <View style={[styles.sectionIcon, { backgroundColor: '#10B981' + '15' }]}>
                                     <MaterialCommunityIcons name="wrench-outline" size={20} color="#10B981" />
                                 </View>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Workshop Fitting</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('checkout.workshopFitting')}</Text>
                             </View>
                         </View>
 
                         {hasWorkshopVendorGap ? (
                             <Text style={[styles.workshopDetail, { color: colors.pink }]}>
-                                One or more cart items are missing a vendor workshop.
+                                {t('checkout.workshopMissing')}
                             </Text>
                         ) : null}
 
@@ -500,26 +502,26 @@ export default function CheckoutScreen() {
                                         <View style={{ flex: 1 }}>
                                             <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{group.vendorName}</Text>
                                             <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
-                                                {group.itemCount} item{group.itemCount === 1 ? '' : 's'} for installation
+                                                {t(group.itemCount === 1 ? 'checkout.itemForInstall' : 'checkout.itemsForInstall', { count: group.itemCount })}
                                             </Text>
                                         </View>
                                     </View>
                                     <View style={styles.workshopLine}>
                                         <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textSecondary} />
                                         <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
-                                            {group.workshopAddress || 'Workshop address will be confirmed by the vendor'}
+                                            {group.workshopAddress || t('checkout.workshopAddressPending')}
                                         </Text>
                                     </View>
                                     <View style={styles.workshopLine}>
                                         <MaterialCommunityIcons name="timer-outline" size={16} color={colors.textSecondary} />
                                         <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
-                                            Estimated fitting time: {group.installationMinutes || 30} minutes
+                                            {t('checkout.estimatedFittingTime', { minutes: group.installationMinutes || 30 })}
                                         </Text>
                                     </View>
                                     <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
                                         <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
                                         <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
-                                            Fitting fee: {WORKSHOP_SERVICE_FEE.toFixed(2)} EGP for this workshop order
+                                            {t('checkout.fittingFee', { amount: WORKSHOP_SERVICE_FEE.toFixed(2), currency: t('common.currency.egp') })}
                                         </Text>
                                     </View>
                                 </GlassView>
@@ -536,7 +538,7 @@ export default function CheckoutScreen() {
                             <View style={[styles.sectionIcon, { backgroundColor: colors.purple + '15' }]}>
                                 <MaterialCommunityIcons name="credit-card-outline" size={20} color={colors.purple} />
                             </View>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Payment Method</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('checkout.paymentMethod')}</Text>
                         </View>
                     </View>
 
@@ -565,7 +567,7 @@ export default function CheckoutScreen() {
                                     <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
                                         <View style={styles.methodLeft}>
                                             <MaterialCommunityIcons name={method.icon as any} size={20} color={active ? colors.pink : colors.textSecondary} />
-                                            <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
+                                            <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{t(method.label)}</Text>
                                         </View>
                                         {active ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
                                     </GlassView>
@@ -578,7 +580,7 @@ export default function CheckoutScreen() {
                 {paymentMethod === 'credit_card' ? (
                     <Animated.View entering={FadeInUp}>
                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.paymentDetailsCard, { borderColor: colors.cardBorder }]}>
-                            <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>Card Details</Text>
+                            <Text style={[styles.paymentDetailsTitle, { color: colors.textPrimary }]}>{t('checkout.cardDetails')}</Text>
                             {loadingSavedCards ? (
                                 <ActivityIndicator size="small" color={colors.pink} />
                             ) : savedCards.length > 0 ? (
@@ -628,7 +630,7 @@ export default function CheckoutScreen() {
                                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.methodBlur}>
                                     <View style={styles.methodLeft}>
                                         <MaterialCommunityIcons name="plus-circle-outline" size={20} color={useNewCard ? colors.pink : colors.textSecondary} />
-                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>Use new card</Text>
+                                        <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{t('checkout.useNewCard')}</Text>
                                     </View>
                                     {useNewCard ? <MaterialCommunityIcons name="radiobox-marked" size={18} color={colors.pink} /> : <MaterialCommunityIcons name="radiobox-blank" size={18} color={colors.textSecondary} />}
                                 </GlassView>
@@ -670,7 +672,7 @@ export default function CheckoutScreen() {
                             </View>
                                 </>
                             ) : null}
-                            <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>Select a saved card or complete all fields to unlock Place Order.</Text>
+                            <Text style={[styles.uploadHint, { color: colors.textSecondary, opacity: 0.6 }]}>{t('checkout.cardHint')}</Text>
                         </GlassView>
                     </Animated.View>
                 ) : null}
@@ -685,7 +687,7 @@ export default function CheckoutScreen() {
                             <View style={[styles.sectionIcon, { backgroundColor: '#4CAF5015' }]}>
                                 <MaterialCommunityIcons name="calendar-clock-outline" size={20} color="#4CAF50" />
                             </View>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Arrival Window</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('checkout.arrivalWindow')}</Text>
                         </View>
                     </View>
 
@@ -698,18 +700,18 @@ export default function CheckoutScreen() {
                             <View style={styles.estimatedHeader}>
                                 <MaterialCommunityIcons name="calendar-range" size={20} color={colors.pink} />
                                 <Text style={[styles.estimatedTitle, { color: colors.textPrimary }]}>
-                                    {deliveryType === 'home_delivery' ? 'Estimated Delivery' : 'Preferred Installation Day'}
+                                    {t(deliveryType === 'home_delivery' ? 'checkout.estimatedDelivery' : 'checkout.preferredInstallationDay')}
                                 </Text>
                             </View>
                             <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>
                                 {deliveryType === 'home_delivery'
-                                    ? `Between ${formatReadableDate(formatDateValue(estimatedStartDate))} and ${formatReadableDate(formatDateValue(estimatedEndDate))}`
-                                    : `Vendor workshop queues will be assigned for ${formatReadableDate(preferredDeliveryDate)}`}
+                                    ? t('checkout.deliveryBetween', { start: formatReadableDate(formatDateValue(estimatedStartDate), language), end: formatReadableDate(formatDateValue(estimatedEndDate), language) })
+                                    : t('checkout.workshopQueuesAssigned', { date: formatReadableDate(preferredDeliveryDate, language) })}
                             </Text>
                         </GlassView>
                     </Animated.View>
 
-                    <Text style={[styles.dateSelectionLabel, { color: colors.textSecondary }]}>Select Preferred Day</Text>
+                    <Text style={[styles.dateSelectionLabel, { color: colors.textSecondary }]}>{t('checkout.selectPreferredDay')}</Text>
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
                         {deliveryChoices.map((dateValue, idx) => {
@@ -730,8 +732,8 @@ export default function CheckoutScreen() {
                                         }}
                                     >
                                         <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={styles.dateBlur}>
-                                            <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>{selected ? 'Selected' : 'Preferred'}</Text>
-                                            <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue)}</Text>
+                                            <Text style={[styles.dateChipLabel, { color: selected ? colors.pink : colors.textSecondary }]}>{t(selected ? 'checkout.selected' : 'checkout.preferred')}</Text>
+                                            <Text style={[styles.dateChipValue, { color: colors.textPrimary }]}>{formatReadableDate(dateValue, language)}</Text>
                                         </GlassView>
                                     </Pressable>
                                 </Animated.View>
@@ -746,36 +748,36 @@ export default function CheckoutScreen() {
                 <Animated.View entering={FadeInUp.delay(1000)}>
                     <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.summaryCard, { borderColor: colors.cardBorder }]}>
                         <View style={styles.receiptHeader}>
-                            <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>Order Summary</Text>
+                            <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>{t('checkout.orderSummary')}</Text>
                             <MaterialCommunityIcons name="receipt-outline" size={24} color={colors.textSecondary} />
                         </View>
 
                         <View style={styles.summaryTable}>
                             <View style={styles.summaryRow}>
-                                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Items ({items.length})</Text>
-                                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{totalNumber.toFixed(2)} EGP</Text>
+                                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('checkout.itemsCount', { count: items.length })}</Text>
+                                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{totalNumber.toFixed(2)} {t('common.currency.egp')}</Text>
                             </View>
                             {deliveryType === 'home_delivery' ? (
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Shipping</Text>
-                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{shippingCharge.toFixed(2)} EGP</Text>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('checkout.shipping')}</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{shippingCharge.toFixed(2)} {t('common.currency.egp')}</Text>
                                 </View>
                             ) : (
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Fitting Service ({workshopVendorCount})</Text>
-                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{serviceCharge.toFixed(2)} EGP</Text>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('checkout.fittingService', { count: workshopVendorCount })}</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{serviceCharge.toFixed(2)} {t('common.currency.egp')}</Text>
                                 </View>
                             )}
 
                             <View style={styles.divider} />
                             <View style={styles.summaryRow}>
-                                <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Grand Total</Text>
+                                <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>{t('order.details.grandTotal')}</Text>
                                 <Text
                                     style={[styles.totalValue, { color: colors.pink }]}
                                     numberOfLines={1}
                                     adjustsFontSizeToFit
                                 >
-                                    {totalWithShipping.toFixed(2)} EGP
+                                    {totalWithShipping.toFixed(2)} {t('common.currency.egp')}
                                 </Text>
                             </View>
                         </View>
@@ -783,7 +785,9 @@ export default function CheckoutScreen() {
                         <View style={styles.deliveryBadge}>
                             <MaterialCommunityIcons name="clock-fast" size={16} color={colors.pink} />
                             <Text style={[styles.deliveryBadgeText, { color: colors.pink }]}>
-                                {deliveryType === 'home_delivery' ? `Arrival by ${formatReadableDate(preferredDeliveryDate)}` : `${workshopVendorCount} vendor workshop queue${workshopVendorCount === 1 ? '' : 's'} assigned after order placement`}
+                                {deliveryType === 'home_delivery'
+                                    ? t('checkout.arrivalBy', { date: formatReadableDate(preferredDeliveryDate, language) })
+                                    : t(workshopVendorCount === 1 ? 'checkout.queueAssigned' : 'checkout.queuesAssigned', { count: workshopVendorCount })}
                             </Text>
                         </View>
                     </GlassView>
@@ -819,7 +823,7 @@ export default function CheckoutScreen() {
                             {placingOrder ? (
                                 <ActivityIndicator color={colors.white} />
                             ) : (
-                                <Text style={styles.placeButtonText}>Place Order</Text>
+                                <Text style={styles.placeButtonText}>{t('checkout.placeOrder')}</Text>
                             )}
                         </LinearGradient>
                     </Pressable>
