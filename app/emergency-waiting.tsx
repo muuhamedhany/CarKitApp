@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CenteredHeader, GlassView } from '@/components';
 import EmergencyRouteMap, { RouteCoordinate } from '@/components/EmergencyRouteMap';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService, type CoordinateValue, type EmergencyRequest } from '@/services/api/emergency.service';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AVERAGE_CITY_SPEED_KMH = 32;
 
@@ -71,6 +72,7 @@ const formatLocationAge = (value: string | undefined, now: number) => {
 export default function EmergencyWaitingScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [request, setRequest] = useState<EmergencyRequest | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -127,7 +129,11 @@ export default function EmergencyWaitingScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <CenteredHeader title="Emergency Request" titleColor={colors.textPrimary} />
+        <CenteredHeader
+          title="Emergency Request"
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         <GlassView intensity={isDark ? 30 : 50} style={styles.card} {...{} as any}>
           {!request || status === 'searching' ? (
             <>
@@ -232,7 +238,7 @@ export default function EmergencyWaitingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flexGrow: 1, padding: Spacing.md, justifyContent: 'center', gap: Spacing.md },
+  content: { flexGrow: 1, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xl, gap: Spacing.md },
   card: { padding: Spacing.xl, borderRadius: BorderRadius.xl, alignItems: 'center', gap: Spacing.md, borderWidth: 1 },
   title: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg, textAlign: 'center' },
   subtitle: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, textAlign: 'center' },

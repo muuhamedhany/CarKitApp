@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,12 +8,14 @@ import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MAX_ASSIGNED_SERVICES = 2;
 
 export default function AddEmployeeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const [services, setServices] = useState<EmergencyServiceOption[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
@@ -56,7 +58,11 @@ export default function AddEmployeeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content}>
-        <CenteredHeader title="Add Employee" titleColor={colors.textPrimary} />
+        <CenteredHeader
+          title="Add Employee"
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         <Input label="Name" value={form.full_name} onChangeText={(v: string) => setForm({ ...form, full_name: v })} colors={colors} />
         <Input label="Phone" value={form.phone} onChangeText={(v: string) => setForm({ ...form, phone: v })} colors={colors} />
         <Input label="Password" value={form.password} secureTextEntry onChangeText={(v: string) => setForm({ ...form, password: v })} colors={colors} />
@@ -87,7 +93,7 @@ function Input({ label, colors, ...props }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
   label: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, marginBottom: Spacing.xs },
   input: { minHeight: 52, borderWidth: 1, borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, fontFamily: Fonts.medium },
   sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
