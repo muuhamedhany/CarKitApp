@@ -1,16 +1,37 @@
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CenteredHeader } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import FormInput from '@/components/common/FormInput';
+import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MAX_ASSIGNED_SERVICES = 2;
+
+const getServiceConfig = (name: string) => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('towing') || lowerName.includes('ونش') || lowerName.includes('سحب')) {
+    return { icon: 'truck-flatbed' as const, color: '#FF3D00' };
+  }
+  if (lowerName.includes('battery') || lowerName.includes('بطارية') || lowerName.includes('شحن')) {
+    return { icon: 'car-battery' as const, color: '#FFAB00' };
+  }
+  if (lowerName.includes('tire') || lowerName.includes('إطار') || lowerName.includes('كاوتش')) {
+    return { icon: 'car-tire-alert' as const, color: '#2979FF' };
+  }
+  if (lowerName.includes('fuel') || lowerName.includes('gas') || lowerName.includes('وقود') || lowerName.includes('بنزين')) {
+    return { icon: 'gas-station' as const, color: '#00C853' };
+  }
+  if (lowerName.includes('key') || lowerName.includes('lock') || lowerName.includes('مفتاح') || lowerName.includes('قفل')) {
+    return { icon: 'car-key' as const, color: '#9C27B0' };
+  }
+  return { icon: 'car-wrench' as const, color: '#CD42A8' };
+};
 
 export default function AddEmployeeScreen() {
   const router = useRouter();
@@ -63,17 +84,70 @@ export default function AddEmployeeScreen() {
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
-        <Input label="Name" value={form.full_name} onChangeText={(v: string) => setForm({ ...form, full_name: v })} colors={colors} />
-        <Input label="Phone" value={form.phone} onChangeText={(v: string) => setForm({ ...form, phone: v })} colors={colors} />
-        <Input label="Password" value={form.password} secureTextEntry onChangeText={(v: string) => setForm({ ...form, password: v })} colors={colors} />
+        <FormInput
+          label="Name"
+          icon="account-outline"
+          placeholder="Driver full name"
+          value={form.full_name}
+          onChangeText={(v: string) => setForm({ ...form, full_name: v })}
+          autoCapitalize="words"
+          autoComplete="name"
+        />
+        <FormInput
+          label="Phone"
+          icon="phone-outline"
+          placeholder="Driver phone number"
+          value={form.phone}
+          onChangeText={(v: string) => setForm({ ...form, phone: v })}
+          keyboardType="phone-pad"
+          autoComplete="tel"
+        />
+        <FormInput
+          label="Password"
+          icon="lock-outline"
+          placeholder="Create a password"
+          value={form.password}
+          secureTextEntry
+          onChangeText={(v: string) => setForm({ ...form, password: v })}
+        />
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Emergency services</Text>
         <Text style={[styles.assignmentHint, { color: colors.textMuted }]}>{selected.length}/{MAX_ASSIGNED_SERVICES} services selected</Text>
-        {services.map((service) => (
-          <Pressable key={service.service_id} style={[styles.serviceRow, { borderColor: colors.cardBorder }]} onPress={() => toggle(service.service_id)}>
-            <MaterialCommunityIcons name={selected.includes(service.service_id) ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline'} size={22} color={selected.includes(service.service_id) ? colors.pink : colors.textMuted} />
-            <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
-          </Pressable>
-        ))}
+        <View style={styles.roleGrid}>
+          {services.map((service) => {
+            const isSelected = selected.includes(service.service_id);
+            const config = getServiceConfig(service.name);
+
+            return (
+              <Pressable
+                key={service.service_id}
+                style={({ pressed }) => [
+                  styles.roleCard,
+                  {
+                    borderColor: isSelected ? config.color : colors.cardBorder,
+                    backgroundColor: isSelected ? config.color + '12' : colors.surfaceElevated,
+                    opacity: pressed ? 0.86 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  },
+                ]}
+                onPress={() => toggle(service.service_id)}
+              >
+                <LinearGradient
+                  colors={isSelected ? [config.color + '24', config.color + '05'] : [colors.surfaceMuted, colors.transparent]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={[styles.roleIconWrap, { backgroundColor: config.color + '18' }]}>
+                  <MaterialCommunityIcons name={config.icon} size={30} color={config.color} />
+                </View>
+                <Text numberOfLines={2} style={[styles.roleName, { color: colors.textPrimary }]}>
+                  {service.name}
+                </Text>
+                <View style={[styles.roleCheck, { backgroundColor: isSelected ? config.color : colors.surfaceMuted, borderColor: isSelected ? config.color : colors.cardBorder }]}>
+                  <MaterialCommunityIcons name={isSelected ? 'check-bold' : 'plus'} size={14} color={isSelected ? '#FFFFFF' : colors.textMuted} />
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
         <Pressable style={[styles.submit, { backgroundColor: colors.pink }]} onPress={submit}>
           <Text style={styles.submitText}>Create Employee</Text>
         </Pressable>
@@ -82,24 +156,25 @@ export default function AddEmployeeScreen() {
   );
 }
 
-function Input({ label, colors, ...props }: any) {
-  return (
-    <View style={{ marginBottom: Spacing.md }}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      <TextInput {...props} style={[styles.input, { color: colors.textPrimary, borderColor: colors.cardBorder, backgroundColor: colors.surfaceElevated }]} placeholderTextColor={colors.textMuted} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
-  label: { fontFamily: Fonts.bold, fontSize: FontSizes.xs, marginBottom: Spacing.xs },
-  input: { minHeight: 52, borderWidth: 1, borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, fontFamily: Fonts.medium },
   sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
   assignmentHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginBottom: Spacing.sm },
-  serviceRow: { minHeight: 52, borderWidth: 1, borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
-  serviceName: { fontFamily: Fonts.medium, fontSize: FontSizes.sm },
+  roleGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: Spacing.md },
+  roleCard: {
+    width: '48%',
+    minHeight: 142,
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    padding: Spacing.md,
+    justifyContent: 'space-between',
+    ...Shadows.sm,
+  },
+  roleIconWrap: { width: 52, height: 52, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
+  roleName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, lineHeight: 20, marginTop: Spacing.sm, paddingRight: Spacing.lg },
+  roleCheck: { position: 'absolute', top: Spacing.sm, right: Spacing.sm, width: 26, height: 26, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   submit: { minHeight: 54, borderRadius: BorderRadius.full, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.lg },
   submitText: { color: '#fff', fontFamily: Fonts.bold, textTransform: 'uppercase' },
 });
