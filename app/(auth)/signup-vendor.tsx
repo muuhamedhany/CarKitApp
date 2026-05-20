@@ -71,7 +71,7 @@ export default function SignUpVendorScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={styles.flex}
       >
-        <CenteredHeader title="Vendor Account" titleColor={colors.pink} />
+        <CenteredHeader title="Creat Account" titleColor={colors.pink} />
 
         <ScrollView 
           contentContainerStyle={styles.scrollContent} 
