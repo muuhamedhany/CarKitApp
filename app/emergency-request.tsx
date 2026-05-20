@@ -9,7 +9,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const methods: { key: PaymentMethod; label: string; icon: string }[] = [
   { key: 'cash_on_delivery', label: 'Cash on Delivery', icon: 'cash' },
@@ -20,6 +21,7 @@ export default function EmergencyRequestScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ serviceId: string; serviceName: string; price?: string }>();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -53,7 +55,11 @@ export default function EmergencyRequestScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content}>
-        <CenteredHeader title={params.serviceName || 'Emergency Request'} titleColor={colors.textPrimary} />
+        <CenteredHeader
+          title={params.serviceName || 'Emergency Request'}
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         <GlassView intensity={isDark ? 30 : 50} style={styles.card} {...{} as any}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('emergency.request.location')}</Text>
           <Pressable style={[styles.locationBox, { borderColor: colors.cardBorder }]} onPress={() => setPickerVisible(true)}>
@@ -92,7 +98,7 @@ export default function EmergencyRequestScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
   card: { padding: Spacing.lg, borderRadius: BorderRadius.xl, marginBottom: Spacing.md, borderWidth: 1 },
   sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.md },
   locationBox: { minHeight: 88, borderWidth: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },

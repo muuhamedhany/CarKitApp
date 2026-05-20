@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,10 +7,12 @@ import { CenteredHeader } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { emergencyService, EmergencyEmployee } from '@/services/api/emergency.service';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProviderEmployeesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [employees, setEmployees] = useState<EmergencyEmployee[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +23,11 @@ export default function ProviderEmployeesScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content}>
-        <CenteredHeader title="Emergency Team" titleColor={colors.textPrimary} />
+        <CenteredHeader
+          title="Emergency Team"
+          titleColor={colors.textPrimary}
+          rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
+        />
         <Pressable style={[styles.addButton, { backgroundColor: colors.pink }]} onPress={() => router.push('/add-employee' as any)}>
           <MaterialCommunityIcons name="account-plus" size={20} color="#fff" />
           <Text style={styles.addText}>Add Employee</Text>
@@ -46,7 +52,7 @@ export default function ProviderEmployeesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
+  content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
   addButton: { minHeight: 52, borderRadius: BorderRadius.full, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginBottom: Spacing.md },
   addText: { color: '#fff', fontFamily: Fonts.bold, textTransform: 'uppercase' },
   card: { borderWidth: 1, borderRadius: BorderRadius.xl, padding: Spacing.md, marginBottom: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md },
