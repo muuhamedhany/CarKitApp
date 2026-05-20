@@ -1,31 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import {
-    View, Text, StyleSheet, ScrollView, Pressable,
-    ActivityIndicator, Image
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
-import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/theme';
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useToast } from '@/contexts/ToastContext';
-import { providerService } from '@/services/api/provider.service';
-import { supabase } from '@/lib/supabase';
-import GradientButton from '@/components/common/GradientButton';
 import BackButton from '@/components/common/BackButton';
-import { GlassView, FormInput } from '@/components';
+import FormInput from '@/components/common/FormInput';
+import GradientButton from '@/components/common/GradientButton';
+import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useToast } from '@/contexts/ToastContext';
+import { useTheme } from '@/hooks/useTheme';
+import { supabase } from '@/lib/supabase';
+import { providerService } from '@/services/api/provider.service';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+type ServiceCategoryOption = { service_category_id: number; name: string };
 
-const STEPS = ['Info', 'Details', 'Media'];
+type ImageSlot = {
+    previewUri: string | null;
+    base64: string | null;
+};
 
-// ─── Image helpers ────────────────────────────────────────────────────────────
+const createImageSlots = (): ImageSlot[] =>
+    Array.from({ length: 3 }, () => ({ previewUri: null, base64: null }));
 
 const uploadServiceImage = async (base64: string, slotIndex: number): Promise<string> => {
     const fileName = `service-${Date.now()}-${slotIndex}-${Math.floor(Math.random() * 1000)}.jpg`;
@@ -37,174 +36,517 @@ const uploadServiceImage = async (base64: string, slotIndex: number): Promise<st
     return data.publicUrl;
 };
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 export default function AddServiceScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { showToast } = useToast();
-    const isDark = colors.background === '#000000' || colors.background === '#121212';
 
-    const [currentStep, setCurrentStep] = useState(0);
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+    const [duration, setDuration] = useState('');
+    const [categories, setCategories] = useState<ServiceCategoryOption[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [imageSlots, setImageSlots] = useState<ImageSlot[]>(createImageSlots());
     const [submitting, setSubmitting] = useState(false);
-    const [form, setForm] = useState({ name: '', description: '', price: '', duration: '', category: '', is_emergency: false });
-    const [imageUri, setImageUri] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<string | null>(null);
-    const [CATEGORIES, setCategories] = useState<string[]>([]);
+    const [step, setStep] = useState(1);
 
     useEffect(() => {
-        providerService.getServiceCategories().then(res => {
-            if (res.success && res.data) setCategories(res.data.map((c: any) => c.name));
-        });
-    }, []);
+        let mounted = true;
+        const loadCategories = async () => {
+            try {
+                setCategoriesLoading(true);
+                const res = await providerService.getServiceCategories();
+                if (!mounted) return;
+                if (res.success && Array.isArray(res.data)) {
+                    setCategories(res.data);
+                } else {
+                    showToast('error', 'Categories Error', res.message || 'Could not load service categories.');
+                }
+            } catch {
+                if (mounted) showToast('error', 'Categories Error', 'Could not load service categories.');
+            } finally {
+                if (mounted) setCategoriesLoading(false);
+            }
+        };
 
-    const handlePickImage = async () => {
+        loadCategories();
+        return () => { mounted = false; };
+    }, [showToast]);
+
+    useEffect(() => {
+        if (!selectedCategoryId && categories.length > 0) {
+            setSelectedCategoryId(categories[0].service_category_id);
+        }
+    }, [categories, selectedCategoryId]);
+
+    const pickImage = async (slotIndex: number) => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.7, base64: true,
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.7,
+            base64: true,
         });
-        if (!result.canceled) {
-            setImageUri(result.assets[0].uri);
-            setImageFile(result.assets[0].base64 || null);
+
+        if (!result.canceled && result.assets?.length) {
+            const asset = result.assets[0];
+            setImageSlots((current) => {
+                const next = [...current];
+                next[slotIndex] = {
+                    previewUri: asset.uri,
+                    base64: asset.base64 ?? null,
+                };
+                return next;
+            });
         }
     };
 
-    const handleNext = () => {
-        if (currentStep < STEPS.length - 1) setCurrentStep(s => s + 1);
-        else handleSubmit();
+    const validateInfoStep = () => {
+        if (name.trim().length < 3) {
+            showToast('warning', 'Service Name Required', 'Enter a service name with at least 3 characters.');
+            return false;
+        }
+
+        if (description.trim().length < 10) {
+            showToast('warning', 'Description Required', 'Describe the service in at least 10 characters.');
+            return false;
+        }
+
+        if (!selectedCategoryId) {
+            showToast('warning', 'Category Required', 'Please select a category.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const validateDetailsStep = () => {
+        const parsedPrice = Number(price);
+        const parsedDuration = Number(duration);
+
+        if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+            showToast('warning', 'Invalid Price', 'Enter a service price greater than 0.');
+            return false;
+        }
+
+        if (!Number.isInteger(parsedDuration) || parsedDuration < 5 || parsedDuration > 1440) {
+            showToast('warning', 'Invalid Duration', 'Enter a duration between 5 and 1440 minutes.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const goNextStep = () => {
+        if (step === 1) {
+            if (!validateInfoStep()) return;
+            setStep(2);
+            return;
+        }
+
+        if (step === 2) {
+            if (!validateDetailsStep()) return;
+            setStep(3);
+        }
     };
 
     const handleSubmit = async () => {
+        if (!validateInfoStep() || !validateDetailsStep()) return;
+
         setSubmitting(true);
         try {
-            const imageUrl = imageFile ? await uploadServiceImage(imageFile, 0) : null;
+            const uploadedUrls = await Promise.all(
+                imageSlots.map((slot, index) => (slot.base64 ? uploadServiceImage(slot.base64, index) : null))
+            );
+
             const res = await providerService.createService({
-                name: form.name,
-                description: form.description,
-                price: parseFloat(form.price),
-                duration: parseInt(form.duration),
-                image_url: imageUrl, service_cat_id_fk: 1, is_active: true, is_emergency: form.is_emergency, image_url_2: null, image_url_3: null, provider_id_fk: 1, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-            } as any);
+                name: name.trim(),
+                description: description.trim(),
+                price: Number(price),
+                duration: Number(duration),
+                service_cat_id_fk: selectedCategoryId as number,
+                image_url: uploadedUrls[0] || null,
+                image_url_2: uploadedUrls[1] || null,
+                image_url_3: uploadedUrls[2] || null,
+                is_active: true,
+                location_type: 'both',
+                available_times: [],
+            });
+
             if (res.success) {
                 showToast('success', 'Service Submitted', 'Pending admin approval.');
                 router.back();
+            } else {
+                showToast('error', 'Failed', res.message || 'Could not submit service.');
             }
-        } catch (e) {
+        } catch {
             showToast('error', 'Error', 'Failed to submit.');
         } finally {
             setSubmitting(false);
         }
     };
 
+    const progressWidth = `${(step / 3) * 100}%` as `${number}%`;
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <ExpoLinearGradient
+            <LinearGradient
                 colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
+
             <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, left: -150, backgroundColor: colors.purple + '10' }]} />
-            
-            <View style={{ paddingTop: insets.top + Spacing.md, paddingHorizontal: Spacing.md }}>
+
+            <View style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}>
                 <BackButton />
+                <View style={styles.headerSpacer} />
+                <Text style={[styles.title, { color: colors.textPrimary }]}>Add Service</Text>
+                <View style={styles.headerSpacer} />
             </View>
 
-            <View style={styles.stepIndicator}>
-                {STEPS.map((step, idx) => (
-                    <React.Fragment key={step}>
-                        <View style={styles.stepItem}>
-                            <View style={[styles.stepCircle, { backgroundColor: currentStep >= idx ? colors.pink : 'transparent', borderColor: currentStep >= idx ? colors.pink : colors.cardBorder, borderWidth: 2 }]}>
-                                {currentStep > idx ? <MaterialCommunityIcons name="check" size={14} color="#FFF" /> : <Text style={[styles.stepNumber, { color: currentStep >= idx ? '#FFF' : colors.textSecondary }]}>{idx + 1}</Text>}
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={[styles.stepCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}>
+                    <Text style={[styles.stepLabel, { color: colors.textMuted }]}>Step {step} of 3</Text>
+                    <View style={[styles.progressTrack, { backgroundColor: colors.cardBorder }]}>
+                        <View style={[styles.progressFill, { backgroundColor: colors.pink, width: progressWidth }]} />
+                    </View>
+                </View>
+
+                {step === 1 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Info</Text>
+
+                        <FormInput
+                            label="Service Name"
+                            icon="wrench"
+                            placeholder="e.g. Oil change"
+                            value={name}
+                            onChangeText={setName}
+                        />
+
+                        <View style={[styles.textAreaShell, { borderColor: colors.inputBorder, backgroundColor: colors.FormBg }]}>
+                            <View style={styles.textAreaHeader}>
+                                <MaterialCommunityIcons name="text" size={20} color={colors.textMuted} />
                             </View>
-                            <Text style={[styles.stepLabel, { color: currentStep === idx ? colors.textPrimary : colors.textSecondary }]}>{step}</Text>
+
+                            <TextInput
+                                style={[styles.textAreaInput, { color: colors.textPrimary }]}
+                                placeholder="Detailed service description..."
+                                placeholderTextColor={colors.textMuted}
+                                value={description}
+                                onChangeText={setDescription}
+                                multiline
+                                textAlignVertical="top"
+                            />
                         </View>
-                        {idx < STEPS.length - 1 && <View style={[styles.stepLine, { backgroundColor: currentStep > idx ? colors.pink : colors.cardBorder }]} />}
-                    </React.Fragment>
-                ))}
-            </View>
 
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                <Animated.View entering={FadeInDown} key={`step-${currentStep}`}>
-                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.stepCard, { borderColor: colors.cardBorder }]}>
-                        {currentStep === 0 && (
-                            <View>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Information</Text>
-                                <FormInput label="Service Name" icon="wrench" placeholder="Enter service name" value={form.name} onChangeText={(v) => setForm(f => ({ ...f, name: v }))} />
-                                <FormInput 
-                                    label="Description" 
-                                    icon="text" 
-                                    placeholder="Describe your service" 
-                                    value={form.description} 
-                                    onChangeText={(v) => setForm(f => ({ ...f, description: v }))} 
-                                    multiline
-                                    numberOfLines={3}
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Category</Text>
+                        {categoriesLoading ? (
+                            <ActivityIndicator size="small" color={colors.pink} style={styles.categoryLoader} />
+                        ) : categories.length === 0 ? (
+                            <Text style={[styles.helperText, { color: colors.textMuted }]}>No service categories available.</Text>
+                        ) : (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
+                                {categories.map((cat) => {
+                                    const isSelected = selectedCategoryId === cat.service_category_id;
+
+                                    return (
+                                        <Pressable
+                                            key={cat.service_category_id}
+                                            onPress={() => setSelectedCategoryId(cat.service_category_id)}
+                                            style={[
+                                                styles.categoryChip,
+                                                {
+                                                    backgroundColor: isSelected ? colors.pink : colors.backgroundSecondary,
+                                                    borderColor: isSelected ? colors.pink : colors.cardBorder,
+                                                },
+                                            ]}
+                                        >
+                                            <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
+                                                {cat.name}
+                                            </Text>
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        )}
+
+                    </>
+                )}
+
+                {step === 2 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Timing</Text>
+                        <View style={styles.row}>
+                            <View style={styles.halfWidth}>
+                                <FormInput
+                                    label="Price"
+                                    icon="currency-usd"
+                                    placeholder="0.00"
+                                    keyboardType="numeric"
+                                    value={price}
+                                    onChangeText={(value) => setPrice(value.replace(',', '.'))}
                                 />
-                                <Pressable
-                                    onPress={() => setForm(f => ({ ...f, is_emergency: !f.is_emergency }))}
-                                    style={[styles.toggleRow, { borderColor: colors.cardBorder, backgroundColor: form.is_emergency ? colors.errorSoft : 'transparent' }]}
-                                >
-                                    <MaterialCommunityIcons
-                                        name={form.is_emergency ? 'toggle-switch' : 'toggle-switch-off-outline'}
-                                        size={34}
-                                        color={form.is_emergency ? colors.error : colors.textMuted}
-                                    />
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Emergency service</Text>
-                                        <Text style={[styles.toggleHint, { color: colors.textSecondary }]}>Only appears in the emergency request flow.</Text>
-                                    </View>
-                                </Pressable>
                             </View>
-                        )}
-                        {currentStep === 1 && (
-                            <View>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Timing</Text>
-                                <FormInput label="Price (EGP)" icon="cash" keyboardType="numeric" placeholder="0.00" value={form.price} onChangeText={(v) => setForm(f => ({ ...f, price: v }))} />
-                                <FormInput label="Duration (min)" icon="clock-outline" keyboardType="numeric" placeholder="30" value={form.duration} onChangeText={(v) => setForm(f => ({ ...f, duration: v }))} />
+                            <View style={styles.halfWidth}>
+                                <FormInput
+                                    label="Duration"
+                                    icon="clock-outline"
+                                    placeholder="30"
+                                    keyboardType="number-pad"
+                                    value={duration}
+                                    onChangeText={(value) => setDuration(value.replace(/\D/g, ''))}
+                                />
                             </View>
-                        )}
-                        {currentStep === 2 && (
-                            <View>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Media</Text>
-                                <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickImage(); }} style={[styles.imageUpload, { borderColor: colors.cardBorder }]}>
-                                    {imageUri ? <Image source={{ uri: imageUri }} style={styles.previewImage} /> : <MaterialCommunityIcons name="camera-plus" size={40} color={colors.pink} />}
-                                </Pressable>
-                            </View>
-                        )}
-                    </GlassView>
-                </Animated.View>
-            </ScrollView>
+                        </View>
+                        <Text style={[styles.helperText, { color: colors.textMuted }]}>Duration is entered in minutes.</Text>
+                    </>
+                )}
 
-            <Animated.View entering={FadeInUp.delay(300)} style={[styles.footer, { borderTopColor: colors.cardBorder }]}>
-                {currentStep > 0 && <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCurrentStep(s => s - 1); }} style={styles.navButton}><Text style={{ color: colors.textPrimary }}>Back</Text></Pressable>}
-                <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleNext(); }} style={[styles.nextButton, { backgroundColor: colors.pink }]}>
-                    <Text style={{ color: '#FFF', fontFamily: Fonts.bold }}>{currentStep === STEPS.length - 1 ? 'Create Service' : 'Next'}</Text>
-                </Pressable>
-            </Animated.View>
+                {step === 3 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Upload Photos</Text>
+                        <Text style={[styles.helperText, { color: colors.textMuted }]}>Add up to three images for the service listing.</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesRow}>
+                            {imageSlots.map((slot, index) => {
+                                const hasImage = !!slot.previewUri;
+
+                                return (
+                                    <View key={index} style={{ position: 'relative' }}>
+                                        <Pressable
+                                            onPress={() => pickImage(index)}
+                                            style={[
+                                                styles.imageSlot,
+                                                { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
+                                            ]}
+                                        >
+                                            <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary }]}>
+                                                {hasImage ? (
+                                                    <Image source={{ uri: slot.previewUri! }} style={styles.image} />
+                                                ) : (
+                                                    <MaterialCommunityIcons name="camera-plus" size={28} color={colors.textMuted} />
+                                                )}
+                                            </View>
+                                            <Text style={[styles.imageLabel, { color: colors.textSecondary }]}>
+                                                {index === 0 ? (hasImage ? 'Primary' : 'Main Photo') : (hasImage ? `Photo ${index + 1}` : `Add ${index + 1}`)}
+                                            </Text>
+                                        </Pressable>
+
+                                        {hasImage && (
+                                            <Pressable
+                                                onPress={() => {
+                                                    setImageSlots((current) => {
+                                                        const next = [...current];
+                                                        next[index] = { previewUri: null, base64: null };
+                                                        return next;
+                                                    });
+                                                }}
+                                                style={styles.imageRemoveButton}
+                                            >
+                                                <MaterialCommunityIcons name="close-circle" size={22} color="#EF4444" />
+                                            </Pressable>
+                                        )}
+                                    </View>
+                                );
+                            })}
+                        </ScrollView>
+                    </>
+                )}
+
+                <View style={styles.actionsRow}>
+                    {step > 1 ? (
+                        <Pressable
+                            onPress={() => setStep((current) => Math.max(1, current - 1))}
+                            style={[styles.secondaryButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                        >
+                            <Text style={[styles.secondaryButtonText, { color: colors.textPrimary }]}>Back</Text>
+                        </Pressable>
+                    ) : (
+                        <View style={styles.secondaryButtonSpacer} />
+                    )}
+
+                    <View style={styles.primaryButtonWrapper}>
+                        {step < 3 ? (
+                            <GradientButton title="Next" onPress={goNextStep} />
+                        ) : (
+                            <GradientButton title="Create Service" onPress={handleSubmit} loading={submitting} />
+                        )}
+                    </View>
+                </View>
+            </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    orb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, opacity: 0.5 },
-    stepIndicator: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg },
-    stepItem: { alignItems: 'center', gap: Spacing.xs },
-    stepCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-    stepNumber: { fontFamily: Fonts.bold, fontSize: 14 },
-    stepLabel: { fontFamily: Fonts.medium, fontSize: 11 },
-    stepLine: { flex: 1, height: 2, marginHorizontal: Spacing.xs, marginTop: -16 },
-    content: { paddingHorizontal: Spacing.lg, paddingBottom: 160 },
-    stepCard: { borderRadius: BorderRadius.xxl, borderWidth: 1, padding: Spacing.xl, overflow: 'hidden', ...Shadows.lg },
-    sectionTitle: { fontFamily: Fonts.extraBold, fontSize: 24, marginBottom: Spacing.lg, letterSpacing: -0.5 },
-    input: { borderWidth: 1, borderRadius: BorderRadius.lg, paddingVertical: 14, paddingHorizontal: Spacing.md, marginBottom: Spacing.md, fontSize: FontSizes.md },
-    textArea: { minHeight: 120 },
-    imageUpload: { height: 200, borderRadius: BorderRadius.lg, borderWidth: 2, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
-    previewImage: { width: '100%', height: '100%', borderRadius: BorderRadius.lg },
-    toggleRow: { borderWidth: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-    toggleTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-    toggleHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2 },
-    footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.md, flexDirection: 'row', gap: Spacing.md },
-    navButton: { padding: Spacing.md, borderRadius: BorderRadius.full },
-    nextButton: { flex: 1, padding: Spacing.md, borderRadius: BorderRadius.full, alignItems: 'center' }
+    container: {
+        flex: 1,
+    },
+    orb: {
+        position: 'absolute',
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.5,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: Spacing.md,
+        paddingBottom: Spacing.md,
+    },
+    headerSpacer: {
+        width: 40,
+        height: 40,
+    },
+    title: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.xl,
+    },
+    scrollContent: {
+        paddingHorizontal: Spacing.md,
+        paddingBottom: 150,
+    },
+    sectionTitle: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.md,
+        marginBottom: Spacing.sm,
+    },
+    stepCard: {
+        padding: Spacing.md,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        marginBottom: Spacing.lg,
+    },
+    stepLabel: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+        marginBottom: Spacing.sm,
+    },
+    progressTrack: {
+        height: 6,
+        borderRadius: 999,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        borderRadius: 999,
+    },
+    helperText: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.sm,
+        marginBottom: Spacing.md,
+        marginTop: -Spacing.xs,
+    },
+    textAreaShell: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.md,
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.sm,
+        minHeight: 140,
+    },
+    textAreaHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    textAreaInput: {
+        minHeight: 96,
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.md,
+        paddingBottom: Spacing.md,
+    },
+    categoryLoader: {
+        marginVertical: Spacing.sm,
+    },
+    categoriesRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    categoryChip: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+    },
+    categoryText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+    },
+    row: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+    },
+    halfWidth: {
+        flex: 1,
+    },
+    imagesRow: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+    },
+    imageSlot: {
+        width: 112,
+        borderRadius: BorderRadius.lg,
+        borderWidth: 1,
+        overflow: 'hidden',
+        padding: Spacing.xs,
+    },
+    imagePreview: {
+        width: '100%',
+        aspectRatio: 1,
+        borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    imageLabel: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+        textAlign: 'center',
+        marginTop: Spacing.xs,
+    },
+    imageRemoveButton: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        zIndex: 10,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 1,
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        marginTop: Spacing.lg,
+    },
+    secondaryButton: {
+        minWidth: 88,
+        paddingVertical: 14,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    secondaryButtonText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+    },
+    secondaryButtonSpacer: {
+        minWidth: 88,
+    },
+    primaryButtonWrapper: {
+        flex: 1,
+    },
 });
-

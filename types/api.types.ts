@@ -355,7 +355,6 @@ export type ServiceFormPayload = {
   image_url_3: string | null;
   location_type: 'both' | 'mobile' | 'in-shop';
   available_times: string[];
-  is_emergency?: boolean;
 };
 
 // ─── Provider Dashboard ───────────────────────────────────────────────────────

@@ -32,7 +32,7 @@ export default function ProviderEmployeesScreen() {
             <View>
               <Text style={[styles.name, { color: colors.textPrimary }]}>{employee.full_name}</Text>
               <Text style={[styles.meta, { color: colors.textSecondary }]}>{employee.phone}</Text>
-              <Text style={[styles.meta, { color: colors.textMuted }]}>{employee.service_ids?.length || 0} services assigned</Text>
+              <Text style={[styles.meta, { color: colors.textMuted }]}>{employee.service_ids?.length || 0}/2 services assigned</Text>
             </View>
             <View style={[styles.badge, { backgroundColor: employee.is_online ? colors.successSoft : colors.surfaceMuted }]}>
               <Text style={[styles.badgeText, { color: employee.is_online ? colors.success : colors.textMuted }]}>{employee.is_online ? 'Online' : 'Offline'}</Text>
