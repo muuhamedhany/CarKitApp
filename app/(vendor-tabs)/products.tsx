@@ -38,6 +38,7 @@ export default function VendorProductsScreen() {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const currencySuffix = t('common.currency.egp');
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ filter?: string }>();
@@ -61,12 +62,12 @@ export default function VendorProductsScreen() {
         hasLoaded.current = true;
       }
     } catch (e: any) {
-      showToast('error', 'Error', e.message || 'Failed to load products');
+      showToast('error', t('common.error'), e.message || t('inventory.loadFailed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [showToast, user?.vendor_id]);
+  }, [showToast, t, user?.vendor_id]);
 
   // Initial load only
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function VendorProductsScreen() {
     const stock = Number(item.stock ?? 0);
     const isActive = (item as any).is_active !== false && (item as any).status !== 'disabled' && (item as any).status !== 'rejected';
     
-    if (!isActive) return { label: 'Disabled', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
+    if (!isActive) return { label: t('inventory.badgeDisabled'), color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
     if (stock === 0) return { label: t('inventory.filterOutOfStock'), color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
     if (stock <= 5) return { label: t('inventory.badgeLowStock'), color: '#F97316', backgroundColor: 'rgba(249,115,22,0.15)', progressColor: '#F97316' };
     return { label: t('inventory.badgeActive'), color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', progressColor: '#10B981' };
@@ -151,15 +152,15 @@ export default function VendorProductsScreen() {
         ));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        throw new Error(res.message || 'Failed to update stock');
+        throw new Error(res.message || t('inventory.stockUpdateFailed'));
       }
     } catch (e: any) {
-      showToast('error', 'Error', e.message || 'Failed to update stock');
+      showToast('error', t('common.error'), e.message || t('inventory.stockUpdateFailed'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setUpdatingStock(null);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   const renderProductItem = useCallback(({ item, index }: { item: Product; index: number }) => {
     const stock = Number(item.stock ?? 0);
@@ -202,7 +203,7 @@ export default function VendorProductsScreen() {
               </View>
               
               <Text style={[styles.productPrice, { color: colors.textSecondary }]}>
-                {Number(item.price).toLocaleString('en-EG')} EGP
+                {Number(item.price).toLocaleString('en-EG')} {currencySuffix}
               </Text>
               
               {/* Progress Bar Row */}
@@ -248,7 +249,7 @@ export default function VendorProductsScreen() {
                   ]}
                   onPress={handleNavigate}
                 >
-                  <Text style={[styles.restockButtonText, { color: '#FFF' }]}>RESTOCK NOW</Text>
+                  <Text style={[styles.restockButtonText, { color: '#FFF' }]}>{t('inventory.restockNow')}</Text>
                 </Pressable>
               </View>
             ) : (
@@ -284,7 +285,7 @@ export default function VendorProductsScreen() {
                   ]}
                   onPress={handleNavigate}
                 >
-                  <Text style={[styles.viewDetailsBtnText, { color: '#FFF' }]}>View Details</Text>
+                  <Text style={[styles.viewDetailsBtnText, { color: '#FFF' }]}>{t('inventory.viewDetails')}</Text>
                 </Pressable>
               </View>
             )}
@@ -292,7 +293,7 @@ export default function VendorProductsScreen() {
         </GlassView>
       </Animated.View>
     );
-  }, [colors, getStockBadge, handleStockUpdate, isDark, router, t, updatingStock]);
+  }, [colors, currencySuffix, getStockBadge, handleStockUpdate, isDark, router, t, updatingStock]);
 
   const hasLowStock = useMemo(() => products.some((product) => Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= 5), [products]);
 
@@ -321,8 +322,8 @@ export default function VendorProductsScreen() {
           <View style={styles.header}>
             <View style={styles.headerTop}>
               <View>
-                <Text style={[styles.title, { color: colors.textPrimary }]}>Inventory</Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your product catalog</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{t('inventory.title')}</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('inventory.subtitle')}</Text>
               </View>
 
               <Pressable
@@ -334,29 +335,29 @@ export default function VendorProductsScreen() {
                 style={[styles.headerAction, { backgroundColor: colors.pink }]}
               >
                 <MaterialCommunityIcons name="plus" size={18} color={colors.white} />
-                <Text style={[styles.headerActionText, { color: colors.white }]}>Add</Text>
+                <Text style={[styles.headerActionText, { color: colors.white }]}>{t('common.add')}</Text>
               </Pressable>
             </View>
 
             <View style={styles.statsRow}>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                 <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.total}</Text>
-                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Total Items</Text>
+                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>{t('inventory.totalItems')}</Text>
               </GlassView>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                 <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.low}</Text>
-                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Low Stock</Text>
+                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>{t('inventory.filterLowStock')}</Text>
               </GlassView>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statsCard, { borderColor: colors.cardBorder }]}>
                 <Text style={[styles.statsValue, { color: colors.textPrimary }]}>{totals.out}</Text>
-                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>Out</Text>
+                <Text style={[styles.statsLabel, { color: colors.textSecondary }]}>{t('inventory.out')}</Text>
               </GlassView>
             </View>
 
             <View style={styles.searchWrap}>
               <FormInput
                 icon="magnify"
-                placeholder="Search products..."
+                placeholder="inventory.searchPlaceholder"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -397,9 +398,9 @@ export default function VendorProductsScreen() {
               contentContainerStyle={styles.sortRow}
             >
               {([
-                { key: 'latest', label: 'Latest' },
-                { key: 'price-desc', label: 'Price' },
-                { key: 'stock-asc', label: 'Stock' },
+                { key: 'latest', label: 'inventory.latest' },
+                { key: 'price-desc', label: 'inventory.price' },
+                { key: 'stock-asc', label: 'inventory.stock' },
               ] as const).map((option) => {
                 const isActive = sortMode === option.key;
                 return (
@@ -415,7 +416,7 @@ export default function VendorProductsScreen() {
                     ]}
                   >
                     <MaterialCommunityIcons name="sort" size={14} color={isActive ? colors.pink : colors.textMuted} />
-                    <Text style={[styles.sortText, { color: isActive ? colors.pink : colors.textMuted }]}>{option.label}</Text>
+                    <Text style={[styles.sortText, { color: isActive ? colors.pink : colors.textMuted }]}>{t(option.label)}</Text>
                   </Pressable>
                 );
               })}
@@ -427,8 +428,8 @@ export default function VendorProductsScreen() {
                   <MaterialCommunityIcons name="alert-decagram" size={20} color="#F97316" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.alertTitle, { color: '#F97316' }]}>Low Stock Alert</Text>
-                  <Text style={[styles.alertText, { color: colors.textSecondary }]}>Some products are reaching critical stock levels. Restock soon.</Text>
+                  <Text style={[styles.alertTitle, { color: '#F97316' }]}>{t('inventory.lowStockAlert')}</Text>
+                  <Text style={[styles.alertText, { color: colors.textSecondary }]}>{t('inventory.lowStockAlertMessage')}</Text>
                 </View>
               </GlassView>
             )}
@@ -440,7 +441,7 @@ export default function VendorProductsScreen() {
           ) : (
             <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.emptyState}>
               <MaterialCommunityIcons name="package-variant-closed" size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No products found</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('inventory.noProductsFound')}</Text>
             </GlassView>
           )
         }

@@ -37,14 +37,14 @@ type SimpleResponse = {
 
 const buildStockBadge = (stock: number) => {
   if (stock <= 0) {
-    return { label: 'Out of stock', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
+    return { labelKey: 'inventory.filterOutOfStock', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
   }
 
   if (stock <= 5) {
-    return { label: 'Low stock', backgroundColor: 'rgba(249,115,22,0.16)', color: '#F97316' };
+    return { labelKey: 'inventory.badgeLowStock', backgroundColor: 'rgba(249,115,22,0.16)', color: '#F97316' };
   }
 
-  return { label: 'Healthy stock', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
+  return { labelKey: 'inventory.badgeHealthyStock', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
 };
 
 export default function VendorProductDetailScreen() {
@@ -54,6 +54,7 @@ export default function VendorProductDetailScreen() {
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const { t, language } = useTranslation();
+  const currencySuffix = t('common.currency.egp');
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,12 +71,12 @@ export default function VendorProductDetailScreen() {
       const response = await apiFetch<ProductResponse>(`/products/${id}/manage`);
       setProduct(response.data);
     } catch (error: any) {
-      showToast('error', 'Error', error.message || 'Failed to load product details.');
+      showToast('error', t('common.error'), error.message || t('product.loadFailed'));
       router.back();
     } finally {
       setLoading(false);
     }
-  }, [id, router, showToast]);
+  }, [id, router, showToast, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -86,13 +87,13 @@ export default function VendorProductDetailScreen() {
   const publishInfo = useMemo(() => {
     const status = String(product?.status || 'active').toLowerCase();
     if (status === 'pending') {
-      return { label: 'Pending', backgroundColor: 'rgba(59,130,246,0.16)', color: '#3B82F6' };
+      return { labelKey: 'status.pending', backgroundColor: 'rgba(59,130,246,0.16)', color: '#3B82F6' };
     }
     if (status === 'active') {
-      return { label: 'Enabled', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
+      return { labelKey: 'status.enabled', backgroundColor: 'rgba(16,185,129,0.16)', color: '#10B981' };
     }
 
-    return { label: 'Disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
+    return { labelKey: 'status.disabled', backgroundColor: 'rgba(239,68,68,0.16)', color: '#EF4444' };
   }, [product?.status]);
 
   const stockInfo = useMemo(() => buildStockBadge(Number(product?.stock ?? 0)), [product?.stock]);
@@ -116,9 +117,11 @@ export default function VendorProductDetailScreen() {
         body: JSON.stringify({ status: nextStatus }),
       });
       setProduct(response.data);
-      showToast('success', 'Updated', response.message || `Product ${nextStatus === 'active' ? 'enabled' : 'disabled'} successfully.`);
+      showToast('success', t('common.updated'), response.message || t('product.statusUpdatedMessage', {
+        status: t(nextStatus === 'active' ? 'status.enabled' : 'status.disabled').toLowerCase(),
+      }));
     } catch (error: any) {
-      showToast('error', 'Error', error.message || 'Failed to update product status.');
+      showToast('error', t('common.error'), error.message || t('product.statusUpdateFailed'));
     } finally {
       setSaving(false);
     }
@@ -130,21 +133,21 @@ export default function VendorProductDetailScreen() {
     }
 
     Alert.alert(
-      'Delete product',
-      'This will permanently remove the product from your inventory.',
+      t('product.deleteProduct'),
+      t('product.deleteConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               setSaving(true);
               const response = await apiFetch<SimpleResponse>(`/products/${product.product_id}`, { method: 'DELETE' });
-              showToast('success', 'Deleted', response.message || 'Product deleted successfully.');
+              showToast('success', t('common.deleted'), response.message || t('product.deletedMessage'));
               router.replace('/(vendor-tabs)/products');
             } catch (error: any) {
-              showToast('error', 'Error', error.message || 'Failed to delete product.');
+              showToast('error', t('common.error'), error.message || t('product.deleteFailed'));
             } finally {
               setSaving(false);
             }
@@ -164,9 +167,9 @@ export default function VendorProductDetailScreen() {
       });
       setProduct(response.data);
       setRestockValue('');
-      showToast('success', 'Restocked', response.message || `Stock updated to ${newStock} units.`);
+      showToast('success', t('product.restocked'), response.message || t('product.stockUpdatedUnits', { count: newStock }));
     } catch (error: any) {
-      showToast('error', 'Error', error.message || 'Failed to update stock.');
+      showToast('error', t('common.error'), error.message || t('inventory.stockUpdateFailed'));
     } finally {
       setSaving(false);
     }
@@ -201,12 +204,12 @@ export default function VendorProductDetailScreen() {
   const isEnabled = String(product.status || 'active').toLowerCase() === 'active';
   const isPending = String(product.status || '').toLowerCase() === 'pending';
   const stock = Number(product.stock ?? 0);
-  const publishLabel = isEnabled ? t('inventory.badgeActive') : publishInfo.label;
+  const publishLabel = isEnabled ? t('inventory.badgeActive') : t(publishInfo.labelKey);
   const stockLabel = stock <= 0
     ? t('inventory.filterOutOfStock')
     : stock <= 5
       ? t('inventory.badgeLowStock')
-      : stockInfo.label;
+      : t(stockInfo.labelKey);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -214,7 +217,7 @@ export default function VendorProductDetailScreen() {
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerIconButton}>
           <MaterialCommunityIcons name="chevron-left" size={30} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Product details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('product.detailsTitle')}</Text>
         <View style={styles.headerIconSpacer} />
       </View>
 
@@ -223,10 +226,10 @@ export default function VendorProductDetailScreen() {
           <View style={{ backgroundColor: 'rgba(59,130,246,0.1)', padding: Spacing.md, borderRadius: BorderRadius.xl, borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
               <MaterialCommunityIcons name="clock-outline" size={24} color="#3B82F6" />
-              <Text style={{ fontFamily: Fonts.semiBold, color: '#3B82F6', fontSize: FontSizes.md }}>Pending Approval</Text>
+              <Text style={{ fontFamily: Fonts.semiBold, color: '#3B82F6', fontSize: FontSizes.md }}>{t('product.pendingApproval')}</Text>
             </View>
             <Text style={{ fontFamily: Fonts.regular, color: '#9E9E9E', fontSize: FontSizes.sm, marginTop: Spacing.xs, lineHeight: 20 }}>
-              This product is under review. You will be notified once it is approved.
+              {t('product.pendingApprovalMessage')}
             </Text>
           </View>
         )}
@@ -255,7 +258,7 @@ export default function VendorProductDetailScreen() {
 
           <View style={styles.heroInfo}>
             <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
-            <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(product.price).toLocaleString('en-EG')} EGP</Text>
+            <Text style={[styles.productPrice, { color: colors.pink }]}>{Number(product.price).toLocaleString('en-EG')} {currencySuffix}</Text>
 
             <View style={styles.badgeRow}>
               <View style={[styles.badge, { backgroundColor: publishInfo.backgroundColor }]}>
@@ -270,15 +273,15 @@ export default function VendorProductDetailScreen() {
 
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Category</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{product.category_name ? translateCategoryName(product.category_name, language) : 'Uncategorized'}</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('product.category')}</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{product.category_name ? translateCategoryName(product.category_name, language) : t('product.uncategorized')}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Stock</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{Number(product.stock ?? 0)} units</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('product.stock')}</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{Number(product.stock ?? 0)} {t('order.details.unit')}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Product ID</Text>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('product.productId')}</Text>
             <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{product.product_id}</Text>
           </View>
         </View>
@@ -286,8 +289,8 @@ export default function VendorProductDetailScreen() {
         {/* Quick Restock */}
         {!isPending && (
           <View style={[styles.restockCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Restock</Text>
-            <Text style={[styles.restockHint, { color: colors.textMuted }]}>Current: {Number(product.stock ?? 0)} units</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('product.quickRestock')}</Text>
+            <Text style={[styles.restockHint, { color: colors.textMuted }]}>{t('inventory.currentStock')}: {Number(product.stock ?? 0)} {t('order.details.unit')}</Text>
           <View style={styles.restockRow}>
             <Pressable
               onPress={() => handleQuickRestock(Math.max(0, Number(product.stock ?? 0) - 10))}
@@ -331,9 +334,9 @@ export default function VendorProductDetailScreen() {
         )}
 
         <View style={[styles.descriptionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('product.description')}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>
-            {product.description || 'No description available for this product.'}
+            {product.description || t('product.noDescription')}
           </Text>
         </View>
 
@@ -349,7 +352,7 @@ export default function VendorProductDetailScreen() {
                 ]}
               >
                 <MaterialCommunityIcons name="square-edit-outline" size={20} color={colors.pink} />
-                <Text style={[styles.editActionText, { color: colors.pink }]}>Edit product</Text>
+                <Text style={[styles.editActionText, { color: colors.pink }]}>{t('product.editProduct')}</Text>
               </Pressable>
 
               <Pressable
@@ -361,7 +364,7 @@ export default function VendorProductDetailScreen() {
                 ]}
               >
                 <MaterialCommunityIcons name="content-duplicate" size={20} color="#6366F1" />
-                <Text style={[styles.editActionText, { color: '#6366F1' }]}>Duplicate product</Text>
+                <Text style={[styles.editActionText, { color: '#6366F1' }]}>{t('product.duplicateProduct')}</Text>
               </Pressable>
 
               <Pressable
@@ -397,7 +400,7 @@ export default function VendorProductDetailScreen() {
             ]}
           >
             <MaterialCommunityIcons name="delete-outline" size={20} color="#EF4444" />
-            <Text style={styles.deleteActionText}>Delete product</Text>
+            <Text style={styles.deleteActionText}>{t('product.deleteProduct')}</Text>
           </Pressable>
         </View>
       </ScrollView>
