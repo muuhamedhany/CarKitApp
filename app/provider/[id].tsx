@@ -1,15 +1,19 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useEffect,
+  useRef,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -22,6 +26,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { providerService } from '@/services/api/provider.service';
 import { reviewService } from '@/services/api/review.service';
 import { ProviderPublicProfile, Review } from '@/types/api.types';
+import Text from '@/components/common/LocalizedText';
 
 const { width } = Dimensions.get('window');
 

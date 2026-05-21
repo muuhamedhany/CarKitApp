@@ -1,8 +1,13 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect,
+  useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useMemo,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -10,8 +15,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  View
+  View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -22,6 +26,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService, bookingService, paymentService } from '@/services/api';
 import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
+import Text from '@/components/common/LocalizedText';
 
 const { width } = Dimensions.get('window');
 

@@ -1,5 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import {
+  useEffect,
+  useRef } from 'react';
+import { View,
+  StyleSheet,
+  Pressable,
+  Animated,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { GlassView } from '@/components';
+import Text from '@/components/common/LocalizedText';
 
 export default function AdSuccessScreen() {
   const router = useRouter();

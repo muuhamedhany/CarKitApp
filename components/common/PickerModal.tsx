@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   Pressable,
@@ -11,6 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 type PickerItem = {
   id: number;

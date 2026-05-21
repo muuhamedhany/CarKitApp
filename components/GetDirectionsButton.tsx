@@ -1,15 +1,16 @@
-import { useCallback } from 'react';
+import {
+  useCallback } from 'react';
 import {
     Linking,
-    Platform,
-    StyleSheet,
-    Pressable,
-    Text,
+  Platform,
+  StyleSheet,
+  Pressable,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { BorderRadius, FontSizes, Fonts } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 interface GetDirectionsButtonProps {
     latitude: number;

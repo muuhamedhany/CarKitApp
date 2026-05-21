@@ -1,13 +1,13 @@
-import { useRef } from 'react';
+import {
+  useRef } from 'react';
 import {
   Pressable,
-  Text,
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
   Animated,
   Platform,
-  View
+  View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 type GradientButtonProps = {
   title: string;

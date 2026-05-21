@@ -1,5 +1,9 @@
 import GlassView from './GlassView';
-import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import {
+  BorderRadius,
+  Fonts,
+  FontSizes,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,10 +15,10 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   View,
-  ViewStyle
+  ViewStyle,
 } from 'react-native';
+import Text from '@/components/common/LocalizedText';
 
 type SecondaryButtonProps = {
   title: string;

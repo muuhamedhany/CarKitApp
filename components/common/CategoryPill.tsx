@@ -1,11 +1,13 @@
 import React from 'react';
-import { Text, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-import { useTheme } from '@/hooks/useTheme';
+import Text from '@/components/common/LocalizedText';
 import { Fonts, FontSizes, Spacing, BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type CategoryPillProps = {
   label: string;

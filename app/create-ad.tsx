@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  Image, ActivityIndicator, TextInput,
+  useState,
+  useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Image,
+  ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +24,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader, FormInput, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 const AD_TIERS = [
   { id: 1, name: 'Basic', duration: '7 Days', price: 250 },

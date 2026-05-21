@@ -1,17 +1,33 @@
-import { CenteredHeader, GlassView } from '@/components';
-import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  GlassView } from '@/components';
+import { BorderRadius,
+  Fonts,
+  FontSizes,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { emergencyService, EmergencyServiceOption } from '@/services/api/emergency.service';
-import { rowDirection, textAlign } from '@/utils/rtl';
+import { emergencyService,
+  EmergencyServiceOption } from '@/services/api/emergency.service';
+import { rowDirection,
+  textAlign } from '@/utils/rtl';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect,
+  useState } from 'react';
+import { ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 function PulsingDot({ color }: { color: string }) {
   const scale = useSharedValue(1);

@@ -1,7 +1,13 @@
-import { useCallback, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  Image, ActivityIndicator,
+  useCallback,
+  useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +20,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { adService, Ad } from '@/services/api/ad.service';
 import { CenteredHeader, GlassView} from '@/components';
+import Text from '@/components/common/LocalizedText';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string; icon: string; border: string }> = {
   pending: { label: 'Pending Review', bg: 'rgba(249,115,22,0.15)', fg: '#F97316', icon: 'clock-outline', border: 'rgba(249,115,22,0.3)' },

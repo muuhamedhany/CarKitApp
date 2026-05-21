@@ -1,7 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import {
+  useCallback,
+  useRef,
+  useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   FlatList,
@@ -14,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 

@@ -1,7 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import {
+  useState,
+  useRef,
+  useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   ActivityIndicator,
@@ -15,6 +17,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 export interface MapPickerResult {
   latitude: number;

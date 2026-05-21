@@ -1,5 +1,13 @@
-import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  GetDirectionsButton,
+  GlassView,
+  GradientButton } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -7,14 +15,27 @@ import { providerService } from '@/services/api/provider.service';
 import { ProviderBookingDetail } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect,
+  useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useMemo,
+  useState } from 'react';
+import { ActivityIndicator,
+  Alert,
+  Dimensions,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 
 const { width } = Dimensions.get('window');

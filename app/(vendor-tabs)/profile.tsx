@@ -1,5 +1,10 @@
-import { GlassView } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  GlassView } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
@@ -8,22 +13,25 @@ import { VendorDashboardResponse } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useRef,
+  useState } from 'react';
 import {
   Dimensions,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  View
+  View,
 } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInUp
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 65;

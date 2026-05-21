@@ -1,26 +1,39 @@
-import { CenteredHeader, FormInput, GlassView } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  FormInput,
+  GlassView } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { addressService, orderService, paymentService } from '@/services/api';
-import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
+import { addressService,
+  orderService,
+  paymentService } from '@/services/api';
+import { PaymentMethod,
+  SavedPaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useMemo,
+  useState } from 'react';
 import {
     ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 type Address = {
     address_id: number;

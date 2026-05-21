@@ -1,6 +1,12 @@
-import { CenteredHeader, GlassView } from '@/components';
+import {
+  CenteredHeader,
+  GlassView } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -8,7 +14,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -16,10 +24,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 const { width, height } = Dimensions.get('window');
 

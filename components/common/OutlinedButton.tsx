@@ -1,8 +1,15 @@
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  View,
+} from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 type OutlinedButtonProps = {
   title: string;

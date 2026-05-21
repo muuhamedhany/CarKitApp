@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  useEffect,
+  useState } from 'react';
+import { ActivityIndicator,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ProductForm } from '@/components';
@@ -8,6 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import { apiFetch } from '@/services/api/client';
 import { Product, ProductFormInitialValues, ProductFormPayload } from '@/types/api.types';
+import Text from '@/components/common/LocalizedText';
 
 export default function EditProductScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();

@@ -1,8 +1,12 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useMemo,
+  useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +15,6 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
@@ -24,6 +27,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
+import Text from '@/components/common/LocalizedText';
 
 type WishlistProduct = {
   product_id: number;

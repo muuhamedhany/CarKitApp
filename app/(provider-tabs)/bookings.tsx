@@ -1,5 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View, ScrollView } from 'react-native';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState } from 'react';
+import { ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+  ScrollView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,6 +25,7 @@ import { BorderRadius, FontSizes, Fonts, Spacing, Shadows } from '@/constants/th
 import * as Haptics from 'expo-haptics';
 import { useTabReload } from '@/hooks/useTabReload';
 import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 const TypedFlashList = FlashList as any;
 

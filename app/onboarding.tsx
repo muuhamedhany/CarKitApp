@@ -1,11 +1,22 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { Dimensions, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View, ViewToken } from 'react-native';
+import { useCallback,
+  useRef,
+  useState } from 'react';
+import { Dimensions,
+  FlatList,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  ViewToken,
+} from 'react-native';
 import Animated, {
   FadeInRight,
   FadeInUp,
@@ -17,6 +28,7 @@ import { GlassView, GradientButton } from '@/components';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
+import Text from '@/components/common/LocalizedText';
 
 const { width } = Dimensions.get('window');
 

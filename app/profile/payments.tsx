@@ -1,23 +1,36 @@
-import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  FormInput,
+  GlassView,
+  GradientButton,
+  OutlinedButton } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { PaymentRecord, paymentService, SavedPaymentMethod } from '@/services/api';
+import { PaymentRecord,
+  paymentService,
+  SavedPaymentMethod } from '@/services/api';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback,
+  useMemo,
+  useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInLeft, Layout } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 type CardBrand = 'visa' | 'mastercard' | 'amex' | 'discover' | 'card';
 

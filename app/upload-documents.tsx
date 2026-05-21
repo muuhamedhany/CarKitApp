@@ -1,8 +1,8 @@
-import { useTheme } from '@/hooks/useTheme';
+import {
+  useTheme } from '@/hooks/useTheme';
 import { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   ScrollView,
@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 const { height } = Dimensions.get('window');
 

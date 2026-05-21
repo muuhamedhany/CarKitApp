@@ -1,5 +1,11 @@
-import { CenteredHeader, GlassView, MapLocationPicker } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  GlassView,
+  MapLocationPicker } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -7,10 +13,18 @@ import { emergencyService } from '@/services/api/emergency.service';
 import { PaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams,
+  useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 const methods: { key: PaymentMethod; label: string; icon: string }[] = [
   { key: 'cash_on_delivery', label: 'Cash on Delivery', icon: 'cash' },

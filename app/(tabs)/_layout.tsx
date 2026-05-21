@@ -1,10 +1,15 @@
-import { CustomTabBar } from '@/components';
+import {
+  CustomTabBar } from '@/components';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native-tabs';
-import { Platform } from 'react-native';
+import { Icon,
+  Label,
+  NativeTabs,
+  VectorIcon } from 'expo-router/unstable-native-tabs';
+import { Platform,
+} from 'react-native';
 
 // iOS: Keep the NativeTabs exactly as before
 function IOSTabLayout() {

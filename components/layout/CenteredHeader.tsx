@@ -1,10 +1,19 @@
-import { Platform, StyleSheet, Text, View, Pressable, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  Pressable,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import BackButton from './BackButton';
+import Text from '@/components/common/LocalizedText';
 
 type HeaderAction = {
     icon: string;

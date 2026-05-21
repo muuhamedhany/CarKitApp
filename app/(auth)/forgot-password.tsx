@@ -1,5 +1,11 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import {
+  useState } from 'react';
+import { View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -12,6 +18,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, CenteredHeader, GlassView} from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();

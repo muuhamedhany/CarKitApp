@@ -1,7 +1,8 @@
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 type ThirdButtonProps = {
   title: string;

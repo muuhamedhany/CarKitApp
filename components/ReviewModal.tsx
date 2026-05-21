@@ -1,10 +1,15 @@
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import {
+  BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { reviewService } from '@/services/api/review.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React,
+  { useState } from 'react';
 import {
   Dimensions,
   KeyboardAvoidingView,
@@ -13,13 +18,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  View
+  View,
 } from 'react-native';
 import GlassView from './common/GlassView';
 import GradientButton from './common/GradientButton';
 import { StarRating } from './common/StarRating';
+import Text from '@/components/common/LocalizedText';
+import TextInput from '@/components/common/LocalizedTextInput';
 
 const { height } = Dimensions.get('window');
 

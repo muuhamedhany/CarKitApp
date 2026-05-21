@@ -1,5 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
+import {
+  useEffect,
+  useRef } from 'react';
+import { Animated,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { BorderRadius } from '@/constants/theme';
 

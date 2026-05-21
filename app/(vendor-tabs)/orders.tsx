@@ -1,5 +1,18 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Platform, ScrollView } from 'react-native';
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo } from 'react';
+import { View,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +27,7 @@ import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTabReload } from '@/hooks/useTabReload';
+import Text from '@/components/common/LocalizedText';
 
 type OrderFilter = 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 

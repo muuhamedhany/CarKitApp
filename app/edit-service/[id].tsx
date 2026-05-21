@@ -3,11 +3,18 @@
  * Loads existing service data and re-uses the same 3-step wizard
  * from add-service.tsx but with pre-filled values and a PUT on submit.
  */
-import { useEffect, useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, Pressable,
-    ActivityIndicator,
-    KeyboardAvoidingView, Platform, Image,
+  useEffect,
+  useState } from 'react';
+import {
+    View,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +30,7 @@ import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { FormInput, GradientButton } from '@/components';
 import BackButton from '@/components/common/BackButton';
 import type { Service } from '@/types/api.types';
+import Text from '@/components/common/LocalizedText';
 
 type ImageSlot = { previewUri: string | null; base64: string | null; sourceUrl: string | null };
 type LocationType = 'both' | 'mobile' | 'in-shop';

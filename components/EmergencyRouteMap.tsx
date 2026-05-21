@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  useEffect,
+  useMemo,
+  useState } from 'react';
+import { ActivityIndicator,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 export type RouteCoordinate = {
   latitude: number;

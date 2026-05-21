@@ -1,6 +1,15 @@
-import { FormInput, GlassView, ProductCard, SearchSkeleton, ServiceCard } from '@/components';
+import {
+  FormInput,
+  GlassView,
+  ProductCard,
+  SearchSkeleton,
+  ServiceCard } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -11,16 +20,19 @@ import { Product } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useEffect,
+  useRef,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
-  View
+  View,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -30,6 +42,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 const TAB_BAR_HEIGHT = 65;
 

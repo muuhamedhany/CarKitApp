@@ -1,14 +1,19 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect,
+  useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useCallback,
+  useMemo,
+  useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    View
+  Alert,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 

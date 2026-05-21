@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   useWindowDimensions,
   Alert,
@@ -27,6 +29,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
 import { GlassView, AnalyticsSkeleton, CountUp } from '@/components';
+import Text from '@/components/common/LocalizedText';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
