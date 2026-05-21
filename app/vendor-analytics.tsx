@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { vendorService } from '@/services/api/vendor.service';
 import {
   VendorAnalyticsCategory,
@@ -36,9 +37,9 @@ import Text from '@/components/common/LocalizedText';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const RANGE_OPTIONS: Array<{ label: string; value: VendorAnalyticsRange }> = [
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Yearly', value: 'yearly' },
+  { label: 'analytics.weekly', value: 'weekly' },
+  { label: 'analytics.monthly', value: 'monthly' },
+  { label: 'analytics.yearly', value: 'yearly' },
 ];
 
 const formatCurrency = (value: number) => Number(value || 0).toLocaleString('en-EG');
@@ -117,6 +118,7 @@ const buildCategorySeries = (categories: VendorAnalyticsCategory[]) => {
 export default function VendorAnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -256,7 +258,7 @@ export default function VendorAnalyticsScreen() {
                     { color: isActive ? '#FFFFFF' : colors.textSecondary },
                   ]}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </Text>
               </Pressable>
             );
@@ -372,8 +374,8 @@ export default function VendorAnalyticsScreen() {
 
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{analytics.trend.title}</Text>
-                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle}</Text>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.salesTrend')}</Text>
+                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle || t('analytics.last30Days')}</Text>
                   </View>
                   <View style={[styles.cardSummary, { marginRight: 20 }]}>
                     <CountUp
@@ -384,7 +386,7 @@ export default function VendorAnalyticsScreen() {
                         return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
                       }}
                     />
-                    <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label}</Text>
+                    <Text style={[styles.cardSummaryLabel, { color: colors.pink }]}>{analytics.trend.summary_label === 'This Week' ? t('analytics.thisWeek') : analytics.trend.summary_label}</Text>
                   </View>
 
 

@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    marginRight: Spacing.sm,
+    marginEnd: Spacing.sm,
   },
 });
 

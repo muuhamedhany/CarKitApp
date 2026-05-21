@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams,
   useRouter } from 'expo-router';
 import { StyleSheet,
+  ScrollView,
   View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -79,7 +80,10 @@ export default function OrderSuccessScreen() {
             <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-            <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
+            <ScrollView
+                contentContainerStyle={[styles.content, { paddingTop: insets.top + 60, paddingBottom: insets.bottom + Spacing.xl }]}
+                showsVerticalScrollIndicator={false}
+            >
                 <Animated.View entering={FadeInDown.delay(200)} style={[styles.iconCircle, { backgroundColor: colors.pink + '15' }]}>
                     <MaterialCommunityIcons name="check-decagram" size={64} color={colors.pink} />
                 </Animated.View>
@@ -155,7 +159,7 @@ export default function OrderSuccessScreen() {
                         style={{ marginTop: Spacing.md }}
                     />
                 </Animated.View>
-            </View>
+            </ScrollView>
         </View>
     );
 }
@@ -172,7 +176,7 @@ const styles = StyleSheet.create({
         opacity: 0.4,
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         alignItems: 'center',
         paddingHorizontal: Spacing.xl,
     },

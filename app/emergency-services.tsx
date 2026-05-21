@@ -91,7 +91,7 @@ export default function EmergencyServicesScreen() {
       .catch(() => {
         if (mounted) {
           setServices([]);
-          showToast('error', 'Emergency Services', 'Could not load emergency services.');
+          showToast('error', t('emergency.title'), t('emergency.services.empty'));
         }
       })
       .finally(() => {
@@ -101,7 +101,7 @@ export default function EmergencyServicesScreen() {
     return () => {
       mounted = false;
     };
-  }, [showToast]);
+  }, [showToast, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -117,7 +117,7 @@ export default function EmergencyServicesScreen() {
       {/* Set flexGrow: 1 to allow the content to fill the screen */}
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader 
-          title="Emergency Help"
+          title={t('emergency.title')}
           titleColor={colors.textPrimary} 
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -177,7 +177,7 @@ function EmergencyServiceTile({
   const assignedCount = service.assigned_employee_count || 0;
   const isAvailable = onlineCount > 0;
 
-  const availabilityText = isAvailable ? 'Available' : 'Not Available';
+  const availabilityText = isAvailable ? t('emergency.available') : t('emergency.notAvailable');
 
   const config = getServiceConfig(service.name);
   const statusColor = isAvailable ? colors.success : assignedCount > 0 ? colors.warning : colors.textMuted;
@@ -230,7 +230,7 @@ function EmergencyServiceTile({
 
         <View style={[styles.priceBadge, { backgroundColor: colors.pink + '15' }]}>
           <Text style={[styles.priceText, { color: colors.pink }]}>
-            {service.price ? `${service.price} EGP` : 'QUOTE'}
+            {service.price ? `${service.price} ${t('common.currency.egp')}` : t('emergency.quote')}
           </Text>
         </View>
       </View>

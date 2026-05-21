@@ -17,8 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiFetch } from '@/services/api/client';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import type { Product } from '@/types/api.types';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import Text from '@/components/common/LocalizedText';
 import TextInput from '@/components/common/LocalizedTextInput';
 
@@ -51,6 +53,7 @@ export default function VendorProductDetailScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,6 +200,13 @@ export default function VendorProductDetailScreen() {
 
   const isEnabled = String(product.status || 'active').toLowerCase() === 'active';
   const isPending = String(product.status || '').toLowerCase() === 'pending';
+  const stock = Number(product.stock ?? 0);
+  const publishLabel = isEnabled ? t('inventory.badgeActive') : publishInfo.label;
+  const stockLabel = stock <= 0
+    ? t('inventory.filterOutOfStock')
+    : stock <= 5
+      ? t('inventory.badgeLowStock')
+      : stockInfo.label;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -249,10 +259,10 @@ export default function VendorProductDetailScreen() {
 
             <View style={styles.badgeRow}>
               <View style={[styles.badge, { backgroundColor: publishInfo.backgroundColor }]}>
-                <Text style={[styles.badgeText, { color: publishInfo.color }]}>{publishInfo.label}</Text>
+                <Text style={[styles.badgeText, { color: publishInfo.color }]}>{publishLabel}</Text>
               </View>
               <View style={[styles.badge, { backgroundColor: stockInfo.backgroundColor }]}>
-                <Text style={[styles.badgeText, { color: stockInfo.color }]}>{stockInfo.label}</Text>
+                <Text style={[styles.badgeText, { color: stockInfo.color }]}>{stockLabel}</Text>
               </View>
             </View>
           </View>
@@ -261,7 +271,7 @@ export default function VendorProductDetailScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Category</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{product.category_name || 'Uncategorized'}</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{product.category_name ? translateCategoryName(product.category_name, language) : 'Uncategorized'}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Stock</Text>
@@ -372,7 +382,7 @@ export default function VendorProductDetailScreen() {
                   color={isEnabled ? colors.pink : colors.white}
                 />
                 <Text style={[styles.primaryActionText, { color: isEnabled ? colors.pink : colors.white }]}>
-                  {isEnabled ? 'Disable product' : 'Enable product'}
+                  {isEnabled ? t('inventory.disableProduct') : t('inventory.enableProduct')}
                 </Text>
               </Pressable>
             </>

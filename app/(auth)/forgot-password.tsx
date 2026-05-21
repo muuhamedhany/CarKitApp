@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   glassCard: {
-    gap: Spacing.sm,
     padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
@@ -160,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     fontFamily: Fonts.bold,
     marginBottom: Spacing.xs,
-    marginLeft: 4,
+    marginStart: 4,
   },
   footer: {
     marginTop: Spacing.lg,

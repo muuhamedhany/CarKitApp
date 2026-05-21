@@ -57,6 +57,7 @@ const STATUS_COLORS: Record<string, string> = {
   completed: '#81C784',
   cancelled: '#EF5350',
   'in-progress': '#AB47BC',
+  in_progress: '#AB47BC',
 };
 
 export default function MyBookingsScreen() {
@@ -141,8 +142,13 @@ export default function MyBookingsScreen() {
     }
   };
 
-  const renderBooking = ({ item, index }: { item: Booking; index: number }) => (
-    <Animated.View
+  const renderBooking = ({ item, index }: { item: Booking; index: number }) => {
+    const rawStatus = String(item.status || '');
+    const normalizedStatus = rawStatus.toLowerCase().replace(/-/g, '_');
+    const statusColor = STATUS_COLORS[normalizedStatus] || colors.pink;
+
+    return (
+      <Animated.View
       entering={FadeInUp.delay(index * 100).springify()}
       style={styles.cardContainer}
     >
@@ -154,9 +160,9 @@ export default function MyBookingsScreen() {
               <Text style={[styles.providerName, { color: colors.pink }]}>{item.provider_name}</Text>
             )}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '20' }]}>
-            <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-              {t(`status.${item.status}`)}
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {t(`status.${normalizedStatus}`, { defaultValue: rawStatus })}
             </Text>
           </View>
         </View>
@@ -209,8 +215,9 @@ export default function MyBookingsScreen() {
 
         </View>
       </GlassView>
-    </Animated.View>
-  );
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -250,7 +257,7 @@ export default function MyBookingsScreen() {
               {tab === 'completed' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>{t('status.completed')}</Text>
+              <Text style={[styles.tabText, { color: tab === 'completed' ? 'white' : colors.textSecondary }]}>{t('filter.completed')}</Text>
             </Pressable>
           </GlassView>
         </View>

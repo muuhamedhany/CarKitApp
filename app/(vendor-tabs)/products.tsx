@@ -19,6 +19,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { apiFetch } from '@/services/api/client';
 import { Product } from '@/types/api.types';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
@@ -36,6 +37,7 @@ export default function VendorProductsScreen() {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ filter?: string }>();
@@ -120,15 +122,15 @@ export default function VendorProductsScreen() {
     out: products.filter(p => Number(p.stock ?? 0) === 0).length,
   }), [products]);
 
-  const getStockBadge = (item: Product) => {
+  const getStockBadge = useCallback((item: Product) => {
     const stock = Number(item.stock ?? 0);
     const isActive = (item as any).is_active !== false && (item as any).status !== 'disabled' && (item as any).status !== 'rejected';
     
     if (!isActive) return { label: 'Disabled', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
-    if (stock === 0) return { label: 'Out of Stock', color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
-    if (stock <= 5) return { label: 'Low Stock', color: '#F97316', backgroundColor: 'rgba(249,115,22,0.15)', progressColor: '#F97316' };
-    return { label: 'Active', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', progressColor: '#10B981' };
-  };
+    if (stock === 0) return { label: t('inventory.filterOutOfStock'), color: '#EF4444', backgroundColor: 'rgba(239,68,68,0.15)', progressColor: '#EF4444' };
+    if (stock <= 5) return { label: t('inventory.badgeLowStock'), color: '#F97316', backgroundColor: 'rgba(249,115,22,0.15)', progressColor: '#F97316' };
+    return { label: t('inventory.badgeActive'), color: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)', progressColor: '#10B981' };
+  }, [t]);
 
   const [updatingStock, setUpdatingStock] = useState<number | null>(null);
 
@@ -208,7 +210,7 @@ export default function VendorProductsScreen() {
                 <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                   <View style={[styles.progressBarFill, { width: progressWidth as any, backgroundColor: badge.progressColor }]} />
                 </View>
-                <Text style={[styles.stockLeftText, { color: badge.color }]}>{stock} left</Text>
+                <Text style={[styles.stockLeftText, { color: badge.color }]}>{t('inventory.stockLeft', { count: stock })}</Text>
               </View>
             </View>
           </View>
@@ -290,7 +292,7 @@ export default function VendorProductsScreen() {
         </GlassView>
       </Animated.View>
     );
-  }, [colors, isDark, router, showToast, updatingStock, handleStockUpdate]);
+  }, [colors, getStockBadge, handleStockUpdate, isDark, router, t, updatingStock]);
 
   const hasLowStock = useMemo(() => products.some((product) => Number(product.stock ?? 0) > 0 && Number(product.stock ?? 0) <= 5), [products]);
 
@@ -381,7 +383,7 @@ export default function VendorProductsScreen() {
                     ]}
                   >
                     <Text style={[styles.filterText, { color: isActive ? colors.white : colors.textPrimary }]}>
-                      {filter === 'all' ? 'All' : filter === 'in-stock' ? 'Active' : filter === 'low-stock' ? 'Low Stock' : 'Out of Stock'}
+                      {filter === 'all' ? t('filter.all') : filter === 'in-stock' ? t('inventory.filterActive') : filter === 'low-stock' ? t('inventory.filterLowStock') : t('inventory.filterOutOfStock')}
                     </Text>
                   </Pressable>
                 );

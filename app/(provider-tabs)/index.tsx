@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { providerService } from '@/services/api/provider.service';
 import { notificationService } from '@/services/api/notification.service';
 import { ProviderDashboardResponse } from '@/types/api.types';
@@ -40,6 +41,7 @@ export default function ProviderDashboard() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const [dashboard, setDashboard] = useState<ProviderDashboardResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -80,19 +82,19 @@ export default function ProviderDashboard() {
     const stats = dashboard
         ? [
             {
-                label: "Today's Bookings",
+                label: t('provider.dashboard.todayBookings'),
                 value: String(dashboard.stats.todays_bookings),
                 icon: 'calendar-check',
                 color: '#F97316',
-                subtitle: 'Scheduled today',
+                subtitle: t('provider.dashboard.scheduledToday'),
                 onPress: () => router.push('/(provider-tabs)/bookings')
             },
             {
-                label: 'Total Customers',
+                label: t('provider.dashboard.totalCustomers'),
                 value: String(dashboard.stats.total_customers),
                 icon: 'account-group',
                 color: '#818CF8',
-                subtitle: 'Served customers',
+                subtitle: t('provider.dashboard.servedCustomers'),
                 onPress: () => router.push('/(provider-tabs)/bookings')
             },
             {
@@ -104,11 +106,11 @@ export default function ProviderDashboard() {
                 onPress: () => router.push('/provider-analytics')
             },
             {
-                label: 'Growth',
+                label: t('provider.dashboard.growth'),
                 value: `${dashboard.stats.growth_pct >= 0 ? '+' : ''}${dashboard.stats.growth_pct}%`,
                 icon: 'trending-up',
                 color: '#10B981',
-                subtitle: 'Vs previous period',
+                subtitle: t('provider.dashboard.vsPreviousPeriod'),
                 onPress: () => router.push('/provider-analytics')
             },
 

@@ -32,9 +32,11 @@ import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { reviewService } from '@/services/api/review.service';
 import { Review } from '@/types/api.types';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -65,6 +67,7 @@ export default function ServiceDetailScreen() {
   const insets = useSafeAreaInsets();
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
 
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -259,7 +262,7 @@ export default function ServiceDetailScreen() {
             <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.mainInfoCard}>
               <View style={styles.badgeRow}>
                 <View style={[styles.categoryBadge, { backgroundColor: colors.pink + '20' }]}>
-                  <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name?.toUpperCase() || 'SERVICE'}</Text>
+                  <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name ? translateCategoryName(service.category_name, language).toUpperCase() : 'SERVICE'}</Text>
                 </View>
                 <View style={[styles.locationBadge, { backgroundColor: colors.purple + '20' }]}>
                   <MaterialCommunityIcons
@@ -268,7 +271,7 @@ export default function ServiceDetailScreen() {
                     color={colors.purple}
                   />
                   <Text style={[styles.locationText, { color: colors.purple }]}>
-                    {service.location_type === 'mobile' ? 'MOBILE SERVICE' : service.location_type === 'in-shop' ? 'IN-SHOP ONLY' : 'FLEXIBLE LOCATION'}
+                    {service.location_type === 'mobile' ? 'MOBILE SERVICE' : service.location_type === 'in-shop' ? 'IN-SHOP ONLY' : t('service.flexibleLocation')}
                   </Text>
                 </View>
               </View>
@@ -413,7 +416,7 @@ export default function ServiceDetailScreen() {
               <View style={styles.emptyReviews}>
                 <MaterialCommunityIcons name="comment-text-outline" size={32} color={colors.textMuted} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  {filterRating ? `No ${filterRating}-star reviews yet.` : 'Be the first to review this service.'}
+                  {filterRating ? `No ${filterRating}-star reviews yet.` : t('service.beFirstReview')}
                 </Text>
               </View>
             )}

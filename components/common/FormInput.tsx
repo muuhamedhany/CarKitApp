@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     opacity: 0.6
   },
   icon: {
-    marginRight: Spacing.sm,
+    marginEnd: Spacing.sm,
   },
   input: {
     flex: 1,

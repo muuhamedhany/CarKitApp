@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     fontFamily: Fonts.bold,
     marginBottom: Spacing.xs,
-    marginLeft: 4,
+    marginStart: 4,
   },
   forgotContainer: {
     alignItems: 'flex-end',
