@@ -13,6 +13,7 @@ import { useLocalSearchParams,
   useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -73,7 +74,10 @@ export default function BookingSuccessScreen() {
       <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
       <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
-      <View style={[styles.content, { paddingTop: insets.top + 40 }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + Spacing.xl }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View style={[styles.iconCircle, animatedIconStyle, { backgroundColor: colors.pinkGlow || colors.pink + '20' }]}>
           <MaterialCommunityIcons name="check" size={54} color={colors.pink} />
         </Animated.View>
@@ -154,7 +158,7 @@ export default function BookingSuccessScreen() {
             <Text style={[styles.homeBtnText, { color: colors.textSecondary }]}>{t('common.backToHome')}</Text>
           </Pressable>
         </Animated.View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 
-  content: { flex: 1, paddingHorizontal: Spacing.xl, alignItems: 'center' },
+  content: { flexGrow: 1, paddingHorizontal: Spacing.xl, alignItems: 'center' },
   iconCircle: {
     width: 100, height: 100, borderRadius: 50,
     justifyContent: 'center', alignItems: 'center',

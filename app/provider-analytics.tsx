@@ -18,6 +18,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Path, Stop } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { providerService } from '@/services/api/provider.service';
 import {
   ProviderAnalyticsRange,
@@ -34,9 +35,9 @@ import Text from '@/components/common/LocalizedText';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const RANGE_OPTIONS: Array<{ label: string; value: ProviderAnalyticsRange }> = [
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Yearly', value: 'yearly' },
+  { label: 'analytics.weekly', value: 'weekly' },
+  { label: 'analytics.monthly', value: 'monthly' },
+  { label: 'analytics.yearly', value: 'yearly' },
 ];
 
 const formatCurrency = (value: number) => Number(value || 0).toLocaleString('en-EG');
@@ -98,6 +99,7 @@ const buildLineChart = (
 export default function ProviderAnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -229,7 +231,7 @@ export default function ProviderAnalyticsScreen() {
                     { color: isActive ? '#FFFFFF' : colors.textSecondary },
                   ]}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </Text>
               </Pressable>
             );
@@ -333,7 +335,7 @@ export default function ProviderAnalyticsScreen() {
                 <View style={styles.cardHeader}>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Booking Volume</Text>
-                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle || "Last 30 days performance"}</Text>
+                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle || t('analytics.last30Days')}</Text>
                   </View>
                   <Pressable
                     onPress={() => Alert.alert('Booking Volume', 'A visual trend of booking volume over the selected period.')}

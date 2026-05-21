@@ -23,6 +23,7 @@ import Text from '@/components/common/LocalizedText';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { orderService } from '@/services/api/order.service';
@@ -98,6 +99,22 @@ const getStatusLabel = (status: string, isWorkshopFitting: boolean, role: OrderR
     return 'Pending';
 };
 
+const getStatusLabelKey = (status: string, isWorkshopFitting: boolean, role: OrderRole) => {
+    const normalized = normalizeStatus(status);
+    if (normalized === 'ready_for_customer') return 'orderStatus.readyForCustomer';
+    if (normalized === 'ready_for_pickup') {
+        if (isWorkshopFitting) return 'orderStatus.readyForCustomer';
+        return role === 'vendor' ? 'orderStatus.readyForDriver' : 'orderStatus.readyForDelivery';
+    }
+    if (normalized === 'processing') {
+        return isWorkshopFitting ? 'orderStatus.installationInProgress' : 'orderStatus.processing';
+    }
+    if (normalized === 'in_transit') return 'orderStatus.inTransit';
+    if (normalized === 'delivered') return isWorkshopFitting ? 'orderStatus.readyForCustomer' : 'orderStatus.delivered';
+    if (normalized === 'cancelled') return 'filter.cancelled';
+    return 'filter.pending';
+};
+
 const getCustomerStatusNote = (order: OrderDetail, isWorkshopFitting: boolean, hasQueue: boolean) => {
     const status = normalizeStatus(order.status);
 
@@ -145,6 +162,7 @@ export default function OrderDetailScreen() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
+    const { t } = useTranslation();
     const { user } = useAuth();
     const params = useLocalSearchParams<{ id?: string; role?: string }>();
 
@@ -170,7 +188,9 @@ export default function OrderDetailScreen() {
     const workshopLatitude = Number(order?.queue?.center_latitude ?? order?.workshop_latitude);
     const workshopLongitude = Number(order?.queue?.center_longitude ?? order?.workshop_longitude);
     const hasWorkshopCoordinates = Number.isFinite(workshopLatitude) && Number.isFinite(workshopLongitude);
-    const displayStatus = getStatusLabel(order?.status || 'pending', isWorkshopFitting, role);
+    const displayStatus = t(getStatusLabelKey(order?.status || 'pending', isWorkshopFitting, role), {
+        defaultValue: getStatusLabel(order?.status || 'pending', isWorkshopFitting, role),
+    });
     const customerStatusNote = order ? getCustomerStatusNote(order, isWorkshopFitting, showCustomerWorkshopQueue) : '';
 
     const loadOrder = useCallback(async () => {
@@ -226,7 +246,11 @@ export default function OrderDetailScreen() {
                 return;
             }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast('success', 'Status Updated', `Order status changed to ${getStatusLabel(status, isWorkshopFitting, role)}.`);
+            showToast('success', 'Status Updated', t('order.details.statusUpdated', {
+                status: t(getStatusLabelKey(status, isWorkshopFitting, role), {
+                    defaultValue: getStatusLabel(status, isWorkshopFitting, role),
+                }),
+            }));
             await loadOrder();
         } catch {
             showToast('error', 'Status Update', 'Could not update order status.');
@@ -277,28 +301,28 @@ export default function OrderDetailScreen() {
     const primaryAction = getVendorPrimaryAction(order?.status || '', isWorkshopFitting);
 
     const customerDeliveryTimelineSteps = [
-        { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
-        { key: 'processing', label: 'Processing', icon: 'cog-outline' },
-        { key: 'ready_for_pickup', label: 'Ready for Delivery', icon: 'package-check' },
-        { key: 'in_transit', label: 'In Transit', icon: 'truck-fast-outline' },
-        { key: 'delivered', label: 'Delivered', icon: 'check-all' },
+        { key: 'pending', labelKey: 'orderStatus.orderPlaced', icon: 'package-variant' },
+        { key: 'processing', labelKey: 'orderStatus.processing', icon: 'cog-outline' },
+        { key: 'ready_for_pickup', labelKey: 'orderStatus.readyForDelivery', icon: 'package-check' },
+        { key: 'in_transit', labelKey: 'orderStatus.inTransit', icon: 'truck-fast-outline' },
+        { key: 'delivered', labelKey: 'orderStatus.delivered', icon: 'check-all' },
     ];
     const customerWorkshopTimelineSteps = [
-        { key: 'pending', label: 'Order Placed', icon: 'package-variant' },
-        { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
-        { key: 'delivered', label: 'Ready for Customer', icon: 'check-circle-outline' },
+        { key: 'pending', labelKey: 'orderStatus.orderPlaced', icon: 'package-variant' },
+        { key: 'processing', labelKey: 'orderStatus.installationInProgress', icon: 'car-wrench' },
+        { key: 'delivered', labelKey: 'orderStatus.readyForCustomer', icon: 'check-circle-outline' },
     ];
     const vendorWorkshopTimelineSteps = [
-        { key: 'pending', label: 'Order Received', icon: 'package-variant' },
-        { key: 'processing', label: 'Installation In Progress', icon: 'car-wrench' },
-        { key: 'delivered', label: 'Ready for Customer', icon: 'check-circle-outline' },
+        { key: 'pending', labelKey: 'orderStatus.orderReceived', icon: 'package-variant' },
+        { key: 'processing', labelKey: 'orderStatus.installationInProgress', icon: 'car-wrench' },
+        { key: 'delivered', labelKey: 'orderStatus.readyForCustomer', icon: 'check-circle-outline' },
     ];
     const vendorDeliveryTimelineSteps = [
-        { key: 'pending', label: 'Order Received', icon: 'package-variant' },
-        { key: 'processing', label: 'Preparing Items', icon: 'package-variant-closed' },
-        { key: 'ready_for_pickup', label: 'Ready for Driver Pickup', icon: 'package-check' },
-        { key: 'in_transit', label: 'With Driver', icon: 'truck-fast-outline' },
-        { key: 'delivered', label: 'Delivered to Customer', icon: 'check-all' },
+        { key: 'pending', labelKey: 'orderStatus.orderReceived', icon: 'package-variant' },
+        { key: 'processing', labelKey: 'orderStatus.preparingItems', icon: 'package-variant-closed' },
+        { key: 'ready_for_pickup', labelKey: 'orderStatus.readyForDriverPickup', icon: 'package-check' },
+        { key: 'in_transit', labelKey: 'orderStatus.withDriver', icon: 'truck-fast-outline' },
+        { key: 'delivered', labelKey: 'orderStatus.deliveredToCustomer', icon: 'check-all' },
     ];
     const timelineSteps = role === 'vendor'
         ? (isWorkshopFitting ? vendorWorkshopTimelineSteps : vendorDeliveryTimelineSteps)
@@ -484,9 +508,9 @@ export default function OrderDetailScreen() {
                                                 ) : null}
                                             </View>
                                             <View style={styles.timelineLabelCol}>
-                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{step.label}</Text>
+                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{t(step.labelKey)}</Text>
                                                 <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
-                                                    {reached ? (index === 0 ? formatDate(order.order_date) : active ? 'Current step' : 'Completed') : 'Pending'}
+                                                    {reached ? (index === 0 ? formatDate(order.order_date) : active ? t('Current step') : t('filter.completed')) : t('filter.pending')}
                                                 </Text>
                                             </View>
                                         </View>
@@ -500,7 +524,7 @@ export default function OrderDetailScreen() {
                         <Animated.View entering={FadeInDown.delay(300).springify()}>
                             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                                    {isWorkshopFitting ? 'Workshop Job' : 'Delivery Job'}
+                                    {isWorkshopFitting ? t('orderDetail.workshopJob') : t('orderDetail.deliveryJob')}
                                 </Text>
                                 <View style={styles.vendorCustomerRow}>
                                     <View style={styles.vendorCustomerText}>
@@ -509,8 +533,8 @@ export default function OrderDetailScreen() {
                                         </Text>
                                         <Text style={[styles.customerHint, { color: colors.textSecondary }]}>
                                             {isWorkshopFitting
-                                                ? 'Install the ordered items when the customer arrives at your workshop.'
-                                                : 'Pack the ordered items and prepare them for driver pickup.'}
+                                                ? t('orderDetail.workshopJobHint')
+                                                : t('orderDetail.deliveryJobHint')}
                                         </Text>
                                     </View>
                                     <View style={styles.iconGroup}>
@@ -538,8 +562,8 @@ export default function OrderDetailScreen() {
                                     <MaterialCommunityIcons name="information-outline" size={16} color={colors.info} />
                                     <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
                                         {isWorkshopFitting
-                                            ? 'Use Start Installation when work begins, then Ready for Customer when fitting is finished.'
-                                            : 'Use Start Preparing while packing, then Ready for Driver when the package can be picked up.'}
+                                            ? t('orderDetail.workshopActionHint')
+                                            : t('orderDetail.deliveryActionHint')}
                                     </Text>
                                 </View>
                             </GlassView>
@@ -606,7 +630,7 @@ export default function OrderDetailScreen() {
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="basket-outline" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Order Items ({order.items.length})</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('orderDetail.orderItems', { count: order.items.length })}</Text>
                             </View>
 
                             <View style={{ marginTop: Spacing.md }}>

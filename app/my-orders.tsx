@@ -46,6 +46,9 @@ type TabType = 'active' | 'delivered';
 const STATUS_COLORS: Record<string, string> = {
   pending: '#FFB74D',
   confirmed: '#64B5F6',
+  processing: '#818CF8',
+  ready_for_pickup: '#F97316',
+  in_transit: '#AB47BC',
   shipped: '#E91E8C',
   delivered: '#81C784',
   cancelled: '#EF5350',
@@ -124,8 +127,13 @@ export default function MyOrdersScreen() {
     } catch { return dateStr; }
   };
 
-  const renderOrder = ({ item, index }: { item: Order; index: number }) => (
-    <Animated.View
+  const renderOrder = ({ item, index }: { item: Order; index: number }) => {
+    const rawStatus = String(item.status || '');
+    const normalizedStatus = rawStatus.toLowerCase().replace(/-/g, '_');
+    const statusColor = STATUS_COLORS[normalizedStatus] || colors.pink;
+
+    return (
+      <Animated.View
       entering={FadeInUp.delay(index * 100).springify()}
       style={styles.cardContainer}
     >
@@ -135,9 +143,9 @@ export default function MyOrdersScreen() {
             <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('orders.orderNumber', { id: item.order_id })}</Text>
             <Text style={[styles.orderDate, { color: colors.textMuted }]}>{formatDate(item.order_date)}</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[item.status] || colors.pink) + '20' }]}>
-            <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] || colors.pink }]}>
-              {t(`status.${item.status}`)}
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {t(`status.${normalizedStatus}`, { defaultValue: rawStatus })}
             </Text>
           </View>
         </View>
@@ -178,8 +186,9 @@ export default function MyOrdersScreen() {
           </Pressable>
         </View>
       </GlassView>
-    </Animated.View>
-  );
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -207,7 +216,7 @@ export default function MyOrdersScreen() {
               {tab === 'active' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'active' ? 'white' : colors.textSecondary }]}>{t('orders.active')}</Text>
+              <Text style={[styles.tabText, { color: tab === 'active' ? 'white' : colors.textSecondary }]}>{t('filter.active')}</Text>
             </Pressable>
             <Pressable
               style={styles.tab}
@@ -219,7 +228,7 @@ export default function MyOrdersScreen() {
               {tab === 'delivered' && (
                 <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
               )}
-              <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>{t('status.delivered')}</Text>
+              <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>{t('filter.delivered')}</Text>
             </Pressable>
           </GlassView>
         </View>

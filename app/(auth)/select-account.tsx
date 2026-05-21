@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginRight: Spacing.md,
+    marginEnd: Spacing.md,
   },
   cardText: { flex: 1 },
   cardTitle: { 

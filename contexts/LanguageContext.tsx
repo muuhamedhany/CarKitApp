@@ -83,6 +83,9 @@ const translateKey = (language: Language, key: string, params?: TranslationParam
     translations[DEFAULT_LANGUAGE][key] ??
     literalFallbacks[DEFAULT_LANGUAGE]?.[key] ??
     key;
+  if (translated === key && params?.defaultValue !== undefined && params.defaultValue !== null) {
+    return interpolate(String(params.defaultValue), params);
+  }
   return interpolate(translated, params);
 };
 

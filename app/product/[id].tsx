@@ -34,9 +34,11 @@ import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/th
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { reviewService } from '@/services/api/review.service';
 import { Review } from '@/types/api.types';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -66,6 +68,7 @@ export default function ProductDetailScreen() {
   const { token } = useAuth();
   const { addToCart, items: cartItems } = useCart();
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -282,7 +285,7 @@ export default function ProductDetailScreen() {
             <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.mainInfoCard}>
               <View style={styles.badgeRow}>
                 <View style={[styles.categoryBadge, { backgroundColor: colors.pink + '20' }]}>
-                  <Text style={[styles.categoryText, { color: colors.pink }]}>{product.category_name?.toUpperCase() || 'GENERAL'}</Text>
+                  <Text style={[styles.categoryText, { color: colors.pink }]}>{product.category_name ? translateCategoryName(product.category_name, language).toUpperCase() : 'GENERAL'}</Text>
                 </View>
                 <View style={[styles.stockBadge, { backgroundColor: product.stock > 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
                   <View style={[styles.stockDot, { backgroundColor: product.stock > 0 ? colors.success : colors.error }]} />
@@ -330,9 +333,9 @@ export default function ProductDetailScreen() {
           {/* Features Grid */}
           <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.featuresGrid}>
             {[
-              { icon: 'shield-check', label: 'Authentic' },
-              { icon: 'truck-fast', label: 'Express' },
-              { icon: 'refresh', label: 'Easy Returns' },
+              { icon: 'shield-check', label: t('product.authentic') },
+              { icon: 'truck-fast', label: t('product.express') },
+              { icon: 'refresh', label: t('product.easyReturns') },
             ].map((item, i) => (
               <View key={i} style={[styles.featureItem, { backgroundColor: colors.surfaceMuted }]}>
                 <MaterialCommunityIcons name={item.icon as any} size={22} color={colors.pink} />
@@ -415,7 +418,7 @@ export default function ProductDetailScreen() {
               <View style={styles.emptyReviews}>
                 <MaterialCommunityIcons name="comment-text-outline" size={32} color={colors.textMuted} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  {filterRating ? `No ${filterRating}-star reviews yet.` : 'Be the first to review this product.'}
+                  {filterRating ? `No ${filterRating}-star reviews yet.` : t('product.beFirstReview')}
                 </Text>
               </View>
             )}

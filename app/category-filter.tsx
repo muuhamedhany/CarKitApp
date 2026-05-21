@@ -32,8 +32,10 @@ import { FormInput, GlassView, GradientButton } from '@/components';
 import { API_URL } from '@/constants/config';
 import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Category, ServiceCategory } from '@/types/api.types';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -43,6 +45,7 @@ export default function CategoryFilterScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  const { t, language } = useTranslation();
   const params = useLocalSearchParams<{ product_categories?: string; service_categories?: string }>();
 
   const [productCategories, setProductCategories] = useState<Category[]>([]);
@@ -93,6 +96,7 @@ export default function CategoryFilterScreen() {
 
   const filteredProducts = productCategories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredServices = serviceCategories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const selectedCount = selectedProductIds.length + selectedServiceIds.length;
 
   const handleApply = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -203,7 +207,7 @@ export default function CategoryFilterScreen() {
                            <MaterialCommunityIcons name={selected ? "check" : "plus"} size={16} color={selected ? "#FFF" : colors.textMuted} />
                         </View>
                         <Text style={[styles.catName, { color: colors.textPrimary }, selected && styles.catNameSelected]} numberOfLines={2}>
-                          {cat.name}
+                          {translateCategoryName(cat.name, language)}
                         </Text>
                       </GlassView>
                     </Pressable>
@@ -257,7 +261,7 @@ export default function CategoryFilterScreen() {
                            <MaterialCommunityIcons name={selected ? "check" : "plus"} size={16} color={selected ? "#FFF" : colors.textMuted} />
                         </View>
                         <Text style={[styles.catName, { color: colors.textPrimary }, selected && styles.catNameSelected]} numberOfLines={2}>
-                          {cat.name}
+                          {translateCategoryName(cat.name, language)}
                         </Text>
                       </GlassView>
                     </Pressable>
@@ -281,7 +285,7 @@ export default function CategoryFilterScreen() {
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <GlassView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.footerGlass}>
           <GradientButton 
-            title={`Apply Selection (${selectedProductIds.length + selectedServiceIds.length})`}
+            title={t('categoryFilter.applySelection', { count: selectedCount })}
             onPress={handleApply}
             style={styles.applyBtn}
           />

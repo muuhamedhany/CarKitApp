@@ -22,6 +22,7 @@ import Text from '@/components/common/LocalizedText';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { bookingService, type Booking } from '@/services/api/booking.service';
 import { reviewService } from '@/services/api/review.service';
@@ -73,6 +74,7 @@ export default function BookingDetailScreen() {
     const router = useRouter();
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
+    const { t } = useTranslation();
     const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
     const [loading, setLoading] = useState(true);
     const [, setUpdating] = useState(false);
@@ -124,10 +126,10 @@ export default function BookingDetailScreen() {
 
     const timelineSteps = useMemo(
         () => [
-            { key: 'pending', label: 'Booking Placed', icon: 'calendar-check' },
-            { key: 'confirmed', label: 'Confirmed', icon: 'check-circle-outline' },
-            { key: 'in-progress', label: 'In Progress', icon: 'clock-outline' },
-            { key: 'completed', label: 'Completed', icon: 'flag-checkered' },
+            { key: 'pending', icon: 'calendar-check' },
+            { key: 'confirmed', icon: 'check-circle-outline' },
+            { key: 'in-progress', icon: 'clock-outline' },
+            { key: 'completed', icon: 'flag-checkered' },
         ],
         []
     );
@@ -200,7 +202,7 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.bookingDate, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
                                 </View>
                                 <View style={[styles.statusBadge, { backgroundColor: colors.pink + '20' }]}>
-                                    <Text style={[styles.statusText, { color: colors.pink }]}>{booking.status}</Text>
+                                    <Text style={[styles.statusText, { color: colors.pink }]}>{t(`status.${String(booking.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: booking.status })}</Text>
                                 </View>
                             </View>
                         </GlassView>
@@ -234,9 +236,9 @@ export default function BookingDetailScreen() {
                                                 ) : null}
                                             </View>
                                             <View style={styles.timelineLabelCol}>
-                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{step.label}</Text>
+                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{t(`bookingStatus.${step.key.replace(/-/g, '_')}`)}</Text>
                                                 <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
-                                                    {reached ? (index === 0 ? formatDate(booking.booking_date) : 'Completed') : 'Pending'}
+                                                    {reached ? (index === 0 ? formatDate(booking.booking_date) : t('filter.completed')) : t('filter.pending')}
                                                 </Text>
                                             </View>
                                         </View>
