@@ -68,6 +68,8 @@ export default function ServiceDetailScreen() {
   const { token } = useAuth();
   const { showToast } = useToast();
   const { t, language } = useTranslation();
+  const currencySuffix = t('common.currency.egp');
+  const minutesShort = t('common.minutesShort');
 
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -114,11 +116,11 @@ export default function ServiceDetailScreen() {
       if (data.success) {
         setService(data.data);
       } else {
-        showToast('error', 'Error', 'Service not found');
+        showToast('error', t('common.error'), t('service.notFound'));
         router.back();
       }
     } catch {
-      showToast('error', 'Error', 'Failed to fetch service details.');
+      showToast('error', t('common.error'), t('service.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -262,7 +264,7 @@ export default function ServiceDetailScreen() {
             <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={styles.mainInfoCard}>
               <View style={styles.badgeRow}>
                 <View style={[styles.categoryBadge, { backgroundColor: colors.pink + '20' }]}>
-                  <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name ? translateCategoryName(service.category_name, language).toUpperCase() : 'SERVICE'}</Text>
+                  <Text style={[styles.categoryText, { color: colors.pink }]}>{service.category_name ? translateCategoryName(service.category_name, language).toUpperCase() : t('booking.details.service').toUpperCase()}</Text>
                 </View>
                 <View style={[styles.locationBadge, { backgroundColor: colors.purple + '20' }]}>
                   <MaterialCommunityIcons
@@ -271,7 +273,7 @@ export default function ServiceDetailScreen() {
                     color={colors.purple}
                   />
                   <Text style={[styles.locationText, { color: colors.purple }]}>
-                    {service.location_type === 'mobile' ? 'MOBILE SERVICE' : service.location_type === 'in-shop' ? 'IN-SHOP ONLY' : t('service.flexibleLocation')}
+                    {service.location_type === 'mobile' ? t('service.mobileService') : service.location_type === 'in-shop' ? t('service.inShopOnly') : t('service.flexibleLocation')}
                   </Text>
                 </View>
               </View>
@@ -284,13 +286,13 @@ export default function ServiceDetailScreen() {
                   {service.rating ? Number(service.rating).toFixed(1) : '0.0'}
                 </Text>
                 <Text style={[styles.reviewCount, { color: colors.textSecondary }]}>
-                  ({service.review_count || 0} reviews)
+                  ({t('review.count', { count: service.review_count || 0 })})
                 </Text>
               </View>
 
-              <Text style={[styles.sectionHeadingSmall, { color: colors.textPrimary }]}>Service Details</Text>
+              <Text style={[styles.sectionHeadingSmall, { color: colors.textPrimary }]}>{t('service.detailsTitle')}</Text>
               <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
-                {service.description || 'Professional car care service provided by our certified experts.'}
+                {service.description || t('service.defaultDescription')}
               </Text>
 
               <Pressable
@@ -301,8 +303,8 @@ export default function ServiceDetailScreen() {
                   <MaterialCommunityIcons name="shield-star-outline" size={18} color={colors.pink} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>Provided by</Text>
-                  <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || 'Verified Partner'}</Text>
+                  <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>{t('service.providedBy')}</Text>
+                  <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || t('service.verifiedPartner')}</Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
@@ -314,15 +316,15 @@ export default function ServiceDetailScreen() {
             <View style={[styles.statItem, { backgroundColor: colors.surfaceMuted }]}>
               <MaterialCommunityIcons name="clock-outline" size={24} color={colors.pink} />
               <View>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} min</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('service.duration')}</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{service.duration || '--'} {minutesShort}</Text>
               </View>
             </View>
             <View style={[styles.statItem, { backgroundColor: colors.surfaceMuted }]}>
               <MaterialCommunityIcons name="shield-check-outline" size={24} color={colors.pink} />
               <View>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Protection</Text>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>Insured</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('service.protection')}</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{t('service.insured')}</Text>
               </View>
             </View>
           </Animated.View>
@@ -330,7 +332,7 @@ export default function ServiceDetailScreen() {
           {/* Available Slots */}
           {service.available_times && service.available_times.length > 0 && (
             <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.section}>
-              <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>Available Slots</Text>
+              <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>{t('service.availableSlots')}</Text>
               <View style={styles.slotsGrid}>
                 {service.available_times.map((time, i) => (
                   <View key={i} style={[styles.slotChip, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}>
@@ -345,7 +347,7 @@ export default function ServiceDetailScreen() {
           {/* Reviews Section */}
           <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reviewsSection}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 0 }]}>User Reviews</Text>
+              <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 0 }]}>{t('service.userReviews')}</Text>
               {reviews.length > 0 && <Text style={[styles.reviewCountLabel, { color: colors.pink }]}>{reviews.length}</Text>}
             </View>
 
@@ -360,7 +362,7 @@ export default function ServiceDetailScreen() {
             {/* Premium Rating Filter UI */}
             {reviews.length > 0 && (
               <View style={styles.filterSection}>
-                <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Filter by rating:</Text>
+                <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>{t('common.filterByRating')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -376,7 +378,7 @@ export default function ServiceDetailScreen() {
                       }
                     ]}
                   >
-                    <Text style={[styles.filterText, { color: filterRating === null ? '#FFF' : colors.textPrimary }]}>All Reviews</Text>
+                    <Text style={[styles.filterText, { color: filterRating === null ? '#FFF' : colors.textPrimary }]}>{t('common.allReviews')}</Text>
                   </Pressable>
                   {[5, 4, 3, 2, 1].map(star => (
                     <Pressable
@@ -406,7 +408,7 @@ export default function ServiceDetailScreen() {
               filteredReviews.map((review, idx) => (
                 <View key={review.review_id || idx} style={[styles.reviewItem, { borderBottomColor: colors.cardBorder }]}>
                   <View style={styles.reviewTop}>
-                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || 'Anonymous'}</Text>
+                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>{review.user_name || t('review.anonymous')}</Text>
                     <StarRating rating={review.rating || 0} size={12} readonly />
                   </View>
                   <Text style={[styles.reviewComment, { color: colors.textSecondary }]}>{review.comment}</Text>
@@ -416,7 +418,7 @@ export default function ServiceDetailScreen() {
               <View style={styles.emptyReviews}>
                 <MaterialCommunityIcons name="comment-text-outline" size={32} color={colors.textMuted} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  {filterRating ? `No ${filterRating}-star reviews yet.` : t('service.beFirstReview')}
+                  {filterRating ? t('service.noRatingReviews', { rating: filterRating }) : t('service.beFirstReview')}
                 </Text>
               </View>
             )}
@@ -434,10 +436,10 @@ export default function ServiceDetailScreen() {
         <GlassView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.bottomBlur}>
           <View style={styles.bottomBarContent}>
             <View style={styles.priceInfo}>
-              <Text style={[styles.priceTag, { color: colors.textSecondary }]}>Starting at</Text>
+              <Text style={[styles.priceTag, { color: colors.textSecondary }]}>{t('service.startingAt')}</Text>
               <View style={styles.priceRow}>
                 <Text style={[styles.priceValue, { color: colors.textPrimary }]}>{service.price}</Text>
-                <Text style={[styles.currency, { color: colors.pink }]}> EGP</Text>
+                <Text style={[styles.currency, { color: colors.pink }]}> {currencySuffix}</Text>
               </View>
             </View>
 
@@ -455,7 +457,7 @@ export default function ServiceDetailScreen() {
                 style={styles.bookBtnGradient}
               >
                 <MaterialCommunityIcons name="calendar-check" size={20} color="#FFF" />
-                <Text style={styles.bookBtnText}>Book Now</Text>
+                <Text style={styles.bookBtnText}>{t('service.card.bookNow')}</Text>
               </LinearGradient>
             </Pressable>
           </View>

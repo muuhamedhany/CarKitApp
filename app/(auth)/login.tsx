@@ -165,7 +165,7 @@ export default function LoginScreen() {
               />
 
               <Pressable
-                style={styles.forgotContainer}
+                style={[styles.forgotContainer, { alignItems: isRTL ? 'flex-start' : 'flex-end' }]}
                 onPress={() => router.push('/forgot-password' as any)}
               >
                 <Text style={[styles.forgotText, { color: colors.pink }]}>{t('auth.login.forgotPassword')}</Text>

@@ -30,6 +30,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Text from '@/components/common/LocalizedText';
 
 const AVERAGE_CITY_SPEED_KMH = 32;
+type TFunction = ReturnType<typeof useTranslation>['t'];
 
 const toFiniteNumber = (value: CoordinateValue | undefined): number | null => {
   if (value === null || value === undefined || value === '') return null;
@@ -63,28 +64,28 @@ const formatDistance = (distanceKm: number) => (
   distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`
 );
 
-const buildEta = (customer: RouteCoordinate | null, employee: RouteCoordinate | null) => {
+const buildEta = (customer: RouteCoordinate | null, employee: RouteCoordinate | null, t: TFunction) => {
   if (!customer || !employee) {
-    return { eta: 'Calculating', distance: 'Waiting for GPS' };
+    return { eta: t('emergency.waiting.calculating'), distance: t('emergency.waiting.waitingForGps') };
   }
 
   const distanceKm = getDistanceKm(employee, customer);
   if (distanceKm < 0.12) {
-    return { eta: 'Arriving now', distance: formatDistance(distanceKm) };
+    return { eta: t('emergency.waiting.arrivingNow'), distance: formatDistance(distanceKm) };
   }
 
   const minutes = Math.max(1, Math.round((distanceKm / AVERAGE_CITY_SPEED_KMH) * 60));
-  return { eta: `${minutes} min`, distance: formatDistance(distanceKm) };
+  return { eta: `${minutes} ${t('common.minutesShort')}`, distance: formatDistance(distanceKm) };
 };
 
-const formatLocationAge = (value: string | undefined, now: number) => {
-  if (!value) return 'waiting for update';
+const formatLocationAge = (value: string | undefined, now: number, t: TFunction) => {
+  if (!value) return t('emergency.waiting.waitingForUpdate');
   const updatedAt = new Date(value).getTime();
-  if (!Number.isFinite(updatedAt)) return 'waiting for update';
+  if (!Number.isFinite(updatedAt)) return t('emergency.waiting.waitingForUpdate');
   const ageSeconds = Math.max(0, Math.floor((now - updatedAt) / 1000));
-  if (ageSeconds < 10) return 'updated now';
-  if (ageSeconds < 60) return `updated ${ageSeconds}s ago`;
-  return `updated ${Math.floor(ageSeconds / 60)}m ago`;
+  if (ageSeconds < 10) return t('emergency.waiting.updatedNow');
+  if (ageSeconds < 60) return t('emergency.waiting.updatedSecondsAgo', { seconds: ageSeconds });
+  return t('emergency.waiting.updatedMinutesAgo', { minutes: Math.floor(ageSeconds / 60) });
 };
 
 export default function EmergencyWaitingScreen() {
@@ -119,10 +120,10 @@ export default function EmergencyWaitingScreen() {
     () => toCoordinate(request?.tracking_lat ?? request?.employee_lat, request?.tracking_lng ?? request?.employee_lng),
     [request?.employee_lat, request?.employee_lng, request?.tracking_lat, request?.tracking_lng]
   );
-  const arrival = useMemo(() => buildEta(customerCoordinate, employeeCoordinate), [customerCoordinate, employeeCoordinate]);
+  const arrival = useMemo(() => buildEta(customerCoordinate, employeeCoordinate, t), [customerCoordinate, employeeCoordinate, t]);
   const locationAge = useMemo(
-    () => formatLocationAge(request?.tracking_recorded_at || request?.employee_last_seen_at, now),
-    [request?.employee_last_seen_at, request?.tracking_recorded_at, now]
+    () => formatLocationAge(request?.tracking_recorded_at || request?.employee_last_seen_at, now, t),
+    [request?.employee_last_seen_at, request?.tracking_recorded_at, now, t]
   );
 
   const cancel = async () => {
@@ -148,7 +149,7 @@ export default function EmergencyWaitingScreen() {
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <CenteredHeader
-          title="Emergency Request"
+          title={t('emergency.request.title')}
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -188,7 +189,7 @@ export default function EmergencyWaitingScreen() {
               <View style={styles.statusRow}>
                 {['accepted', 'arrived', 'completed'].map((step) => (
                   <View key={step} style={[styles.statusStep, { backgroundColor: step === status ? colors.accentSoft : colors.surfaceMuted }]}>
-                    <Text style={[styles.statusText, { color: step === status ? colors.pink : colors.textMuted }]}>{step}</Text>
+                    <Text style={[styles.statusText, { color: step === status ? colors.pink : colors.textMuted }]}>{t(`status.${step}`, { defaultValue: step })}</Text>
                   </View>
                 ))}
               </View>

@@ -40,7 +40,7 @@ const formatDate = (value?: string | null) => {
     }
 };
 
-const formatMoney = (value: string | number) => `${Number(value || 0).toLocaleString('en-EG')} EGP`;
+const formatMoney = (value: string | number, currency: string) => `${Number(value || 0).toLocaleString('en-EG')} ${currency}`;
 
 const formatQueueTime = (value?: string | null) => {
     if (!value) return '-';
@@ -56,12 +56,12 @@ const formatQueueTime = (value?: string | null) => {
     }
 };
 
-const formatMinutes = (value?: number | null) => {
+const formatMinutes = (value: number | null | undefined, labels: { minutesShort: string; hoursShort: string; minutesCompact: string }) => {
     const minutes = Number(value || 0);
-    if (minutes < 60) return `${minutes} min`;
+    if (minutes < 60) return `${minutes} ${labels.minutesShort}`;
     const hours = Math.floor(minutes / 60);
     const remainder = minutes % 60;
-    return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+    return remainder ? `${hours}${labels.hoursShort} ${remainder}${labels.minutesCompact}` : `${hours}${labels.hoursShort}`;
 };
 
 const canCancel = (status?: string | null) => {
@@ -75,6 +75,10 @@ export default function BookingDetailScreen() {
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { t } = useTranslation();
+    const currencySuffix = t('common.currency.egp');
+    const minutesShort = t('common.minutesShort');
+    const hoursShort = t('common.hoursShort');
+    const minutesCompact = t('common.minutesCompact');
     const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
     const [loading, setLoading] = useState(true);
     const [, setUpdating] = useState(false);
@@ -85,7 +89,7 @@ export default function BookingDetailScreen() {
 
     const loadBooking = useCallback(async () => {
         if (!bookingId) {
-            showToast('error', 'Invalid Booking', 'Booking id is missing.');
+            showToast('error', t('booking.details.invalidTitle'), t('booking.details.invalidMessage'));
             router.back();
             return;
         }
@@ -94,16 +98,16 @@ export default function BookingDetailScreen() {
             setLoading(true);
             const response = await bookingService.getBookingById(bookingId);
             if (!response.success || !response.data) {
-                showToast('error', 'Booking Error', response.message || 'Unable to load booking details.');
+                showToast('error', t('booking.details.errorTitle'), response.message || t('booking.details.loadError'));
                 return;
             }
             setBooking(response.data as NonNullable<BookingDetail>);
         } catch {
-            showToast('error', 'Booking Error', 'Unable to load booking details.');
+            showToast('error', t('booking.details.errorTitle'), t('booking.details.loadError'));
         } finally {
             setLoading(false);
         }
-    }, [bookingId, router, showToast]);
+    }, [bookingId, router, showToast, t]);
 
     const checkReviewStatus = useCallback(async () => {
         if (!bookingId) return;
@@ -144,24 +148,24 @@ export default function BookingDetailScreen() {
         if (!booking) return;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-        Alert.alert('Cancel Booking', 'Do you want to cancel this booking?', [
-            { text: 'Keep Booking', style: 'cancel' },
+        Alert.alert(t('booking.details.cancelBooking'), t('booking.details.cancelConfirm'), [
+            { text: t('booking.details.keepBooking'), style: 'cancel' },
             {
-                text: 'Cancel Booking',
+                text: t('booking.details.cancelBooking'),
                 style: 'destructive',
                 onPress: async () => {
                     try {
                         setUpdating(true);
                         const response = await bookingService.cancelBooking(booking.booking_id);
                         if (!response.success) {
-                            showToast('error', 'Cancel Failed', response.message || 'Could not cancel booking.');
+                            showToast('error', t('booking.details.cancelFailed'), response.message || t('booking.details.cancelFailedMessage'));
                             return;
                         }
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        showToast('success', 'Booking Cancelled', 'Your booking was cancelled successfully.');
+                        showToast('success', t('booking.details.cancelledTitle'), t('booking.details.cancelledMessage'));
                         await loadBooking();
                     } catch {
-                        showToast('error', 'Cancel Failed', 'Could not cancel booking.');
+                        showToast('error', t('booking.details.cancelFailed'), t('booking.details.cancelFailedMessage'));
                     } finally {
                         setUpdating(false);
                     }
@@ -170,7 +174,7 @@ export default function BookingDetailScreen() {
         ]);
     };
 
-    const serviceTitle = booking?.service_name || 'Service';
+    const serviceTitle = booking?.service_name || t('booking.details.service');
 
     return (
         <View style={styles.container}>
@@ -189,16 +193,16 @@ export default function BookingDetailScreen() {
                 </View>
             ) : !booking ? (
                 <View style={styles.center}>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>Booking not found.</Text>
+                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('booking.details.notFound')}</Text>
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                    <CenteredHeader title="Booking Details" titleColor={colors.textPrimary} />
+                    <CenteredHeader title={t('booking.details.title')} titleColor={colors.textPrimary} />
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.cardHeader}>
                                 <View>
-                                    <Text style={[styles.bookingId, { color: colors.textPrimary }]}>Booking #{booking.booking_id}</Text>
+                                    <Text style={[styles.bookingId, { color: colors.textPrimary }]}>{t('booking.details.bookingNumber', { id: booking.booking_id })}</Text>
                                     <Text style={[styles.bookingDate, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
                                 </View>
                                 <View style={[styles.statusBadge, { backgroundColor: colors.pink + '20' }]}>
@@ -210,7 +214,7 @@ export default function BookingDetailScreen() {
 
                     <Animated.View entering={FadeInDown.delay(200).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tracking</Text>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('booking.details.tracking')}</Text>
                             <View style={styles.timelineContainer}>
                                 {timelineSteps.map((step, index) => {
                                     const reached = currentPosition >= index;
@@ -253,26 +257,29 @@ export default function BookingDetailScreen() {
                             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                                 <View style={styles.sectionHeader}>
                                     <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
-                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Service Queue</Text>
+                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.serviceQueue')}</Text>
                                 </View>
                                 <View style={styles.queueGrid}>
                                     <View style={styles.queueStat}>
                                         <Text style={[styles.queueValue, { color: colors.pink }]}>#{booking.queue.queue_number}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Your number</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('booking.details.yourNumber')}</Text>
                                     </View>
                                     <View style={styles.queueStat}>
                                         <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{booking.queue.people_before}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Before you</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('booking.details.beforeYou')}</Text>
                                     </View>
                                     <View style={styles.queueStat}>
-                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(booking.queue.estimated_wait_minutes)}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Est. wait</Text>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(booking.queue.estimated_wait_minutes, { minutesShort, hoursShort, minutesCompact })}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('booking.details.estWait')}</Text>
                                     </View>
                                 </View>
                                 <View style={[styles.queueNote, { backgroundColor: colors.infoSoft }]}>
                                     <MaterialCommunityIcons name="map-marker-check-outline" size={16} color={colors.info} />
                                     <Text style={[styles.queueNoteText, { color: colors.textSecondary }]}>
-                                        Show up around {formatQueueTime(booking.queue.show_up_at)}. Service is expected to finish by {formatQueueTime(booking.queue.estimated_finish_at)}.
+                                        {t('booking.details.showUpFinish', {
+                                            showUp: formatQueueTime(booking.queue.show_up_at),
+                                            finish: formatQueueTime(booking.queue.estimated_finish_at),
+                                        })}
                                     </Text>
                                 </View>
                             </GlassView>
@@ -283,7 +290,7 @@ export default function BookingDetailScreen() {
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="car-cog" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Service</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.service')}</Text>
                             </View>
                             <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{serviceTitle}</Text>
                             {booking.service_description ? (
@@ -292,7 +299,7 @@ export default function BookingDetailScreen() {
                             {booking.service_duration ? (
                                 <View style={styles.metaRow}>
                                     <MaterialCommunityIcons name="timer-outline" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.service_duration} min</Text>
+                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.service_duration} {minutesShort}</Text>
                                 </View>
                             ) : null}
                         </GlassView>
@@ -302,9 +309,9 @@ export default function BookingDetailScreen() {
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="account-tie" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Provider</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.provider')}</Text>
                             </View>
-                            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.provider_name || 'Provider details unavailable'}</Text>
+                            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.provider_name || t('booking.details.providerUnavailable')}</Text>
                             {booking.provider_phone ? (
                                 <View style={styles.metaRow}>
                                     <MaterialCommunityIcons name="phone-outline" size={14} color={colors.textMuted} />
@@ -318,37 +325,37 @@ export default function BookingDetailScreen() {
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Location & Schedule</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.locationSchedule')}</Text>
                             </View>
                             <View style={styles.scheduleRow}>
                                 <View style={styles.scheduleItem}>
-                                    <Text style={styles.scheduleLabel}>Date</Text>
+                                    <Text style={styles.scheduleLabel}>{t('common.date')}</Text>
                                     <Text style={[styles.scheduleValue, { color: colors.textPrimary }]}>{formatDate(booking.booking_date)}</Text>
                                 </View>
                                 <View style={styles.scheduleDivider} />
                                 <View style={styles.scheduleItem}>
-                                    <Text style={styles.scheduleLabel}>Time</Text>
+                                    <Text style={styles.scheduleLabel}>{t('common.time')}</Text>
                                     <Text style={[styles.scheduleValue, { color: colors.textPrimary }]}>{booking.start_time}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.addressContainer}>
-                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{booking.address_title || 'Service Address'}</Text>
+                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{booking.address_title || t('booking.details.serviceAddress')}</Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                                    {booking.street || booking.location || 'No street address'}{booking.city ? `, ${booking.city}` : ''}
+                                    {booking.street || booking.location || t('booking.details.noStreetAddress')}{booking.city ? `, ${booking.city}` : ''}
                                 </Text>
                                 {(booking.building || booking.apartment_floor) && (
                                     <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
-                                        {booking.building ? `Building: ${booking.building}` : ''}
+                                        {booking.building ? t('booking.details.building', { value: booking.building }) : ''}
                                         {booking.building && booking.apartment_floor ? ' | ' : ''}
-                                        {booking.apartment_floor ? `Apt/Floor: ${booking.apartment_floor}` : ''}
+                                        {booking.apartment_floor ? t('booking.details.aptFloor', { value: booking.apartment_floor }) : ''}
                                     </Text>
                                 )}
                             </View>
 
                             {booking.notes && (
                                 <View style={[styles.notesContainer, { borderTopColor: colors.cardBorder }]}>
-                                    <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Notes:</Text>
+                                    <Text style={[styles.notesLabel, { color: colors.textMuted }]}>{t('booking.details.notes')}</Text>
                                     <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
                                 </View>
                             )}
@@ -368,26 +375,26 @@ export default function BookingDetailScreen() {
                     <Animated.View entering={FadeInDown.delay(600).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.priceCard}>
                             <View>
-                                <Text style={styles.totalLabel}>Total Amount</Text>
-                                <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price)}</Text>
+                                <Text style={styles.totalLabel}>{t('booking.details.totalAmount')}</Text>
+                                <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price, currencySuffix)}</Text>
                             </View>
                             <View style={styles.paymentBadge}>
                                 <MaterialCommunityIcons name="credit-card-check" size={16} color={colors.white} />
-                                <Text style={styles.paymentText}>Paid</Text>
+                                <Text style={styles.paymentText}>{t('common.paid')}</Text>
                             </View>
                         </GlassView>
                     </Animated.View>
 
                     <View style={styles.actionsRow}>
                         <GradientButton
-                            title="Support"
+                            title={t('common.support')}
                             onPress={() => router.push('/support' as any)}
                             style={{ flex: 1 }}
                             icon="chat-processing-outline"
                         />
                         {canCancel(booking.status) ? (
                             <OutlinedButton
-                                title="Cancel"
+                                title={t('common.cancel')}
                                 onPress={handleCancel}
                                 style={{ flex: 1 }}
                                 textColor={colors.error}
@@ -396,7 +403,7 @@ export default function BookingDetailScreen() {
                         ) : null}
                         {booking.status?.toLowerCase() === 'completed' && !isReviewed ? (
                             <GradientButton
-                                title="Rate"
+                                title={t('common.rate')}
                                 onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"
@@ -404,7 +411,7 @@ export default function BookingDetailScreen() {
                         ) : isReviewed ? (
                             <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
                                 <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
-                                <Text style={[styles.reviewedText, { color: colors.success }]}>Reviewed</Text>
+                                <Text style={[styles.reviewedText, { color: colors.success }]}>{t('booking.details.reviewed')}</Text>
                             </View>
                         ) : null}
                     </View>
@@ -416,7 +423,7 @@ export default function BookingDetailScreen() {
                     visible={reviewModalVisible}
                     onClose={() => setReviewModalVisible(false)}
                     entityId={booking.provider_id_fk || 0}
-                    entityName={booking.provider_name || 'Provider'}
+                    entityName={booking.provider_name || t('booking.details.provider')}
                     entityType="provider"
                     bookingId={booking.booking_id}
                     items={[{

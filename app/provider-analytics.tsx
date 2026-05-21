@@ -100,6 +100,7 @@ export default function ProviderAnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const currencySuffix = t('common.currency.egp');
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -124,7 +125,7 @@ export default function ProviderAnalyticsScreen() {
           setAnalytics(res.data);
         }
       } catch (error: any) {
-        showToast('error', 'Error', error?.message || 'Failed to load analytics.');
+        showToast('error', t('common.error'), error?.message || t('analytics.loadFailed'));
       } finally {
         setLoading(false);
         chartProgress.value = 0;
@@ -206,7 +207,7 @@ export default function ProviderAnalyticsScreen() {
           >
             <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('analytics.title')}</Text>
         </View>
 
         <View style={[styles.rangeToggle, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}
@@ -243,7 +244,7 @@ export default function ProviderAnalyticsScreen() {
         ) : !analytics ? (
           <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <MaterialCommunityIcons name="chart-line" size={32} color={colors.textMuted} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>No analytics data yet.</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('analytics.noData')}</Text>
           </View>
         ) : (
           <>
@@ -251,19 +252,19 @@ export default function ProviderAnalyticsScreen() {
               <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
                 <Pressable
                   style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
-                  onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed bookings in the selected period. The percentage change is compared to the previous period.')}
+                  onPress={() => Alert.alert(t('analytics.revenue'), t('analytics.revenueInfoBookings'))}
                   hitSlop={8}
                 >
                   <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                 </Pressable>
                 <View style={{ flex: 1, marginRight: Spacing.md }}>
-                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Revenue</Text>
+                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>{t('analytics.revenue')}</Text>
                     <CountUp
                       value={analytics.revenue.total}
                       style={[styles.revenueValue, { color: colors.textPrimary }]}
                       formatter={(val) => {
                         'worklet';
-                        return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} EGP`;
+                        return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${currencySuffix}`;
                       }}
                     />
                 </View>
@@ -285,13 +286,13 @@ export default function ProviderAnalyticsScreen() {
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
-                    onPress={() => Alert.alert('Bookings', 'Total number of bookings made in the selected period. The percentage change is compared to the previous period.')}
+                    onPress={() => Alert.alert(t('analytics.bookings'), t('analytics.bookingsInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                   </Pressable>
                   <MaterialCommunityIcons name="calendar-blank-outline" size={20} color={colors.pink} />
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bookings</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('analytics.bookings')}</Text>
                     <CountUp
                       value={analytics.bookings.total}
                       style={[styles.statValue, { color: colors.textPrimary }]}
@@ -309,13 +310,13 @@ export default function ProviderAnalyticsScreen() {
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
-                    onPress={() => Alert.alert('New Customers', 'Number of unique new customers who made their first booking in the selected period. The percentage change is compared to the previous period.')}
+                    onPress={() => Alert.alert(t('analytics.newCustomers'), t('analytics.newCustomersInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                   </Pressable>
                   <MaterialCommunityIcons name="account-group-outline" size={20} color={colors.pink} />
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>New Customers</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('analytics.newCustomers')}</Text>
                     <CountUp
                       value={analytics.new_customers.total}
                       style={[styles.statValue, { color: colors.textPrimary }]}
@@ -334,11 +335,11 @@ export default function ProviderAnalyticsScreen() {
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <View>
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Booking Volume</Text>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.bookingVolume')}</Text>
                     <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{analytics.trend.subtitle || t('analytics.last30Days')}</Text>
                   </View>
                   <Pressable
-                    onPress={() => Alert.alert('Booking Volume', 'A visual trend of booking volume over the selected period.')}
+                    onPress={() => Alert.alert(t('analytics.bookingVolume'), t('analytics.bookingVolumeInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -380,9 +381,9 @@ export default function ProviderAnalyticsScreen() {
             <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Customer Mix</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.customerMix')}</Text>
                   <Pressable
-                    onPress={() => Alert.alert('Customer Mix', 'Percentage of returning customers vs new customers based on bookings in the selected period.')}
+                    onPress={() => Alert.alert(t('analytics.customerMix'), t('analytics.customerMixInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -433,12 +434,12 @@ export default function ProviderAnalyticsScreen() {
                   <View style={styles.categoryLegend}>
                     <View style={styles.categoryItem}>
                       <View style={[styles.categoryDot, { backgroundColor: colors.pink }]} />
-                      <Text style={[styles.categoryName, { color: colors.textSecondary }]}>Returning</Text>
+                      <Text style={[styles.categoryName, { color: colors.textSecondary }]}>{t('analytics.returning')}</Text>
                       <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>{Math.round(returningPct)}%</Text>
                     </View>
                     <View style={styles.categoryItem}>
                       <View style={[styles.categoryDot, { backgroundColor: colors.purple }]} />
-                      <Text style={[styles.categoryName, { color: colors.textSecondary }]}>New</Text>
+                      <Text style={[styles.categoryName, { color: colors.textSecondary }]}>{t('analytics.new')}</Text>
                       <Text style={[styles.categoryValue, { color: colors.textPrimary }]}>{Math.round(newPct)}%</Text>
                     </View>
                   </View>
@@ -449,9 +450,9 @@ export default function ProviderAnalyticsScreen() {
             <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Revenue by Service</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.revenueByService')}</Text>
                   <Pressable
-                    onPress={() => Alert.alert('Revenue by Service', 'Revenue breakdown across different services. The progress bar shows the proportion relative to the highest-earning service.')}
+                    onPress={() => Alert.alert(t('analytics.revenueByService'), t('analytics.revenueByServiceInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -466,7 +467,7 @@ export default function ProviderAnalyticsScreen() {
                         <View style={styles.serviceHeader}>
                           <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{svc.name}</Text>
                           <Text style={[styles.serviceRevenue, { color: colors.textPrimary }]} selectable>
-                            {formatCurrency(svc.revenue)} EGP
+                            {formatCurrency(svc.revenue)} {currencySuffix}
                           </Text>
                         </View>
                         <View style={[styles.progressBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
@@ -476,7 +477,7 @@ export default function ProviderAnalyticsScreen() {
                     );
                   })
                 ) : (
-                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No services yet.</Text>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('analytics.noServices')}</Text>
                 )}
               </GlassView>
             </View>

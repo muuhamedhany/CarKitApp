@@ -119,6 +119,7 @@ export default function VendorAnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const currencySuffix = t('common.currency.egp');
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -145,7 +146,7 @@ export default function VendorAnalyticsScreen() {
           setAnalytics(res.data);
         }
       } catch (error: any) {
-        showToast('error', 'Error', error?.message || 'Failed to load analytics.');
+        showToast('error', t('common.error'), error?.message || t('analytics.loadFailed'));
       } finally {
         setLoading(false);
         chartProgress.value = 0;
@@ -233,7 +234,7 @@ export default function VendorAnalyticsScreen() {
           >
             <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textPrimary} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Analytics</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('analytics.title')}</Text>
         </View>
 
         <View style={[styles.rangeToggle, { backgroundColor: colors.surfaceMuted, borderColor: colors.cardBorder }]}
@@ -270,7 +271,7 @@ export default function VendorAnalyticsScreen() {
         ) : !analytics ? (
           <View style={[styles.loadingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <MaterialCommunityIcons name="chart-line" size={32} color={colors.textMuted} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>No analytics data yet.</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('analytics.noData')}</Text>
           </View>
         ) : (
           <>
@@ -278,19 +279,19 @@ export default function VendorAnalyticsScreen() {
               <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.revenueCard, { borderColor: colors.purpleDark, backgroundColor: colors.purple + '20' }]}>
                 <Pressable
                   style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
-                  onPress={() => Alert.alert('Revenue', 'Total revenue generated from all completed orders in the selected period. The percentage change is compared to the previous period.')}
+                  onPress={() => Alert.alert(t('analytics.revenue'), t('analytics.revenueInfoOrders'))}
                   hitSlop={8}
                 >
                   <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                 </Pressable>
                 <View>
-                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Revenue</Text>
+                  <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>{t('analytics.revenue')}</Text>
                   <CountUp
                     value={analytics.revenue.total}
                     style={[styles.revenueValue, { color: colors.textPrimary }]}
                     formatter={(val) => {
                       'worklet';
-                      return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} EGP`;
+                      return `${Math.floor(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${currencySuffix}`;
                     }}
                   />
                 </View>
@@ -312,13 +313,13 @@ export default function VendorAnalyticsScreen() {
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
-                    onPress={() => Alert.alert('Total Orders', 'Total number of orders placed in the selected period. The percentage change is compared to the previous period.')}
+                    onPress={() => Alert.alert(t('analytics.orders'), t('analytics.ordersInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                   </Pressable>
                   <MaterialCommunityIcons name="receipt-text" size={20} color={colors.pink} />
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>total Orders</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('analytics.orders')}</Text>
                   <CountUp
                     value={analytics.orders.total}
                     style={[styles.statValue, { color: colors.textPrimary }]}
@@ -336,13 +337,13 @@ export default function VendorAnalyticsScreen() {
                 <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, { borderColor: colors.cardBorder }]}>
                   <Pressable
                     style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
-                    onPress={() => Alert.alert('Avg Order Value', 'Total revenue divided by the number of orders in the selected period. The percentage change is compared to the previous period.')}
+                    onPress={() => Alert.alert(t('analytics.avgOrderValue'), t('analytics.avgOrderValueInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />
                   </Pressable>
                   <MaterialCommunityIcons name="cash-multiple" size={20} color={colors.pink} />
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Order Value</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('analytics.avgOrderValue')}</Text>
                   <CountUp
                     value={analytics.order_value.total}
                     style={[styles.statValue, { color: colors.textPrimary }]}
@@ -366,7 +367,7 @@ export default function VendorAnalyticsScreen() {
 
                 <Pressable
                   style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}
-                  onPress={() => Alert.alert(analytics.trend.title, 'A visual trend of performance over the selected period.')}
+                  onPress={() => Alert.alert(t('analytics.salesTrend'), t('analytics.trendInfo'))}
                   hitSlop={8}
                 >
                   <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -427,9 +428,9 @@ export default function VendorAnalyticsScreen() {
             <View>
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Sales by Category</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.salesByCategory')}</Text>
                   <Pressable
-                    onPress={() => Alert.alert('Sales by Category', 'Revenue breakdown across different product categories.')}
+                    onPress={() => Alert.alert(t('analytics.salesByCategory'), t('analytics.salesByCategoryInfo'))}
                     hitSlop={8}
                   >
                     <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -499,9 +500,9 @@ export default function VendorAnalyticsScreen() {
               <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: colors.cardBorder }]}>
                 <View style={styles.cardHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Top Products</Text>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('analytics.topProducts')}</Text>
                     <Pressable
-                      onPress={() => Alert.alert('Top Products', 'Best-selling products in the selected period, ranked by revenue.')}
+                      onPress={() => Alert.alert(t('analytics.topProducts'), t('analytics.topProductsInfo'))}
                       hitSlop={8}
                     >
                       <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
@@ -515,7 +516,7 @@ export default function VendorAnalyticsScreen() {
                     hitSlop={8}
                     accessibilityRole="button"
                   >
-                    <Text style={[styles.cardLink, { color: colors.pink }]}>Manage</Text>
+                    <Text style={[styles.cardLink, { color: colors.pink }]}>{t('common.manage')}</Text>
                   </Pressable>
                 </View>
                 {analytics.top_products.length ? (
@@ -524,14 +525,14 @@ export default function VendorAnalyticsScreen() {
                       <View style={styles.productInfo}>
                         <Text style={[styles.productName, { color: colors.textPrimary }]}>{product.name}</Text>
                         <Text style={[styles.productMeta, { color: colors.textSecondary }]}>
-                          {product.sold_units} sold
+                          {t('analytics.soldUnits', { count: product.sold_units })}
                         </Text>
                       </View>
                       <View style={styles.productStats}>
                         <Text style={[styles.productRevenue, { color: colors.textPrimary }]}
                           selectable
                         >
-                          {formatCurrency(product.revenue)} EGP
+                          {formatCurrency(product.revenue)} {currencySuffix}
                         </Text>
                         <Text
                           selectable
@@ -543,7 +544,7 @@ export default function VendorAnalyticsScreen() {
                     </View>
                   ))
                 ) : (
-                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No products yet.</Text>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('analytics.noProducts')}</Text>
                 )}
               </GlassView>
             </View>

@@ -42,6 +42,7 @@ export default function ProviderDashboard() {
     const router = useRouter();
     const { showToast } = useToast();
     const { t } = useTranslation();
+    const currencySuffix = t('common.currency.egp');
 
     const [dashboard, setDashboard] = useState<ProviderDashboardResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -65,11 +66,11 @@ export default function ProviderDashboard() {
                 }
             } catch { /* non-blocking */ }
         } catch (error: any) {
-            showToast('error', 'Error', error?.message || 'Failed to load dashboard.');
+            showToast('error', t('common.error'), error?.message || t('provider.dashboard.loadFailed'));
         } finally {
             setLoading(false);
         }
-    }, [showToast]);
+    }, [showToast, t, user]);
 
     useFocusEffect(useCallback(() => { loadDashboard(); }, [loadDashboard]));
 
@@ -98,11 +99,11 @@ export default function ProviderDashboard() {
                 onPress: () => router.push('/(provider-tabs)/bookings')
             },
             {
-                label: 'Revenue',
+                label: t('provider.dashboard.revenue'),
                 value: `${Number(dashboard.stats.revenue).toLocaleString('en-EG')}`,
                 icon: 'cash-multiple',
                 color: colors.pink,
-                subtitle: 'All time',
+                subtitle: t('provider.dashboard.allTime'),
                 onPress: () => router.push('/provider-analytics')
             },
             {
@@ -118,7 +119,7 @@ export default function ProviderDashboard() {
         : [];
 
     const formatTime = (value: string | null) => {
-        if (!value) return 'Time not set';
+        if (!value) return t('provider.dashboard.timeNotSet');
         return value.slice(0, 5);
     };
 
@@ -141,8 +142,8 @@ export default function ProviderDashboard() {
                 {/* Header */}
                 <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
                     <View style={styles.headerLeft}>
-                        <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello,</Text>
-                        <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Provider'}</Text>
+                        <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('vendor.dashboard.hello')}</Text>
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || t('review.provider')}</Text>
                     </View>
                     <Pressable
                         style={[styles.notificationBtn, { backgroundColor: colors.glass, borderColor: colors.cardBorder }]}
@@ -212,7 +213,7 @@ export default function ProviderDashboard() {
                                     style={[styles.quickAction, { borderColor: 'transparent' }]}
                                 >
                                     <MaterialCommunityIcons name="bullhorn-outline" size={20} color={colors.white} />
-                                    <Text style={[styles.quickActionText, { color: colors.white }]}>Promote Your Services</Text>
+                                    <Text style={[styles.quickActionText, { color: colors.white }]}>{t('provider.dashboard.promote')}</Text>
                                 </LinearGradient>
                             </Pressable>
                         </Animated.View>
@@ -233,8 +234,8 @@ export default function ProviderDashboard() {
                                     <MaterialCommunityIcons name="chart-line" size={22} color={colors.pink} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>Analytics</Text>
-                                    <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>Track service performance</Text>
+                                    <Text style={[styles.analyticsTitle, { color: colors.textPrimary }]}>{t('vendor.dashboard.analytics')}</Text>
+                                    <Text style={[styles.analyticsSubtitle, { color: colors.textSecondary }]}>{t('provider.dashboard.analyticsSub')}</Text>
                                 </View>
                                 <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
                             </Pressable>
@@ -259,8 +260,8 @@ export default function ProviderDashboard() {
                                     <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.pink} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={[styles.teamCardTitle, { color: colors.textPrimary }]}>Manage Team</Text>
-                                    <Text style={[styles.teamCardSub, { color: colors.textSecondary }]}>Employees & assignments</Text>
+                                    <Text style={[styles.teamCardTitle, { color: colors.textPrimary }]}>{t('provider.dashboard.manageTeam')}</Text>
+                                    <Text style={[styles.teamCardSub, { color: colors.textSecondary }]}>{t('provider.dashboard.teamSub')}</Text>
                                 </View>
                                 <MaterialCommunityIcons name="chevron-right" size={22} color={colors.pink} />
                             </Pressable>
@@ -268,9 +269,9 @@ export default function ProviderDashboard() {
 
                         <Animated.View entering={FadeInUp.delay(600).duration(800)} style={[styles.section, { marginTop: Spacing.lg }]}>
                             <View style={styles.sectionHeader}>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today Appointments</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('provider.dashboard.todayAppointments')}</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/bookings')}>
-                                    <Text style={[styles.sectionLink, { color: colors.pink }]}>See All</Text>
+                                    <Text style={[styles.sectionLink, { color: colors.pink }]}>{t('common.seeAll')}</Text>
                                 </Pressable>
                             </View>
 
@@ -298,12 +299,14 @@ export default function ProviderDashboard() {
                                                     <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{appointment.service_name} · {formatTime(appointment.start_time)}</Text>
                                                 </View>
                                                 <View style={[styles.statusBadge, { backgroundColor: getStatusTint(appointment.status, colors).bg }]}>
-                                                    <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>{appointment.status}</Text>
+                                                    <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>
+                                                        {t(`status.${String(appointment.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: appointment.status })}
+                                                    </Text>
                                                 </View>
                                             </View>
                                             <View style={styles.orderBottomRow}>
-                                                <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>Booking #{appointment.booking_id}</Text>
-                                                <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} EGP</Text>
+                                                <Text style={[styles.orderMeta, { color: colors.textSecondary }]}>{t('provider.dashboard.bookingNumber', { id: appointment.booking_id })}</Text>
+                                                <Text style={[styles.orderTotal, { color: colors.textPrimary }]}>{Number(appointment.booking_price).toLocaleString('en-EG')} {currencySuffix}</Text>
                                             </View>
                                         </GlassView>
                                     </Pressable>
@@ -311,7 +314,7 @@ export default function ProviderDashboard() {
                             ) : (
                                 <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="calendar-blank-outline" size={44} color={colors.textMuted} />
-                                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>No appointments today.</Text>
+                                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('provider.dashboard.noAppointments')}</Text>
                                 </GlassView>
                             )}
                         </Animated.View>
@@ -319,9 +322,9 @@ export default function ProviderDashboard() {
                         {/* Popular Services */}
                         <Animated.View entering={FadeInUp.delay(700).duration(800)} style={styles.section}>
                             <View style={styles.sectionHeader}>
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Popular Services</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('provider.dashboard.popularServices')}</Text>
                                 <Pressable onPress={() => router.push('/(provider-tabs)/services')}>
-                                    <Text style={[styles.sectionLink, { color: colors.pink }]}>Manage</Text>
+                                    <Text style={[styles.sectionLink, { color: colors.pink }]}>{t('common.manage')}</Text>
                                 </Pressable>
                             </View>
 
@@ -341,10 +344,10 @@ export default function ProviderDashboard() {
                                             </View>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={[styles.productName, { color: colors.textPrimary }]}>{service.name}</Text>
-                                                <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{service.booking_count} bookings</Text>
+                                                <Text style={[styles.productMeta, { color: colors.textSecondary }]}>{t('provider.dashboard.bookingCount', { count: service.booking_count })}</Text>
                                             </View>
                                             <Text style={[styles.productRevenue, { color: colors.pink }]}>
-                                                {Number(service.revenue).toLocaleString('en-EG')} EGP
+                                                {Number(service.revenue).toLocaleString('en-EG')} {currencySuffix}
                                             </Text>
                                         </GlassView>
                                     </Pressable>
@@ -352,7 +355,7 @@ export default function ProviderDashboard() {
                             ) : (
                                 <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={[styles.emptyState, { borderColor: colors.cardBorder }]}>
                                     <MaterialCommunityIcons name="wrench-outline" size={44} color={colors.textMuted} />
-                                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>No services yet. Add your first service!</Text>
+                                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('provider.dashboard.noServices')}</Text>
                                 </GlassView>
                             )}
                         </Animated.View>

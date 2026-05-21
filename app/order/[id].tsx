@@ -34,6 +34,7 @@ import { OrderDetail } from '@/types/api.types';
 const SHIPPING_FEE = 50;
 
 type OrderRole = 'customer' | 'vendor';
+type TFunction = ReturnType<typeof useTranslation>['t'];
 
 const formatDate = (value?: string | null) => {
     if (!value) return '-';
@@ -45,9 +46,9 @@ const formatDate = (value?: string | null) => {
     }
 };
 
-const formatMoney = (value: string | number) => {
+const formatMoney = (value: string | number, currency: string) => {
     const numberValue = Number(value || 0);
-    return `${numberValue.toLocaleString('en-EG')} EGP`;
+    return `${numberValue.toLocaleString('en-EG')} ${currency}`;
 };
 
 const formatQueueTime = (value?: string | null) => {
@@ -64,12 +65,12 @@ const formatQueueTime = (value?: string | null) => {
     }
 };
 
-const formatMinutes = (value?: number | null) => {
+const formatMinutes = (value: number | null | undefined, labels: { minutesShort: string; hoursShort: string; minutesCompact: string }) => {
     const minutes = Number(value || 0);
-    if (minutes < 60) return `${minutes} min`;
+    if (minutes < 60) return `${minutes} ${labels.minutesShort}`;
     const hours = Math.floor(minutes / 60);
     const remainder = minutes % 60;
-    return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+    return remainder ? `${hours}${labels.hoursShort} ${remainder}${labels.minutesCompact}` : `${hours}${labels.hoursShort}`;
 };
 
 const normalizeStatus = (status?: string) => String(status || '').toLowerCase();
@@ -115,35 +116,41 @@ const getStatusLabelKey = (status: string, isWorkshopFitting: boolean, role: Ord
     return 'filter.pending';
 };
 
-const getCustomerStatusNote = (order: OrderDetail, isWorkshopFitting: boolean, hasQueue: boolean) => {
+const getCustomerStatusNote = (order: OrderDetail, isWorkshopFitting: boolean, hasQueue: boolean, t: TFunction) => {
     const status = normalizeStatus(order.status);
 
     if (isWorkshopFitting) {
-        if (status === 'processing') return 'Installation is in progress at the vendor workshop.';
-        if (status === 'ready_for_pickup' || status === 'delivered') return 'Installation is complete. The order is closed and ready for the customer.';
-        if (status === 'cancelled') return 'This workshop installation order was cancelled.';
-        if (hasQueue && order.queue?.show_up_at) return `Show up: ${formatQueueTime(order.queue.show_up_at)}`;
-        return `Estimated fitting: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`;
+        if (status === 'processing') return t('order.details.installationInProgressNote');
+        if (status === 'ready_for_pickup' || status === 'delivered') return t('order.details.installationCompleteNote');
+        if (status === 'cancelled') return t('order.details.workshopCancelledNote');
+        if (hasQueue && order.queue?.show_up_at) return t('order.details.showUp', { time: formatQueueTime(order.queue.show_up_at) });
+        return t('order.details.estimatedFitting', {
+            start: formatDate(order.estimated_delivery_start),
+            end: formatDate(order.estimated_delivery_end),
+        });
     }
 
-    if (status === 'ready_for_pickup') return 'The vendor has prepared the order for driver pickup.';
-    if (status === 'in_transit') return 'Your order is with the driver.';
-    if (status === 'delivered') return 'Your order has been delivered.';
-    if (status === 'cancelled') return 'This delivery order was cancelled.';
-    return `Estimated delivery: ${formatDate(order.estimated_delivery_start)} - ${formatDate(order.estimated_delivery_end)}`;
+    if (status === 'ready_for_pickup') return t('order.details.driverPickupNote');
+    if (status === 'in_transit') return t('order.details.withDriverNote');
+    if (status === 'delivered') return t('order.details.deliveredNote');
+    if (status === 'cancelled') return t('order.details.deliveryCancelledNote');
+    return t('order.details.estimatedDelivery', {
+        start: formatDate(order.estimated_delivery_start),
+        end: formatDate(order.estimated_delivery_end),
+    });
 };
 
 const getVendorPrimaryAction = (status: string, isWorkshopFitting: boolean) => {
     const normalized = normalizeStatus(status);
     if (normalized === 'pending') {
         return isWorkshopFitting
-            ? { label: 'Start Installation', nextStatus: 'processing', icon: 'wrench-outline' }
-            : { label: 'Start Preparing', nextStatus: 'processing', icon: 'progress-clock' };
+            ? { labelKey: 'order.details.startInstallation', nextStatus: 'processing', icon: 'wrench-outline' }
+            : { labelKey: 'order.details.startPreparing', nextStatus: 'processing', icon: 'progress-clock' };
     }
     if (normalized === 'processing') {
         return isWorkshopFitting
-            ? { label: 'Ready for Customer', nextStatus: 'ready_for_customer', icon: 'check-circle-outline' }
-            : { label: 'Ready for Driver', nextStatus: 'ready_for_pickup', icon: 'package-check' };
+            ? { labelKey: 'order.details.readyForCustomer', nextStatus: 'ready_for_customer', icon: 'check-circle-outline' }
+            : { labelKey: 'order.details.readyForDriver', nextStatus: 'ready_for_pickup', icon: 'package-check' };
     }
     return null;
 };
@@ -163,6 +170,10 @@ export default function OrderDetailScreen() {
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
     const { t } = useTranslation();
+    const currencySuffix = t('common.currency.egp');
+    const minutesShort = t('common.minutesShort');
+    const hoursShort = t('common.hoursShort');
+    const minutesCompact = t('common.minutesCompact');
     const { user } = useAuth();
     const params = useLocalSearchParams<{ id?: string; role?: string }>();
 
@@ -188,14 +199,15 @@ export default function OrderDetailScreen() {
     const workshopLatitude = Number(order?.queue?.center_latitude ?? order?.workshop_latitude);
     const workshopLongitude = Number(order?.queue?.center_longitude ?? order?.workshop_longitude);
     const hasWorkshopCoordinates = Number.isFinite(workshopLatitude) && Number.isFinite(workshopLongitude);
-    const displayStatus = t(getStatusLabelKey(order?.status || 'pending', isWorkshopFitting, role), {
+    const normalizedDisplayStatus = normalizeStatus(order?.status || 'pending').replace(/-/g, '_');
+    const displayStatus = t(`status.${normalizedDisplayStatus}`, {
         defaultValue: getStatusLabel(order?.status || 'pending', isWorkshopFitting, role),
     });
-    const customerStatusNote = order ? getCustomerStatusNote(order, isWorkshopFitting, showCustomerWorkshopQueue) : '';
+    const customerStatusNote = order ? getCustomerStatusNote(order, isWorkshopFitting, showCustomerWorkshopQueue, t) : '';
 
     const loadOrder = useCallback(async () => {
         if (!orderId) {
-            showToast('error', 'Invalid Order', 'Order id is missing.');
+            showToast('error', t('order.details.invalidTitle'), t('order.details.invalidMessage'));
             router.back();
             return;
         }
@@ -204,16 +216,16 @@ export default function OrderDetailScreen() {
             setLoading(true);
             const response = await orderService.getOrderById(orderId);
             if (!response.success || !response.data) {
-                showToast('error', 'Order Error', response.message || 'Unable to load order details.');
+                showToast('error', t('order.details.errorTitle'), response.message || t('order.details.loadError'));
                 return;
             }
             setOrder(response.data);
         } catch {
-            showToast('error', 'Order Error', 'Unable to load order details.');
+            showToast('error', t('order.details.errorTitle'), t('order.details.loadError'));
         } finally {
             setLoading(false);
         }
-    }, [orderId, router, showToast]);
+    }, [orderId, router, showToast, t]);
 
     const checkReviewStatus = useCallback(async () => {
         if (!orderId || role !== 'customer') return;
@@ -242,18 +254,18 @@ export default function OrderDetailScreen() {
             setUpdatingStatus(true);
             const response = await vendorService.updateOrderStatus(order.order_id, status);
             if (!response.success) {
-                showToast('error', 'Status Update', response.message || 'Could not update order status.');
+                showToast('error', t('order.details.statusUpdate'), response.message || t('order.details.updateFailed'));
                 return;
             }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast('success', 'Status Updated', t('order.details.statusUpdated', {
+            showToast('success', t('common.updated'), t('order.details.statusUpdated', {
                 status: t(getStatusLabelKey(status, isWorkshopFitting, role), {
                     defaultValue: getStatusLabel(status, isWorkshopFitting, role),
                 }),
             }));
             await loadOrder();
         } catch {
-            showToast('error', 'Status Update', 'Could not update order status.');
+            showToast('error', t('order.details.statusUpdate'), t('order.details.updateFailed'));
         } finally {
             setUpdatingStatus(false);
         }
@@ -262,32 +274,32 @@ export default function OrderDetailScreen() {
     const handleCustomerCancelOrder = () => {
         if (!order) return;
         if (!canCustomerCancel(order.status)) {
-            showToast('warning', 'Cancel Unavailable', 'Orders can only be cancelled before processing starts.');
+            showToast('warning', t('order.details.cancelUnavailable'), t('order.details.cancelUnavailableMessage'));
             return;
         }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
         Alert.alert(
-            'Cancel Order',
-            'Are you sure you want to cancel this order?',
+            t('order.details.cancelOrder'),
+            t('order.details.cancelConfirm'),
             [
-                { text: 'Keep Order', style: 'cancel' },
+                { text: t('order.details.keepOrder'), style: 'cancel' },
                 {
-                    text: 'Cancel Order',
+                    text: t('order.details.cancelOrder'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
                             setUpdatingStatus(true);
                             const response = await orderService.cancelOrder(order.order_id);
                             if (!response.success) {
-                                showToast('error', 'Cancel Failed', response.message || 'Could not cancel order.');
+                                showToast('error', t('order.details.cancelFailed'), response.message || t('order.details.cancelFailedMessage'));
                                 return;
                             }
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            showToast('success', 'Order Cancelled', 'Your order has been cancelled successfully.');
+                            showToast('success', t('order.details.cancelledTitle'), t('order.details.cancelledMessage'));
                             await loadOrder();
                         } catch {
-                            showToast('error', 'Cancel Failed', 'Could not cancel order.');
+                            showToast('error', t('order.details.cancelFailed'), t('order.details.cancelFailedMessage'));
                         } finally {
                             setUpdatingStatus(false);
                         }
@@ -352,7 +364,7 @@ export default function OrderDetailScreen() {
         : customerStatusPosition;
 
     const currentPosition = statusPosition[normalizeStatus(order?.status)] ?? 0;
-    const customerAddressText = `${order?.shipping_street || 'No street address'}${order?.shipping_street && order?.shipping_city ? ', ' : ''}${order?.shipping_city || ''}`;
+    const customerAddressText = `${order?.shipping_street || t('order.details.noStreetAddress')}${order?.shipping_street && order?.shipping_city ? ', ' : ''}${order?.shipping_city || ''}`;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -371,16 +383,16 @@ export default function OrderDetailScreen() {
                 </View>
             ) : !order ? (
                 <View style={styles.center}>
-                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Order not found.</Text>
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('order.details.notFound')}</Text>
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                    <CenteredHeader title="Order Details" titleColor={colors.textPrimary} />
+                    <CenteredHeader title={t('order.details.title')} titleColor={colors.textPrimary} />
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.headerRow}>
                                 <View>
-                                    <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.order_id}</Text>
+                                    <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('order.details.orderNumber', { id: order.order_id })}</Text>
                                     <Text style={[styles.orderDate, { color: colors.textSecondary }]}>{formatDate(order.order_date)}</Text>
                                 </View>
                                 <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
@@ -398,13 +410,13 @@ export default function OrderDetailScreen() {
                                                 color={colors.textMuted}
                                             />
                                             <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
-                                                Fulfillment: {isWorkshopFitting ? 'Workshop installation' : 'Home delivery'}
+                                                {t('order.details.fulfillment')}: {isWorkshopFitting ? t('order.details.workshopInstallation') : t('order.details.homeDelivery')}
                                             </Text>
                                         </View>
                                         <View style={styles.infoRow}>
                                             <MaterialCommunityIcons name="calendar-clock-outline" size={14} color={colors.textMuted} />
                                             <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
-                                                {isWorkshopFitting ? 'Customer fitting day' : 'Customer delivery day'}: {formatDate(order.preferred_delivery_date)}
+                                                {isWorkshopFitting ? t('order.details.customerFittingDay') : t('order.details.customerDeliveryDay')}: {formatDate(order.preferred_delivery_date)}
                                             </Text>
                                         </View>
                                         <View style={styles.infoRow}>
@@ -415,8 +427,8 @@ export default function OrderDetailScreen() {
                                             />
                                             <Text style={[styles.deliveryText, { color: colors.textMuted }]}>
                                                 {isWorkshopFitting
-                                                    ? 'Customer comes to your workshop. No delivery handoff needed.'
-                                                    : 'Prepare the order and mark it ready when driver pickup can happen.'}
+                                                    ? t('order.details.customerWorkshopInstruction')
+                                                    : t('order.details.deliveryPrepInstruction')}
                                             </Text>
                                         </View>
                                     </>
@@ -425,7 +437,7 @@ export default function OrderDetailScreen() {
                                         <View style={styles.infoRow}>
                                             <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
                                             <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
-                                                {isWorkshopFitting ? 'Fitting day' : 'Preferred delivery day'}: {formatDate(order.preferred_delivery_date)}
+                                                {isWorkshopFitting ? t('order.details.fittingDay') : t('order.details.preferredDeliveryDay')}: {formatDate(order.preferred_delivery_date)}
                                             </Text>
                                         </View>
                                         <View style={styles.infoRow}>
@@ -449,26 +461,29 @@ export default function OrderDetailScreen() {
                             <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                                 <View style={styles.sectionHeader}>
                                     <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
-                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Workshop Queue</Text>
+                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('order.details.queue')}</Text>
                                 </View>
                                 <View style={styles.queueGrid}>
                                     <View style={styles.queueStat}>
                                         <Text style={[styles.queueValue, { color: colors.pink }]}>#{order.queue.queue_number}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Your number</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('order.details.yourNumber')}</Text>
                                     </View>
                                     <View style={styles.queueStat}>
                                         <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{order.queue.people_before}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Before you</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('order.details.beforeYou')}</Text>
                                     </View>
                                     <View style={styles.queueStat}>
-                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(order.queue.estimated_wait_minutes)}</Text>
-                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>Est. wait</Text>
+                                        <Text style={[styles.queueValue, { color: colors.textPrimary }]}>{formatMinutes(order.queue.estimated_wait_minutes, { minutesShort, hoursShort, minutesCompact })}</Text>
+                                        <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('order.details.estWait')}</Text>
                                     </View>
                                 </View>
                                 <View style={[styles.vendorPickupNote, { backgroundColor: colors.infoSoft }]}>
                                     <MaterialCommunityIcons name="map-marker-check-outline" size={16} color={colors.info} />
                                     <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
-                                        Show up around {formatQueueTime(order.queue.show_up_at)}. Fitting is expected to finish by {formatQueueTime(order.queue.estimated_finish_at)}.
+                                        {t('order.details.queueFinishNote', {
+                                            showUp: formatQueueTime(order.queue.show_up_at),
+                                            finish: formatQueueTime(order.queue.estimated_finish_at),
+                                        })}
                                     </Text>
                                 </View>
                             </GlassView>
@@ -478,7 +493,7 @@ export default function OrderDetailScreen() {
                     <Animated.View entering={FadeInDown.delay(200).springify()}>
                         <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                                {role === 'customer' ? 'Tracking' : 'Fulfillment Status'}
+                                {role === 'customer' ? t('order.details.tracking') : t('order.details.fulfillmentStatus')}
                             </Text>
                             <View style={styles.timelineContainer}>
                                 {timelineSteps.map((step, index) => {
@@ -510,7 +525,7 @@ export default function OrderDetailScreen() {
                                             <View style={styles.timelineLabelCol}>
                                                 <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{t(step.labelKey)}</Text>
                                                 <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
-                                                    {reached ? (index === 0 ? formatDate(order.order_date) : active ? t('Current step') : t('filter.completed')) : t('filter.pending')}
+                                                    {reached ? (index === 0 ? formatDate(order.order_date) : active ? t('common.currentStep') : t('filter.completed')) : t('filter.pending')}
                                                 </Text>
                                             </View>
                                         </View>
@@ -529,7 +544,7 @@ export default function OrderDetailScreen() {
                                 <View style={styles.vendorCustomerRow}>
                                     <View style={styles.vendorCustomerText}>
                                         <Text style={[styles.customerName, { color: colors.textPrimary }]}>
-                                            {order.customer_name || order.shipping_title || 'Customer'}
+                                            {order.customer_name || order.shipping_title || t('order.details.customer')}
                                         </Text>
                                         <Text style={[styles.customerHint, { color: colors.textSecondary }]}>
                                             {isWorkshopFitting
@@ -549,12 +564,12 @@ export default function OrderDetailScreen() {
                                 <View style={styles.vendorOpsGrid}>
                                     <View style={[styles.vendorOpsTile, { backgroundColor: colors.pink + '10' }]}>
                                         <MaterialCommunityIcons name="calendar-check-outline" size={16} color={colors.pink} />
-                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>Due day</Text>
+                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>{t('order.details.dueDay')}</Text>
                                         <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{formatDate(order.preferred_delivery_date)}</Text>
                                     </View>
                                     <View style={[styles.vendorOpsTile, { backgroundColor: colors.purple + '10' }]}>
                                         <MaterialCommunityIcons name="basket-outline" size={16} color={colors.purple} />
-                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>Items</Text>
+                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>{t('order.details.items')}</Text>
                                         <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{order.items.length}</Text>
                                     </View>
                                 </View>
@@ -576,31 +591,31 @@ export default function OrderDetailScreen() {
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
                                 <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
                                     {isWorkshopFitting
-                                        ? (role === 'vendor' ? 'Your Workshop' : 'Workshop Location')
-                                        : (role === 'vendor' ? 'Customer Delivery Address' : 'Shipping Address')}
+                                        ? (role === 'vendor' ? t('order.details.yourWorkshop') : t('order.details.workshopLocation'))
+                                        : (role === 'vendor' ? t('order.details.customerDeliveryAddress') : t('order.details.shippingAddress'))}
                                 </Text>
                             </View>
                             <View style={{ gap: Spacing.xs, marginTop: Spacing.sm }}>
                                 <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
                                     {isWorkshopFitting
-                                        ? (order.queue?.center_name || order.vendor_name || 'Vendor Workshop')
-                                        : (role === 'vendor' ? (order.customer_name || order.shipping_title || 'Customer') : (order.shipping_title || 'Default Address'))}
+                                        ? (order.queue?.center_name || order.vendor_name || t('order.details.vendorWorkshop'))
+                                        : (role === 'vendor' ? (order.customer_name || order.shipping_title || t('order.details.customer')) : (order.shipping_title || t('order.details.defaultAddress')))}
                                 </Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
                                     {isWorkshopFitting
-                                        ? (order.queue?.center_address || order.workshop_address || 'Workshop address unavailable')
+                                        ? (order.queue?.center_address || order.workshop_address || t('order.details.workshopAddressUnavailable'))
                                         : customerAddressText}
                                 </Text>
                                 {(order.shipping_building || order.shipping_apartment_floor) && (
                                     <Text style={[styles.addressSubtext, { color: colors.textSecondary }]}>
-                                        {order.shipping_building ? `Building: ${order.shipping_building}` : ''}
+                                        {order.shipping_building ? t('order.details.building', { value: order.shipping_building }) : ''}
                                         {order.shipping_building && order.shipping_apartment_floor ? ' | ' : ''}
-                                        {order.shipping_apartment_floor ? `Apt/Floor: ${order.shipping_apartment_floor}` : ''}
+                                        {order.shipping_apartment_floor ? t('order.details.aptFloor', { value: order.shipping_apartment_floor }) : ''}
                                     </Text>
                                 )}
                                 {order.shipping_notes && (
                                     <View style={[styles.notesContainer, { borderTopColor: colors.cardBorder }]}>
-                                        <Text style={[styles.notesLabel, { color: colors.textMuted }]}>Delivery Instructions:</Text>
+                                        <Text style={[styles.notesLabel, { color: colors.textMuted }]}>{t('order.details.deliveryInstructions')}</Text>
                                         <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.shipping_notes}</Text>
                                     </View>
                                 )}
@@ -642,33 +657,33 @@ export default function OrderDetailScreen() {
                                         <View style={{ flex: 1 }}>
                                             <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.product_name}</Text>
                                             <View style={styles.qtyContainer}>
-                                                <Text style={[styles.itemQty, { color: colors.textSecondary }]}>Qty: {item.quantity}</Text>
+                                                <Text style={[styles.itemQty, { color: colors.textSecondary }]}>{t('order.details.qty', { count: item.quantity })}</Text>
                                                 <View style={styles.dot} />
-                                                <Text style={[styles.itemPriceEach, { color: colors.textMuted }]}>{formatMoney(item.price_each)} / unit</Text>
+                                                <Text style={[styles.itemPriceEach, { color: colors.textMuted }]}>{formatMoney(item.price_each, currencySuffix)} / {t('order.details.unit')}</Text>
                                             </View>
                                         </View>
-                                        <Text style={[styles.itemPrice, { color: colors.pink }]}>{formatMoney(Number(item.price_each) * item.quantity)}</Text>
+                                        <Text style={[styles.itemPrice, { color: colors.pink }]}>{formatMoney(Number(item.price_each) * item.quantity, currencySuffix)}</Text>
                                     </View>
                                 ))}
                             </View>
 
                             <View style={[styles.summaryBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)' }]}>
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(subtotal)}</Text>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('order.details.subtotal')}</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(subtotal, currencySuffix)}</Text>
                                 </View>
                                 <View style={styles.summaryRow}>
                                     <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
-                                        {isWorkshopFitting ? 'Workshop fitting' : 'Shipping'}
+                                        {isWorkshopFitting ? t('order.details.workshopFitting') : t('order.details.shipping')}
                                     </Text>
                                     <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                                        {formatMoney(isWorkshopFitting ? workshopFittingFee : SHIPPING_FEE)}
+                                        {formatMoney(isWorkshopFitting ? workshopFittingFee : SHIPPING_FEE, currencySuffix)}
                                     </Text>
                                 </View>
                                 <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
                                 <View style={styles.summaryRow}>
-                                    <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Grand Total</Text>
-                                    <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(totalWithShipping)}</Text>
+                                    <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>{t('order.details.grandTotal')}</Text>
+                                    <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(totalWithShipping, currencySuffix)}</Text>
                                 </View>
                             </View>
                         </GlassView>
@@ -683,7 +698,7 @@ export default function OrderDetailScreen() {
                     <View style={styles.actionsContainer}>
                         {primaryAction ? (
                             <GradientButton
-                                title={primaryAction.label}
+                                title={t(primaryAction.labelKey)}
                                 onPress={() => handleVendorStatusUpdate(primaryAction.nextStatus)}
                                 loading={updatingStatus}
                                 style={{ flex: 1 }}
@@ -692,7 +707,7 @@ export default function OrderDetailScreen() {
                         ) : null}
                         {canVendorCancel(order.status) ? (
                             <OutlinedButton
-                                title="Cancel"
+                                title={t('common.cancel')}
                                 onPress={() => handleVendorStatusUpdate('cancelled')}
                                 disabled={updatingStatus}
                                 textColor={colors.error}
@@ -704,14 +719,14 @@ export default function OrderDetailScreen() {
                 ) : (
                     <View style={styles.actionsContainer}>
                         <GradientButton
-                            title="Support"
+                            title={t('common.support')}
                             onPress={() => router.push('/support' as any)}
                             style={{ flex: 1 }}
                             icon="chat-question-outline"
                         />
                         {canCustomerCancel(order.status) ? (
                             <OutlinedButton
-                                title="Cancel Order"
+                                title={t('order.details.cancelOrder')}
                                 onPress={handleCustomerCancelOrder}
                                 disabled={updatingStatus}
                                 textColor={colors.error}
@@ -721,7 +736,7 @@ export default function OrderDetailScreen() {
                         ) : null}
                         {normalizeStatus(order.status) === 'delivered' && !isReviewed ? (
                             <GradientButton
-                                title="Rate"
+                                title={t('common.rate')}
                                 onPress={() => setReviewModalVisible(true)}
                                 style={{ flex: 1 }}
                                 icon="star-outline"
@@ -729,7 +744,7 @@ export default function OrderDetailScreen() {
                         ) : isReviewed ? (
                             <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
                                 <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
-                                <Text style={[styles.reviewedText, { color: colors.success }]}>Reviewed</Text>
+                                <Text style={[styles.reviewedText, { color: colors.success }]}>{t('common.reviewed')}</Text>
                             </View>
                         ) : null}
                     </View>
@@ -741,7 +756,7 @@ export default function OrderDetailScreen() {
                     visible={reviewModalVisible}
                     onClose={() => setReviewModalVisible(false)}
                     entityId={order.vendor_id_fk || 0}
-                    entityName={order.vendor_name || 'Vendor'}
+                    entityName={order.vendor_name || t('review.vendor')}
                     entityType="vendor"
                     orderId={order.order_id}
                     items={order.items.map(item => ({

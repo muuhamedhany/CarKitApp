@@ -16,15 +16,11 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  TextInput,
 } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInUp,
   Layout,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -76,13 +72,13 @@ export default function CategoryFilterScreen() {
         if (pData.success) setProductCategories(pData.data || []);
         if (sData.success) setServiceCategories(sData.data || []);
       } catch {
-        showToast('error', 'Error', 'Could not load categories.');
+        showToast('error', t('common.error'), t('categoryFilter.loadFailed'));
       } finally {
         setLoading(false);
       }
     };
     loadCategories();
-  }, [showToast]);
+  }, [showToast, t]);
 
   const toggleProduct = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -94,8 +90,14 @@ export default function CategoryFilterScreen() {
     setSelectedServiceIds(prev => prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]);
   };
 
-  const filteredProducts = productCategories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredServices = serviceCategories.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredProducts = productCategories.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    translateCategoryName(c.name, language).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredServices = serviceCategories.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    translateCategoryName(c.name, language).toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const selectedCount = selectedProductIds.length + selectedServiceIds.length;
 
   const handleApply = () => {
@@ -140,19 +142,19 @@ export default function CategoryFilterScreen() {
             <MaterialCommunityIcons name="chevron-left" size={28} color={colors.textPrimary} />
           </Pressable>
           <View style={styles.headerTitleContainer}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Filter by Category</Text>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('categoryFilter.title')}</Text>
             <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-              {selectedProductIds.length + selectedServiceIds.length} selected
+              {t('categoryFilter.selected', { count: selectedProductIds.length + selectedServiceIds.length })}
             </Text>
           </View>
           <Pressable onPress={handleClear} style={styles.resetBtn}>
-             <Text style={[styles.resetBtnText, { color: colors.pink }]}>Reset</Text>
+             <Text style={[styles.resetBtnText, { color: colors.pink }]}>{t('common.reset')}</Text>
           </Pressable>
         </View>
 
         <FormInput
           icon="magnify"
-          placeholder="Search categories..."
+          placeholder="categoryFilter.searchPlaceholder"
           value={searchQuery}
           onChangeText={setSearchQuery}
           containerStyle={styles.searchBar}
@@ -177,7 +179,7 @@ export default function CategoryFilterScreen() {
             >
               <View style={styles.sectionHeaderLeft}>
                 <MaterialCommunityIcons name="package-variant-closed" size={20} color={colors.pink} />
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Products</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('categoryFilter.products')}</Text>
               </View>
               <MaterialCommunityIcons 
                 name={productsExpanded ? "chevron-up" : "chevron-down"} 
@@ -231,7 +233,7 @@ export default function CategoryFilterScreen() {
             >
               <View style={styles.sectionHeaderLeft}>
                 <MaterialCommunityIcons name="wrench-outline" size={20} color={colors.pink} />
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('categoryFilter.services')}</Text>
               </View>
               <MaterialCommunityIcons 
                 name={servicesExpanded ? "chevron-up" : "chevron-down"} 
@@ -276,7 +278,7 @@ export default function CategoryFilterScreen() {
         {filteredProducts.length === 0 && filteredServices.length === 0 && (
            <View style={styles.emptyState}>
               <MaterialCommunityIcons name="magnify-close" size={64} color={colors.textMuted} />
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No categories found for {searchQuery}</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('categoryFilter.noResults', { query: searchQuery })}</Text>
            </View>
         )}
       </ScrollView>

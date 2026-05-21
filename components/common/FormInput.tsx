@@ -12,6 +12,7 @@ import { Pressable,
 } from 'react-native';
 import Text from '@/components/common/LocalizedText';
 import TextInput from '@/components/common/LocalizedTextInput';
+import { rowDirection } from '@/utils/rtl';
 
 type FormInputProps = {
   icon?: string;
@@ -70,6 +71,7 @@ export default function FormInput({
         height: multiline ? (numberOfLines ? numberOfLines * 24 + 20 : 100) : 52,
         alignItems: multiline ? 'flex-start' : 'center',
         paddingVertical: multiline ? Spacing.sm : 0,
+        flexDirection: rowDirection(isRTL),
       }]}>
         {icon && (
           <MaterialCommunityIcons

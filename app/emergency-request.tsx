@@ -26,9 +26,9 @@ import { ActivityIndicator,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Text from '@/components/common/LocalizedText';
 
-const methods: { key: PaymentMethod; label: string; icon: string }[] = [
-  { key: 'cash_on_delivery', label: 'Cash on Delivery', icon: 'cash' },
-  { key: 'credit_card', label: 'Credit Card', icon: 'credit-card-outline' },
+const methods: { key: PaymentMethod; labelKey: string; icon: string }[] = [
+  { key: 'cash_on_delivery', labelKey: 'emergency.request.cashOnDelivery', icon: 'cash' },
+  { key: 'credit_card', labelKey: 'emergency.request.creditCard', icon: 'credit-card-outline' },
 ];
 
 export default function EmergencyRequestScreen() {
@@ -59,7 +59,7 @@ export default function EmergencyRequestScreen() {
       });
       router.replace({ pathname: '/emergency-waiting' as any, params: { requestId: res.data?.request_id } });
     } catch {
-      showToast('error', 'Emergency Request', 'Could not send request.');
+      showToast('error', t('emergency.request.title'), t('emergency.request.sendFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -70,7 +70,7 @@ export default function EmergencyRequestScreen() {
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content}>
         <CenteredHeader
-          title={params.serviceName || 'Emergency Request'}
+          title={params.serviceName || t('emergency.request.title')}
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -92,7 +92,7 @@ export default function EmergencyRequestScreen() {
                 onPress={() => setPaymentMethod(method.key)}
               >
                 <MaterialCommunityIcons name={method.icon as any} size={22} color={paymentMethod === method.key ? colors.error : colors.textSecondary} />
-                <Text style={[styles.methodText, { color: colors.textPrimary }]}>{t(method.label)}</Text>
+                <Text style={[styles.methodText, { color: colors.textPrimary }]}>{t(method.labelKey)}</Text>
               </Pressable>
             ))}
           </View>
