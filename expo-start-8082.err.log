@@ -1,5 +1,0 @@
-"shadow*" style props are deprecated. Use "boxShadow".
-"shadow*" style props are deprecated. Use "boxShadow".
-Error: Premature close
-    at onclose (node:internal/streams/end-of-stream:162:30)
-    at processTicksAndRejections (node:internal/process/task_queues:85:11)
