@@ -1,7 +1,12 @@
-import { CenteredHeader, GlassView } from '@/components';
+import {
+  CenteredHeader,
+  GlassView } from '@/components';
 import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,12 +15,13 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   View,
   ScrollView,
 } from 'react-native';
@@ -24,6 +30,7 @@ import Animated, {
   FadeInUp,
   LinearTransition
 } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 const TypedFlashList = FlashList as any;
 
 type Order = {

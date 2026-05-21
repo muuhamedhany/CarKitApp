@@ -1,7 +1,8 @@
-import { Pressable, View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, View, StyleSheet, ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, BorderRadius, Fonts } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 type AddButtonProps = {
   title: string;

@@ -1,12 +1,21 @@
-import { GlassView } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import {
+  GlassView } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 const { width, height } = Dimensions.get('window');
 

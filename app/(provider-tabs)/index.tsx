@@ -1,11 +1,13 @@
-import { useCallback, useState, useRef } from 'react';
+import {
+  useCallback,
+  useState,
+  useRef } from 'react';
 import {
     View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    Pressable,
-    RefreshControl,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -22,6 +24,7 @@ import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { GlassView } from '@/components';
+import Text from '@/components/common/LocalizedText';
 
 function getStatusTint(status: string, colors: any) {
     const s = (status || '').toLowerCase();

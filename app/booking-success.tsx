@@ -1,15 +1,25 @@
-import { GlassView, GradientButton } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import {
+  GlassView,
+  GradientButton } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams,
+  useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 export default function BookingSuccessScreen() {
   const router = useRouter();

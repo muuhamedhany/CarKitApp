@@ -1,18 +1,21 @@
-import { BorderRadius, Fonts, Spacing } from '@/constants/theme';
+import {
+  BorderRadius,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { Ad } from '@/services/api/ad.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect,
+  useRef } from 'react';
 import {
   Dimensions,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, {
@@ -23,6 +26,7 @@ import Animated, {
   useSharedValue,
   withSpring
 } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const AD_SLIDE_INTERVAL = 5000;

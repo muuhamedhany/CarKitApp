@@ -6,14 +6,19 @@ import {
   ServiceCard
 } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
-import { Ad, adService } from '@/services/api/ad.service';
+import { Ad,
+  adService } from '@/services/api/ad.service';
 import { bookingService } from '@/services/api/booking.service';
 import { notificationService } from '@/services/api/notification.service';
 import { orderService } from '@/services/api/order.service';
@@ -21,7 +26,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState } from 'react';
 import {
   Dimensions,
   Platform,
@@ -29,8 +38,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  View
+  View,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -40,6 +48,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { arrowForward, rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 // ─── Typewriter Search Placeholder ────────────────────────────────────────────
 function useTypewriter(phrases: string[]) {

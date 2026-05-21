@@ -1,5 +1,17 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState } from 'react';
+import { ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,6 +26,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
 import { useTabReload } from '@/hooks/useTabReload';
+import Text from '@/components/common/LocalizedText';
 
 type Filter = 'all' | 'enabled' | 'disabled' | 'pending';
 type SortMode = 'latest' | 'price-desc' | 'duration-asc';

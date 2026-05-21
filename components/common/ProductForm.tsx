@@ -1,9 +1,17 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect,
+  useState } from 'react';
+import { ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
@@ -16,6 +24,8 @@ import { Category, ProductFormInitialValues, ProductFormPayload } from '@/types/
 import BackButton from './BackButton';
 import FormInput from './FormInput';
 import GradientButton from './GradientButton';
+import Text from '@/components/common/LocalizedText';
+import TextInput from '@/components/common/LocalizedTextInput';
 
 type ImageSlot = {
     previewUri: string | null;

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import {
+  useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   ScrollView,
@@ -24,6 +24,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 const { height } = Dimensions.get('window');
 

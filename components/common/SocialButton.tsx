@@ -1,7 +1,8 @@
-import { Text, Pressable, StyleSheet, Image } from 'react-native';
+import { Pressable, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Text from '@/components/common/LocalizedText';
 
 type SocialButtonProps = {
   provider: 'google';

@@ -1,10 +1,21 @@
-import { BorderRadius, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  BorderRadius,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect } from 'react';
-import { DeviceEventEmitter, Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React,
+  { useEffect } from 'react';
+import { DeviceEventEmitter,
+  Dimensions,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -12,6 +23,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

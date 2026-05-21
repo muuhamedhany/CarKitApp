@@ -1,5 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  useCallback,
+  useMemo,
+  useState } from 'react';
+import { ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +19,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import type { Product } from '@/types/api.types';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
+import TextInput from '@/components/common/LocalizedTextInput';
 
 type ProductResponse = {
   success: boolean;

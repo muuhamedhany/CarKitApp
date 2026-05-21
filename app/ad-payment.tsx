@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  Image, ActivityIndicator,
+  useEffect,
+  useMemo,
+  useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +23,7 @@ import { CenteredHeader, FormInput, GlassView } from '@/components';
 import { Spacing, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import Text from '@/components/common/LocalizedText';
 
 const PAYMENT_METHODS: { label: string; value: PaymentMethod; icon: string }[] = [
   { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash' },

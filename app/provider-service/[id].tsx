@@ -1,7 +1,16 @@
-import { useCallback, useMemo, useState } from 'react';
 import {
-    ActivityIndicator, Alert, Image, Pressable,
-    ScrollView, StyleSheet, Text, View, Switch,
+  useCallback,
+  useMemo,
+  useState } from 'react';
+import {
+    ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  Switch,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,6 +21,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
 import type { Service } from '@/types/api.types';
 import { BorderRadius, Fonts, FontSizes, Spacing } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 const buildStatusBadge = (isActive: boolean) =>
     isActive

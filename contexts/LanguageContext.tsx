@@ -9,6 +9,7 @@ import {
   TranslationParams,
   translations,
 } from '@/locales';
+import { literalFallbacks } from '@/locales/literalFallbacks';
 
 export type Language = LocaleCode;
 
@@ -20,8 +21,32 @@ interface LanguageContextProps {
   isLanguageLoaded: boolean;
 }
 
-I18nManager.allowRTL(true);
-I18nManager.swapLeftAndRightInRTL(true);
+const allowRTL = (enabled: boolean) => {
+  if (typeof I18nManager.allowRTL === 'function') {
+    I18nManager.allowRTL(enabled);
+  }
+};
+
+const forceRTL = (enabled: boolean) => {
+  if (typeof I18nManager.forceRTL === 'function') {
+    I18nManager.forceRTL(enabled);
+  }
+};
+
+const swapLeftAndRightInRTL = (enabled: boolean) => {
+  const swap = (I18nManager as typeof I18nManager & {
+    swapLeftAndRightInRTL?: (enabled: boolean) => void;
+  }).swapLeftAndRightInRTL;
+
+  if (typeof swap === 'function') {
+    swap(enabled);
+  }
+};
+
+allowRTL(true);
+swapLeftAndRightInRTL(true);
+
+const nativeAlert = Alert.alert;
 
 const interpolate = (template: string, params?: TranslationParams) => {
   if (!params) return template;
@@ -33,7 +58,31 @@ const interpolate = (template: string, params?: TranslationParams) => {
 };
 
 const translateKey = (language: Language, key: string, params?: TranslationParams) => {
-  const translated = translations[language]?.[key] ?? translations[DEFAULT_LANGUAGE][key] ?? key;
+  if (language === 'ar') {
+    const stockMatch = key.match(/^Stock updated to (\d+) units\.$/);
+    if (stockMatch) return interpolate(`تم تحديث المخزون إلى ${stockMatch[1]} وحدة.`, params);
+
+    const productStatusMatch = key.match(/^Product (enabled|disabled) successfully\.$/);
+    if (productStatusMatch) {
+      return interpolate(`تم ${productStatusMatch[1] === 'enabled' ? 'تفعيل' : 'تعطيل'} المنتج بنجاح.`, params);
+    }
+
+    const quantityCartMatch = key.match(/^(\d+) x (.+) added to cart\.$/);
+    if (quantityCartMatch) return interpolate(`تمت إضافة ${quantityCartMatch[1]} × ${quantityCartMatch[2]} إلى السلة.`, params);
+
+    const stockLimitMatch = key.match(/^Only (\d+) units available in total\.$/);
+    if (stockLimitMatch) return interpolate(`المتاح ${stockLimitMatch[1]} وحدة فقط إجمالاً.`, params);
+
+    const bookingStatusMatch = key.match(/^Booking marked as (.+)\.$/);
+    if (bookingStatusMatch) return interpolate(`تم تعليم الحجز كـ ${bookingStatusMatch[1]}.`, params);
+  }
+
+  const translated =
+    translations[language]?.[key] ??
+    literalFallbacks[language]?.[key] ??
+    translations[DEFAULT_LANGUAGE][key] ??
+    literalFallbacks[DEFAULT_LANGUAGE]?.[key] ??
+    key;
   return interpolate(translated, params);
 };
 
@@ -52,6 +101,24 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
 
   useEffect(() => {
+    Alert.alert = (title, message, buttons, options) => {
+      nativeAlert(
+        translateKey(language, title),
+        message ? translateKey(language, message) : message,
+        buttons?.map((button) => ({
+          ...button,
+          text: button.text ? translateKey(language, button.text) : button.text,
+        })),
+        options
+      );
+    };
+
+    return () => {
+      Alert.alert = nativeAlert;
+    };
+  }, [language]);
+
+  useEffect(() => {
     const loadLanguage = async () => {
       try {
         const storedLang = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -61,7 +128,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setLanguageState(nextLanguage);
 
         if (I18nManager.isRTL !== nextRTL) {
-          I18nManager.forceRTL(nextRTL);
+          forceRTL(nextRTL);
         }
       } catch (err) {
         console.log('Error loading language', err);
@@ -81,7 +148,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const nextRTL = newLang === 'ar';
       if (I18nManager.isRTL !== nextRTL) {
-        I18nManager.forceRTL(nextRTL);
+        forceRTL(nextRTL);
         Alert.alert(
           translateKey(newLang, 'language.restartTitle'),
           translateKey(newLang, 'language.restartMessage'),

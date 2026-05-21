@@ -1,6 +1,11 @@
-import { BlurView } from 'expo-blur';
+import {
+  BlurView } from 'expo-blur';
 import React from 'react';
-import { Platform, StyleSheet, View, ViewProps } from 'react-native';
+import { Platform,
+  StyleSheet,
+  View,
+  ViewProps,
+} from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 
 interface GlassViewProps extends ViewProps {

@@ -1,15 +1,33 @@
-import { CenteredHeader, GlassView } from '@/components';
-import EmergencyRouteMap, { RouteCoordinate } from '@/components/EmergencyRouteMap';
-import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import {
+  CenteredHeader,
+  GlassView } from '@/components';
+import EmergencyRouteMap,
+  { RouteCoordinate } from '@/components/EmergencyRouteMap';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
-import { emergencyService, type CoordinateValue, type EmergencyRequest } from '@/services/api/emergency.service';
+import { emergencyService,
+  type CoordinateValue,
+  type EmergencyRequest } from '@/services/api/emergency.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect,
+  useMemo,
+  useState } from 'react';
+import { ActivityIndicator,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Text from '@/components/common/LocalizedText';
 
 const AVERAGE_CITY_SPEED_KMH = 32;
 

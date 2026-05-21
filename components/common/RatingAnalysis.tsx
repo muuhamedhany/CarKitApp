@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Fonts, Spacing, BorderRadius } from '@/constants/theme';
 import GlassView from './GlassView';
 import { Review } from '@/types/api.types';
+import Text from '@/components/common/LocalizedText';
 
 interface RatingAnalysisProps {
   reviews: Review[];

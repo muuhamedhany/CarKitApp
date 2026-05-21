@@ -1,5 +1,18 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Image, ScrollView, RefreshControl } from 'react-native';
+import {
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect } from 'react';
+import { View,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Pressable,
+  Image,
+  ScrollView,
+  RefreshControl,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,6 +27,7 @@ import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTabReload } from '@/hooks/useTabReload';
+import Text from '@/components/common/LocalizedText';
 
 type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 type SortMode = 'latest' | 'price-desc' | 'stock-asc';

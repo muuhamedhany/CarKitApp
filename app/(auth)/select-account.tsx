@@ -1,5 +1,9 @@
-import { useTheme } from '@/hooks/useTheme';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import {
+  useTheme } from '@/hooks/useTheme';
+import { View,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +13,7 @@ import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/th
 import { GlassView } from '@/components';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 export default function SelectAccountScreen() {
   const router = useRouter();

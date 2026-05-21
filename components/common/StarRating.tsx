@@ -1,7 +1,12 @@
-import { useTheme } from '@/hooks/useTheme';
+import {
+  useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleSheet,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 interface StarRatingProps {
   rating: number;

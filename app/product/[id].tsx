@@ -1,9 +1,13 @@
-import { useWishlist } from '@/contexts/WishlistContext';
+import {
+  useWishlist } from '@/contexts/WishlistContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams,
+  useRouter } from 'expo-router';
+import { useEffect,
+  useRef,
+  useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -11,7 +15,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, {
@@ -34,6 +37,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { reviewService } from '@/services/api/review.service';
 import { Review } from '@/types/api.types';
+import Text from '@/components/common/LocalizedText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;

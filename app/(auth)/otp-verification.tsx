@@ -1,5 +1,14 @@
-import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, TextInput, Pressable } from 'react-native';
+import {
+  useState,
+  useRef } from 'react';
+import { View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TextInput,
+  Pressable,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -12,6 +21,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { GradientButton, CenteredHeader, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 const OTP_LENGTH = 4;
 

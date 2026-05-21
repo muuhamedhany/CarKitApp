@@ -1,8 +1,9 @@
-import { useTheme } from '@/hooks/useTheme';
-import { useState, useEffect } from 'react';
+import {
+  useTheme } from '@/hooks/useTheme';
+import { useState,
+  useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Pressable,
@@ -27,6 +28,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { CenteredHeader, FormInput, PickerModal, GradientButton, GlassView} from '@/components';
 import { API_URL } from '@/constants/config';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 const { height } = Dimensions.get('window');
 

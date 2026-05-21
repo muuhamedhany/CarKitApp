@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
@@ -8,6 +8,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { paymentService, PaymentMethod } from '@/services/api/payment.service';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import Text from '@/components/common/LocalizedText';
 
 export default function OrderFailureScreen() {
     const router = useRouter();

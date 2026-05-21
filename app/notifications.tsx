@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -11,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useToast } from '@/contexts/ToastContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import Text from '@/components/common/LocalizedText';
 
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme();

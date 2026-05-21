@@ -1,5 +1,12 @@
-import { CartSkeleton, GlassView, SecondaryButton } from '@/components';
-import { BorderRadius, FontSizes, Fonts, Shadows, Spacing } from '@/constants/theme';
+import {
+  CartSkeleton,
+  GlassView,
+  SecondaryButton } from '@/components';
+import { BorderRadius,
+  FontSizes,
+  Fonts,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -11,14 +18,18 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React,
+  { memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState } from 'react';
 import {
   Image,
   Platform,
   Pressable,
   StyleSheet,
-  Text,
-  View
+  View,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -27,6 +38,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { arrowForward, rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 const TypedFlashList = FlashList as any;
 
 const TAB_BAR_HEIGHT = 65;

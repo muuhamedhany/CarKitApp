@@ -1,17 +1,30 @@
-import { BorderRadius, Fonts, FontSizes, Shadows, Spacing } from '@/constants/theme';
+import {
+  BorderRadius,
+  Fonts,
+  FontSizes,
+  Shadows,
+  Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useTheme } from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React,
+  { useState } from 'react';
+import { ActivityIndicator,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring
 } from 'react-native-reanimated';
+import Text from '@/components/common/LocalizedText';
 
 type ProductCardProps = {
   productId?: number;

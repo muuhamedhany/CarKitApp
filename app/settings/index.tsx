@@ -1,8 +1,14 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { CenteredHeader, GlassView } from '@/components';
@@ -13,6 +19,7 @@ import { ThemeMode } from '@/contexts/ThemeContext';
 import { useTheme } from '@/hooks/useTheme';
 import { supportedLanguages } from '@/locales';
 import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
+import Text from '@/components/common/LocalizedText';
 
 const THEME_OPTIONS: { mode: ThemeMode; labelKey: string; icon: string; descriptionKey: string }[] = [
   { mode: 'light', labelKey: 'settings.theme.light', icon: 'white-balance-sunny', descriptionKey: 'settings.theme.lightDesc' },
