@@ -10,6 +10,7 @@ import {
   Spacing
 } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
@@ -36,6 +37,7 @@ import {
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Text from '@/components/common/LocalizedText';
+import { rowDirection } from '@/utils/rtl';
 
 export default function VendorDashboard() {
   const { user } = useAuth();
@@ -43,6 +45,7 @@ export default function VendorDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { showToast } = useToast();
+  const { isRTL } = useTranslation();
 
   const [dashboard, setDashboard] = useState<VendorDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +152,7 @@ export default function VendorDashboard() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} colors={[colors.pink]} progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'} />}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+        <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { flexDirection: rowDirection(isRTL) }]}>
           <View style={styles.headerLeft}>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello,</Text>
             <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || 'Vendor'}</Text>

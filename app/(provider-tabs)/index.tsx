@@ -1,13 +1,14 @@
 import {
-  useCallback,
-  useState,
-  useRef } from 'react';
+    useCallback,
+    useState,
+    useRef
+} from 'react';
 import {
     View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  RefreshControl,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -26,6 +27,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { GlassView } from '@/components';
 import Text from '@/components/common/LocalizedText';
+import { rowDirection } from '@/utils/rtl';
 
 function getStatusTint(status: string, colors: any) {
     const s = (status || '').toLowerCase();
@@ -41,7 +43,7 @@ export default function ProviderDashboard() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { showToast } = useToast();
-    const { t } = useTranslation();
+    const { t, isRTL } = useTranslation();
     const currencySuffix = t('common.currency.egp');
 
     const [dashboard, setDashboard] = useState<ProviderDashboardResponse | null>(null);
@@ -140,7 +142,7 @@ export default function ProviderDashboard() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
-                <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+                <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { flexDirection: rowDirection(isRTL) }]}>
                     <View style={styles.headerLeft}>
                         <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('vendor.dashboard.hello')}</Text>
                         <Text style={[styles.title, { color: colors.textPrimary }]}>{user?.name?.split(' ')[0] || t('review.provider')}</Text>
