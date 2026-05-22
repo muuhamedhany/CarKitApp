@@ -1,17 +1,19 @@
 import {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  useMemo } from 'react';
-import { View,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  Platform,
-  ScrollView,
+    useState,
+    useCallback,
+    useRef,
+    useEffect,
+    useMemo
+} from 'react';
+import {
+    View,
+    StyleSheet,
+    FlatList,
+    ActivityIndicator,
+    Pressable,
+    RefreshControl,
+    Platform,
+    ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -48,16 +50,16 @@ export default function VendorOrdersScreen() {
     const [loadingMore, setLoadingMore] = useState(false);
     const listRef = useRef<FlatList>(null);
     const hasLoaded = useRef(false);
-    
+
     useTabReload('orders', () => {
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
         onRefresh();
     });
-    
+
     // Use a ref for debounced search so loadOrders keeps a stable identity
     const debouncedSearchRef = useRef('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    
+
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(searchQuery);
@@ -74,22 +76,22 @@ export default function VendorOrdersScreen() {
     const loadOrders = useCallback(async (pageNum = 1, isRefresh = false) => {
         if (!user) return;
         if (isLoadingRef.current && !isRefresh) return;
-        
+
         const currentSearch = debouncedSearchRef.current;
-        
+
         try {
             isLoadingRef.current = true;
             // Only show full loading on first mount
             if (pageNum === 1 && !isRefresh && !hasLoaded.current) setLoading(true);
             if (pageNum > 1) setLoadingMore(true);
-            
+
             const res = await vendorService.getOrders(activeFilter, pageNum, 10, currentSearch || undefined);
 
             if (res.success && res.data) {
                 const newOrders = res.data;
                 setOrders(prev => pageNum === 1 ? newOrders : [...prev, ...newOrders]);
                 hasLoaded.current = true;
-                
+
                 if (res.pagination) {
                     setHasMore(pageNum < res.pagination.totalPages);
                 } else {
@@ -138,7 +140,7 @@ export default function VendorOrdersScreen() {
     };
 
     const renderOrderItem = useCallback(({ item, index }: { item: VendorOrder, index: number }) => (
-        <Animated.View 
+        <Animated.View
             entering={FadeInUp.delay(index * 50).duration(400)}
             style={styles.orderCard}
         >
@@ -236,9 +238,9 @@ export default function VendorOrdersScreen() {
                                         }}
                                         style={[
                                             styles.filterChip,
-                                            { 
+                                            {
                                                 backgroundColor: isActive ? colors.pink : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'),
-                                                borderColor: isActive ? colors.pink : colors.cardBorder 
+                                                borderColor: isActive ? colors.pink : colors.cardBorder
                                             },
                                         ]}
                                     >

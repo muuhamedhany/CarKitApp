@@ -6,19 +6,23 @@ import {
   ServiceCard
 } from '@/components';
 import { API_URL } from '@/constants/config';
-import { BorderRadius,
+import {
+  BorderRadius,
   FontSizes,
   Fonts,
   Shadows,
-  Spacing } from '@/constants/theme';
+  Spacing
+} from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
-import { Ad,
-  adService } from '@/services/api/ad.service';
+import {
+  Ad,
+  adService
+} from '@/services/api/ad.service';
 import { bookingService } from '@/services/api/booking.service';
 import { notificationService } from '@/services/api/notification.service';
 import { orderService } from '@/services/api/order.service';
@@ -26,11 +30,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback,
+import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
-  useState } from 'react';
+  useState
+} from 'react';
 import {
   Dimensions,
   Platform,
