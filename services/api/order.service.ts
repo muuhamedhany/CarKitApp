@@ -30,6 +30,8 @@ export interface OrderRecord {
     orders?: OrderRecord[];
 }
 
+export type OrderDeliveryType = 'home_delivery' | 'workshop_fitting';
+
 export const orderService = {
     async createOrder(data: OrderPayload) {
         return apiFetch<ApiResponse<OrderRecord>>('/orders', {
@@ -38,9 +40,10 @@ export const orderService = {
         });
     },
 
-    async getMyOrders(status?: string, page: number = 1, pageSize: number = 10) {
+    async getMyOrders(status?: string, page: number = 1, pageSize: number = 10, deliveryType?: OrderDeliveryType) {
         const query = new URLSearchParams();
         if (status) query.append('status', status);
+        if (deliveryType) query.append('delivery_type', deliveryType);
         query.append('page', page.toString());
         query.append('pageSize', pageSize.toString());
         return apiFetch<ApiResponse<OrderRecord[]>>(`/orders/my?${query.toString()}`);

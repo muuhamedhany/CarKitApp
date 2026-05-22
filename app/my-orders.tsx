@@ -35,13 +35,16 @@ const TypedFlashList = FlashList as any;
 
 type Order = {
   order_id: number;
+  shipping_address_fk?: number | null;
   total_amount: string;
   status: string;
   order_date: string;
+  delivery_type?: 'home_delivery' | 'workshop_fitting' | string;
+  vendor_name?: string | null;
   items?: any[];
 };
 
-type TabType = 'active' | 'delivered';
+type TabType = 'active' | 'delivered' | 'workshop';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: '#FFB74D',
@@ -75,8 +78,16 @@ export default function MyOrdersScreen() {
     if (pageNum > 1) setLoadingMore(true);
 
     try {
-      const statusParam = tab === 'active' ? 'active' : 'delivered';
-      const res = await fetch(`${API_URL}/orders/my?status=${statusParam}&page=${pageNum}&pageSize=10`, {
+      const query = new URLSearchParams({
+        page: String(pageNum),
+        pageSize: '10',
+        delivery_type: tab === 'workshop' ? 'workshop_fitting' : 'home_delivery',
+      });
+      if (tab !== 'workshop') {
+        query.append('status', tab === 'active' ? 'active' : 'delivered');
+      }
+
+      const res = await fetch(`${API_URL}/orders/my?${query.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -131,6 +142,7 @@ export default function MyOrdersScreen() {
     const rawStatus = String(item.status || '');
     const normalizedStatus = rawStatus.toLowerCase().replace(/-/g, '_');
     const statusColor = STATUS_COLORS[normalizedStatus] || colors.pink;
+    const isWorkshopOrder = item.delivery_type === 'workshop_fitting' || item.shipping_address_fk === null;
 
     return (
       <Animated.View
@@ -142,6 +154,14 @@ export default function MyOrdersScreen() {
           <View>
             <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('orders.orderNumber', { id: item.order_id })}</Text>
             <Text style={[styles.orderDate, { color: colors.textMuted }]}>{formatDate(item.order_date)}</Text>
+            {isWorkshopOrder ? (
+              <View style={[styles.workshopBadge, { backgroundColor: '#10B98120', borderColor: '#10B98140' }]}>
+                <MaterialCommunityIcons name="wrench-outline" size={12} color="#10B981" />
+                <Text style={styles.workshopBadgeText}>
+                  {t('orders.workshopBadge')}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>
@@ -230,6 +250,18 @@ export default function MyOrdersScreen() {
               )}
               <Text style={[styles.tabText, { color: tab === 'delivered' ? 'white' : colors.textSecondary }]}>{t('filter.delivered')}</Text>
             </Pressable>
+            <Pressable
+              style={styles.tab}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setTab('workshop');
+              }}
+            >
+              {tab === 'workshop' && (
+                <Animated.View layout={LinearTransition} style={[StyleSheet.absoluteFill, styles.tabHighlight, { backgroundColor: colors.pink }]} />
+              )}
+              <Text style={[styles.tabText, { color: tab === 'workshop' ? 'white' : colors.textSecondary }]}>{t('orders.workshop')}</Text>
+            </Pressable>
           </GlassView>
         </View>
       </View>
@@ -261,10 +293,18 @@ export default function MyOrdersScreen() {
         <ScrollView contentContainerStyle={styles.center} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown} style={styles.emptyContent}>
             <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.emptyIconContainer, { borderColor: 'rgba(255,255,255,0.1)' }]}>
-              <MaterialCommunityIcons name="package-variant" size={48} color={colors.pink} />
+              <MaterialCommunityIcons name={tab === 'workshop' ? 'car-wrench' : 'package-variant'} size={48} color={colors.pink} />
             </GlassView>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('orders.emptyTitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('orders.emptySubtitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+              {tab === 'workshop'
+                ? t('orders.emptyWorkshopTitle')
+                : t('orders.emptyTitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+              {tab === 'workshop'
+                ? t('orders.emptyWorkshopSubtitle')
+                : t('orders.emptySubtitle', { status: t(tab === 'active' ? 'orders.activeLower' : 'status.deliveredLower') })}
+            </Text>
           </Animated.View>
         </ScrollView>
       ) : (
@@ -320,6 +360,8 @@ const styles = StyleSheet.create({
   orderDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.6 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: BorderRadius.full },
   statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  workshopBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: BorderRadius.full, paddingHorizontal: 8, paddingVertical: 3, marginTop: 8 },
+  workshopBadgeText: { color: '#10B981', fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8 },
   orderDivider: { height: 1, marginVertical: Spacing.lg, opacity: 0.1 },
   orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.md },
   totalBlock: { flex: 1, minWidth: 0 },
