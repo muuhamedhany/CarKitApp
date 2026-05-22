@@ -19,10 +19,12 @@ import BackButton from '@/components/common/BackButton';
 import FormInput from '@/components/common/FormInput';
 import GradientButton from '@/components/common/GradientButton';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { providerService } from '@/services/api/provider.service';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import Text from '@/components/common/LocalizedText';
 import TextInput from '@/components/common/LocalizedTextInput';
 
@@ -51,6 +53,7 @@ export default function AddServiceScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { showToast } = useToast();
+    const { language } = useTranslation();
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -277,7 +280,7 @@ export default function AddServiceScreen() {
                                             ]}
                                         >
                                             <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
-                                                {cat.name}
+                                                {translateCategoryName(cat.name, language)}
                                             </Text>
                                         </Pressable>
                                     );

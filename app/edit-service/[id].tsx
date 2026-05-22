@@ -24,11 +24,13 @@ import { decode } from 'base64-arraybuffer';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { providerService } from '@/services/api/provider.service';
 import { supabase } from '@/lib/supabase';
 import { Spacing, FontSizes, Fonts, BorderRadius } from '@/constants/theme';
 import { FormInput, GradientButton } from '@/components';
 import BackButton from '@/components/common/BackButton';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import type { Service } from '@/types/api.types';
 import Text from '@/components/common/LocalizedText';
 
@@ -59,6 +61,7 @@ export default function EditServiceScreen() {
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { showToast } = useToast();
+    const { language } = useTranslation();
 
     const [loadingService, setLoadingService] = useState(true);
     const [step, setStep] = useState(1);
@@ -278,7 +281,7 @@ export default function EditServiceScreen() {
                                                 borderColor: isSelected ? colors.pink : colors.border,
                                             }]}>
                                             <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
-                                                {cat.name}
+                                                {translateCategoryName(cat.name, language)}
                                             </Text>
                                         </Pressable>
                                     );

@@ -21,6 +21,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/services/api/client';
 import { Category, ProductFormInitialValues, ProductFormPayload } from '@/types/api.types';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import BackButton from './BackButton';
 import FormInput from './FormInput';
 import GradientButton from './GradientButton';
@@ -54,7 +55,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { showToast } = useToast();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -286,7 +287,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                             ]}
                                         >
                                             <Text style={[styles.categoryText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
-                                                {cat.name}
+                                                {translateCategoryName(cat.name, language)}
                                             </Text>
                                         </Pressable>
                                     );

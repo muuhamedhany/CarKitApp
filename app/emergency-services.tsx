@@ -13,6 +13,7 @@ import { emergencyService,
   EmergencyServiceOption } from '@/services/api/emergency.service';
 import { rowDirection,
   textAlign } from '@/utils/rtl';
+import { translateCategoryName } from '@/utils/categoryTranslations';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -78,7 +79,7 @@ export default function EmergencyServicesScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, language } = useTranslation();
   const [services, setServices] = useState<EmergencyServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -128,6 +129,7 @@ export default function EmergencyServicesScreen() {
           </View>
         ) : null}
 
+
         {!loading && services.length === 0 ? (
           <Animated.View entering={FadeInDown.duration(500)}>
             <GlassView intensity={isDark ? 30 : 50} style={styles.empty} {...{} as any}>
@@ -149,6 +151,7 @@ export default function EmergencyServicesScreen() {
                 service={service}
                 colors={colors}
                 t={t}
+                language={language}
                 onPress={() => router.push({
                   pathname: '/emergency-request' as any,
                   params: { serviceId: service.service_id, serviceName: service.name, price: String(service.price || '') },
@@ -167,11 +170,13 @@ function EmergencyServiceTile({
   colors,
   onPress,
   t,
+  language,
 }: {
   service: EmergencyServiceOption;
   colors: ReturnType<typeof useTheme>['colors'];
   onPress: () => void;
   t: (key: string, params?: Record<string, string | number>) => string;
+  language: string;
 }) {
   const onlineCount = service.online_employee_count || 0;
   const assignedCount = service.assigned_employee_count || 0;
@@ -213,7 +218,7 @@ function EmergencyServiceTile({
       {/* Texts */}
       <View style={styles.textCenter}>
         <Text numberOfLines={2} style={[styles.serviceTitle, { color: colors.textPrimary }]}>
-          {service.name}
+          {translateCategoryName(service.name, language)}
         </Text>
       </View>
 
