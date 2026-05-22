@@ -1,11 +1,14 @@
 import {
-  GlassView } from '@/components';
+  GlassView
+} from '@/components';
 import { DashboardSkeleton } from '@/components/common/SkeletonPlaceholder';
-import { BorderRadius,
+import {
+  BorderRadius,
   FontSizes,
   Fonts,
   Shadows,
-  Spacing } from '@/constants/theme';
+  Spacing
+} from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
@@ -17,11 +20,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback,
+import {
+  useCallback,
   useEffect,
   useRef,
-  useState } from 'react';
-import { Pressable,
+  useState
+} from 'react';
+import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
