@@ -16,7 +16,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/contexts/LanguageContext';
-import { Product } from '@/types/api.types';
+import { vehicleService } from '@/services/api/vehicle.service';
+import { Product, Vehicle } from '@/types/api.types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -90,6 +91,9 @@ export default function SearchScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState<number[]>([]);
   const [selectedServiceCategoryIds, setSelectedServiceCategoryIds] = useState<number[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [vehicleFilterEnabled, setVehicleFilterEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -113,6 +117,8 @@ export default function SearchScreen() {
 
   const queryRef = useRef(query);
   const adFilterRef = useRef(adFilter);
+  const selectedVehicleRef = useRef<Vehicle | null>(selectedVehicle);
+  const vehicleFilterEnabledRef = useRef(vehicleFilterEnabled);
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
@@ -122,6 +128,43 @@ export default function SearchScreen() {
   useEffect(() => {
     adFilterRef.current = adFilter;
   }, [adFilter]);
+
+  useEffect(() => {
+    selectedVehicleRef.current = selectedVehicle;
+  }, [selectedVehicle]);
+
+  useEffect(() => {
+    vehicleFilterEnabledRef.current = vehicleFilterEnabled;
+  }, [vehicleFilterEnabled]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadVehicles = async () => {
+      if (!token) {
+        setVehicles([]);
+        setSelectedVehicle(null);
+        return;
+      }
+
+      try {
+        const response = await vehicleService.getVehicles();
+        const list = response.data || [];
+        if (!isMounted) return;
+
+        setVehicles(list);
+        setSelectedVehicle((current) => current || list[0] || null);
+      } catch {
+        if (isMounted) {
+          setVehicles([]);
+          setSelectedVehicle(null);
+        }
+      }
+    };
+
+    loadVehicles();
+    return () => { isMounted = false; };
+  }, [token]);
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
@@ -155,6 +198,11 @@ export default function SearchScreen() {
       }
       prodParams.set('page', '1');
       prodParams.set('pageSize', '50');
+      const vehicle = selectedVehicleRef.current;
+      const useVehicleFit = Boolean(vehicleFilterEnabledRef.current && vehicle?.vehicle_id);
+      const productEndpoint = useVehicleFit
+        ? `${API_URL}/products/personalized?${prodParams.toString()}&vehicle_id=${vehicle!.vehicle_id}`
+        : `${API_URL}/products?${prodParams.toString()}`;
 
       const serviceParams = new URLSearchParams();
       if (searchQuery.trim()) serviceParams.set('search', searchQuery.trim());
@@ -171,7 +219,7 @@ export default function SearchScreen() {
       serviceParams.set('pageSize', '50');
 
       const [prodRes, servRes] = await Promise.all([
-        fetch(`${API_URL}/products?${prodParams.toString()}`, { headers }),
+        fetch(productEndpoint, { headers }),
         fetch(`${API_URL}/services?${serviceParams.toString()}`, { headers }),
       ]);
       const [prodData, servData] = await Promise.all([prodRes.json(), servRes.json()]);
@@ -179,8 +227,11 @@ export default function SearchScreen() {
       let fetchedProds = prodData.data || [];
       let fetchedServs = servData.data || [];
 
-      if (shouldShuffle || (!searchQuery.trim() && productCategoryIds.length === 0 && serviceCategoryIds.length === 0 && !af)) {
-        fetchedProds = [...fetchedProds].sort(() => Math.random() - 0.5);
+      const shouldRandomizeDefaultView = !useVehicleFit && !searchQuery.trim() && productCategoryIds.length === 0 && serviceCategoryIds.length === 0 && !af;
+      if (shouldShuffle || shouldRandomizeDefaultView) {
+        if (!useVehicleFit) {
+          fetchedProds = [...fetchedProds].sort(() => Math.random() - 0.5);
+        }
         fetchedServs = [...fetchedServs].sort(() => Math.random() - 0.5);
       }
 
@@ -227,6 +278,10 @@ export default function SearchScreen() {
     search(queryRef.current, parsedProducts, parsedServices, newAdFilter);
   }, [params.product_categories, params.service_categories, params.vendor_id, params.provider_id, params.product_ids, params.service_ids, params.ad_category_ids, params.ad_title, params.type, search]);
 
+  useEffect(() => {
+    search(queryRef.current, selectedProductCategoryIds, selectedServiceCategoryIds, adFilterRef.current);
+  }, [search, selectedProductCategoryIds, selectedServiceCategoryIds, selectedVehicle?.vehicle_id, vehicleFilterEnabled]);
+
   const handleAddToCart = async (productId: number) => {
     const product = products.find(p => p.product_id === productId);
     if (product) {
@@ -260,6 +315,28 @@ export default function SearchScreen() {
       ad_title: '',
     });
     search(query, selectedProductCategoryIds, selectedServiceCategoryIds, null);
+  };
+
+  const handleVehicleChipPress = () => {
+    if (vehicles.length === 0) {
+      router.push('/add-vehicle' as any);
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!vehicleFilterEnabled) {
+      setVehicleFilterEnabled(true);
+      return;
+    }
+
+    const currentIndex = vehicles.findIndex((vehicle) => vehicle.vehicle_id === selectedVehicle?.vehicle_id);
+    const nextVehicle = vehicles[(currentIndex + 1) % vehicles.length] || vehicles[0];
+    setSelectedVehicle(nextVehicle);
+  };
+
+  const handleClearVehicleFilter = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setVehicleFilterEnabled(false);
   };
 
   const handleRefresh = async () => {
@@ -339,6 +416,38 @@ export default function SearchScreen() {
                 </Pressable>
               </Animated.View>
             )}
+            {/* Vehicle fitment filter */}
+            <Animated.View entering={FadeInDown} style={[styles.vehicleFitRow, { flexDirection: rowDirection(isRTL) }]}>
+              <Pressable
+                onPress={handleVehicleChipPress}
+                style={[styles.vehicleFitChip, { flexDirection: rowDirection(isRTL), backgroundColor: colors.surfaceElevated, borderColor: vehicleFilterEnabled && selectedVehicle ? colors.pink : colors.cardBorder }]}
+              >
+                <MaterialCommunityIcons
+                  name={vehicleFilterEnabled && selectedVehicle ? "car-select" : "car-outline"}
+                  size={18}
+                  color={vehicleFilterEnabled && selectedVehicle ? colors.pink : colors.textSecondary}
+                />
+                <Text style={[styles.vehicleFitText, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]} numberOfLines={1}>
+                  {selectedVehicle && vehicleFilterEnabled
+                    ? `Fits your ${selectedVehicle.make_name} ${selectedVehicle.model_name}`
+                    : vehicles.length > 0
+                      ? 'All vehicles'
+                      : 'Add vehicle'}
+                </Text>
+                {vehicles.length > 1 && vehicleFilterEnabled && selectedVehicle && (
+                  <MaterialCommunityIcons name="swap-horizontal" size={16} color={colors.textSecondary} />
+                )}
+              </Pressable>
+
+              {selectedVehicle && vehicleFilterEnabled && (
+                <Pressable
+                  onPress={handleClearVehicleFilter}
+                  style={[styles.vehicleClearBtn, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
+                >
+                  <MaterialCommunityIcons name="close" size={17} color={colors.pink} />
+                </Pressable>
+              )}
+            </Animated.View>
             {/* Mode toggle */}
             <View style={[styles.toggleRow, { flexDirection: rowDirection(isRTL), marginBottom: Spacing.lg }]}>
               <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
@@ -521,6 +630,34 @@ const styles = StyleSheet.create({
   },
   adFilterText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.sm },
   closeAdFilter: { padding: 4 },
+
+  vehicleFitRow: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  vehicleFitChip: {
+    flex: 1,
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    height: 44,
+  },
+  vehicleFitText: {
+    flex: 1,
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.sm,
+  },
+  vehicleClearBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   toggleRow: {
     flexDirection: 'row',

@@ -40,6 +40,9 @@ export type Product = {
   image_url_2?: string | null;
   image_url_3?: string | null;
   status?: string;
+  compatible_makes?: string[] | null;
+  compatible_models?: string[] | null;
+  fitment_rank?: number;
   rating?: number;
   review_count?: number;
   created_at?: string;
@@ -52,7 +55,10 @@ export type ProductFormInitialValues = {
   price?: string | number;
   stock?: string | number;
   categoryId?: number | null;
-  imageUrls?: Array<string | null>;
+  compatibleMakes?: string[];
+  compatibleModels?: string[];
+  isUniversal?: boolean;
+  imageUrls?: (string | null)[];
 };
 
 export type ProductFormPayload = {
@@ -64,14 +70,19 @@ export type ProductFormPayload = {
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
+  compatible_makes: string[];
+  compatible_models: string[];
 };
 
 export type Vehicle = {
   vehicle_id: number;
   user_id_fk: number;
-  make: string;
-  model: string;
-  year: number;
+  make?: string;
+  model?: string;
+  make_name?: string;
+  model_name?: string;
+  nickname?: string | null;
+  year?: number | null;
   license_plate?: string | null;
   color?: string | null;
   photo_url?: string | null;
