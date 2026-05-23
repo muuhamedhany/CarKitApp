@@ -808,7 +808,7 @@ const ar = {
   'wishlist.updateFailed': 'فشل تحديث المفضلة',
 
   'forms.product.basicInfo': 'المعلومات الأساسية',
-  'forms.product.step': 'الخطوة {step} من 3',
+  'forms.product.step': 'الخطوة {step} من 4',
   'forms.product.nameLabel': 'اسم المنتج',
   'forms.product.namePlaceholder': 'مثال: زيت محرك ممتاز',
   'forms.product.descriptionPlaceholder': 'وصف تفصيلي للمنتج...',

@@ -185,6 +185,8 @@ export default function VendorProductDetailScreen() {
         duplicate_price: String(product.price || ''),
         duplicate_stock: String(product.stock || 0),
         duplicate_category_id: String(product.category_id_fk || ''),
+        duplicate_compatible_makes: JSON.stringify(product.compatible_makes || []),
+        duplicate_compatible_models: JSON.stringify(product.compatible_models || []),
       },
     });
   };
