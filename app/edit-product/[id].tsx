@@ -39,12 +39,17 @@ export default function EditProductScreen() {
                 const product = response.data as Product;
 
                 if (isMounted) {
+                    const compatibleMakes = product.compatible_makes ?? [];
+                    const compatibleModels = product.compatible_models ?? [];
                     setInitialValues({
                         name: product.name,
                         description: product.description ?? '',
                         price: product.price,
                         stock: product.stock ?? 0,
                         categoryId: product.category_id_fk ?? null,
+                        compatibleMakes,
+                        compatibleModels,
+                        isUniversal: compatibleMakes.length === 0 && compatibleModels.length === 0,
                         imageUrls: [product.image_url ?? null, product.image_url_2 ?? null, product.image_url_3 ?? null],
                     });
                 }
