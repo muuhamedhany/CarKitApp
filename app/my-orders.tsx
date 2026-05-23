@@ -1,12 +1,16 @@
 import {
   CenteredHeader,
-  GlassView } from '@/components';
+  GlassView
+} from '@/components';
+import Text from '@/components/common/LocalizedText';
 import { SkeletonBone } from '@/components/common/SkeletonPlaceholder';
 import { API_URL } from '@/constants/config';
-import { BorderRadius,
+import {
+  BorderRadius,
   FontSizes,
   Fonts,
-  Spacing } from '@/constants/theme';
+  Spacing
+} from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -15,22 +19,23 @@ import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useCallback,
+import {
+  useCallback,
   useEffect,
-  useState } from 'react';
+  useState
+} from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
-  ScrollView,
 } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInUp,
   LinearTransition
 } from 'react-native-reanimated';
-import Text from '@/components/common/LocalizedText';
 const TypedFlashList = FlashList as any;
 
 type Order = {
@@ -146,66 +151,66 @@ export default function MyOrdersScreen() {
 
     return (
       <Animated.View
-      entering={FadeInUp.delay(index * 100).springify()}
-      style={styles.cardContainer}
-    >
-      <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.orderCard}>
-        <View style={styles.orderHeader}>
-          <View>
-            <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('orders.orderNumber', { id: item.order_id })}</Text>
-            <Text style={[styles.orderDate, { color: colors.textMuted }]}>{formatDate(item.order_date)}</Text>
-            {isWorkshopOrder ? (
-              <View style={[styles.workshopBadge, { backgroundColor: '#10B98120', borderColor: '#10B98140' }]}>
-                <MaterialCommunityIcons name="wrench-outline" size={12} color="#10B981" />
-                <Text style={styles.workshopBadgeText}>
-                  {t('orders.workshopBadge')}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {t(`status.${normalizedStatus}`, { defaultValue: rawStatus })}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.orderDivider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.orderFooter}>
-          <View style={styles.totalBlock}>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t('cart.totalAmount')}</Text>
-            <View style={styles.totalAmountRow}>
-              <Text
-                style={[styles.totalValue, { color: colors.textPrimary }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.82}
-              >
-                {Number(item.total_amount || 0).toLocaleString('en-EG')}
+        entering={FadeInUp.delay(index * 100).springify()}
+        style={styles.cardContainer}
+      >
+        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.orderCard}>
+          <View style={styles.orderHeader}>
+            <View>
+              <Text style={[styles.orderId, { color: colors.textPrimary }]}>{t('orders.orderNumber', { id: item.order_id })}</Text>
+              <Text style={[styles.orderDate, { color: colors.textMuted }]}>{formatDate(item.order_date)}</Text>
+              {isWorkshopOrder ? (
+                <View style={[styles.workshopBadge, { backgroundColor: '#10B98120', borderColor: '#10B98140' }]}>
+                  <MaterialCommunityIcons name="wrench-outline" size={12} color="#10B981" />
+                  <Text style={styles.workshopBadgeText}>
+                    {t('orders.workshopBadge')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+              <Text style={[styles.statusText, { color: statusColor }]}>
+                {t(`status.${normalizedStatus}`, { defaultValue: rawStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}
               </Text>
-              <Text style={[styles.currencyLabel, { color: colors.pink }]}> {t('common.currency.egp')}</Text>
             </View>
           </View>
-          <Pressable
-            style={styles.detailsPressable}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({ pathname: '/order/[id]', params: { id: String(item.order_id), role: 'customer' } } as any);
-            }}
-          >
-            <LinearGradient
-              colors={[colors.pink, colors.purple]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.viewDetailsBtn}
+
+          <View style={[styles.orderDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.orderFooter}>
+            <View style={styles.totalBlock}>
+              <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t('cart.totalAmount')}</Text>
+              <View style={styles.totalAmountRow}>
+                <Text
+                  style={[styles.totalValue, { color: colors.textPrimary }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.82}
+                >
+                  {Number(item.total_amount || 0).toLocaleString('en-EG')}
+                </Text>
+                <Text style={[styles.currencyLabel, { color: colors.pink }]}> {t('common.currency.egp')}</Text>
+              </View>
+            </View>
+            <Pressable
+              style={styles.detailsPressable}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: '/order/[id]', params: { id: String(item.order_id), role: 'customer' } } as any);
+              }}
             >
-              <Text style={styles.viewDetailsText}>{t('common.details')}</Text>
-              <MaterialCommunityIcons name="chevron-right" size={18} color="white" />
-            </LinearGradient>
-          </Pressable>
-        </View>
-      </GlassView>
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.viewDetailsBtn}
+              >
+                <Text style={styles.viewDetailsText}>{t('common.details')}</Text>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="white" />
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </GlassView>
       </Animated.View>
     );
   };

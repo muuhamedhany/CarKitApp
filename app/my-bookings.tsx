@@ -162,7 +162,7 @@ export default function MyBookingsScreen() {
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {t(`status.${normalizedStatus}`, { defaultValue: rawStatus })}
+              {t(`status.${normalizedStatus}`, { defaultValue: rawStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}
             </Text>
           </View>
         </View>

@@ -272,7 +272,7 @@ export default function VendorDashboard() {
                         <Text style={[styles.orderAmount, { color: colors.pink }]}>{Number(order.total_amount).toLocaleString('en-EG')} EGP</Text>
                         <View style={[styles.statusBadge, { backgroundColor: order.status === 'pending' ? 'rgba(249,115,22,0.1)' : 'rgba(16,185,129,0.1)' }]}>
                           <Text style={[styles.statusText, { color: order.status === 'pending' ? '#F97316' : '#10B981' }]}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            {order.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                           </Text>
                         </View>
                       </View>

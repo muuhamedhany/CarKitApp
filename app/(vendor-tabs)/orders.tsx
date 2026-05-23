@@ -164,7 +164,7 @@ export default function VendorOrdersScreen() {
                         </View>
                         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '15' }]}>
                             <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                {item.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                             </Text>
                         </View>
                     </View>

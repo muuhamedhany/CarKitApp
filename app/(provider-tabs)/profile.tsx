@@ -279,12 +279,20 @@ export default function ProviderProfileScreen() {
             <View style={[{ borderTopColor: colors.cardBorder, borderTopWidth: 1 }]} />
 
             {renderMenuItem({
+              icon: 'credit-card-outline',
+              label: 'Payments',
+              route: '/profile/payments',
+              iconBg: 'rgba(168, 85, 247, 0.1)',
+              iconColor: '#A855F7'
+            }, 0, false)}
+
+            {renderMenuItem({
               icon: 'cog-outline',
               label: 'Settings',
               route: '/settings',
               iconBg: 'rgba(99, 102, 241, 0.1)',
               iconColor: '#6366F1'
-            }, 0, false)}
+            }, 1, false)}
 
             {renderMenuItem({
               icon: 'lifebuoy',
@@ -292,7 +300,7 @@ export default function ProviderProfileScreen() {
               route: '/support',
               iconBg: 'rgba(16, 185, 129, 0.1)',
               iconColor: '#10B981'
-            }, 1, true)}
+            }, 2, true)}
           </GlassView>
         </Animated.View>
 

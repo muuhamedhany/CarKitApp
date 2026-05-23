@@ -302,7 +302,7 @@ export default function ProviderDashboard() {
                                                 </View>
                                                 <View style={[styles.statusBadge, { backgroundColor: getStatusTint(appointment.status, colors).bg }]}>
                                                     <Text style={[styles.statusBadgeText, { color: getStatusTint(appointment.status, colors).fg }]}>
-                                                        {t(`status.${String(appointment.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: appointment.status })}
+                                                        {t(`status.${String(appointment.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: String(appointment.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}
                                                     </Text>
                                                 </View>
                                             </View>
