@@ -2,36 +2,32 @@ import {
   MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useCallback,
   useEffect,
   useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
-import Animated, { FadeInDown, FadeInLeft, FadeInUp, Layout } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInLeft, Layout } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { supportService } from '@/services/api';
 import Text from '@/components/common/LocalizedText';
 
-const { width, height } = Dimensions.get('window');
-
 export default function SupportScreen() {
-  const router = useRouter();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +41,16 @@ export default function SupportScreen() {
 
   const fetchTickets = useCallback(async () => {
     try {
-      const res = await supportService.getTickets();
+      const res = await supportService.getTickets(user?.user_id);
       if (res.success) {
-        setTickets(res.data);
+        setTickets(res.data ?? []);
       }
     } catch (e) {
       console.log('Tickets fetch error', e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.user_id]);
 
   useEffect(() => {
     fetchTickets();
@@ -69,13 +65,15 @@ export default function SupportScreen() {
     setSubmitting(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const res = await supportService.createTicket({ subject, message, priority });
+      const res = await supportService.createTicket({ subject, message, priority, user_id_fk: user?.user_id });
       if (res.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Ticket Created', 'Our support team will get back to you shortly.');
         setIsCreating(false);
-        setSubject(''); setMessage('');
-        fetchTickets();
+        setSubject('');
+        setMessage('');
+        setPriority('medium');
+        await fetchTickets();
       } else {
         showToast('error', 'Failed', res.message || 'Could not create ticket.');
       }
@@ -199,7 +197,7 @@ export default function SupportScreen() {
                     </View>
                   </View>
                   <Text style={[styles.cardMessage, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {ticket.message}
+                    {ticket.message || ticket.description}
                   </Text>
                   <View style={styles.cardFooter}>
                     <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />

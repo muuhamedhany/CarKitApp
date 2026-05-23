@@ -35,7 +35,7 @@ import Text from '@/components/common/LocalizedText';
 type CardBrand = 'visa' | 'mastercard' | 'amex' | 'discover' | 'card';
 
 const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 19);
+    const digits = value.replace(/\D/g, '').slice(0, 16);
     return digits.replace(/(.{4})/g, '$1 ').trim();
 };
 
@@ -59,23 +59,6 @@ const parseExpiry = (value: string) => {
     if (year < currentYear || (year === currentYear && month < currentMonth)) return null;
 
     return { month, year };
-};
-
-const passesLuhn = (digits: string) => {
-    let sum = 0;
-    let shouldDouble = false;
-
-    for (let i = digits.length - 1; i >= 0; i -= 1) {
-        let digit = Number(digits[i]);
-        if (shouldDouble) {
-            digit *= 2;
-            if (digit > 9) digit -= 9;
-        }
-        sum += digit;
-        shouldDouble = !shouldDouble;
-    }
-
-    return sum % 10 === 0;
 };
 
 const detectBrand = (digits: string): CardBrand => {
@@ -153,8 +136,8 @@ export default function PaymentsScreen() {
     const cardDigits = useMemo(() => cardNumber.replace(/\D/g, ''), [cardNumber]);
     const parsedExpiry = useMemo(() => parseExpiry(expiry), [expiry]);
     const detectedBrand = useMemo(() => detectBrand(cardDigits), [cardDigits]);
-    const cardIsValid = cardDigits.length >= 13 && cardDigits.length <= 19 && passesLuhn(cardDigits);
-    const cvvIsValid = /^\d{3,4}$/.test(cvv.trim());
+    const cardIsValid = cardDigits.length === 16;
+    const cvvIsValid = /^\d{3}$/.test(cvv.trim());
     const canSave = holderName.trim().length >= 2 && cardIsValid && Boolean(parsedExpiry) && cvvIsValid && !saving;
 
     const resetForm = useCallback(() => {
@@ -407,7 +390,7 @@ export default function PaymentsScreen() {
                     value={cardNumber}
                     onChangeText={(value) => setCardNumber(formatCardNumber(value))}
                     keyboardType="number-pad"
-                    maxLength={23}
+                    maxLength={19}
                 />
                 <FormInput
                     label="Expiry"
@@ -423,9 +406,9 @@ export default function PaymentsScreen() {
                     icon="shield-lock-outline"
                     placeholder="CVV"
                     value={cvv}
-                    onChangeText={(value) => setCvv(value.replace(/\D/g, '').slice(0, 4))}
+                    onChangeText={(value) => setCvv(value.replace(/\D/g, '').slice(0, 3))}
                     keyboardType="number-pad"
-                    maxLength={4}
+                    maxLength={3}
                 />
 
                 <Pressable

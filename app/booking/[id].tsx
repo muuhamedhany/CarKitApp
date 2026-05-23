@@ -206,7 +206,7 @@ export default function BookingDetailScreen() {
                                     <Text style={[styles.bookingDate, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
                                 </View>
                                 <View style={[styles.statusBadge, { backgroundColor: colors.pink + '20' }]}>
-                                    <Text style={[styles.statusText, { color: colors.pink }]}>{t(`status.${String(booking.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: booking.status })}</Text>
+                                    <Text style={[styles.statusText, { color: colors.pink }]}>{t(`status.${String(booking.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: String(booking.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}</Text>
                                 </View>
                             </View>
                         </GlassView>

@@ -70,6 +70,7 @@ export default function ProfileScreen() {
   const personalItems: MenuItem[] = [
     { icon: 'map-marker-outline', labelKey: 'profile.addresses', route: '/profile/addresses' },
     { icon: 'credit-card-outline', labelKey: 'profile.payments', route: '/profile/payments' },
+    { icon: 'lifebuoy', labelKey: 'common.support', route: '/support' },
   ];
 
   const getIconStyles = (tone?: MenuItem['tone']) => {

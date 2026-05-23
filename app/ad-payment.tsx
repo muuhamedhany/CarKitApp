@@ -25,10 +25,11 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import Text from '@/components/common/LocalizedText';
 
-const PAYMENT_METHODS: { label: string; value: PaymentMethod; icon: string }[] = [
-  { label: 'Cash on Delivery', value: 'cash_on_delivery', icon: 'cash' },
-  { label: 'Credit Card', value: 'credit_card', icon: 'credit-card-outline' },
-];
+const AD_PAYMENT_METHOD: { label: string; value: PaymentMethod; icon: string } = {
+  label: 'Credit Card',
+  value: 'credit_card',
+  icon: 'credit-card-outline',
+};
 
 const cardBrandLabel = (brand: string) => {
   if (brand === 'mastercard') return 'Mastercard';
@@ -60,7 +61,6 @@ export default function AdPaymentScreen() {
     durationDays === 7  ? '7 Days'  :
     durationDays === 14 ? '14 Days' : '30 Days';
 
-  const [method, setMethod] = useState<PaymentMethod>('cash_on_delivery');
   const [savedCards, setSavedCards] = useState<SavedPaymentMethod[]>([]);
   const [loadingSavedCards, setLoadingSavedCards] = useState(true);
   const [selectedSavedCardId, setSelectedSavedCardId] = useState<number | null>(null);
@@ -80,18 +80,14 @@ export default function AdPaymentScreen() {
   };
 
   const canPay = useMemo(() => {
-    if (method === 'cash_on_delivery') return true;
-    if (method === 'credit_card') {
-      if (!useNewCard && selectedSavedCardId) return true;
-      return (
-        cardHolderName.trim().length > 2 &&
-        cardDigits.length >= 13 &&
-        isValidExpiry(cardExpiry.trim()) &&
-        /^\d{3,4}$/.test(cardCvv.trim())
-      );
-    }
-    return false;
-  }, [method, useNewCard, selectedSavedCardId, cardHolderName, cardDigits, cardExpiry, cardCvv]);
+    if (!useNewCard && selectedSavedCardId) return true;
+    return (
+      cardHolderName.trim().length > 2 &&
+      cardDigits.length >= 13 &&
+      isValidExpiry(cardExpiry.trim()) &&
+      /^\d{3,4}$/.test(cardCvv.trim())
+    );
+  }, [useNewCard, selectedSavedCardId, cardHolderName, cardDigits, cardExpiry, cardCvv]);
 
   useEffect(() => {
     (async () => {
@@ -112,9 +108,7 @@ export default function AdPaymentScreen() {
 
   const handleConfirmPayment = async () => {
     if (!canPay) {
-      if (method === 'credit_card') {
-        showToast('warning', 'Card Details Required', 'Select a saved card or complete all card fields.');
-      }
+      showToast('warning', 'Card Details Required', 'Select a saved card or complete all card fields.');
       return;
     }
 
@@ -136,7 +130,7 @@ export default function AdPaymentScreen() {
         await apiFetch('/payments', {
           method: 'POST',
           body: JSON.stringify({
-            method,
+            method: 'credit_card',
             amount: price,
             ad_id: adRes.data.ad_id,
           }),
@@ -197,50 +191,37 @@ export default function AdPaymentScreen() {
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>Payment Method</Text>
         </Animated.View>
         <View style={styles.methodList}>
-          {PAYMENT_METHODS.map((pm, idx) => {
-            const active = method === pm.value;
-            return (
-              <Animated.View key={pm.value} entering={FadeInDown.delay(300 + idx * 100)}>
-                <Pressable
-                  style={[styles.methodCard, {
-                    borderColor: active ? colors.pink : colors.cardBorder,
-                    borderWidth: active ? 2 : 1,
-                    backgroundColor: active ? colors.pink + '08' : 'transparent'
-                  }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMethod(pm.value);
-                    if (pm.value !== 'credit_card') {
-                      setUseNewCard(false);
-                    }
-                  }}
-                >
-                  <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
-                    <View style={styles.methodLeft}>
-                      <View style={[styles.methodIcon, { backgroundColor: active ? colors.pink + '15' : colors.cardBorder }]}>
-                        <MaterialCommunityIcons
-                          name={pm.icon as any}
-                          size={22}
-                          color={active ? colors.pink : colors.textSecondary}
-                        />
-                      </View>
-                      <Text style={[styles.methodLabel, { color: active ? colors.textPrimary : colors.textSecondary, fontFamily: active ? Fonts.bold : Fonts.medium }]}>{pm.label}</Text>
-                    </View>
+          <Animated.View entering={FadeInDown.delay(300)}>
+            <View
+              style={[styles.methodCard, {
+                borderColor: colors.pink,
+                borderWidth: 2,
+                backgroundColor: colors.pink + '08'
+              }]}
+            >
+              <GlassView intensity={isDark ? 10 : 30} tint={isDark ? 'dark' : 'light'} style={styles.methodInner}>
+                <View style={styles.methodLeft}>
+                  <View style={[styles.methodIcon, { backgroundColor: colors.pink + '15' }]}>
                     <MaterialCommunityIcons
-                      name={active ? 'check-circle' : 'circle-outline'}
-                      size={24}
-                      color={active ? colors.pink : colors.cardBorder}
+                      name={AD_PAYMENT_METHOD.icon as any}
+                      size={22}
+                      color={colors.pink}
                     />
-                  </GlassView>
-                </Pressable>
-              </Animated.View>
-            );
-          })}
+                  </View>
+                  <Text style={[styles.methodLabel, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>{AD_PAYMENT_METHOD.label}</Text>
+                </View>
+                <MaterialCommunityIcons
+                  name="check-circle"
+                  size={24}
+                  color={colors.pink}
+                />
+              </GlassView>
+            </View>
+          </Animated.View>
         </View>
 
         <Animated.View entering={FadeInUp.delay(600)}>
-          {method === 'credit_card' && (
-            <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
+          <GlassView intensity={isDark ? 30 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.detailsCard, { borderColor: colors.cardBorder }]}>
               <Text style={[styles.detailsTitle, { color: colors.textPrimary, marginBottom: Spacing.md }]}>Card Information</Text>
               {loadingSavedCards ? (
                 <ActivityIndicator size="small" color={colors.pink} />
@@ -336,8 +317,7 @@ export default function AdPaymentScreen() {
               </View>
                 </>
               ) : null}
-            </GlassView>
-          )}
+          </GlassView>
         </Animated.View>
         <View style={{ height: 160 }} />
       </ScrollView>
@@ -356,7 +336,7 @@ export default function AdPaymentScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.payBtnText}>
-                {method === 'cash_on_delivery' ? 'Confirm' : 'Pay'} {price.toLocaleString('en-EG')} EGP
+                Pay {price.toLocaleString('en-EG')} EGP
               </Text>
             )}
           </Pressable>

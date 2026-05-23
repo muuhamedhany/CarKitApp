@@ -20,7 +20,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { LogBox } from 'react-native';
 import 'react-native-reanimated';
+
+// Suppress harmless Expo dev tool warning
+LogBox.ignoreLogs(['Unable to activate keep awake', 'Unable to activate keep-awake']);
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();

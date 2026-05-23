@@ -189,7 +189,7 @@ export default function EmergencyWaitingScreen() {
               <View style={styles.statusRow}>
                 {['accepted', 'arrived', 'completed'].map((step) => (
                   <View key={step} style={[styles.statusStep, { backgroundColor: step === status ? colors.accentSoft : colors.surfaceMuted }]}>
-                    <Text style={[styles.statusText, { color: step === status ? colors.pink : colors.textMuted }]}>{t(`status.${step}`, { defaultValue: step })}</Text>
+                    <Text style={[styles.statusText, { color: step === status ? colors.pink : colors.textMuted }]}>{t(`status.${step}`, { defaultValue: step.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}</Text>
                   </View>
                 ))}
               </View>
