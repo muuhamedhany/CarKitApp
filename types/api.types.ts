@@ -55,6 +55,9 @@ export type ProductFormInitialValues = {
   price?: string | number;
   stock?: string | number;
   categoryId?: number | null;
+  compatibleMakes?: string[];
+  compatibleModels?: string[];
+  isUniversal?: boolean;
   imageUrls?: (string | null)[];
 };
 
@@ -67,8 +70,8 @@ export type ProductFormPayload = {
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
-  compatible_makes?: string[];
-  compatible_models?: string[];
+  compatible_makes: string[];
+  compatible_models: string[];
 };
 
 export type Vehicle = {

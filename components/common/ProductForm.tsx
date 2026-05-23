@@ -1,16 +1,15 @@
-import {
-  MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { decode } from 'base64-arraybuffer';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect,
-  useState } from 'react';
-import { ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    ActivityIndicator,
+    Image,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,12 +33,32 @@ type ImageSlot = {
     sourceUrl: string | null;
 };
 
+type MakeOption = {
+    make_id: number;
+    name: string;
+};
+
+type ModelOption = {
+    model_id: number;
+    make_id_fk: number;
+    name: string;
+};
+
+type FitmentSuggestion = {
+    compatible_makes: string[];
+    compatible_models: string[];
+    confidence: number;
+    source: string;
+};
+
 type ProductFormProps = {
     screenTitle: string;
     submitLabel: string;
     initialValues?: ProductFormInitialValues;
     onSubmit: (payload: ProductFormPayload) => Promise<void>;
 };
+
+const TOTAL_STEPS = 4;
 
 const createImageSlots = (imageUrls?: (string | null)[]): ImageSlot[] =>
     Array.from({ length: 3 }, (_, index) => {
@@ -50,6 +69,9 @@ const createImageSlots = (imageUrls?: (string | null)[]): ImageSlot[] =>
             sourceUrl: imageUrl,
         };
     });
+
+const uniqueStrings = (values?: string[] | null) =>
+    [...new Set((values || []).map((value) => String(value || '').trim()).filter(Boolean))];
 
 export default function ProductForm({ screenTitle, submitLabel, initialValues, onSubmit }: ProductFormProps) {
     const insets = useSafeAreaInsets();
@@ -63,17 +85,40 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const [stock, setStock] = useState('0');
     const [categories, setCategories] = useState<Category[]>([]);
     const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [makes, setMakes] = useState<MakeOption[]>([]);
+    const [makesLoading, setMakesLoading] = useState(true);
+    const [modelsByMake, setModelsByMake] = useState<Record<number, ModelOption[]>>({});
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [isUniversal, setIsUniversal] = useState(true);
+    const [selectedMakeNames, setSelectedMakeNames] = useState<string[]>([]);
+    const [selectedModelNames, setSelectedModelNames] = useState<string[]>([]);
+    const [suggestingFitment, setSuggestingFitment] = useState(false);
     const [imageSlots, setImageSlots] = useState<ImageSlot[]>(createImageSlots());
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState(1);
 
+    const selectedCategoryName = useMemo(
+        () => categories.find((category) => category.category_id === selectedCategoryId)?.name || '',
+        [categories, selectedCategoryId]
+    );
+
+    const selectedMakes = useMemo(
+        () => makes.filter((make) => selectedMakeNames.includes(make.name)),
+        [makes, selectedMakeNames]
+    );
+
     useEffect(() => {
+        const initialMakes = uniqueStrings(initialValues?.compatibleMakes);
+        const initialModels = uniqueStrings(initialValues?.compatibleModels);
+
         setName(initialValues?.name ?? '');
         setDescription(initialValues?.description ?? '');
         setPrice(initialValues?.price !== undefined && initialValues?.price !== null ? String(initialValues.price) : '');
         setStock(initialValues?.stock !== undefined && initialValues?.stock !== null ? String(initialValues.stock) : '0');
         setSelectedCategoryId(initialValues?.categoryId ?? null);
+        setSelectedMakeNames(initialMakes);
+        setSelectedModelNames(initialModels);
+        setIsUniversal(initialValues?.isUniversal ?? (initialMakes.length === 0 && initialModels.length === 0));
         setImageSlots(createImageSlots(initialValues?.imageUrls));
     }, [initialValues]);
 
@@ -96,7 +141,24 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
             }
         };
 
+        const loadMakes = async () => {
+            try {
+                const response = await apiFetch('/vehicles/makes');
+                if (isMounted && response.data) {
+                    setMakes(response.data);
+                }
+            } catch (error) {
+                console.error('Failed to load makes', error);
+                showToast('error', t('common.error'), 'Failed to load vehicle makes.');
+            } finally {
+                if (isMounted) {
+                    setMakesLoading(false);
+                }
+            }
+        };
+
         loadCategories();
+        loadMakes();
 
         return () => {
             isMounted = false;
@@ -108,6 +170,20 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
             setSelectedCategoryId(categories[0].category_id);
         }
     }, [categories, selectedCategoryId]);
+
+    const fetchModelsForMake = useCallback(async (makeId: number) => {
+        if (modelsByMake[makeId]) {
+            return modelsByMake[makeId];
+        }
+
+        const response = await apiFetch(`/vehicles/makes/${makeId}/models`);
+        const models = response.data || [];
+        setModelsByMake((current) => ({
+            ...current,
+            [makeId]: current[makeId] || models,
+        }));
+        return models as ModelOption[];
+    }, [modelsByMake]);
 
     const uploadImage = async (base64File: string, slotIndex: number) => {
         const fileName = `product-${Date.now()}-${slotIndex}-${Math.floor(Math.random() * 1000)}.jpg`;
@@ -146,6 +222,93 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         }
     };
 
+    const selectUniversal = () => {
+        setIsUniversal(true);
+        setSelectedMakeNames([]);
+        setSelectedModelNames([]);
+    };
+
+    const toggleMake = async (make: MakeOption) => {
+        if (isUniversal) {
+            setIsUniversal(false);
+        }
+
+        const isSelected = selectedMakeNames.includes(make.name);
+        if (isSelected) {
+            const modelsForMake = modelsByMake[make.make_id] || [];
+            const modelNamesToRemove = modelsForMake.map((model) => model.name);
+            setSelectedMakeNames((current) => current.filter((nameValue) => nameValue !== make.name));
+            setSelectedModelNames((current) => current.filter((modelName) => !modelNamesToRemove.includes(modelName)));
+            return;
+        }
+
+        setSelectedMakeNames((current) => uniqueStrings([...current, make.name]));
+        try {
+            await fetchModelsForMake(make.make_id);
+        } catch (error) {
+            console.error('Failed to load models', error);
+            showToast('error', t('common.error'), 'Failed to load vehicle models.');
+        }
+    };
+
+    const toggleModel = (model: ModelOption) => {
+        if (isUniversal) {
+            setIsUniversal(false);
+        }
+
+        setSelectedModelNames((current) => (
+            current.includes(model.name)
+                ? current.filter((modelName) => modelName !== model.name)
+                : uniqueStrings([...current, model.name])
+        ));
+    };
+
+    const suggestFitment = async () => {
+        if (!name.trim()) {
+            showToast('warning', t('common.missingFields'), t('forms.product.nameRequired'));
+            return;
+        }
+
+        setSuggestingFitment(true);
+        try {
+            const response = await apiFetch<{ success: boolean; data: FitmentSuggestion }>('/products/fitment-suggestions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: name.trim(),
+                    description: description.trim(),
+                    category_id_fk: selectedCategoryId,
+                    category_name: selectedCategoryName,
+                }),
+            });
+
+            const suggestedMakes = uniqueStrings(response.data?.compatible_makes);
+            const suggestedModels = uniqueStrings(response.data?.compatible_models);
+
+            if (suggestedMakes.length === 0 && suggestedModels.length === 0) {
+                selectUniversal();
+                showToast('success', 'Fitment suggested', 'This product looks Universal. Review it before saving.');
+                return;
+            }
+
+            setIsUniversal(false);
+            setSelectedMakeNames(suggestedMakes);
+            setSelectedModelNames(suggestedModels);
+            await Promise.all(
+                makes
+                    .filter((make) => suggestedMakes.includes(make.name))
+                    .map((make) => fetchModelsForMake(make.make_id).catch(() => []))
+            );
+            showToast('success', 'Fitment suggested', 'Review the selected makes and models before saving.');
+        } catch (error: any) {
+            showToast('error', t('common.error'), error?.message || 'Failed to suggest fitment.');
+        } finally {
+            setSuggestingFitment(false);
+        }
+    };
+
+    const hasValidCompatibility = () =>
+        isUniversal || selectedMakeNames.length > 0 || selectedModelNames.length > 0;
+
     const goNextStep = () => {
         if (step === 1) {
             if (!name.trim()) {
@@ -169,11 +332,21 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
             }
 
             setStep(3);
+            return;
+        }
+
+        if (step === 3) {
+            if (!hasValidCompatibility()) {
+                showToast('warning', 'Compatibility required', 'Choose Universal or select at least one make or model.');
+                return;
+            }
+
+            setStep(4);
         }
     };
 
     const handleSubmit = async () => {
-        if (!name.trim() || !price.trim() || !selectedCategoryId) {
+        if (!name.trim() || !price.trim() || !selectedCategoryId || !hasValidCompatibility()) {
             showToast('warning', t('common.missingFields'), t('forms.product.completeRequired'));
             return;
         }
@@ -200,6 +373,8 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 image_url: uploadedUrls[0] || null,
                 image_url_2: uploadedUrls[1] || null,
                 image_url_3: uploadedUrls[2] || null,
+                compatible_makes: isUniversal ? [] : selectedMakeNames,
+                compatible_models: isUniversal ? [] : selectedModelNames,
             });
         } catch (error: any) {
             showToast('error', t('common.error'), error?.message || t('forms.product.saveFailed'));
@@ -208,7 +383,119 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         }
     };
 
-    const progressWidth = `${(step / 3) * 100}%` as `${number}%`;
+    const renderCompatibilityStep = () => (
+        <>
+            <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Compatibility</Text>
+                <Pressable
+                    onPress={suggestFitment}
+                    disabled={suggestingFitment || makesLoading}
+                    style={[styles.suggestButton, { borderColor: colors.pink, opacity: suggestingFitment || makesLoading ? 0.7 : 1 }]}
+                >
+                    {suggestingFitment ? (
+                        <ActivityIndicator size="small" color={colors.pink} />
+                    ) : (
+                        <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={colors.pink} />
+                    )}
+                    <Text style={[styles.suggestButtonText, { color: colors.pink }]}>Suggest fitment</Text>
+                </Pressable>
+            </View>
+
+            <Pressable
+                onPress={selectUniversal}
+                style={[
+                    styles.universalCard,
+                    {
+                        backgroundColor: isUniversal ? colors.pink + '18' : colors.backgroundSecondary,
+                        borderColor: isUniversal ? colors.pink : colors.cardBorder,
+                    },
+                ]}
+            >
+                <View style={[styles.optionIcon, { backgroundColor: isUniversal ? colors.pink : colors.cardBorder }]}>
+                    <MaterialCommunityIcons name={isUniversal ? 'check' : 'car'} size={20} color={isUniversal ? '#fff' : colors.textMuted} />
+                </View>
+                <View style={styles.optionTextWrap}>
+                    <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Universal</Text>
+                    <Text style={[styles.optionSubtitle, { color: colors.textMuted }]}>Fits any vehicle when no make or model restriction applies.</Text>
+                </View>
+            </Pressable>
+
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Makes</Text>
+            {makesLoading ? (
+                <ActivityIndicator size="small" color={colors.pink} style={styles.categoryLoader} />
+            ) : (
+                <View style={styles.wrapRow}>
+                    {makes.map((make) => {
+                        const isSelected = !isUniversal && selectedMakeNames.includes(make.name);
+
+                        return (
+                            <Pressable
+                                key={make.make_id}
+                                onPress={() => toggleMake(make)}
+                                style={[
+                                    styles.fitmentChip,
+                                    {
+                                        backgroundColor: isSelected ? colors.pink : colors.backgroundSecondary,
+                                        borderColor: isSelected ? colors.pink : colors.cardBorder,
+                                    },
+                                ]}
+                            >
+                                <Text style={[styles.fitmentChipText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
+                                    {make.name}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            )}
+
+            {!isUniversal && selectedMakes.length > 0 && (
+                <View style={styles.modelSections}>
+                    {selectedMakes.map((make) => {
+                        const models = modelsByMake[make.make_id] || [];
+                        return (
+                            <View key={make.make_id} style={styles.modelSection}>
+                                <Text style={[styles.modelSectionTitle, { color: colors.textSecondary }]}>{make.name} models</Text>
+                                {models.length === 0 ? (
+                                    <Pressable
+                                        onPress={() => fetchModelsForMake(make.make_id)}
+                                        style={[styles.loadModelsButton, { borderColor: colors.cardBorder, backgroundColor: colors.backgroundSecondary }]}
+                                    >
+                                        <Text style={[styles.loadModelsText, { color: colors.textPrimary }]}>Load models</Text>
+                                    </Pressable>
+                                ) : (
+                                    <View style={styles.wrapRow}>
+                                        {models.map((model) => {
+                                            const isSelected = selectedModelNames.includes(model.name);
+                                            return (
+                                                <Pressable
+                                                    key={model.model_id}
+                                                    onPress={() => toggleModel(model)}
+                                                    style={[
+                                                        styles.modelChip,
+                                                        {
+                                                            backgroundColor: isSelected ? colors.purple : colors.backgroundSecondary,
+                                                            borderColor: isSelected ? colors.purple : colors.cardBorder,
+                                                        },
+                                                    ]}
+                                                >
+                                                    <Text style={[styles.modelChipText, { color: isSelected ? '#fff' : colors.textPrimary }]}>
+                                                        {model.name}
+                                                    </Text>
+                                                </Pressable>
+                                            );
+                                        })}
+                                    </View>
+                                )}
+                            </View>
+                        );
+                    })}
+                </View>
+            )}
+        </>
+    );
+
+    const progressWidth = `${(step / TOTAL_STEPS) * 100}%` as `${number}%`;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -325,7 +612,9 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                     </>
                 )}
 
-                {step === 3 && (
+                {step === 3 && renderCompatibilityStep()}
+
+                {step === 4 && (
                     <>
                         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('forms.product.uploadPhotos')}</Text>
                         <Text style={[styles.helperText, { color: colors.textMuted }]}>{t('forms.product.uploadHelp')}</Text>
@@ -390,7 +679,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                     )}
 
                     <View style={styles.primaryButtonWrapper}>
-                        {step < 3 ? (
+                        {step < TOTAL_STEPS ? (
                             <GradientButton title={t('common.next')} onPress={goNextStep} />
                         ) : (
                             <GradientButton title={submitLabel} onPress={handleSubmit} loading={submitting} />
@@ -431,6 +720,13 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: Spacing.md,
         paddingBottom: 150,
+    },
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: Spacing.md,
+        marginBottom: Spacing.sm,
     },
     sectionTitle: {
         fontFamily: Fonts.bold,
@@ -538,21 +834,111 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.sm,
     },
-    textAreaTitle: {
-        fontFamily: Fonts.medium,
-        fontSize: FontSizes.sm,
-    },
     textAreaInput: {
         minHeight: 96,
         fontFamily: Fonts.regular,
         fontSize: FontSizes.md,
         paddingBottom: Spacing.md,
     },
+    suggestButton: {
+        minHeight: 40,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    suggestButtonText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+    },
+    universalCard: {
+        borderWidth: 1,
+        borderRadius: BorderRadius.lg,
+        padding: Spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+    },
+    optionIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    optionTextWrap: {
+        flex: 1,
+    },
+    optionTitle: {
+        fontFamily: Fonts.bold,
+        fontSize: FontSizes.md,
+    },
+    optionSubtitle: {
+        fontFamily: Fonts.regular,
+        fontSize: FontSizes.xs,
+        lineHeight: 18,
+        marginTop: 2,
+    },
+    wrapRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: Spacing.sm,
+    },
+    fitmentChip: {
+        minHeight: 40,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 9,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        justifyContent: 'center',
+    },
+    fitmentChipText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+    },
+    modelSections: {
+        gap: Spacing.md,
+        marginTop: Spacing.md,
+    },
+    modelSection: {
+        gap: Spacing.sm,
+    },
+    modelSectionTitle: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.sm,
+    },
+    modelChip: {
+        minHeight: 36,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: 8,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        justifyContent: 'center',
+    },
+    modelChipText: {
+        fontFamily: Fonts.medium,
+        fontSize: FontSizes.xs,
+    },
+    loadModelsButton: {
+        alignSelf: 'flex-start',
+        minHeight: 36,
+        paddingHorizontal: Spacing.md,
+        borderRadius: BorderRadius.full,
+        borderWidth: 1,
+        justifyContent: 'center',
+    },
+    loadModelsText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.xs,
+    },
     actionsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.md,
-        marginTop: Spacing.lg
+        marginTop: Spacing.lg,
     },
     secondaryButton: {
         minWidth: 88,

@@ -808,7 +808,7 @@ const en = {
   'wishlist.updateFailed': 'Failed to update wishlist',
 
   'forms.product.basicInfo': 'Basic Info',
-  'forms.product.step': 'Step {step} of 3',
+  'forms.product.step': 'Step {step} of 4',
   'forms.product.nameLabel': 'Product Name',
   'forms.product.namePlaceholder': 'e.g. Premium Engine Oil',
   'forms.product.descriptionPlaceholder': 'Detailed product description...',
