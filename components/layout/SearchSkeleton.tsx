@@ -1,15 +1,15 @@
+import { BorderRadius, Spacing } from '@/constants/theme';
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Spacing, BorderRadius } from '@/constants/theme';
 import { Skeleton } from '../common/Skeleton';
 
 export function SearchSkeleton() {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: 200 + insets.top }]}
         showsVerticalScrollIndicator={false}
       >

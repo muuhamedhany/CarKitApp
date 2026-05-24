@@ -223,6 +223,8 @@ export default function WishlistScreen() {
               refreshing={refreshing}
               onRefresh={handleRefresh}
               tintColor={colors.pink}
+              colors={[colors.pink]}
+              progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
             />
           }
           contentContainerStyle={[styles.list, { paddingBottom: androidPadding + 120 }]}

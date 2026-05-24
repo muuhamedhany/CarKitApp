@@ -37,6 +37,8 @@ type MenuItem = {
   tone?: 'vehicles' | 'orders' | 'bookings' | 'wishlist';
   route?: string;
   onPress?: () => void;
+  iconBg?: string;
+  iconColor?: string;
 };
 
 export default function ProfileScreen() {
@@ -68,9 +70,27 @@ export default function ProfileScreen() {
   ];
 
   const personalItems: MenuItem[] = [
-    { icon: 'map-marker-outline', labelKey: 'profile.addresses', route: '/profile/addresses' },
-    { icon: 'credit-card-outline', labelKey: 'profile.payments', route: '/profile/payments' },
-    { icon: 'lifebuoy', labelKey: 'common.support', route: '/support' },
+    {
+      icon: 'map-marker-outline',
+      labelKey: 'profile.addresses',
+      route: '/profile/addresses',
+      iconBg: 'rgba(249, 115, 22, 0.1)',
+      iconColor: '#F97316',
+    },
+    {
+      icon: 'credit-card-outline',
+      labelKey: 'profile.payments',
+      route: '/profile/payments',
+      iconBg: 'rgba(168, 85, 247, 0.1)',
+      iconColor: '#A855F7',
+    },
+    {
+      icon: 'lifebuoy',
+      labelKey: 'common.support',
+      route: '/support',
+      iconBg: 'rgba(16, 185, 129, 0.1)',
+      iconColor: '#10B981',
+    },
   ];
 
   const getIconStyles = (tone?: MenuItem['tone']) => {
@@ -132,8 +152,8 @@ export default function ProfileScreen() {
           else if (item.onPress) item.onPress();
         }}
       >
-        <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
-          <MaterialCommunityIcons name={item.icon as any} size={20} color={colors.textPrimary} />
+        <View style={[styles.menuIconBox, { backgroundColor: item.iconBg || colors.surfaceMuted }]}>
+          <MaterialCommunityIcons name={item.icon as any} size={20} color={item.iconColor || colors.textPrimary} />
         </View>
         <Text style={[styles.menuLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t(item.labelKey)}</Text>
         <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={20} color={colors.textMuted} />
@@ -214,16 +234,13 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInUp.delay(800).duration(800)}>
           <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.menuSection, { borderColor: colors.cardBorder }]}>
             {personalItems.map((item, idx) => renderMenuItem(item, idx, false))}
-            <Pressable
-              style={[styles.menuItem, { flexDirection: rowDirection(isRTL) }]}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/settings'); }}
-            >
-              <View style={[styles.menuIconBox, { backgroundColor: colors.surfaceMuted }]}>
-                <MaterialCommunityIcons name="cog-outline" size={20} color={colors.textPrimary} />
-              </View>
-              <Text style={[styles.menuLabel, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('profile.settings')}</Text>
-              <MaterialCommunityIcons name={chevronForward(isRTL) as any} size={20} color={colors.textMuted} />
-            </Pressable>
+            {renderMenuItem({
+              icon: 'cog-outline',
+              labelKey: 'profile.settings',
+              route: '/settings',
+              iconBg: 'rgba(99, 102, 241, 0.1)',
+              iconColor: '#6366F1'
+            }, personalItems.length, true)}
           </GlassView>
         </Animated.View>
 

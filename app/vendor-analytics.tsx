@@ -212,6 +212,7 @@ export default function VendorAnalyticsScreen() {
             onRefresh={onRefresh}
             tintColor={colors.pink}
             colors={[colors.pink]}
+            progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
           />
         }
       >

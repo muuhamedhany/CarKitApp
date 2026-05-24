@@ -253,7 +253,13 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.pink} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.pink}
+            colors={[colors.pink]}
+            progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
+          />
         }
         ListEmptyComponent={
           !loading ? (
