@@ -37,6 +37,7 @@ type ProductCardProps = {
   vendorName?: string;
   onPress?: () => void;
   onAddToCart?: () => void;
+  isCompatible?: boolean;
 };
 
 export default function ProductCard({
@@ -49,6 +50,7 @@ export default function ProductCard({
   vendorName,
   onPress,
   onAddToCart,
+  isCompatible,
 }: ProductCardProps) {
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useTranslation();
@@ -144,14 +146,25 @@ export default function ProductCard({
 
         {/* Info */}
         <View style={styles.info}>
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-            {name}
-          </Text>
-          {vendorName && (
-            <Text style={[styles.vendor, { color: colors.textSecondary }]} numberOfLines={1}>
-              {vendorName}
+          <View>
+            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
+              {name}
             </Text>
-          )}
+            {vendorName && (
+              <Text style={[styles.vendor, { color: colors.textSecondary }]} numberOfLines={1}>
+                {vendorName}
+              </Text>
+            )}
+
+            {isCompatible && (
+              <View style={[styles.compatibilityBadge, { backgroundColor: colors.pink + '15', borderColor: colors.pink + '40', flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <MaterialCommunityIcons name="check-decagram" size={12} color={colors.pink} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+                <Text style={[styles.compatibilityText, { color: colors.pink }]}>
+                  {t('search.fitsYourVehicle')}
+                </Text>
+              </View>
+            )}
+          </View>
 
           <View style={styles.bottomRow}>
             <View style={{ flex: 1 }}>
@@ -200,7 +213,8 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: BorderRadius.xl,
+    minHeight: 290,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     ...Platform.select({
       ios: { overflow: 'hidden' as const },
@@ -225,16 +239,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.04)',
   },
-  info: { padding: Spacing.md },
-  name: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: 2 },
+  info: { padding: Spacing.md, flex: 1, justifyContent: 'space-between' },
+  name: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, marginBottom: 2 },
   vendor: { fontFamily: Fonts.medium, fontSize: 10, marginBottom: 8, opacity: 0.5 },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.md
+    marginTop: Spacing.xs
   },
-  price: { fontFamily: Fonts.extraBold, fontSize: FontSizes.md },
+  price: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
   currency: { fontSize: 10, fontFamily: Fonts.bold, opacity: 0.6 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   reviewCount: { fontFamily: Fonts.bold, fontSize: 10, marginLeft: 2, opacity: 0.6 },
@@ -254,6 +268,20 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     ...Shadows.sm,
+  },
+  compatibilityBadge: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  compatibilityText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 10,
   },
 });
 

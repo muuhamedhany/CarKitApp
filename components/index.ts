@@ -30,6 +30,7 @@ export { SearchSkeleton } from './layout/SearchSkeleton';
 export { default as ServiceCard } from './layout/ServiceCard';
 export { ServiceDetailSkeleton } from './layout/ServiceDetailSkeleton';
 export { default as VendorTabBar } from './layout/VendorTabBar';
+export { default as VehicleSelectionModal } from './layout/VehicleSelectionModal';
 
 export { default as GetDirectionsButton } from './GetDirectionsButton';
 export { default as MapLocationPicker } from './MapLocationPicker';

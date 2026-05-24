@@ -5,6 +5,8 @@ export interface OrderPayload {
     shipping_address_id?: number;
     preferred_delivery_date?: string;
     delivery_type?: 'home_delivery' | 'workshop_fitting';
+    branch_id?: number;
+    vendor_branches?: Record<number, number>;
 }
 
 export interface OrderRecord {
@@ -26,6 +28,8 @@ export interface OrderRecord {
     workshop_latitude?: number | null;
     workshop_longitude?: number | null;
     workshop_service_fee?: number;
+    branch_id_fk?: number | null;
+    branch_name?: string | null;
     queue?: QueueInfo | null;
     orders?: OrderRecord[];
 }

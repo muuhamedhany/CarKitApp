@@ -3,7 +3,8 @@ import {
   GlassView,
   ProductCard,
   SearchSkeleton,
-  ServiceCard
+  ServiceCard,
+  VehicleSelectionModal
 } from '@/components';
 import Text from '@/components/common/LocalizedText';
 import { API_URL } from '@/constants/config';
@@ -100,10 +101,11 @@ export default function SearchScreen() {
   const [selectedServiceCategoryIds, setSelectedServiceCategoryIds] = useState<number[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [vehicleFilterEnabled, setVehicleFilterEnabled] = useState(true);
+  const [vehicleFilterEnabled, setVehicleFilterEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [vehicleModalVisible, setVehicleModalVisible] = useState(false);
   const scrollRef = useRef<Animated.ScrollView>(null);
 
   useTabReload('search', () => {
@@ -324,27 +326,27 @@ export default function SearchScreen() {
     search(query, selectedProductCategoryIds, selectedServiceCategoryIds, null);
   };
 
-  const handleVehicleChipPress = () => {
-    if (vehicles.length === 0) {
-      router.push('/add-vehicle' as any);
-      return;
-    }
-
+  const handleOpenVehicleModal = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (!vehicleFilterEnabled) {
-      setVehicleFilterEnabled(true);
-      return;
-    }
+    setVehicleModalVisible(true);
+  };
 
-    const currentIndex = vehicles.findIndex((vehicle) => vehicle.vehicle_id === selectedVehicle?.vehicle_id);
-    const nextVehicle = vehicles[(currentIndex + 1) % vehicles.length] || vehicles[0];
-    setSelectedVehicle(nextVehicle);
+  const handleSelectVehicle = (vehicle: Vehicle) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSelectedVehicle(vehicle);
+    setVehicleFilterEnabled(true);
   };
 
   const handleClearVehicleFilter = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setVehicleFilterEnabled(false);
   };
+
+  const handleAddNewVehicle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/add-vehicle' as any);
+  };
+
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -424,34 +426,81 @@ export default function SearchScreen() {
               </Animated.View>
             )}
             {/* Vehicle fitment filter */}
-            <Animated.View entering={FadeInDown} style={[styles.vehicleFitRow, { flexDirection: rowDirection(isRTL) }]}>
-              <Pressable
-                onPress={handleVehicleChipPress}
-                style={[styles.vehicleFitChip, { flexDirection: rowDirection(isRTL), backgroundColor: colors.surfaceElevated, borderColor: vehicleFilterEnabled && selectedVehicle ? colors.pink : colors.cardBorder }]}
-              >
-                <MaterialCommunityIcons
-                  name={vehicleFilterEnabled && selectedVehicle ? "car-select" : "car-outline"}
-                  size={18}
-                  color={vehicleFilterEnabled && selectedVehicle ? colors.pink : colors.textSecondary}
-                />
-                <Text style={[styles.vehicleFitText, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]} numberOfLines={1}>
-                  {selectedVehicle && vehicleFilterEnabled
-                    ? `Fits your ${selectedVehicle.make_name} ${selectedVehicle.model_name}`
-                    : vehicles.length > 0
-                      ? 'All vehicles'
-                      : 'Add vehicle'}
-                </Text>
-                {vehicles.length > 1 && vehicleFilterEnabled && selectedVehicle && (
-                  <MaterialCommunityIcons name="swap-horizontal" size={16} color={colors.textSecondary} />
-                )}
-              </Pressable>
-
-              {selectedVehicle && vehicleFilterEnabled && (
-                <Pressable
-                  onPress={handleClearVehicleFilter}
-                  style={[styles.vehicleClearBtn, { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder }]}
+            <Animated.View entering={FadeInDown}>
+              {selectedVehicle && vehicleFilterEnabled ? (
+                <GlassView
+                  intensity={isDark ? 20 : 40}
+                  tint={isDark ? 'dark' : 'light'}
+                  style={[styles.activePersonalizationCard, { borderColor: colors.cardBorder }]}
                 >
-                  <MaterialCommunityIcons name="close" size={17} color={colors.pink} />
+                  <View style={[styles.activePersonalizationHeader, { flexDirection: rowDirection(isRTL) }]}>
+                    <View style={[styles.activePersonalizationIconBox, { backgroundColor: colors.pink + '20' }]}>
+                      <MaterialCommunityIcons name="car-sports" size={24} color={colors.pink} />
+                    </View>
+                    <View style={styles.activePersonalizationInfo}>
+                      <Text style={[styles.activePersonalizationLabel, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
+                        {t('search.showingResultFor')}
+                      </Text>
+                      <Text style={[styles.activePersonalizationValue, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]} numberOfLines={1}>
+                        {selectedVehicle.nickname && selectedVehicle.nickname.trim().length > 0
+                          ? selectedVehicle.nickname
+                          : `${selectedVehicle.make_name || selectedVehicle.make} ${selectedVehicle.model_name || selectedVehicle.model}`}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={handleOpenVehicleModal}
+                      style={({ pressed }) => [
+                        styles.changeBtn,
+                        { opacity: pressed ? 0.8 : 1, flexDirection: rowDirection(isRTL) }
+                      ]}
+                    >
+                      <MaterialCommunityIcons name="pencil-outline" size={14} color={colors.pink} style={isRTL ? { marginLeft: 4 } : { marginRight: 4 }} />
+                      <Text style={[styles.changeBtnText, { color: colors.pink }]}>{t('search.change')}</Text>
+                    </Pressable>
+                  </View>
+
+                  <Pressable
+                    onPress={handleClearVehicleFilter}
+                    style={({ pressed }) => [
+                      styles.removeBtn,
+                      {
+                        borderColor: colors.cardBorder,
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                        opacity: pressed ? 0.8 : 1,
+                        flexDirection: rowDirection(isRTL)
+                      }
+                    ]}
+                  >
+                    <MaterialCommunityIcons name="close" size={16} color={colors.textSecondary} style={isRTL ? { marginLeft: 6 } : { marginRight: 6 }} />
+                    <Text style={[styles.removeBtnText, { color: colors.textSecondary }]}>
+                      {t('search.remove')}
+                    </Text>
+                  </Pressable>
+                </GlassView>
+              ) : (
+                <Pressable
+                  onPress={handleOpenVehicleModal}
+                  style={({ pressed }) => [
+                    styles.personalizeBannerBtn,
+                    { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[colors.gradientStart, colors.gradientEnd]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={[styles.personalizeBannerGradient, { flexDirection: rowDirection(isRTL) }]}
+                  >
+                    <View style={styles.personalizeBannerTextContainer}>
+                      <Text style={[styles.personalizeBannerTitle, { textAlign: textAlign(isRTL) }]}>
+                        {t('search.personalizeButton')}
+                      </Text>
+                      <Text style={[styles.personalizeBannerSubtitle, { textAlign: textAlign(isRTL) }]}>
+                        {t('search.personalizeSub')}
+                      </Text>
+                    </View>
+                    <MaterialCommunityIcons name="car-sports" size={32} color="#FFFFFF" style={styles.personalizeBannerIcon} />
+                  </LinearGradient>
                 </Pressable>
               )}
             </Animated.View>
@@ -503,9 +552,8 @@ export default function SearchScreen() {
                   <Text style={[styles.resultCount, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('search.showingProducts', { count: products.length })}</Text>
                 </View>
                 <View style={styles.productGrid}>
-                  {products.map((p, idx) => (
-                    <Animated.View
-                      entering={FadeInUp.delay(idx * 50).duration(600)}
+                  {products.map((p) => (
+                    <View
                       key={p.product_id}
                       style={styles.productGridItem}
                     >
@@ -517,10 +565,11 @@ export default function SearchScreen() {
                         vendorName={p.vendor_name}
                         rating={p.rating}
                         reviewCount={p.review_count}
+                        isCompatible={Boolean(vehicleFilterEnabled && selectedVehicle)}
                         onAddToCart={() => handleAddToCart(p.product_id)}
                         onPress={() => router.push(`/product/${p.product_id}` as any)}
                       />
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               </Animated.View>
@@ -532,9 +581,8 @@ export default function SearchScreen() {
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>{t('search.services')}</Text>
                   <Text style={[styles.resultCount, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>{t('search.showingServices', { count: services.length })}</Text>
                 </View>
-                {services.map((s, idx) => (
-                  <Animated.View
-                    entering={FadeInUp.delay(idx * 100).duration(600)}
+                {services.map((s) => (
+                  <View
                     key={s.service_id}
                     style={{ marginBottom: Spacing.md }}
                   >
@@ -549,7 +597,7 @@ export default function SearchScreen() {
                       onView={() => router.push(`/service/${s.service_id}`)}
                       onBookNow={() => router.push(`/service/${s.service_id}`)}
                     />
-                  </Animated.View>
+                  </View>
                 ))}
               </Animated.View>
             )}
@@ -594,6 +642,14 @@ export default function SearchScreen() {
           )}
         </View>
       )}
+      <VehicleSelectionModal
+        visible={vehicleModalVisible}
+        onClose={() => setVehicleModalVisible(false)}
+        vehicles={vehicles}
+        selectedVehicle={selectedVehicle}
+        onSelectVehicle={handleSelectVehicle}
+        onAddNewVehicle={handleAddNewVehicle}
+      />
     </View>
   );
 }
@@ -792,6 +848,89 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 4,
+  },
+  personalizeBannerBtn: {
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+    ...Shadows.md,
+  },
+  personalizeBannerGradient: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 68,
+  },
+  personalizeBannerTextContainer: {
+    flex: 1,
+  },
+  personalizeBannerTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+    color: '#FFFFFF',
+  },
+  personalizeBannerSubtitle: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.xs,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  personalizeBannerIcon: {
+    marginHorizontal: Spacing.xs,
+  },
+  activePersonalizationCard: {
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.sm,
+  },
+  activePersonalizationHeader: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  activePersonalizationIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activePersonalizationInfo: {
+    flex: 1,
+  },
+  activePersonalizationLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: 10,
+    opacity: 0.8,
+  },
+  activePersonalizationValue: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.md,
+    marginTop: 1,
+  },
+  changeBtn: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.xs,
+  },
+  changeBtnText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xs,
+  },
+  removeBtn: {
+    height: 40,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeBtnText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.xs,
   },
 });
 

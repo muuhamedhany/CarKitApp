@@ -1,13 +1,16 @@
 import {
-  useTheme } from '@/hooks/useTheme';
+  useTheme
+} from '@/hooks/useTheme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEffect,
-  useState } from 'react';
+import {
+  useEffect,
+  useState
+} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -213,14 +216,14 @@ export default function AddVehicleScreen() {
                 <Pressable
                   style={({ pressed }) => [
                     photoUri ? styles.photoPreview : styles.photoBox,
-                    { borderColor: photoUri ? colors.pink : 'rgba(255,255,255,0.1)', opacity: pressed ? 0.8 : 1 }
+                    { borderColor: photoUri ? colors.pink : colors.cardBorder, opacity: pressed ? 0.8 : 1 }
                   ]}
                   onPress={pickImage}
                 >
                   {photoUri ? (
                     <>
                       <Image source={{ uri: photoUri }} style={styles.photoImg} />
-                      <View style={[styles.photoOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                      <View style={[styles.photoOverlay, { backgroundColor: colors.accentSoft }]}>
                         <MaterialCommunityIcons name="camera" size={20} color="white" />
                       </View>
                     </>
@@ -243,7 +246,7 @@ export default function AddVehicleScreen() {
                     <ActivityIndicator color={colors.pink} style={styles.loader} />
                   ) : (
                     <Pressable
-                      style={[styles.pickerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }]}
+                      style={[styles.pickerBtn, { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder }]}
                       onPress={() => setShowMakePicker(true)}
                     >
                       <Text style={[styles.pickerBtnText, { color: selectedMake ? colors.textPrimary : colors.textMuted }]}>
@@ -259,7 +262,7 @@ export default function AddVehicleScreen() {
                   <Pressable
                     style={[
                       styles.pickerBtn,
-                      { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
+                      { backgroundColor: colors.backgroundSecondary, borderColor: colors.cardBorder },
                       !selectedMake && styles.pickerBtnDisabled
                     ]}
                     onPress={() => { if (selectedMake) setShowModelPicker(true); }}
