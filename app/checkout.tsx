@@ -13,7 +13,9 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { addressService,
   orderService,
-  paymentService } from '@/services/api';
+  paymentService,
+  branchService } from '@/services/api';
+import { BranchData } from '@/services/api/branch.service';
 import { PaymentMethod,
   SavedPaymentMethod } from '@/services/api/payment.service';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,6 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect,
   useRouter } from 'expo-router';
 import { useCallback,
+  useEffect,
   useMemo,
   useState } from 'react';
 import {
@@ -104,6 +107,10 @@ export default function CheckoutScreen() {
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCvv, setCardCvv] = useState('');
+
+    const [selectedVendorBranches, setSelectedVendorBranches] = useState<Record<number, number>>({});
+    const [vendorBranchesMap, setVendorBranchesMap] = useState<Record<number, BranchData[]>>({});
+    const [loadingVendorBranches, setLoadingVendorBranches] = useState(false);
 
     const today = useMemo(() => new Date(), []);
     const estimatedStartDate = useMemo(() => addDays(today, MIN_DELIVERY_DAYS), [today]);
@@ -194,8 +201,57 @@ export default function CheckoutScreen() {
     const canPlaceOrder = useMemo(() => {
         const hasAddressIfRequired = deliveryType === 'home_delivery' ? Boolean(selectedAddressId) : true;
         const hasWorkshopDestinations = deliveryType === 'workshop_fitting' ? workshopVendorCount > 0 && !hasWorkshopVendorGap : true;
-        return items.length > 0 && hasAddressIfRequired && hasWorkshopDestinations && canSubmitPaymentDetails && !placingOrder;
-    }, [items.length, deliveryType, selectedAddressId, workshopVendorCount, hasWorkshopVendorGap, canSubmitPaymentDetails, placingOrder]);
+        const hasBranchesSelected = deliveryType === 'workshop_fitting'
+          ? !loadingVendorBranches && workshopVendorGroups.every(g => {
+              const branches = vendorBranchesMap[g.vendorId];
+              return (branches && branches.length === 0) || Boolean(selectedVendorBranches[g.vendorId]);
+            })
+          : true;
+        return items.length > 0 && hasAddressIfRequired && hasWorkshopDestinations && hasBranchesSelected && canSubmitPaymentDetails && !placingOrder;
+    }, [
+        items.length,
+        deliveryType,
+        selectedAddressId,
+        workshopVendorCount,
+        hasWorkshopVendorGap,
+        selectedVendorBranches,
+        canSubmitPaymentDetails,
+        placingOrder,
+        loadingVendorBranches,
+        vendorBranchesMap
+    ]);
+
+    const fetchAllVendorBranches = useCallback(async () => {
+        if (workshopVendorGroups.length === 0) return;
+        setLoadingVendorBranches(true);
+        try {
+            const newMap: Record<number, BranchData[]> = {};
+            const newSelection: Record<number, number> = { ...selectedVendorBranches };
+
+            for (const grp of workshopVendorGroups) {
+                const res = await branchService.getVendorBranches(grp.vendorId);
+                if (res.success && Array.isArray(res.data)) {
+                    newMap[grp.vendorId] = res.data;
+                    if (!newSelection[grp.vendorId] && res.data.length > 0) {
+                        const main = res.data.find(b => b.is_main) || res.data[0];
+                        newSelection[grp.vendorId] = main.branch_id!;
+                    }
+                }
+            }
+            setVendorBranchesMap(newMap);
+            setSelectedVendorBranches(newSelection);
+        } catch (e) {
+            console.log('Error fetching vendor branches:', e);
+        } finally {
+            setLoadingVendorBranches(false);
+        }
+    }, [workshopVendorGroups]);
+
+    useEffect(() => {
+        if (deliveryType === 'workshop_fitting') {
+            fetchAllVendorBranches();
+        }
+    }, [deliveryType, fetchAllVendorBranches]);
 
     const loadAddresses = useCallback(async () => {
         try {
@@ -272,6 +328,7 @@ export default function CheckoutScreen() {
                 shipping_address_id: deliveryType === 'home_delivery' ? (selectedAddressId ?? undefined) : undefined,
                 preferred_delivery_date: preferredDeliveryDate,
                 delivery_type: deliveryType,
+                vendor_branches: deliveryType === 'workshop_fitting' ? selectedVendorBranches : undefined,
             });
 
             if (!orderRes.success || !orderRes.data) {
@@ -512,39 +569,88 @@ export default function CheckoutScreen() {
                             </Text>
                         ) : null}
 
-                        {workshopVendorGroups.map((group, idx) => (
-                            <Animated.View key={group.vendorId} entering={FadeInDown.delay(200 + idx * 60)}>
-                                <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.workshopCard, { borderColor: colors.cardBorder }]}>
-                                    <View style={styles.workshopHeader}>
-                                        <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.pink} />
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{group.vendorName}</Text>
-                                            <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
-                                                {t(group.itemCount === 1 ? 'checkout.itemForInstall' : 'checkout.itemsForInstall', { count: group.itemCount })}
+                        {workshopVendorGroups.map((group, idx) => {
+                            const branches = vendorBranchesMap[group.vendorId] || [];
+                            const selBranchId = selectedVendorBranches[group.vendorId];
+                            const selBranch = branches.find(b => b.branch_id === selBranchId);
+                            const displayedAddress = selBranch ? selBranch.address : (group.workshopAddress || t('checkout.workshopAddressPending'));
+                            return (
+                                <Animated.View key={group.vendorId} entering={FadeInDown.delay(200 + idx * 60)}>
+                                    <GlassView intensity={isDark ? 20 : 40} tint={isDark ? 'dark' : 'light'} style={[styles.workshopCard, { borderColor: colors.cardBorder }]}>
+                                        <View style={styles.workshopHeader}>
+                                            <MaterialCommunityIcons name="storefront-outline" size={22} color={colors.pink} />
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{group.vendorName}</Text>
+                                                <Text style={[styles.workshopDetail, { color: colors.textSecondary }]}>
+                                                    {t(group.itemCount === 1 ? 'checkout.itemForInstall' : 'checkout.itemsForInstall', { count: group.itemCount })}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        {branches.length > 0 && (
+                                            <View style={{ marginTop: Spacing.sm, marginBottom: Spacing.sm }}>
+                                                <Text style={{ fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', color: colors.textSecondary, marginBottom: 6 }}>
+                                                    {t('checkout.selectBranch')}
+                                                </Text>
+                                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.xs, paddingBottom: 4 }}>
+                                                    {branches.map((b) => {
+                                                        const isSelected = selectedVendorBranches[group.vendorId] === b.branch_id;
+                                                        return (
+                                                            <Pressable
+                                                                key={b.branch_id}
+                                                                style={{
+                                                                    borderWidth: 1,
+                                                                    borderRadius: BorderRadius.md,
+                                                                    paddingHorizontal: Spacing.md,
+                                                                    paddingVertical: 8,
+                                                                    backgroundColor: isSelected ? colors.pink + '15' : colors.surfaceMuted,
+                                                                    borderColor: isSelected ? colors.pink : colors.cardBorder,
+                                                                    alignItems: 'center',
+                                                                    minWidth: 110,
+                                                                }}
+                                                                onPress={() => {
+                                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                                    setSelectedVendorBranches(prev => ({
+                                                                        ...prev,
+                                                                        [group.vendorId]: b.branch_id!,
+                                                                    }));
+                                                                }}
+                                                            >
+                                                                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.xs, color: isSelected ? colors.pink : colors.textPrimary }}>
+                                                                    {b.name}
+                                                                </Text>
+                                                                <Text style={{ fontFamily: Fonts.medium, fontSize: 9, color: colors.textSecondary, marginTop: 2 }} numberOfLines={1}>
+                                                                    {b.address}
+                                                                </Text>
+                                                            </Pressable>
+                                                        );
+                                                    })}
+                                                </ScrollView>
+                                            </View>
+                                        )}
+
+                                        <View style={styles.workshopLine}>
+                                            <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textSecondary} />
+                                            <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
+                                                {displayedAddress}
                                             </Text>
                                         </View>
-                                    </View>
-                                    <View style={styles.workshopLine}>
-                                        <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textSecondary} />
-                                        <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
-                                            {group.workshopAddress || t('checkout.workshopAddressPending')}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.workshopLine}>
-                                        <MaterialCommunityIcons name="timer-outline" size={16} color={colors.textSecondary} />
-                                        <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
-                                            {t('checkout.estimatedFittingTime', { minutes: group.installationMinutes || 30 })}
-                                        </Text>
-                                    </View>
-                                    <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
-                                        <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
-                                        <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
-                                            {t('checkout.fittingFee', { amount: WORKSHOP_SERVICE_FEE.toFixed(2), currency: t('common.currency.egp') })}
-                                        </Text>
-                                    </View>
-                                </GlassView>
-                            </Animated.View>
-                        ))}
+                                        <View style={styles.workshopLine}>
+                                            <MaterialCommunityIcons name="timer-outline" size={16} color={colors.textSecondary} />
+                                            <Text style={[styles.workshopDetail, { color: colors.textSecondary, flex: 1 }]}>
+                                                {t('checkout.estimatedFittingTime', { minutes: group.installationMinutes || 30 })}
+                                            </Text>
+                                        </View>
+                                        <View style={[styles.workshopBadge, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30' }]}>
+                                            <MaterialCommunityIcons name="wrench" size={14} color="#10B981" />
+                                            <Text style={[styles.workshopBadgeText, { color: '#10B981' }]}>
+                                                {t('checkout.fittingFee', { amount: WORKSHOP_SERVICE_FEE.toFixed(2), currency: t('common.currency.egp') })}
+                                            </Text>
+                                        </View>
+                                    </GlassView>
+                                </Animated.View>
+                            );
+                        })}
                     </View>
                 )}
 

@@ -12,6 +12,7 @@ export type BookingPayload = {
   location?: string;
   booking_price: number;
   address_id?: number;
+  branch_id?: number;
   payment_method?: PaymentMethod;
 };
 
@@ -45,6 +46,11 @@ export type Booking = {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  branch_id_fk?: number;
+  branch_name?: string;
+  branch_address?: string;
+  branch_latitude?: number;
+  branch_longitude?: number;
   queue?: QueueInfo | null;
 };
 

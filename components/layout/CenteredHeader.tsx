@@ -28,6 +28,7 @@ type CenteredHeaderProps = {
     rightIcon?: string;
     onRightPress?: () => void | Promise<void>;
     rightActions?: HeaderAction[];
+    onBackPress?: () => void;
 };
 
 export default function CenteredHeader({
@@ -38,6 +39,7 @@ export default function CenteredHeader({
     rightIcon,
     onRightPress,
     rightActions,
+    onBackPress,
 }: CenteredHeaderProps) {
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
@@ -49,7 +51,7 @@ export default function CenteredHeader({
 
     return (
         <>
-            <BackButton noSpacer />
+            <BackButton onPress={onBackPress} noSpacer />
             <View style={[
                 styles.header,
                 { paddingTop: defaultPaddingTop },

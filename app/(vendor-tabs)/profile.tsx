@@ -249,27 +249,35 @@ export default function VendorProfileScreen() {
             
             {renderMenuItem({
               icon: 'credit-card-outline',
-              label: 'Payments',
+              label: 'profile.payments',
               route: '/profile/payments',
               iconBg: 'rgba(168, 85, 247, 0.1)',
               iconColor: '#A855F7'
             }, 0, false)}
 
             {renderMenuItem({
+              icon: 'map-marker-multiple-outline',
+              label: 'profile.branches',
+              route: '/profile/branches',
+              iconBg: 'rgba(236, 72, 153, 0.1)',
+              iconColor: '#EC4899'
+            }, 1, false)}
+
+            {renderMenuItem({
               icon: 'cog-outline',
-              label: 'Settings',
+              label: 'profile.settings',
               route: '/settings',
               iconBg: 'rgba(99, 102, 241, 0.1)',
               iconColor: '#6366F1'
-            }, 1, false)}
+            }, 2, false)}
             
             {renderMenuItem({
               icon: 'lifebuoy',
-              label: 'Support',
+              label: 'common.support',
               route: '/support',
               iconBg: 'rgba(16, 185, 129, 0.1)',
               iconColor: '#10B981'
-            }, 2, true)}
+            }, 3, true)}
           </GlassView>
         </Animated.View>
 

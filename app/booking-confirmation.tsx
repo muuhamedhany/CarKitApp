@@ -24,7 +24,7 @@ import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { addressService, bookingService, paymentService } from '@/services/api';
+import { addressService, bookingService, paymentService, branchService, BranchData } from '@/services/api';
 import { PaymentMethod, SavedPaymentMethod } from '@/services/api/payment.service';
 import Text from '@/components/common/LocalizedText';
 
@@ -138,6 +138,11 @@ export default function BookingConfirmationScreen() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
 
+  const [branches, setBranches] = useState<BranchData[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+  const [bookingType, setBookingType] = useState<'mobile' | 'center'>('mobile');
+  const [loadingBranches, setLoadingBranches] = useState(false);
+
   const dateChoices = useMemo(
     () => Array.from({ length: 5 }, (_, index) => {
       const date = addDays(new Date(), index + 1);
@@ -185,11 +190,34 @@ export default function BookingConfirmationScreen() {
     }
   }, [showToast]);
 
+  const loadBranches = useCallback(async () => {
+    if (!providerId) return;
+    try {
+      setLoadingBranches(true);
+      const res = await branchService.getProviderBranches(providerId);
+      if (res.success && Array.isArray(res.data)) {
+        setBranches(res.data);
+        if (res.data.length > 0) {
+          setBookingType('center');
+          const mainBranch = res.data.find(b => b.is_main) || res.data[0];
+          setSelectedBranchId(mainBranch.branch_id || null);
+        } else {
+          setBookingType('mobile');
+        }
+      }
+    } catch {
+      showToast('error', 'Branch Error', 'Could not load provider branches.');
+    } finally {
+      setLoadingBranches(false);
+    }
+  }, [providerId, showToast]);
+
   useFocusEffect(
     useCallback(() => {
       loadAddresses();
       loadSavedCards();
-    }, [loadAddresses, loadSavedCards])
+      loadBranches();
+    }, [loadAddresses, loadSavedCards, loadBranches])
   );
 
   const selectedAddress = addresses.find((address) => address.address_id === selectedAddressId) || null;
@@ -197,18 +225,26 @@ export default function BookingConfirmationScreen() {
     ? [selectedAddress.title, selectedAddress.street, selectedAddress.city].filter(Boolean).join(' • ')
     : '';
 
+  const selectedBranch = branches.find((b) => b.branch_id === selectedBranchId) || null;
+  const isLocationValid = bookingType === 'center' ? Boolean(selectedBranchId) : Boolean(selectedAddressId);
+
   const paymentDetailsValid = useMemo(() => {
     if (paymentMethod === 'cash_on_delivery') return true;
     if (!useNewCard && selectedSavedCardId) return true;
     return cardNumber.trim().length >= 8 && cardExpiry.trim().length >= 4 && cardCvv.trim().length >= 3;
   }, [cardCvv, cardExpiry, cardNumber, paymentMethod, useNewCard, selectedSavedCardId]);
 
-  const canPlaceBooking = Boolean(selectedAddressId) && Boolean(selectedTime) && paymentDetailsValid && !placingBooking;
+  const canPlaceBooking = isLocationValid && Boolean(selectedTime) && paymentDetailsValid && !placingBooking;
 
   const handlePlaceBooking = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!selectedAddressId) {
+    if (bookingType === 'mobile' && !selectedAddressId) {
       showToast('warning', 'Address Required', 'Please select a booking address.');
+      return;
+    }
+
+    if (bookingType === 'center' && !selectedBranchId) {
+      showToast('warning', 'Center Required', 'Please select a service center branch.');
       return;
     }
 
@@ -225,15 +261,20 @@ export default function BookingConfirmationScreen() {
     try {
       setPlacingBooking(true);
 
+      const bookingLocation = bookingType === 'center'
+        ? (selectedBranch ? `${selectedBranch.name} • ${selectedBranch.address}` : 'At Center')
+        : selectedAddressLabel;
+
       const bookingResponse = await bookingService.createBooking({
         service_id: serviceId,
         provider_id: providerId,
         booking_date: selectedDate,
         start_time: selectedTime,
         end_time: computeEndTime(selectedTime, duration),
-        location: selectedAddressLabel || undefined,
+        location: bookingLocation || undefined,
         booking_price: price,
-        address_id: selectedAddressId,
+        address_id: bookingType === 'mobile' ? (selectedAddressId || undefined) : undefined,
+        branch_id: bookingType === 'center' ? (selectedBranchId || undefined) : undefined,
         payment_method: paymentMethod,
       });
 
@@ -382,53 +423,152 @@ export default function BookingConfirmationScreen() {
           )}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('checkout.address')}</Text>
-          {loadingAddresses ? (
-            <ActivityIndicator size="small" color={colors.pink} />
-          ) : addresses.length === 0 ? (
-            <Pressable
-              onPress={() => router.push('/profile/addresses')}
-            >
+        {branches.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(350).springify()}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>SERVICE LOCATION TYPE</Text>
+            <View style={[styles.typeSelectorContainer, { borderColor: colors.cardBorder, backgroundColor: colors.surfaceMuted }]}>
+              <Pressable
+                style={[
+                  styles.typeTab,
+                  bookingType === 'center' && { backgroundColor: colors.pink },
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBookingType('center');
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="store-outline"
+                  size={18}
+                  color={bookingType === 'center' ? '#FFF' : colors.textSecondary}
+                />
+                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: bookingType === 'center' ? '#FFF' : colors.textSecondary }}>
+                  booking.atCenter
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.typeTab,
+                  bookingType === 'mobile' && { backgroundColor: colors.pink },
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBookingType('mobile');
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="car-wash"
+                  size={18}
+                  color={bookingType === 'mobile' ? '#FFF' : colors.textSecondary}
+                />
+                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: bookingType === 'mobile' ? '#FFF' : colors.textSecondary }}>
+                  booking.mobileService
+                </Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        )}
+
+        {bookingType === 'center' ? (
+          <Animated.View entering={FadeInDown.delay(400).springify()}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('booking.selectBranch')}</Text>
+            {loadingBranches ? (
+              <ActivityIndicator size="small" color={colors.pink} style={{ marginTop: Spacing.md }} />
+            ) : branches.length === 0 ? (
               <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
-                <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
-                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('checkout.noAddress')}</Text>
+                <MaterialCommunityIcons name="map-marker-off-outline" size={20} color={colors.pink} />
+                <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('booking.noBranchesAvailable')}</Text>
               </GlassView>
-            </Pressable>
-          ) : (
-            addresses.map((address) => {
-              const active = selectedAddressId === address.address_id;
-              return (
-                <Pressable
-                  key={address.address_id}
-                  style={styles.addressWrapper}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedAddressId(address.address_id);
-                  }}
-                >
-                  <GlassView
-                    intensity={active ? 40 : 20}
-                    tint={isDark ? 'dark' : 'light'}
-                    style={[styles.addressCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
+            ) : (
+              branches.map((b) => {
+                const active = selectedBranchId === b.branch_id;
+                return (
+                  <Pressable
+                    key={b.branch_id}
+                    style={styles.addressWrapper}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedBranchId(b.branch_id || null);
+                    }}
                   >
-                    <View style={styles.addressHeader}>
-                      <View style={styles.addressInfo}>
-                        <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{address.title || t('checkout.address')}</Text>
-                        <Text style={[styles.addressText, { color: colors.textSecondary }]}>
-                          {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
-                        </Text>
+                    <GlassView
+                      intensity={active ? 40 : 20}
+                      tint={isDark ? 'dark' : 'light'}
+                      style={[styles.addressCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
+                    >
+                      <View style={styles.addressHeader}>
+                        <View style={styles.addressInfo}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+                            <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{b.name}</Text>
+                            {b.is_main && (
+                              <View style={[styles.mainBadge, { backgroundColor: colors.pink + '20', borderColor: colors.pink }]}>
+                                <Text style={{ fontSize: 9, fontFamily: Fonts.bold, color: colors.pink }}>MAIN</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                            {b.address}
+                          </Text>
+                        </View>
+                        <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
+                          {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
+                        </View>
                       </View>
-                      <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
-                        {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
+                    </GlassView>
+                  </Pressable>
+                );
+              })
+            )}
+          </Animated.View>
+        ) : (
+          <Animated.View entering={FadeInDown.delay(400).springify()}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('checkout.address')}</Text>
+            {loadingAddresses ? (
+              <ActivityIndicator size="small" color={colors.pink} style={{ marginTop: Spacing.md }} />
+            ) : addresses.length === 0 ? (
+              <Pressable
+                onPress={() => router.push('/profile/addresses')}
+              >
+                <GlassView intensity={20} tint={isDark ? 'dark' : 'light'} style={styles.infoCard}>
+                  <MaterialCommunityIcons name="map-marker-plus-outline" size={20} color={colors.pink} />
+                  <Text style={[styles.infoText, { color: colors.textSecondary }]}>{t('checkout.noAddress')}</Text>
+                </GlassView>
+              </Pressable>
+            ) : (
+              addresses.map((address) => {
+                const active = selectedAddressId === address.address_id;
+                return (
+                  <Pressable
+                    key={address.address_id}
+                    style={styles.addressWrapper}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedAddressId(address.address_id);
+                    }}
+                  >
+                    <GlassView
+                      intensity={active ? 40 : 20}
+                      tint={isDark ? 'dark' : 'light'}
+                      style={[styles.addressCard, { borderColor: active ? colors.pink : colors.cardBorder }]}
+                    >
+                      <View style={styles.addressHeader}>
+                        <View style={styles.addressInfo}>
+                          <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{address.title || t('checkout.address')}</Text>
+                          <Text style={[styles.addressText, { color: colors.textSecondary }]}>
+                            {address.street || ''}{address.street && address.city ? ', ' : ''}{address.city || ''}
+                          </Text>
+                        </View>
+                        <View style={[styles.radioCircle, { borderColor: active ? colors.pink : colors.textMuted }]}>
+                          {active && <View style={[styles.radioInner, { backgroundColor: colors.pink }]} />}
+                        </View>
                       </View>
-                    </View>
-                  </GlassView>
-                </Pressable>
-              );
-            })
-          )}
-        </Animated.View>
+                    </GlassView>
+                  </Pressable>
+                );
+              })
+            )}
+          </Animated.View>
+        )}
 
         <Animated.View entering={FadeInDown.delay(500).springify()}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.xl }]}>{t('checkout.paymentMethod')}</Text>
@@ -712,5 +852,28 @@ const styles = StyleSheet.create({
   totalLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', opacity: 0.6, marginBottom: 2 },
   totalValue: { fontFamily: Fonts.extraBold, fontSize: 24 },
   confirmButton: { flex: 1.2 },
+  typeSelectorContainer: {
+    flexDirection: 'row',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    padding: 4,
+    gap: 4,
+    marginBottom: Spacing.md,
+  },
+  typeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  mainBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
 });
 
