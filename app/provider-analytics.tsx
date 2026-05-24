@@ -187,6 +187,7 @@ export default function ProviderAnalyticsScreen() {
             onRefresh={onRefresh}
             tintColor={colors.pink}
             colors={[colors.pink]}
+            progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
           />
         }
       >

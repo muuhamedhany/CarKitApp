@@ -1,13 +1,15 @@
-import {
-  useEffect,
-  useRef } from 'react';
-import { Animated,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
 import { BorderRadius } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import {
+    useEffect,
+    useRef
+} from 'react';
+import {
+    Animated,
+    StyleSheet,
+    View,
+    ViewStyle,
+} from 'react-native';
 
 type SkeletonProps = {
     width: number | `${number}%`;

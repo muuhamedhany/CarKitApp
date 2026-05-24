@@ -3,30 +3,39 @@ import {
   GlassView,
   ProductCard,
   SearchSkeleton,
-  ServiceCard } from '@/components';
+  ServiceCard
+} from '@/components';
+import Text from '@/components/common/LocalizedText';
 import { API_URL } from '@/constants/config';
-import { BorderRadius,
+import {
+  BorderRadius,
   FontSizes,
   Fonts,
   Shadows,
-  Spacing } from '@/constants/theme';
+  Spacing
+} from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTabReload } from '@/hooks/useTabReload';
 import { useTheme } from '@/hooks/useTheme';
-import { useTranslation } from '@/contexts/LanguageContext';
 import { vehicleService } from '@/services/api/vehicle.service';
 import { Product, Vehicle } from '@/types/api.types';
+import { rowDirection, textAlign } from '@/utils/rtl';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams,
-  useRouter } from 'expo-router';
-import { useCallback,
+import {
+  useLocalSearchParams,
+  useRouter
+} from 'expo-router';
+import {
+  useCallback,
   useEffect,
   useRef,
-  useState } from 'react';
+  useState
+} from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -42,8 +51,6 @@ import Animated, {
   useSharedValue
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { rowDirection, textAlign } from '@/utils/rtl';
-import Text from '@/components/common/LocalizedText';
 
 const TAB_BAR_HEIGHT = 65;
 
@@ -400,7 +407,7 @@ export default function SearchScreen() {
                 onRefresh={handleRefresh}
                 tintColor={colors.pink}
                 colors={[colors.pink]}
-                progressBackgroundColor={isDark ? colors.surfaceElevated : '#FFFFFF'}
+                progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
               />
             }
           >

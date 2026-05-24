@@ -311,7 +311,15 @@ export default function MyBookingsScreen() {
           showsVerticalScrollIndicator={false}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.pink} colors={[colors.pink]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.pink}
+              colors={[colors.pink]}
+              progressBackgroundColor={isDark ? colors.backgroundSecondary : '#FFFFFF'}
+            />
+          }
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.pink} style={{ marginVertical: 20 }} /> : null}
         />
       )}
