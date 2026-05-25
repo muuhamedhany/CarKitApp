@@ -22,6 +22,7 @@ import { rowDirection, textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
 import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
 
+
 export default function SignUpVendorScreen() {
   const router = useRouter();
   const { showToast } = useToast();

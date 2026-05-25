@@ -9,16 +9,19 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
 import { GlassView } from '@/components';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { chevronForward, rowDirection, textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
+import LanguageToggle from '@/components/common/LanguageToggle';
 
 export default function SelectAccountScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const handlePress = (path: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -35,6 +38,11 @@ export default function SelectAccountScreen() {
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, right: -100, backgroundColor: colors.pink + '20' }]} />
       <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
+
+      {/* Language Toggle — top right */}
+      <View style={[styles.langToggleWrap, { top: insets.top + 12 }]}>
+        <LanguageToggle />
+      </View>
 
       <View style={styles.content}>
         <Animated.View 
@@ -117,6 +125,11 @@ export default function SelectAccountScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  langToggleWrap: {
+    position: 'absolute',
+    right: Spacing.lg,
+    zIndex: 10,
+  },
   orb: {
     position: 'absolute',
     width: 300,

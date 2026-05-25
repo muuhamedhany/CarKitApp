@@ -125,6 +125,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const loadLanguage = async () => {
       try {
         const storedLang = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        // Use stored preference, or fall back to the default language (English).
+        // System language detection has been removed intentionally.
         const nextLanguage = isSupportedLanguage(storedLang) ? storedLang : DEFAULT_LANGUAGE;
         const nextRTL = nextLanguage === 'ar';
 
