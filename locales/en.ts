@@ -917,6 +917,19 @@ const en = {
   'docs.completeRegistration': 'Complete Registration',
   'docs.reviewNote': 'Verification usually takes 24 hours',
 
+  // Document picker options
+  'docs.uploadOptionsTitle': 'Select Upload Option',
+  'docs.uploadOptionsMsg': 'Choose your document upload format:',
+  'docs.pdfDocument': 'PDF Document',
+  'docs.photoOption': 'Photo (Camera / Gallery)',
+  'docs.photoSourceTitle': 'Select Photo Source',
+  'docs.photoSourceMsg': 'Take a new photo or select from library:',
+  'docs.takePhoto': 'Take Photo',
+  'docs.chooseGallery': 'Choose from Gallery',
+  'docs.permissionDenied': 'Permission Denied',
+  'docs.cameraPermissionRequired': 'Camera permission is required to take photos.',
+  'docs.galleryPermissionRequired': 'Gallery permission is required to choose photos.',
+
   // Document Labels
   'docs.businessLicense': 'Business License',
   'docs.taxId': 'Tax ID / EIN',
