@@ -1,9 +1,5 @@
-import {
-  useTheme } from '@/hooks/useTheme';
-import { View,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { useTheme } from '@/hooks/useTheme';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,7 +36,18 @@ export default function SelectAccountScreen() {
       <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
 
       {/* Language Toggle — top right */}
-      <View style={[styles.langToggleWrap, { top: insets.top + 12 }]}>
+      <View
+        style={[
+          styles.langToggleWrap,
+          {
+            top: insets.top + 12,
+            ...(Platform.OS === 'android'
+              ? (isRTL ? { left: Spacing.lg, right: undefined } : { right: Spacing.lg, left: undefined })
+              : {}
+            ),
+          },
+        ]}
+      >
         <LanguageToggle />
       </View>
 
