@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -19,6 +20,7 @@ import { FormInput, GradientButton, AuthFooter, CenteredHeader, GlassView} from 
 import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/theme';
 import { rowDirection, textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
+import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
 
 export default function SignUpVendorScreen() {
   const router = useRouter();
@@ -31,14 +33,30 @@ export default function SignUpVendorScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const handleMapResult = (result: MapPickerResult) => {
+    if (result.street) {
+      setAddress(result.street + (result.city ? `, ${result.city}` : ''));
+    }
+    setLatitude(result.latitude);
+    setLongitude(result.longitude);
+  };
+
   const handleContinue = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim() || !password || !confirmPassword) {
       showToast('warning', t('common.missingFields'), t('auth.missingFieldsMessage'));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+    if (latitude === null || longitude === null) {
+      showToast('warning', t('common.missingFields'), 'Please select your store location on the map.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -56,7 +74,16 @@ export default function SignUpVendorScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
       pathname: '/upload-documents',
-      params: { role, name: name.trim(), email: email.trim(), phone: phone.trim(), address: address.trim(), password },
+      params: { 
+        role, 
+        name: name.trim(), 
+        email: email.trim(), 
+        phone: phone.trim(), 
+        address: address.trim(), 
+        latitude: latitude.toString(), 
+        longitude: longitude.toString(), 
+        password 
+      },
     });
   };
 
@@ -155,6 +182,37 @@ export default function SignUpVendorScreen() {
                 keyboardType="phone-pad" 
               />
 
+              {/* Location Picker Button */}
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>
+                  {t('branches.locationSelect', { defaultValue: 'Select Location on Map' }).toUpperCase()}
+                </Text>
+                <GlassView intensity={10} tint={isDark ? 'dark' : 'light'} style={[styles.mapPickerBtn, { borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowMapPicker(true); }}
+                    style={({ pressed }) => [styles.mapPickerInner, { opacity: pressed ? 0.7 : 1 }]}
+                  >
+                    <View style={[styles.mapPickerIconWrap, { backgroundColor: colors.pink + '15' }]}>
+                      <MaterialCommunityIcons
+                        name={latitude !== null ? "map-marker-check" : "map-marker-radius"}
+                        size={24}
+                        color={colors.pink}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: colors.textPrimary }}>
+                        {latitude !== null ? t('branches.locationSelected', { defaultValue: 'Location Selected' }) : t('branches.locationSelect', { defaultValue: 'Select Location' })}
+                      </Text>
+                      {latitude !== null && (
+                        <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.xs, color: colors.textSecondary, marginTop: 2 }}>
+                          Lat: {Number(latitude).toFixed(5)}, Lng: {Number(longitude).toFixed(5)}
+                        </Text>
+                      )}
+                    </View>
+                  </Pressable>
+                </GlassView>
+              </View>
+
               <FormInput 
                 label={t('auth.signup.businessAddressLabel')}
                 icon="map-marker-outline" 
@@ -206,6 +264,12 @@ export default function SignUpVendorScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* Map Location Picker Modal */}
+      <MapLocationPicker
+        visible={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        onLocationSelected={handleMapResult}
+      />
     </View>
   );
 }
@@ -271,6 +335,28 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: Spacing.xl,
+    alignItems: 'center',
+  },
+  formGroup: { 
+    marginBottom: Spacing.md,
+  },
+  mapPickerBtn: {
+    borderWidth: 1, 
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  mapPickerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  mapPickerIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });

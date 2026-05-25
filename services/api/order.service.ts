@@ -62,4 +62,10 @@ export const orderService = {
             method: 'PATCH',
         });
     },
+
+    async returnOrder(id: number) {
+        return apiFetch<ApiResponse<OrderRecord>>(`/orders/${id}/return`, {
+            method: 'PATCH',
+        });
+    },
 };

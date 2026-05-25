@@ -61,6 +61,8 @@ const STATUS_COLORS: Record<string, string> = {
   delivered: '#81C784',
   cancelled: '#EF5350',
   delivery: '#AB47BC',
+  return_requested: '#FFB74D',
+  returned: '#9E9E9E',
 };
 
 export default function MyOrdersScreen() {

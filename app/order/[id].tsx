@@ -86,6 +86,8 @@ const getStatusPalette = (status: string, colors: any) => {
     if (value === 'ready_for_pickup' || value === 'in_transit') return { bg: 'rgba(249,115,22,0.2)', fg: '#F97316' };
     if (value === 'processing') return { bg: 'rgba(99,102,241,0.2)', fg: '#818CF8' };
     if (value === 'cancelled') return { bg: 'rgba(239,83,80,0.2)', fg: colors.error };
+    if (value === 'return_requested') return { bg: 'rgba(245,158,11,0.2)', fg: '#F59E0B' };
+    if (value === 'returned') return { bg: 'rgba(107,114,128,0.2)', fg: '#6B7280' };
     return { bg: colors.pink + '20', fg: colors.pink };
 };
 
@@ -102,6 +104,8 @@ const getStatusLabel = (status: string, isWorkshopFitting: boolean, role: OrderR
     if (normalized === 'in_transit') return 'In Transit';
     if (normalized === 'delivered') return isWorkshopFitting ? 'Ready for Customer' : 'Delivered';
     if (normalized === 'cancelled') return 'Cancelled';
+    if (normalized === 'return_requested') return 'Return Requested';
+    if (normalized === 'returned') return 'Returned';
     return 'Pending';
 };
 
@@ -118,6 +122,8 @@ const getStatusLabelKey = (status: string, isWorkshopFitting: boolean, role: Ord
     if (normalized === 'in_transit') return 'orderStatus.inTransit';
     if (normalized === 'delivered') return isWorkshopFitting ? 'orderStatus.readyForCustomer' : 'orderStatus.delivered';
     if (normalized === 'cancelled') return 'filter.cancelled';
+    if (normalized === 'return_requested') return 'orderStatus.returnRequested';
+    if (normalized === 'returned') return 'orderStatus.returned';
     return 'filter.pending';
 };
 
@@ -309,6 +315,77 @@ export default function OrderDetailScreen() {
                             setUpdatingStatus(false);
                         }
                     },
+                },
+            ]
+        );
+    };
+
+    const isEligibleForReturn = useMemo(() => {
+        if (!order || role !== 'customer') return false;
+        if (isWorkshopFitting) return false;
+        if (normalizeStatus(order.status) !== 'delivered') return false;
+        
+        const orderDate = new Date(order.order_date);
+        const deliveryDate = order.delivered_at ? new Date(order.delivered_at) : orderDate;
+        const today = new Date();
+        const diffTime = Math.abs(today.getTime() - deliveryDate.getTime());
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        
+        return diffDays <= 14;
+    }, [order, role, isWorkshopFitting]);
+
+    const handleReturnOrder = () => {
+        if (!order) return;
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+        Alert.alert(
+            t('order.details.returnOrder'),
+            t('order.details.returnConfirm'),
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('order.details.returnOrder'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setUpdatingStatus(true);
+                            const response = await orderService.returnOrder(order.order_id);
+                            if (!response.success) {
+                                showToast('error', t('order.details.returnFailed'), response.message || t('order.details.returnFailedMessage'));
+                                return;
+                            }
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            showToast('success', t('order.details.returnOrder'), t('order.details.returnSuccess'));
+                            await loadOrder();
+                        } catch {
+                            showToast('error', t('order.details.returnFailed'), t('order.details.returnFailedMessage'));
+                        } finally {
+                            setUpdatingStatus(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleVendorReturnAction = (action: 'approve' | 'reject') => {
+        if (!order) return;
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+        const isApprove = action === 'approve';
+        const nextStatus = isApprove ? 'returned' : 'delivered';
+        const title = t(isApprove ? 'order.details.approveReturn' : 'order.details.rejectReturn');
+        const confirmMsg = t(isApprove ? 'order.details.approveReturnConfirm' : 'order.details.rejectReturnConfirm');
+
+        Alert.alert(
+            title,
+            confirmMsg,
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: title,
+                    style: isApprove ? 'default' : 'destructive',
+                    onPress: () => handleVendorStatusUpdate(nextStatus),
                 },
             ]
         );
@@ -701,25 +778,58 @@ export default function OrderDetailScreen() {
             <GlassView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.footerContainer} {...{} as any}>
                 {order && (role === 'vendor' ? (
                     <View style={styles.actionsContainer}>
-                        {primaryAction ? (
-                            <GradientButton
-                                title={t(primaryAction.labelKey)}
-                                onPress={() => handleVendorStatusUpdate(primaryAction.nextStatus)}
-                                loading={updatingStatus}
-                                style={{ flex: 1 }}
-                                icon={primaryAction.icon as any}
-                            />
-                        ) : null}
-                        {canVendorCancel(order.status) ? (
-                            <OutlinedButton
-                                title={t('common.cancel')}
-                                onPress={() => handleVendorStatusUpdate('cancelled')}
-                                disabled={updatingStatus}
-                                textColor={colors.error}
-                                borderColor={colors.error}
-                                style={{ flex: 1 }}
-                            />
-                        ) : null}
+                        {normalizeStatus(order.status) === 'return_requested' ? (
+                            order.delivery_status === 'delivered' ? (
+                                <>
+                                    <GradientButton
+                                        title={t('order.details.approveReturn')}
+                                        onPress={() => handleVendorReturnAction('approve')}
+                                        loading={updatingStatus}
+                                        style={{ flex: 1 }}
+                                        icon="check-circle-outline"
+                                    />
+                                    <OutlinedButton
+                                        title={t('order.details.rejectReturn')}
+                                        onPress={() => handleVendorReturnAction('reject')}
+                                        disabled={updatingStatus}
+                                        textColor={colors.error}
+                                        borderColor={colors.error}
+                                        style={{ flex: 1 }}
+                                    />
+                                </>
+                            ) : (
+                                <View style={[styles.reviewedBadge, { backgroundColor: colors.infoSoft, flex: 1 }]}>
+                                    <MaterialCommunityIcons name="truck-delivery-outline" size={18} color={colors.info} />
+                                    <Text style={[styles.reviewedText, { color: colors.info, marginLeft: 8 }]}>
+                                        {order.delivery_status === 'assigned'
+                                            ? t('order.details.returnInTransit')
+                                            : t('order.details.returnPendingPickup')}
+                                    </Text>
+                                </View>
+                            )
+                        ) : (
+                            <>
+                                {primaryAction ? (
+                                    <GradientButton
+                                        title={t(primaryAction.labelKey)}
+                                        onPress={() => handleVendorStatusUpdate(primaryAction.nextStatus)}
+                                        loading={updatingStatus}
+                                        style={{ flex: 1 }}
+                                        icon={primaryAction.icon as any}
+                                    />
+                                ) : null}
+                                {canVendorCancel(order.status) ? (
+                                    <OutlinedButton
+                                        title={t('common.cancel')}
+                                        onPress={() => handleVendorStatusUpdate('cancelled')}
+                                        disabled={updatingStatus}
+                                        textColor={colors.error}
+                                        borderColor={colors.error}
+                                        style={{ flex: 1 }}
+                                    />
+                                ) : null}
+                            </>
+                        )}
                     </View>
                 ) : (
                     <View style={styles.actionsContainer}>
@@ -751,6 +861,16 @@ export default function OrderDetailScreen() {
                                 <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
                                 <Text style={[styles.reviewedText, { color: colors.success }]}>{t('common.reviewed')}</Text>
                             </View>
+                        ) : null}
+                        {isEligibleForReturn ? (
+                            <OutlinedButton
+                                title={t('order.details.returnOrder')}
+                                onPress={handleReturnOrder}
+                                disabled={updatingStatus}
+                                textColor={colors.warning}
+                                borderColor={colors.warning}
+                                style={{ flex: 1 }}
+                            />
                         ) : null}
                     </View>
                 ))}
