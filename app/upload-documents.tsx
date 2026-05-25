@@ -7,11 +7,11 @@ import {
   Pressable,
   ScrollView,
   Dimensions,
-  Modal,
-  TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -50,12 +50,6 @@ export default function UploadDocumentsScreen() {
   const { t, isRTL } = useTranslation();
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
-  const [infoModal, setInfoModal] = useState<{ visible: boolean; titleKey: string; bodyKey: string }>({
-    visible: false,
-    titleKey: '',
-    bodyKey: '',
-  });
-
   const [docs, setDocs] = useState<DocsState>({
     businessLicense: { name: null, uri: null },
     taxId: { name: null, uri: null },
@@ -67,16 +61,14 @@ export default function UploadDocumentsScreen() {
 
   const openInfo = (titleKey: string, bodyKey: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setInfoModal({ visible: true, titleKey, bodyKey });
+    Alert.alert(t(titleKey), t(bodyKey));
   };
 
-  const closeInfo = () => setInfoModal({ visible: false, titleKey: '', bodyKey: '' });
-
-  const pickDocument = async (key: keyof DocsState) => {
+  const pickPDF = async (key: keyof DocsState) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
+        type: ['application/pdf'],
         copyToCacheDirectory: true,
       });
 
@@ -91,6 +83,102 @@ export default function UploadDocumentsScreen() {
       }
     } catch {
       showToast('error', t('docs.selectionFailed'), t('docs.selectionFailedMsg'));
+    }
+  };
+
+  const takePhoto = async (key: keyof DocsState) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!cameraPermission.granted) {
+        Alert.alert(
+          t('docs.permissionDenied') || 'Permission Denied',
+          t('docs.cameraPermissionRequired') || 'Camera permission is required to take photos.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        const fileName = asset.uri.split('/').pop() || 'photo.jpg';
+        setDocs((prev) => ({
+          ...prev,
+          [key]: { name: fileName, uri: asset.uri },
+        }));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showToast('success', t('docs.selectedTitle'), `${fileName} ${t('docs.selectedReady')}`);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('error', t('docs.selectionFailed'), t('docs.selectionFailedMsg'));
+    }
+  };
+
+  const chooseFromLibrary = async (key: keyof DocsState) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!libraryPermission.granted) {
+        Alert.alert(
+          t('docs.permissionDenied') || 'Permission Denied',
+          t('docs.galleryPermissionRequired') || 'Gallery permission is required to choose photos.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        const fileName = asset.fileName || asset.uri.split('/').pop() || 'photo.jpg';
+        setDocs((prev) => ({
+          ...prev,
+          [key]: { name: fileName, uri: asset.uri },
+        }));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        showToast('success', t('docs.selectedTitle'), `${fileName} ${t('docs.selectedReady')}`);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('error', t('docs.selectionFailed'), t('docs.selectionFailedMsg'));
+    }
+  };
+
+  const promptPhotoSource = (key: keyof DocsState) => {
+    Alert.alert(
+      t('docs.photoSourceTitle') || 'Photo Source',
+      t('docs.photoSourceMsg') || 'Choose photo source:',
+      [
+        { text: t('docs.takePhoto') || 'Take Photo', onPress: () => takePhoto(key) },
+        { text: t('docs.chooseGallery') || 'Choose from Gallery', onPress: () => chooseFromLibrary(key) },
+        { text: t('common.cancel') || 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const pickDocument = async (key: keyof DocsState) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (key === 'businessLicense' || key === 'taxId') {
+      Alert.alert(
+        t('docs.uploadOptionsTitle') || 'Select Option',
+        t('docs.uploadOptionsMsg') || 'Choose document format:',
+        [
+          { text: t('docs.pdfDocument') || 'PDF Document', onPress: () => pickPDF(key) },
+          { text: t('docs.photoOption') || 'Photo (Camera / Gallery)', onPress: () => promptPhotoSource(key) },
+          { text: t('common.cancel') || 'Cancel', style: 'cancel' }
+        ]
+      );
+    } else {
+      promptPhotoSource(key);
     }
   };
 
@@ -409,36 +497,7 @@ export default function UploadDocumentsScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Info Modal */}
-      <Modal
-        visible={infoModal.visible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeInfo}
-      >
-        <TouchableWithoutFeedback onPress={closeInfo}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.modalCard, { backgroundColor: isDark ? colors.card : '#fff', borderColor: colors.cardBorder }]}>
-                <View style={[styles.modalIconRow, { flexDirection: rowDirection(isRTL) }]}>
-                  <View style={[styles.modalIconBox, { backgroundColor: colors.pink + '18' }]}>
-                    <MaterialCommunityIcons name="information" size={22} color={colors.pink} />
-                  </View>
-                  <Text style={[styles.modalTitle, { color: colors.textPrimary, textAlign: textAlign(isRTL) }]}>
-                    {infoModal.titleKey ? t(infoModal.titleKey) : ''}
-                  </Text>
-                  <Pressable onPress={closeInfo} hitSlop={8} style={{ marginLeft: 'auto' }}>
-                    <MaterialCommunityIcons name="close" size={20} color={colors.textMuted} />
-                  </Pressable>
-                </View>
-                <Text style={[styles.modalBody, { color: colors.textSecondary, textAlign: textAlign(isRTL) }]}>
-                  {infoModal.bodyKey ? t(infoModal.bodyKey) : ''}
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+
     </View>
   );
 }
@@ -551,43 +610,5 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     opacity: 0.6,
   },
-  // Info Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
-  modalCard: {
-    width: '100%',
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    ...Shadows.lg,
-  },
-  modalIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  modalIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalTitle: {
-    fontSize: FontSizes.md,
-    fontFamily: Fonts.bold,
-    flex: 1,
-  },
-  modalBody: {
-    fontSize: FontSizes.sm,
-    fontFamily: Fonts.regular,
-    lineHeight: 22,
-    opacity: 0.85,
-  },
+
 });

@@ -1031,6 +1031,19 @@ const ar = {
   'docs.completeRegistration': 'إتمام التسجيل',
   'docs.reviewNote': 'عادةً ما تستغرق المراجعة 24 ساعة',
 
+  // خيارات اختيار المستندات
+  'docs.uploadOptionsTitle': 'اختر طريقة الرفع',
+  'docs.uploadOptionsMsg': 'اختر صيغة رفع المستند:',
+  'docs.pdfDocument': 'مستند PDF',
+  'docs.photoOption': 'صورة (الكاميرا / المعرض)',
+  'docs.photoSourceTitle': 'اختر مصدر الصورة',
+  'docs.photoSourceMsg': 'التقط صورة جديدة أو اختر من المعرض:',
+  'docs.takePhoto': 'التقاط صورة',
+  'docs.chooseGallery': 'اختيار من المعرض',
+  'docs.permissionDenied': 'تم رفض الإذن',
+  'docs.cameraPermissionRequired': 'إذن الكاميرا مطلوب لالتقاط الصور.',
+  'docs.galleryPermissionRequired': 'إذن المعرض مطلوب لاختيار الصور.',
+
   // أسماء المستندات
   'docs.businessLicense': 'السجل التجاري',
   'docs.taxId': 'بطاقة ضريبية',
