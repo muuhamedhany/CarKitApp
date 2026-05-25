@@ -316,6 +316,7 @@ export type OrderDetail = {
   total_amount: string | number;
   status: OrderStatus;
   order_date: string;
+  delivered_at?: string | null;
   preferred_delivery_date?: string | null;
   estimated_delivery_start?: string | null;
   estimated_delivery_end?: string | null;
@@ -326,6 +327,8 @@ export type OrderDetail = {
   workshop_longitude?: number | null;
   delivery_type?: 'home_delivery' | 'workshop_fitting' | string;
   queue?: QueueInfo | null;
+  delivery_status?: string | null;
+  is_return?: boolean;
   items: OrderDetailItem[];
 } & OrderAddressSummary;
 

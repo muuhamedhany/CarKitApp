@@ -1,13 +1,18 @@
 import {
-  MaterialCommunityIcons } from '@expo/vector-icons';
+  MaterialCommunityIcons
+} from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect,
+import {
+  useFocusEffect,
   useLocalSearchParams,
-  useRouter } from 'expo-router';
-import { useCallback,
+  useRouter
+} from 'expo-router';
+import {
+  useCallback,
   useMemo,
-  useState } from 'react';
+  useState
+} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -442,7 +447,7 @@ export default function BookingConfirmationScreen() {
                   size={18}
                   color={bookingType === 'center' ? '#FFF' : colors.textSecondary}
                 />
-                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: bookingType === 'center' ? '#FFF' : colors.textSecondary }}>
+                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.xs, color: bookingType === 'center' ? '#FFF' : colors.textSecondary }}>
                   booking.atCenter
                 </Text>
               </Pressable>
@@ -461,7 +466,7 @@ export default function BookingConfirmationScreen() {
                   size={18}
                   color={bookingType === 'mobile' ? '#FFF' : colors.textSecondary}
                 />
-                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.sm, color: bookingType === 'mobile' ? '#FFF' : colors.textSecondary }}>
+                <Text style={{ fontFamily: Fonts.bold, fontSize: FontSizes.xs, color: bookingType === 'mobile' ? '#FFF' : colors.textSecondary }}>
                   booking.mobileService
                 </Text>
               </Pressable>
@@ -671,33 +676,33 @@ export default function BookingConfirmationScreen() {
               </Pressable>
               {savedCards.length === 0 || useNewCard ? (
                 <>
-              <FormInput
-                label="Card Number"
-                value={cardNumber}
-                onChangeText={setCardNumber}
-                placeholder="Card number"
-                keyboardType="number-pad"
-              />
-              <View style={styles.cardRow}>
-                <View style={{ flex: 1 }}>
                   <FormInput
-                    label="Expiry"
-                    value={cardExpiry}
-                    onChangeText={setCardExpiry}
-                    placeholder="MM/YY"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <FormInput
-                    label="CVV"
-                    value={cardCvv}
-                    onChangeText={setCardCvv}
-                    placeholder="CVV"
+                    label="Card Number"
+                    value={cardNumber}
+                    onChangeText={setCardNumber}
+                    placeholder="Card number"
                     keyboardType="number-pad"
-                    secureTextEntry
                   />
-                </View>
-              </View>
+                  <View style={styles.cardRow}>
+                    <View style={{ flex: 1 }}>
+                      <FormInput
+                        label="Expiry"
+                        value={cardExpiry}
+                        onChangeText={setCardExpiry}
+                        placeholder="MM/YY"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <FormInput
+                        label="CVV"
+                        value={cardCvv}
+                        onChangeText={setCardCvv}
+                        placeholder="CVV"
+                        keyboardType="number-pad"
+                        secureTextEntry
+                      />
+                    </View>
+                  </View>
                 </>
               ) : null}
             </View>
@@ -714,7 +719,7 @@ export default function BookingConfirmationScreen() {
             <Text style={[styles.totalValue, { color: colors.textPrimary }]}>{price} {t('common.currency.egp')}</Text>
           </View>
           <GradientButton
-            title={placingBooking ? 'booking.confirm.booking' : 'booking.confirm.title'}
+            title={placingBooking ? 'booking.confirm.booking' : 'booking.confirm.btn'}
             onPress={handlePlaceBooking}
             loading={placingBooking}
             disabled={!canPlaceBooking}
@@ -847,11 +852,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  totalContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xl },
-  totalInfo: { flex: 0.8 },
+  totalContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  totalInfo: { marginRight: Spacing.xs },
   totalLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', opacity: 0.6, marginBottom: 2 },
   totalValue: { fontFamily: Fonts.extraBold, fontSize: 24 },
-  confirmButton: { flex: 1.2 },
+  confirmButton: { flex: 1, paddingHorizontal: Spacing.md },
   typeSelectorContainer: {
     flexDirection: 'row',
     borderRadius: BorderRadius.lg,

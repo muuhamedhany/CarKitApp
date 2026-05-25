@@ -125,8 +125,8 @@ export default function BranchesScreen() {
     setAddress(b.address || '');
     setPhone(b.phone || '');
     setIsMain(!!b.is_main);
-    setLatitude(b.latitude || null);
-    setLongitude(b.longitude || null);
+    setLatitude(b.latitude != null ? Number(b.latitude) : null);
+    setLongitude(b.longitude != null ? Number(b.longitude) : null);
     setIsAdding(true);
   };
 
@@ -220,7 +220,7 @@ export default function BranchesScreen() {
                       </Text>
                       {latitude !== null && (
                         <Text style={{ fontFamily: Fonts.medium, fontSize: FontSizes.xs, color: colors.textSecondary, marginTop: 2 }}>
-                          Lat: {latitude.toFixed(5)}, Lng: {longitude?.toFixed(5)}
+                          Lat: {Number(latitude).toFixed(5)}, Lng: {longitude != null ? Number(longitude).toFixed(5) : ''}
                         </Text>
                       )}
                     </View>

@@ -27,8 +27,8 @@ interface EmergencyRouteMapProps {
 }
 
 const makePoint = (point: RouteCoordinate) => ({
-  lat: Number(point.latitude.toFixed(7)),
-  lng: Number(point.longitude.toFixed(7)),
+  lat: Number(Number(point.latitude).toFixed(7)),
+  lng: Number(Number(point.longitude).toFixed(7)),
 });
 
 function buildRouteMapHtml(

@@ -151,6 +151,8 @@ export default function UploadDocumentsScreen() {
         document_1_url: doc1Url,
         document_2_url: doc2Url,
         document_3_url: doc3Url,
+        latitude: params.latitude ? Number(params.latitude) : null,
+        longitude: params.longitude ? Number(params.longitude) : null,
       };
 
       await axios.post(`${API_URL}${endpoint}`, payload);

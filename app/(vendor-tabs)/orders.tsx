@@ -31,7 +31,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTabReload } from '@/hooks/useTabReload';
 import Text from '@/components/common/LocalizedText';
 
-type OrderFilter = 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderFilter = 'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'return_requested' | 'returned';
 
 export default function VendorOrdersScreen() {
     const { colors, isDark } = useTheme();
@@ -136,6 +136,8 @@ export default function VendorOrdersScreen() {
         if (s === 'processing') return '#6366F1';
         if (s === 'shipped') return '#3B82F6';
         if (s === 'cancelled') return '#EF4444';
+        if (s === 'return_requested') return '#F59E0B';
+        if (s === 'returned') return '#6B7280';
         return colors.textSecondary;
     };
 
@@ -227,7 +229,7 @@ export default function VendorOrdersScreen() {
                             contentContainerStyle={styles.filterRow}
                             style={styles.filterScroll}
                         >
-                            {(['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as OrderFilter[]).map((filter) => {
+                            {(['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'return_requested', 'returned'] as OrderFilter[]).map((filter) => {
                                 const isActive = activeFilter === filter;
                                 return (
                                     <Pressable
@@ -245,7 +247,7 @@ export default function VendorOrdersScreen() {
                                         ]}
                                     >
                                         <Text style={[styles.filterText, { color: isActive ? colors.white : colors.textPrimary }]}>
-                                            {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                            {filter.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                                         </Text>
                                     </Pressable>
                                 );

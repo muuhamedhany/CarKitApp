@@ -141,8 +141,8 @@ export default function AddressesScreen() {
     setApartmentFloor(addr.apartment_floor || '');
     setBuilding(addr.building || '');
     setNotes(addr.notes || '');
-    setLatitude(addr.latitude || null);
-    setLongitude(addr.longitude || null);
+    setLatitude(addr.latitude != null ? Number(addr.latitude) : null);
+    setLongitude(addr.longitude != null ? Number(addr.longitude) : null);
     setIsAdding(true);
   };
 
@@ -210,7 +210,7 @@ export default function AddressesScreen() {
                 <View style={[styles.coordsBadge, { backgroundColor: colors.pink + '15' }]}>
                   <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.pink} />
                   <Text style={[styles.coordsBadgeText, { color: colors.pink }]}>
-                    {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                    {Number(latitude).toFixed(5)}, {Number(longitude).toFixed(5)}
                   </Text>
                 </View>
               )}
