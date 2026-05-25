@@ -115,7 +115,18 @@ export default function LoginScreen() {
       )}
 
       {/* Language Toggle — top right */}
-      <View style={[styles.langToggleWrap, { top: insets.top + 12 }]}>
+      <View
+        style={[
+          styles.langToggleWrap,
+          {
+            top: insets.top + 12,
+            ...(Platform.OS === 'android'
+              ? (isRTL ? { left: Spacing.lg, right: undefined } : { right: Spacing.lg, left: undefined })
+              : {}
+            ),
+          },
+        ]}
+      >
         <LanguageToggle />
       </View>
 

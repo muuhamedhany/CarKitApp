@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
 import { useTranslation, Language } from '@/contexts/LanguageContext';
@@ -59,8 +59,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   option: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    width: 36,
+    height: 26,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
@@ -69,5 +69,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: 12,
     letterSpacing: 0.3,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      },
+    }),
   },
 });
