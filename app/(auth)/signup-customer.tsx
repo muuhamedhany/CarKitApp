@@ -20,6 +20,7 @@ import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/th
 import { textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
 
+
 export default function SignUpCustomerScreen() {
   const router = useRouter();
   const { register } = useAuth();

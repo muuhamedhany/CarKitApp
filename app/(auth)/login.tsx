@@ -16,6 +16,7 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -25,6 +26,7 @@ import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
+import LanguageToggle from '@/components/common/LanguageToggle';
 
 const { height } = Dimensions.get('window');
 
@@ -34,6 +36,7 @@ export default function LoginScreen() {
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -110,6 +113,11 @@ export default function LoginScreen() {
           <View style={[styles.orb, { bottom: -150, left: -150, backgroundColor: colors.purple + '15' }]} />
         </>
       )}
+
+      {/* Language Toggle — top right */}
+      <View style={[styles.langToggleWrap, { top: insets.top + 12 }]}>
+        <LanguageToggle />
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -210,6 +218,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
+  langToggleWrap: {
+    position: 'absolute',
+    right: Spacing.lg,
+    zIndex: 10,
+  },
   orb: {
     position: 'absolute',
     width: 300,

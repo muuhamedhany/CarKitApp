@@ -45,6 +45,8 @@ const en = {
   'language.arabic': 'Arabic',
   'language.englishNative': 'English',
   'language.arabicNative': 'العربية',
+  'language.system': 'Use System Language',
+  'language.systemNative': 'Follow your phone language',
   'language.current': 'Current language',
 
   'tabs.home': 'Home',
@@ -886,6 +888,50 @@ const en = {
   'forms.product.completeRequired': 'Please complete the required fields before saving.',
   'forms.product.loadCategoriesFailed': 'Failed to load categories.',
   'forms.product.saveFailed': 'Failed to save product.',
+
+  // --- Document Upload Screen ---
+  'docs.screenTitle': 'Verify Identity',
+  'docs.screenSubtitle': 'Securely upload your business documents to start your journey',
+  'docs.sectionBusiness': 'Business Documents',
+  'docs.sectionOwner': 'Owner Identity',
+  'docs.sectionCerts': 'Certifications & Experience',
+  'docs.mandatory': 'Mandatory',
+  'docs.optional': 'Optional',
+  'docs.changeFile': 'Change File',
+  'docs.chooseDoc': 'Choose Document',
+  'docs.selectedTitle': 'Selected',
+  'docs.selectedReady': 'is ready.',
+  'docs.selectionFailed': 'Selection Failed',
+  'docs.selectionFailedMsg': 'Could not pick document.',
+  'docs.missingTitle': 'Missing Documents',
+  'docs.missingMsg': 'Please upload all required documents.',
+  'docs.uploadingTitle': 'Uploading',
+  'docs.uploadingMsg': 'Uploading documents securely...',
+  'docs.registeringTitle': 'Registering',
+  'docs.registeringMsg': 'Creating your account...',
+  'docs.successTitle': 'Success!',
+  'docs.successMsg': 'Your documents are under review. We\'ll notify you within 24-48 hours.',
+  'docs.backToLogin': 'Back to Login',
+  'docs.submitFailed': 'Submission Failed',
+  'docs.submitFailedMsg': 'Could not submit documents. Please try again.',
+  'docs.completeRegistration': 'Complete Registration',
+  'docs.reviewNote': 'Verification usually takes 24 hours',
+
+  // Document Labels
+  'docs.businessLicense': 'Business License',
+  'docs.taxId': 'Tax ID / EIN',
+  'docs.nationalIdFront': 'National ID – Front Side',
+  'docs.nationalIdBack': 'National ID – Back Side',
+  'docs.selfie': 'Owner Selfie',
+  'docs.experienceCerts': 'Experience & Accreditation Certs',
+
+  // Document Info Texts
+  'docs.businessLicenseInfo': 'Upload a clear copy of your official business registration or trade license issued by the relevant government authority. Accepted formats: PDF or image.',
+  'docs.taxIdInfo': 'Upload your Tax Identification Number (TIN) or Employer Identification Number (EIN) certificate. This is required for financial and compliance verification.',
+  'docs.nationalIdFrontInfo': 'Upload a clear photo of the FRONT side of the owner\'s National ID card. Make sure all details (name, ID number, date) are clearly visible and not cropped.',
+  'docs.nationalIdBackInfo': 'Upload a clear photo of the BACK side of the owner\'s National ID card. Ensure the card is fully in frame, flat, and well-lit.',
+  'docs.selfieInfo': 'Upload a selfie photo of the business owner holding their National ID card. Your face and the ID card must both be clearly visible in the same photo.',
+  'docs.experienceCertsInfo': 'Upload any of the following supporting documents (at least one recommended):\n• Power of Attorney (توكيل)\n• Training certificates (شهادات تدريب)\n• Experience certificates (شهادات خبرة أو اعتماد)\n• Accreditation from oil or spare parts companies',
 };
 
 export default en;

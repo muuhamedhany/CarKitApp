@@ -45,6 +45,8 @@ const ar = {
   'language.arabic': 'العربية',
   'language.englishNative': 'English',
   'language.arabicNative': 'العربية',
+  'language.system': 'استخدام لغة النظام',
+  'language.systemNative': 'اتّباع لغة الهاتف',
   'language.current': 'اللغة الحالية',
 
   'tabs.home': 'الرئيسية',
@@ -1000,6 +1002,50 @@ const ar = {
   'Status Updated': 'تم تحديث الحالة',
   'Cancel Unavailable': 'الإلغاء غير متاح',
   'Orders can only be cancelled before processing starts.': 'لا يمكن إلغاء الطلب إلا قبل بدء التجهيز.',
+
+  // --- شاشة رفع المستندات ---
+  'docs.screenTitle': 'التحقق من الهوية',
+  'docs.screenSubtitle': 'ارفع مستندات نشاطك بأمان لبدء رحلتك',
+  'docs.sectionBusiness': 'مستندات النشاط التجاري',
+  'docs.sectionOwner': 'هوية المالك',
+  'docs.sectionCerts': 'الشهادات والخبرات',
+  'docs.mandatory': 'إلزامي',
+  'docs.optional': 'اختياري',
+  'docs.changeFile': 'تغيير الملف',
+  'docs.chooseDoc': 'اختيار مستند',
+  'docs.selectedTitle': 'تم الاختيار',
+  'docs.selectedReady': 'جاهز للرفع.',
+  'docs.selectionFailed': 'فشل الاختيار',
+  'docs.selectionFailedMsg': 'تعذر اختيار المستند.',
+  'docs.missingTitle': 'مستندات ناقصة',
+  'docs.missingMsg': 'يرجى رفع كل المستندات المطلوبة.',
+  'docs.uploadingTitle': 'جاري الرفع',
+  'docs.uploadingMsg': 'جاري رفع المستندات بأمان...',
+  'docs.registeringTitle': 'جاري التسجيل',
+  'docs.registeringMsg': 'جاري إنشاء حسابك...',
+  'docs.successTitle': 'تم بنجاح!',
+  'docs.successMsg': 'مستنداتك قيد المراجعة. سيتم إخطارك خلال 24-48 ساعة.',
+  'docs.backToLogin': 'العودة لتسجيل الدخول',
+  'docs.submitFailed': 'فشل الإرسال',
+  'docs.submitFailedMsg': 'تعذر إرسال المستندات. يرجى المحاولة مرة أخرى.',
+  'docs.completeRegistration': 'إتمام التسجيل',
+  'docs.reviewNote': 'عادةً ما تستغرق المراجعة 24 ساعة',
+
+  // أسماء المستندات
+  'docs.businessLicense': 'السجل التجاري',
+  'docs.taxId': 'بطاقة ضريبية',
+  'docs.nationalIdFront': 'بطاقة الرقم القومي – الوجه الأمامي',
+  'docs.nationalIdBack': 'بطاقة الرقم القومي – الوجه الخلفي',
+  'docs.selfie': 'سيلفي مع البطاقة',
+  'docs.experienceCerts': 'شهادات الخبرة والاعتماد',
+
+  // نصوص المعلومات
+  'docs.businessLicenseInfo': 'ارفع نسخة واضحة من السجل التجاري الرسمي أو رخصة المهنة الصادرة من الجهة الحكومية المختصة. الصيغ المقبولة: PDF أو صورة.',
+  'docs.taxIdInfo': 'ارفع شهادة البطاقة الضريبية الخاصة بنشاطك التجاري. هذه الوثيقة مطلوبة للتحقق المالي والامتثال القانوني.',
+  'docs.nationalIdFrontInfo': 'ارفع صورة واضحة للوجه الأمامي من بطاقة الرقم القومي للمالك. تأكد من ظهور جميع البيانات (الاسم، الرقم، التاريخ) بوضوح وعدم اقتصاص أي جزء من البطاقة.',
+  'docs.nationalIdBackInfo': 'ارفع صورة واضحة للوجه الخلفي من بطاقة الرقم القومي للمالك. تأكد من ظهور البطاقة كاملة في الصورة في إضاءة جيدة.',
+  'docs.selfieInfo': 'ارفع صورة سيلفي لمالك النشاط وهو يحمل بطاقة الرقم القومي. يجب أن يظهر وجهه والبطاقة معًا بوضوح في نفس الصورة.',
+  'docs.experienceCertsInfo': 'ارفع أياً من المستندات الداعمة التالية (يُنصح بمستند واحد على الأقل):\n• توكيل رسمي\n• شهادات تدريب\n• شهادات خبرة أو اعتماد\n• اعتماد من شركة زيوت أو قطع غيار',
 };
 
 export default ar;
