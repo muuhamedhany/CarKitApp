@@ -867,7 +867,7 @@ const ar = {
   'wishlist.updateFailed': 'فشل تحديث المفضلة',
 
   'forms.product.basicInfo': 'المعلومات الأساسية',
-  'forms.product.step': 'الخطوة {step} من 4',
+  'forms.product.step': 'الخطوة {step} من 5',
   'forms.product.nameLabel': 'اسم المنتج',
   'forms.product.namePlaceholder': 'مثال: زيت محرك ممتاز',
   'forms.product.descriptionPlaceholder': 'وصف تفصيلي للمنتج...',
@@ -888,6 +888,13 @@ const ar = {
   'forms.product.completeRequired': 'يرجى إكمال الحقول المطلوبة قبل الحفظ.',
   'forms.product.loadCategoriesFailed': 'فشل تحميل الفئات.',
   'forms.product.saveFailed': 'فشل حفظ المنتج.',
+  'forms.product.receiptUploadTitle': 'تحميل الإيصال / الفاتورة',
+  'forms.product.receiptUploadMsg': 'اختر طريقة تحميل إثبات المصدر:',
+  'forms.product.receiptTitle': 'إيصال الشراء / إثبات المصدر',
+  'forms.product.receiptHelp': 'يرجى تحميل إيصال الشراء أو الفاتورة التي توضح مكان شراء المنتج. هذا مطلوب للتحقق من الأصالة.',
+  'forms.product.uploadReceipt': 'تحميل مستند الإيصال',
+  'forms.product.receiptRequiredTitle': 'الإيصال مطلوب',
+  'forms.product.receiptRequiredMsg': 'يرجى تحميل إيصال الشراء أو إثبات المصدر.',
 
   // Literal fallbacks for legacy screens/components that still pass display text.
   'Checkout': 'الدفع',

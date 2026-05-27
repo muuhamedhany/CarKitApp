@@ -51,6 +51,7 @@ export default function EditProductScreen() {
                         compatibleModels,
                         isUniversal: compatibleMakes.length === 0 && compatibleModels.length === 0,
                         imageUrls: [product.image_url ?? null, product.image_url_2 ?? null, product.image_url_3 ?? null],
+                        receiptUrl: product.receipt_url ?? null,
                     });
                 }
             } catch (error: any) {

@@ -39,6 +39,7 @@ export type Product = {
   image_url?: string | null;
   image_url_2?: string | null;
   image_url_3?: string | null;
+  receipt_url?: string | null;
   status?: string;
   compatible_makes?: string[] | null;
   compatible_models?: string[] | null;
@@ -59,6 +60,7 @@ export type ProductFormInitialValues = {
   compatibleModels?: string[];
   isUniversal?: boolean;
   imageUrls?: (string | null)[];
+  receiptUrl?: string | null;
 };
 
 export type ProductFormPayload = {
@@ -70,6 +72,7 @@ export type ProductFormPayload = {
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
+  receipt_url: string | null;
   compatible_makes: string[];
   compatible_models: string[];
 };
