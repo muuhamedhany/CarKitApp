@@ -36,6 +36,7 @@ export const categoryNameMap: Record<string, { en: string; ar: string }> = {
   Suspension: { en: 'Suspension', ar: 'نظام التعليق' },
   'Tires & Wheels': { en: 'Tires & Wheels', ar: 'إطارات وجنوط' },
   'Tools & Equipment': { en: 'Tools & Equipment', ar: 'أدوات ومعدات' },
+  'Accessories & Upgrades': { en: 'Accessories & Upgrades', ar: 'إكسسوارات وترقيات' },
 
   // Emergency service types
   'Battery Charge': { en: 'Battery Charge', ar: 'شحن البطارية' },
