@@ -867,7 +867,7 @@ const en = {
   'wishlist.updateFailed': 'Failed to update wishlist',
 
   'forms.product.basicInfo': 'Basic Info',
-  'forms.product.step': 'Step {step} of 4',
+  'forms.product.step': 'Step {step} of 5',
   'forms.product.nameLabel': 'Product Name',
   'forms.product.namePlaceholder': 'e.g. Premium Engine Oil',
   'forms.product.descriptionPlaceholder': 'Detailed product description...',
@@ -888,6 +888,13 @@ const en = {
   'forms.product.completeRequired': 'Please complete the required fields before saving.',
   'forms.product.loadCategoriesFailed': 'Failed to load categories.',
   'forms.product.saveFailed': 'Failed to save product.',
+  'forms.product.receiptUploadTitle': 'Upload Receipt / Invoice',
+  'forms.product.receiptUploadMsg': 'Choose how you want to upload your proof of origin:',
+  'forms.product.receiptTitle': 'Purchase Receipt / Proof of Origin',
+  'forms.product.receiptHelp': 'Upload your purchase receipt or invoice indicating where you purchased the item. This is required for authenticity checks.',
+  'forms.product.uploadReceipt': 'Upload Receipt Document',
+  'forms.product.receiptRequiredTitle': 'Receipt Required',
+  'forms.product.receiptRequiredMsg': 'Please upload a purchase receipt or proof of origin.',
 
   // --- Document Upload Screen ---
   'docs.screenTitle': 'Verify Identity',

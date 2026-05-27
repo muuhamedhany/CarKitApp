@@ -5,12 +5,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Image,
     Pressable,
     ScrollView,
     StyleSheet,
     View,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
@@ -58,7 +61,7 @@ type ProductFormProps = {
     onSubmit: (payload: ProductFormPayload) => Promise<void>;
 };
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const createImageSlots = (imageUrls?: (string | null)[]): ImageSlot[] =>
     Array.from({ length: 3 }, (_, index) => {
@@ -94,6 +97,11 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
     const [selectedModelNames, setSelectedModelNames] = useState<string[]>([]);
     const [suggestingFitment, setSuggestingFitment] = useState(false);
     const [imageSlots, setImageSlots] = useState<ImageSlot[]>(createImageSlots());
+    const [receiptSlot, setReceiptSlot] = useState<ImageSlot>({
+        previewUri: null,
+        base64: null,
+        sourceUrl: null,
+    });
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState(1);
 
@@ -120,6 +128,11 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
         setSelectedModelNames(initialModels);
         setIsUniversal(initialValues?.isUniversal ?? (initialMakes.length === 0 && initialModels.length === 0));
         setImageSlots(createImageSlots(initialValues?.imageUrls));
+        setReceiptSlot({
+            previewUri: initialValues?.receiptUrl ?? null,
+            base64: null,
+            sourceUrl: initialValues?.receiptUrl ?? null,
+        });
     }, [initialValues]);
 
     useEffect(() => {
@@ -219,6 +232,149 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 };
                 return next;
             });
+        }
+    };
+
+    const getFileName = (uriOrUrl: string | null) => {
+        if (!uriOrUrl) return '';
+        const decoded = decodeURIComponent(uriOrUrl);
+        const parts = decoded.split('/');
+        const namePart = parts[parts.length - 1];
+        return namePart.split('?')[0];
+    };
+
+    const uploadReceipt = async (base64File: string, isPdf: boolean = false) => {
+        const fileExt = isPdf ? 'pdf' : 'jpg';
+        const contentType = isPdf ? 'application/pdf' : 'image/jpeg';
+        const fileName = `receipt-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+
+        let uploadResult = await supabase.storage
+            .from('product-receipts')
+            .upload(fileName, decode(base64File), { contentType });
+
+        if (uploadResult.error) {
+            const errMessage = uploadResult.error.message || '';
+            if (errMessage.toLowerCase().includes('bucket not found') || errMessage.toLowerCase().includes('does not exist')) {
+                const fallbackResult = await supabase.storage
+                    .from('product-images')
+                    .upload(`receipts/${fileName}`, decode(base64File), { contentType });
+
+                if (fallbackResult.error) {
+                    throw fallbackResult.error;
+                }
+
+                const { data } = supabase.storage.from('product-images').getPublicUrl(`receipts/${fileName}`);
+                return data.publicUrl;
+            }
+            throw uploadResult.error;
+        }
+
+        const { data } = supabase.storage.from('product-receipts').getPublicUrl(fileName);
+        return data.publicUrl;
+    };
+
+    const pickReceipt = () => {
+        Alert.alert(
+            t('forms.product.receiptUploadTitle') || 'Upload Receipt / Invoice',
+            t('forms.product.receiptUploadMsg') || 'Choose how you want to upload your proof of origin:',
+            [
+                { text: t('docs.takePhoto') || 'Take Photo', onPress: captureReceiptFromCamera },
+                { text: t('docs.chooseGallery') || 'Choose from Gallery', onPress: pickReceiptFromGallery },
+                { text: t('docs.pdfDocument') || 'PDF Document', onPress: pickReceiptDocument },
+                { text: t('common.cancel') || 'Cancel', style: 'cancel' }
+            ]
+        );
+    };
+
+    const captureReceiptFromCamera = async () => {
+        try {
+            const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+            if (!cameraPermission.granted) {
+                Alert.alert(
+                    t('docs.permissionDenied') || 'Permission Denied',
+                    t('docs.cameraPermissionRequired') || 'Camera permission is required to take photos.'
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+                base64: true,
+            });
+
+            if (!result.canceled && result.assets?.length) {
+                const asset = result.assets[0];
+                setReceiptSlot({
+                    previewUri: asset.uri,
+                    base64: asset.base64 ?? null,
+                    sourceUrl: receiptSlot.sourceUrl ?? null,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to capture receipt from camera', error);
+            showToast('error', t('common.error'), t('docs.selectionFailedMsg') || 'Could not capture photo.');
+        }
+    };
+
+    const pickReceiptFromGallery = async () => {
+        try {
+            const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!libraryPermission.granted) {
+                Alert.alert(
+                    t('docs.permissionDenied') || 'Permission Denied',
+                    t('docs.galleryPermissionRequired') || 'Gallery permission is required to choose photos.'
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+                base64: true,
+            });
+
+            if (!result.canceled && result.assets?.length) {
+                const asset = result.assets[0];
+                setReceiptSlot({
+                    previewUri: asset.uri,
+                    base64: asset.base64 ?? null,
+                    sourceUrl: receiptSlot.sourceUrl ?? null,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to pick receipt from gallery', error);
+            showToast('error', t('common.error'), t('docs.selectionFailedMsg') || 'Could not pick photo.');
+        }
+    };
+
+    const pickReceiptDocument = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: ['application/pdf'],
+                copyToCacheDirectory: true,
+            });
+
+            if (!result.canceled && result.assets?.length) {
+                const asset = result.assets[0];
+
+                // Read PDF file as base64 string
+                const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+                    encoding: 'base64',
+                });
+
+                setReceiptSlot({
+                    previewUri: asset.uri,
+                    base64: base64,
+                    sourceUrl: receiptSlot.sourceUrl ?? null,
+                });
+            }
+        } catch (error) {
+            console.error('Failed to pick receipt document', error);
+            showToast('error', t('common.error'), t('docs.selectionFailedMsg') || 'Could not pick document.');
         }
     };
 
@@ -342,12 +498,22 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
             }
 
             setStep(4);
+            return;
+        }
+
+        if (step === 4) {
+            setStep(5);
         }
     };
 
     const handleSubmit = async () => {
         if (!name.trim() || !price.trim() || !selectedCategoryId || !hasValidCompatibility()) {
             showToast('warning', t('common.missingFields'), t('forms.product.completeRequired'));
+            return;
+        }
+
+        if (!receiptSlot.previewUri && !receiptSlot.sourceUrl) {
+            showToast('warning', t('forms.product.receiptRequiredTitle') || 'Receipt Required', t('forms.product.receiptRequiredMsg') || 'Please upload a purchase receipt or proof of origin.');
             return;
         }
 
@@ -364,6 +530,12 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 })
             );
 
+            let finalReceiptUrl = receiptSlot.sourceUrl;
+            if (receiptSlot.base64) {
+                const isPdf = receiptSlot.previewUri?.toLowerCase().endsWith('.pdf') || false;
+                finalReceiptUrl = await uploadReceipt(receiptSlot.base64, isPdf);
+            }
+
             await onSubmit({
                 name: name.trim(),
                 description: description.trim(),
@@ -375,6 +547,7 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                 image_url_3: uploadedUrls[2] || null,
                 compatible_makes: isUniversal ? [] : selectedMakeNames,
                 compatible_models: isUniversal ? [] : selectedModelNames,
+                receipt_url: finalReceiptUrl || null,
             });
         } catch (error: any) {
             showToast('error', t('common.error'), error?.message || t('forms.product.saveFailed'));
@@ -663,6 +836,67 @@ export default function ProductForm({ screenTitle, submitLabel, initialValues, o
                                 );
                             })}
                         </ScrollView>
+                    </>
+                )}
+
+                {step === 5 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('forms.product.receiptTitle')}</Text>
+                        <Text style={[styles.helperText, { color: colors.textMuted }]}>{t('forms.product.receiptHelp')}</Text>
+
+                        <View style={{ alignItems: 'center', marginTop: Spacing.md }}>
+                            <View style={{ position: 'relative' }}>
+                                <Pressable
+                                    onPress={pickReceipt}
+                                    style={[
+                                        styles.imageSlot,
+                                        {
+                                            width: 280,
+                                            height: 210,
+                                            backgroundColor: colors.backgroundSecondary,
+                                            borderColor: colors.cardBorder,
+                                            borderRadius: BorderRadius.lg,
+                                            justifyContent: 'center',
+                                            alignItems: 'center'
+                                        },
+                                    ]}
+                                >
+                                    <View style={[styles.imagePreview, { backgroundColor: colors.backgroundSecondary, width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }]}>
+                                        {receiptSlot.previewUri || receiptSlot.sourceUrl ? (
+                                            (receiptSlot.previewUri?.toLowerCase().endsWith('.pdf') || receiptSlot.sourceUrl?.toLowerCase().endsWith('.pdf')) ? (
+                                                <View style={{ alignItems: 'center', padding: Spacing.md }}>
+                                                    <MaterialCommunityIcons name="file-pdf-box" size={64} color="#EF4444" />
+                                                    <Text
+                                                        style={{ fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, color: colors.textPrimary, marginTop: Spacing.sm, textAlign: 'center' }}
+                                                        numberOfLines={1}
+                                                    >
+                                                        {getFileName(receiptSlot.previewUri || receiptSlot.sourceUrl)}
+                                                    </Text>
+                                                </View>
+                                            ) : (
+                                                <Image source={{ uri: (receiptSlot.previewUri || receiptSlot.sourceUrl) ?? undefined }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
+                                            )
+                                        ) : (
+                                            <View style={{ alignItems: 'center', padding: Spacing.md }}>
+                                                <MaterialCommunityIcons name="file-document-outline" size={48} color={colors.textMuted} />
+                                                <Text style={{ textAlign: 'center', fontFamily: Fonts.semiBold, fontSize: FontSizes.sm, color: colors.textMuted, marginTop: Spacing.sm }}>{t('forms.product.uploadReceipt')}</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                </Pressable>
+
+                                {(receiptSlot.previewUri || receiptSlot.sourceUrl) && (
+                                    <Pressable
+                                        onPress={() => {
+                                            setReceiptSlot({ previewUri: null, base64: null, sourceUrl: null });
+                                        }}
+                                        style={[styles.imageRemoveButton, { right: -10, top: -10 }]}
+                                    >
+                                        <MaterialCommunityIcons name="close-circle" size={24} color="#EF4444" />
+                                    </Pressable>
+                                )}
+                            </View>
+                        </View>
                     </>
                 )}
 
