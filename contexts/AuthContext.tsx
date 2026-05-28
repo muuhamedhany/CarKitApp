@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
         setToken(data.data.token);
         setUser(data.data.user);
-        return { success: true, message: 'Logged in with Google.' };
+        return { success: true, message: 'Logged in with Google.', user: data.data.user };
       }
       return { success: false, message: data.message || 'Google login failed on server.' };
     } catch {

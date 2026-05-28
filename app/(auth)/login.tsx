@@ -1,5 +1,6 @@
 import {
-  useState } from 'react';
+  useState,
+  useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { textAlign } from '@/utils/rtl';
@@ -37,12 +39,48 @@ export default function LoginScreen() {
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { request, response, promptAsync, getGoogleUser } = useGoogleAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const accessToken = response?.type === 'success' ? response.authentication?.accessToken : null;
+    if (accessToken) {
+      const handleGoogleAuthResponse = async () => {
+        setGoogleLoading(true);
+        const { userInfo, error } = await getGoogleUser(accessToken);
+        if (userInfo) {
+          const result = await loginWithGoogle({
+            id: userInfo.id,
+            name: userInfo.name,
+            email: userInfo.email,
+            picture: userInfo.picture,
+          });
+          setGoogleLoading(false);
+          if (result.success) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            if (result.user?.isNewUser) {
+              router.replace('/add-vehicle-prompt');
+            } else {
+              router.replace('/(tabs)');
+            }
+          } else {
+            showToast('error', t('auth.login.failed'), result.message);
+          }
+        } else {
+          setGoogleLoading(false);
+          showToast('error', t('auth.login.failed'), error || 'Could not fetch Google profile.');
+        }
+      };
+      handleGoogleAuthResponse();
+    } else if (response?.type === 'error' || response?.type === 'cancel') {
+      setGoogleLoading(false);
+    }
+  }, [response]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -77,27 +115,18 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!request) {
+      showToast('error', t('auth.login.failed'), 'Google authentication is not initialized yet.');
+      return;
+    }
     setGoogleLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    setTimeout(async () => {
-      const mockUser = {
-        id: 'mock_google_id_123',
-        name: 'Demo User',
-        email: 'demo@carkit.com',
-        picture: 'https://ui-avatars.com/api/?name=Demo+User&background=random',
-      };
-
-      const result = await loginWithGoogle(mockUser);
+    try {
+      await promptAsync();
+    } catch {
       setGoogleLoading(false);
-
-      if (result.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace('/(tabs)');
-      } else {
-        showToast('error', t('auth.login.failed'), result.message);
-      }
-    }, 1000);
+      showToast('error', t('auth.login.failed'), 'Google authentication failed to launch.');
+    }
   };
 
   return (

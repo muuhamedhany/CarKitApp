@@ -9,6 +9,7 @@ export type User = {
   vendor_id?: number;
   provider_id?: number;
   picture?: string;
+  isNewUser?: boolean;
 };
 
 export type Category = {

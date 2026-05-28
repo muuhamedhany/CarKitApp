@@ -12,6 +12,7 @@ import { ActivityIndicator,
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,6 +36,14 @@ type ImageSlot = {
     base64: string | null;
 };
 
+const PRESET_TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+
+const LOCATION_OPTIONS: { key: 'both' | 'mobile' | 'in-shop'; label: string }[] = [
+    { key: 'both', label: 'Both' },
+    { key: 'mobile', label: 'Mobile' },
+    { key: 'in-shop', label: 'In-Shop' },
+];
+
 const createImageSlots = (): ImageSlot[] =>
     Array.from({ length: 3 }, () => ({ previewUri: null, base64: null }));
 
@@ -55,6 +64,7 @@ export default function AddServiceScreen() {
     const { showToast } = useToast();
     const { language } = useTranslation();
 
+    const { width } = useWindowDimensions();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
@@ -65,6 +75,14 @@ export default function AddServiceScreen() {
     const [imageSlots, setImageSlots] = useState<ImageSlot[]>(createImageSlots());
     const [submitting, setSubmitting] = useState(false);
     const [step, setStep] = useState(1);
+    const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+    const [locationType, setLocationType] = useState<'both' | 'mobile' | 'in-shop'>('both');
+
+    const toggleTimeSlot = (time: string) => {
+        setAvailableTimes((prev) =>
+            prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time].sort()
+        );
+    };
 
     useEffect(() => {
         let mounted = true;
@@ -133,10 +151,6 @@ export default function AddServiceScreen() {
             return false;
         }
 
-        return true;
-    };
-
-    const validateDetailsStep = () => {
         const parsedPrice = Number(price);
         const parsedDuration = Number(duration);
 
@@ -147,6 +161,15 @@ export default function AddServiceScreen() {
 
         if (!Number.isInteger(parsedDuration) || parsedDuration < 5 || parsedDuration > 1440) {
             showToast('warning', 'Invalid Duration', 'Enter a duration between 5 and 1440 minutes.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const validateDetailsStep = () => {
+        if (availableTimes.length === 0) {
+            showToast('warning', 'Time Slot Required', 'Please select at least one available time slot.');
             return false;
         }
 
@@ -185,8 +208,8 @@ export default function AddServiceScreen() {
                 image_url_2: uploadedUrls[1] || null,
                 image_url_3: uploadedUrls[2] || null,
                 is_active: true,
-                location_type: 'both',
-                available_times: [],
+                location_type: locationType,
+                available_times: availableTimes,
             });
 
             if (res.success) {
@@ -288,12 +311,7 @@ export default function AddServiceScreen() {
                             </ScrollView>
                         )}
 
-                    </>
-                )}
-
-                {step === 2 && (
-                    <>
-                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Timing</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Pricing & Timing</Text>
                         <View style={styles.row}>
                             <View style={styles.halfWidth}>
                                 <FormInput
@@ -317,6 +335,61 @@ export default function AddServiceScreen() {
                             </View>
                         </View>
                         <Text style={[styles.helperText, { color: colors.textMuted }]}>Duration is entered in minutes.</Text>
+
+                    </>
+                )}
+
+                {step === 2 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Time Slots:</Text>
+                        <View style={styles.gridContainer}>
+                            {PRESET_TIME_SLOTS.map((time) => {
+                                const isSelected = availableTimes.includes(time);
+                                const slotWidth = (width - Spacing.md * 2 - 24) / 3;
+                                return (
+                                    <Pressable
+                                        key={time}
+                                        onPress={() => toggleTimeSlot(time)}
+                                        style={[
+                                            styles.slotChip,
+                                            {
+                                                width: slotWidth,
+                                                backgroundColor: isSelected ? colors.pink + '20' : colors.backgroundSecondary,
+                                                borderColor: isSelected ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={[styles.slotText, { color: isSelected ? colors.textPrimary : colors.textMuted }]}>
+                                            {time}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: Spacing.md }]}>Location:</Text>
+                        <View style={styles.locationRow}>
+                            {LOCATION_OPTIONS.map((opt) => {
+                                const isSelected = locationType === opt.key;
+                                return (
+                                    <Pressable
+                                        key={opt.key}
+                                        onPress={() => setLocationType(opt.key)}
+                                        style={[
+                                            styles.locationButton,
+                                            {
+                                                backgroundColor: isSelected ? colors.pink + '20' : colors.backgroundSecondary,
+                                                borderColor: isSelected ? colors.pink : colors.cardBorder,
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={[styles.locationButtonText, { color: isSelected ? colors.textPrimary : colors.textMuted }]}>
+                                            {opt.label}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
                     </>
                 )}
 
@@ -561,5 +634,39 @@ const styles = StyleSheet.create({
     },
     primaryButtonWrapper: {
         flex: 1,
+    },
+    gridContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        marginBottom: Spacing.lg,
+    },
+    slotChip: {
+        height: 48,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    slotText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
+    },
+    locationRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: Spacing.lg,
+    },
+    locationButton: {
+        flex: 1,
+        height: 50,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    locationButtonText: {
+        fontFamily: Fonts.semiBold,
+        fontSize: FontSizes.md,
     },
 });
