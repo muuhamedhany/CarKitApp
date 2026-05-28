@@ -21,6 +21,7 @@ import { Spacing, FontSizes, BorderRadius, Fonts, Shadows } from '@/constants/th
 import { rowDirection, textAlign } from '@/utils/rtl';
 import Text from '@/components/common/LocalizedText';
 import MapLocationPicker, { MapPickerResult } from '@/components/MapLocationPicker';
+import { authService } from '@/services/api/auth.service';
 
 
 export default function SignUpVendorScreen() {
@@ -41,6 +42,7 @@ export default function SignUpVendorScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleMapResult = (result: MapPickerResult) => {
     if (result.street) {
@@ -71,6 +73,24 @@ export default function SignUpVendorScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
+
+    setLoading(true);
+    try {
+      const response = await authService.validateUnique(email.trim(), phone.trim());
+      if (!response.success) {
+        showToast('error', t('auth.signup.failed'), response.message);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setLoading(false);
+        return;
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast('error', t('auth.signup.failed'), 'Failed to validate email and phone number.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({
@@ -248,6 +268,7 @@ export default function SignUpVendorScreen() {
               <GradientButton 
                 title={t('auth.signup.registerBusiness')}
                 onPress={handleContinue} 
+                loading={loading}
                 style={{...styles.continueBtn,  width: '100%'}}
               />
             </GlassView>

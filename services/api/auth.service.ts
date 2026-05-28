@@ -55,5 +55,14 @@ export const authService = {
       body: JSON.stringify({ email, otp, newPassword }),
     });
     return response.json();
+  },
+
+  async validateUnique(email: string, phone: string) {
+    const response = await fetch(`${API_URL}/auth/validate-unique`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone }),
+    });
+    return response.json();
   }
 };

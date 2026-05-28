@@ -54,8 +54,8 @@ export default function AdPaymentScreen() {
 
   const bannerUrl = params.banner_image_url || '';
   const title = params.title || '';
-  const durationDays = Number(params.duration_days) as 7 | 14 | 30;
-  const price = Number(params.price);
+  const durationDays = (Number(String(params.duration_days || '').replace(/\D/g, '')) || 7) as 7 | 14 | 30;
+  const price = Number(params.price || 0);
 
   const durationLabel =
     durationDays === 7  ? '7 Days'  :
