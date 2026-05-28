@@ -79,7 +79,7 @@ export default function CreateAdScreen() {
         params: {
           banner_image_url: bannerUrl,
           title,
-          duration_days: selectedTier.duration,
+          duration_days: selectedTier.duration.replace(/\D/g, ''),
           price: selectedTier.price,
         },
       });

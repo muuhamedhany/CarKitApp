@@ -34,8 +34,28 @@ import Text from '@/components/common/LocalizedText';
 
 type CardBrand = 'visa' | 'mastercard' | 'amex' | 'discover' | 'card';
 
+const detectBrand = (digits: string): CardBrand => {
+    if (/^4/.test(digits)) return 'visa';
+    if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'mastercard';
+    if (/^3[47]/.test(digits)) return 'amex';
+    if (/^(6011|65|64[4-9])/.test(digits)) return 'discover';
+    return 'card';
+};
+
 const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 16);
+    const cleanDigits = value.replace(/\D/g, '');
+    const brand = detectBrand(cleanDigits);
+    const maxLen = brand === 'amex' ? 15 : 19;
+    const digits = cleanDigits.slice(0, maxLen);
+    
+    if (brand === 'amex') {
+        const part1 = digits.slice(0, 4);
+        const part2 = digits.slice(4, 10);
+        const part3 = digits.slice(10, 15);
+        if (digits.length <= 4) return part1;
+        if (digits.length <= 10) return `${part1} ${part2}`;
+        return `${part1} ${part2} ${part3}`;
+    }
     return digits.replace(/(.{4})/g, '$1 ').trim();
 };
 
@@ -59,14 +79,6 @@ const parseExpiry = (value: string) => {
     if (year < currentYear || (year === currentYear && month < currentMonth)) return null;
 
     return { month, year };
-};
-
-const detectBrand = (digits: string): CardBrand => {
-    if (/^4/.test(digits)) return 'visa';
-    if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(digits)) return 'mastercard';
-    if (/^3[47]/.test(digits)) return 'amex';
-    if (/^(6011|65|64[4-9])/.test(digits)) return 'discover';
-    return 'card';
 };
 
 const brandLabel = (brand: string) => {
@@ -136,9 +148,67 @@ export default function PaymentsScreen() {
     const cardDigits = useMemo(() => cardNumber.replace(/\D/g, ''), [cardNumber]);
     const parsedExpiry = useMemo(() => parseExpiry(expiry), [expiry]);
     const detectedBrand = useMemo(() => detectBrand(cardDigits), [cardDigits]);
-    const cardIsValid = cardDigits.length === 16;
-    const cvvIsValid = /^\d{3}$/.test(cvv.trim());
+
+    const cardIsValid = useMemo(() => {
+        const len = cardDigits.length;
+        if (detectedBrand === 'amex') return len === 15;
+        if (detectedBrand === 'card') return len >= 13 && len <= 19;
+        return len === 16;
+    }, [cardDigits, detectedBrand]);
+
+    const cvvIsValid = useMemo(() => {
+        const cleanCvv = cvv.trim();
+        if (detectedBrand === 'amex') return /^\d{4}$/.test(cleanCvv);
+        if (detectedBrand === 'card') return /^\d{3,4}$/.test(cleanCvv);
+        return /^\d{3}$/.test(cleanCvv);
+    }, [cvv, detectedBrand]);
+
     const canSave = holderName.trim().length >= 2 && cardIsValid && Boolean(parsedExpiry) && cvvIsValid && !saving;
+
+    const holderNameError = useMemo(() => {
+        if (!holderName) return null;
+        if (holderName.trim().length < 2) return 'Name must be at least 2 characters';
+        return null;
+    }, [holderName]);
+
+    const cardNumberError = useMemo(() => {
+        if (!cardNumber) return null;
+        const len = cardDigits.length;
+        if (detectedBrand === 'amex') {
+            if (len !== 15) return 'Amex card must have 15 digits';
+        } else if (detectedBrand === 'card') {
+            if (len < 13 || len > 19) return 'Card number must be between 13 and 19 digits';
+        } else {
+            if (len !== 16) return `${brandLabel(detectedBrand)} card must have 16 digits`;
+        }
+        return null;
+    }, [cardNumber, cardDigits, detectedBrand]);
+
+    const expiryError = useMemo(() => {
+        if (!expiry) return null;
+        if (expiry.length < 5) return 'Expiry must be MM/YY';
+        if (!parsedExpiry) {
+            const match = expiry.match(/^(\d{2})\/(\d{2})$/);
+            if (!match) return 'Format must be MM/YY';
+            const month = Number(match[1]);
+            if (month < 1 || month > 12) return 'Month must be between 01 and 12';
+            return 'Card has expired';
+        }
+        return null;
+    }, [expiry, parsedExpiry]);
+
+    const cvvError = useMemo(() => {
+        if (!cvv) return null;
+        const len = cvv.trim().length;
+        if (detectedBrand === 'amex') {
+            if (len !== 4) return 'Amex CVV must have 4 digits';
+        } else if (detectedBrand === 'card') {
+            if (len !== 3 && len !== 4) return 'CVV must have 3 or 4 digits';
+        } else {
+            if (len !== 3) return 'CVV must have 3 digits';
+        }
+        return null;
+    }, [cvv, detectedBrand]);
 
     const resetForm = useCallback(() => {
         setHolderName('');
@@ -383,6 +453,8 @@ export default function PaymentsScreen() {
                     autoCapitalize="words"
                     autoComplete="name"
                 />
+                {holderNameError && <Text style={styles.errorText}>{holderNameError}</Text>}
+
                 <FormInput
                     label="Card Number"
                     icon="credit-card-outline"
@@ -390,8 +462,10 @@ export default function PaymentsScreen() {
                     value={cardNumber}
                     onChangeText={(value) => setCardNumber(formatCardNumber(value))}
                     keyboardType="number-pad"
-                    maxLength={19}
+                    maxLength={detectedBrand === 'amex' ? 17 : 24}
                 />
+                {cardNumberError && <Text style={styles.errorText}>{cardNumberError}</Text>}
+
                 <FormInput
                     label="Expiry"
                     icon="calendar-month-outline"
@@ -401,15 +475,21 @@ export default function PaymentsScreen() {
                     keyboardType="number-pad"
                     maxLength={5}
                 />
+                {expiryError && <Text style={styles.errorText}>{expiryError}</Text>}
+
                 <FormInput
                     label="CVV"
                     icon="shield-lock-outline"
                     placeholder="CVV"
                     value={cvv}
-                    onChangeText={(value) => setCvv(value.replace(/\D/g, '').slice(0, 3))}
+                    onChangeText={(value) => {
+                        const maxCvvLen = detectedBrand === 'amex' || detectedBrand === 'card' ? 4 : 3;
+                        setCvv(value.replace(/\D/g, '').slice(0, maxCvvLen));
+                    }}
                     keyboardType="number-pad"
-                    maxLength={3}
+                    maxLength={detectedBrand === 'amex' || detectedBrand === 'card' ? 4 : 3}
                 />
+                {cvvError && <Text style={styles.errorText}>{cvvError}</Text>}
 
                 <Pressable
                     style={[styles.defaultToggle, { borderColor: makeDefault ? colors.pink : colors.cardBorder, backgroundColor: makeDefault ? colors.pink + '10' : 'transparent' }]}
@@ -764,5 +844,13 @@ const styles = StyleSheet.create({
     historyEmptyText: {
         fontFamily: Fonts.bold,
         fontSize: FontSizes.sm,
+    },
+    errorText: {
+        color: '#EF4444',
+        fontSize: 11,
+        fontFamily: Fonts.bold,
+        marginTop: -4,
+        marginBottom: Spacing.xs,
+        paddingHorizontal: 4,
     },
 });

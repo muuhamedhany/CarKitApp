@@ -1,5 +1,6 @@
 import {
-  useTheme } from '@/hooks/useTheme';
+  useTheme
+} from '@/hooks/useTheme';
 import { useState } from 'react';
 import {
   View,
@@ -17,7 +18,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useToast } from '@/contexts/ToastContext';
-import { CenteredHeader, GradientButton, GlassView} from '@/components';
+import { CenteredHeader, GradientButton, GlassView } from '@/components';
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -293,10 +294,11 @@ export default function UploadDocumentsScreen() {
         type: 'success',
         buttons: [{ text: t('docs.backToLogin'), onPress: () => router.replace('/login') }],
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast('error', t('docs.submitFailed'), t('docs.submitFailedMsg'));
+      const serverMsg = error.response?.data?.message || t('docs.submitFailedMsg');
+      showToast('error', t('docs.submitFailed'), serverMsg);
     } finally {
       setLoading(false);
     }
@@ -366,7 +368,7 @@ export default function UploadDocumentsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.uploadButton,
-              { 
+              {
                 backgroundColor: hasFile ? 'rgba(76, 175, 80, 0.05)' : colors.pink + '10',
                 borderColor: hasFile ? 'rgba(76, 175, 80, 0.3)' : colors.pink + '30',
                 opacity: pressed ? 0.7 : 1
@@ -394,7 +396,7 @@ export default function UploadDocumentsScreen() {
         colors={[colors.bgGradientStart, colors.bgGradientEnd]}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {/* Decorative Orbs */}
       <View style={[styles.orb, { top: -100, left: -50, backgroundColor: colors.pink + '20' }]} />
       <View style={[styles.orb, { bottom: -100, right: -50, backgroundColor: colors.purple + '15' }]} />
