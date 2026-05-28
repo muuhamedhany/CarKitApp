@@ -1,5 +1,6 @@
 import {
-  useState } from 'react';
+  useState,
+  useEffect } from 'react';
 import { View,
   StyleSheet,
   ScrollView,
@@ -15,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { FormInput, GradientButton, AuthFooter, SocialButton, Divider, CenteredHeader, GlassView } from '@/components';
 import { Spacing, FontSizes, Fonts, BorderRadius, Shadows } from '@/constants/theme';
 import { textAlign } from '@/utils/rtl';
@@ -23,10 +25,11 @@ import Text from '@/components/common/LocalizedText';
 
 export default function SignUpCustomerScreen() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useTranslation();
+  const { request, response, promptAsync, getGoogleUser } = useGoogleAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,6 +39,38 @@ export default function SignUpCustomerScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const accessToken = response?.type === 'success' ? response.authentication?.accessToken : null;
+    if (accessToken) {
+      const handleGoogleAuthResponse = async () => {
+        setGoogleLoading(true);
+        const { userInfo, error } = await getGoogleUser(accessToken);
+        if (userInfo) {
+          const result = await loginWithGoogle({
+            id: userInfo.id,
+            name: userInfo.name,
+            email: userInfo.email,
+            picture: userInfo.picture,
+          });
+          setGoogleLoading(false);
+          if (result.success) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace('/add-vehicle-prompt');
+          } else {
+            showToast('error', t('auth.signup.failed'), result.message);
+          }
+        } else {
+          setGoogleLoading(false);
+          showToast('error', t('auth.signup.failed'), error || 'Could not fetch Google profile.');
+        }
+      };
+      handleGoogleAuthResponse();
+    } else if (response?.type === 'error' || response?.type === 'cancel') {
+      setGoogleLoading(false);
+    }
+  }, [response]);
 
   const handleSignUp = async () => {
     if (!name.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
@@ -64,6 +99,21 @@ export default function SignUpCustomerScreen() {
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       showToast('error', t('auth.signup.failed'), result.message);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    if (!request) {
+      showToast('error', t('auth.signup.failed'), 'Google authentication is not initialized yet.');
+      return;
+    }
+    setGoogleLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await promptAsync();
+    } catch {
+      setGoogleLoading(false);
+      showToast('error', t('auth.signup.failed'), 'Google authentication failed to launch.');
     }
   };
 
@@ -166,10 +216,8 @@ export default function SignUpCustomerScreen() {
 
               <SocialButton
                 provider="google"
-                actionText={t('auth.signup.google')}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                }}
+                actionText={googleLoading ? t('auth.login.signingIn') : t('auth.signup.google')}
+                onPress={handleGoogleSignUp}
               />
             </GlassView>
           </Animated.View>
