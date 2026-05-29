@@ -15,16 +15,21 @@ import {
   StyleSheet,
   TextInput,
   View,
+  Image,
+  Alert,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { CenteredHeader, FormInput, GlassView, GradientButton, OutlinedButton } from '@/components';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
-import { userService } from '@/services/api';
+import { userService, vendorService } from '@/services/api';
+import { providerService } from '@/services/api/provider.service';
 import Text from '@/components/common/LocalizedText';
 
 const { width, height } = Dimensions.get('window');
@@ -40,6 +45,8 @@ export default function EditProfileScreen() {
   const [phone, setPhone] = useState(user?.phone || '');
   const [loading, setLoading] = useState(false);
   const [initialFetch, setInitialFetch] = useState(true);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -48,16 +55,140 @@ export default function EditProfileScreen() {
         setName(res.data.name || '');
         setPhone(res.data.phone || '');
       }
+
+      if (user?.role === 'vendor' && user?.vendor_id) {
+        const vendorRes = await vendorService.getVendorById(user.vendor_id);
+        if (vendorRes.success && vendorRes.data) {
+          setProfilePhotoUrl(vendorRes.data.profile_photo_url || null);
+        }
+      } else if (user?.role === 'provider' && user?.provider_id) {
+        const providerRes = await providerService.getProviderById(user.provider_id);
+        if (providerRes.success && providerRes.data) {
+          setProfilePhotoUrl(providerRes.data.profile_photo_url || null);
+        }
+      }
     } catch (e) {
       console.log('Profile fetch error', e);
     } finally {
       setInitialFetch(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  const handlePickImage = () => {
+    Alert.alert(
+      'Profile Photo',
+      'Choose source for profile photo:',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Gallery', onPress: chooseFromLibrary },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const takePhoto = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!cameraPermission.granted) {
+        Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        uploadPhoto(result.assets[0].uri, result.assets[0].fileName || 'photo.jpg');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('error', 'Selection Failed', 'Failed to capture photo.');
+    }
+  };
+
+  const chooseFromLibrary = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!libraryPermission.granted) {
+        Alert.alert('Permission Denied', 'Gallery permission is required to choose photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        const fileName = asset.fileName || asset.uri.split('/').pop() || 'photo.jpg';
+        uploadPhoto(asset.uri, fileName);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('error', 'Selection Failed', 'Failed to select photo.');
+    }
+  };
+
+  const uploadPhoto = async (uri: string, fileName: string) => {
+    setUploadingPhoto(true);
+    try {
+      const fileExt = fileName.split('.').pop() || 'jpg';
+      const newFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `profile_photos/${newFileName}`;
+      const contentType = 'image/jpeg';
+
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !anonKey) {
+        throw new Error('Supabase Config Missing');
+      }
+
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/documents/${filePath}`;
+
+      const response = await FileSystem.uploadAsync(uploadUrl, uri, {
+        httpMethod: 'POST',
+        headers: {
+          Authorization: `Bearer ${anonKey}`,
+          apikey: anonKey,
+          'Content-Type': contentType,
+        },
+      });
+
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const { supabase } = await import('@/lib/supabase');
+      const { data: publicUrlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      if (publicUrlData?.publicUrl) {
+        setProfilePhotoUrl(publicUrlData.publicUrl);
+        showToast('success', 'Photo Uploaded', 'Profile photo uploaded successfully.');
+      } else {
+        throw new Error('Could not get public URL');
+      }
+    } catch (e: any) {
+      console.error('Photo Upload Error', e);
+      showToast('error', 'Upload Failed', e.message || 'Failed to upload profile photo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -69,6 +200,23 @@ export default function EditProfileScreen() {
     try {
       const res = await userService.updateUser({ name, phone });
       if (res.success) {
+        if (user?.role === 'vendor') {
+          const vendorRes = await vendorService.updateVendorProfile({
+            name,
+            profile_photo_url: profilePhotoUrl
+          });
+          if (!vendorRes.success) {
+            showToast('warning', 'Store Update Failed', vendorRes.message || 'Could not update vendor details.');
+          }
+        } else if (user?.role === 'provider') {
+          const providerRes = await providerService.updateProviderProfile({
+            name,
+            profile_photo_url: profilePhotoUrl
+          });
+          if (!providerRes.success) {
+            showToast('warning', 'Provider Update Failed', providerRes.message || 'Could not update provider details.');
+          }
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showToast('success', 'Profile Updated', 'Your profile info has been saved.');
         router.back();
@@ -110,6 +258,48 @@ export default function EditProfileScreen() {
             title="Edit Profile"
             titleColor={colors.textPrimary}
           />
+
+          {/* Avatar Section */}
+          {(user?.role === 'vendor' || user?.role === 'provider') && (
+            <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.avatarSection}>
+              <Pressable
+                onPress={handlePickImage}
+                style={({ pressed }) => [
+                  styles.avatarWrapper,
+                  styles.avatarGlow,
+                  { shadowColor: colors.pink, opacity: pressed || uploadingPhoto ? 0.8 : 1 }
+                ]}
+                disabled={uploadingPhoto}
+              >
+                <LinearGradient
+                  colors={[colors.pink, colors.purple]}
+                  style={styles.avatarRing}
+                >
+                  <View style={[styles.avatarContainer, { borderColor: colors.surface }]}>
+                    {uploadingPhoto ? (
+                      <View style={[styles.avatarGradient, { backgroundColor: colors.surfaceMuted }]}>
+                        <ActivityIndicator size="small" color={colors.pink} />
+                      </View>
+                    ) : profilePhotoUrl ? (
+                      <Image source={{ uri: profilePhotoUrl }} style={{ width: '100%', height: '100%' }} />
+                    ) : (
+                      <LinearGradient
+                        colors={[colors.pink + '40', colors.purple + '40']}
+                        style={styles.avatarGradient}
+                      >
+                        <Text style={styles.avatarInitial}>
+                          {(name || 'U').charAt(0).toUpperCase()}
+                        </Text>
+                      </LinearGradient>
+                    )}
+                  </View>
+                </LinearGradient>
+                <View style={[styles.editBadge, { backgroundColor: colors.pink, borderColor: colors.surface }]}>
+                  <MaterialCommunityIcons name="camera-outline" size={18} color="#FFF" />
+                </View>
+              </Pressable>
+            </Animated.View>
+          )}
 
           {/* Form Section */}
           <Animated.View entering={FadeInDown.delay(200).springify()}>

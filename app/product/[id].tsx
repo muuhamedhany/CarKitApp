@@ -53,6 +53,7 @@ type ProductDetail = {
   category_name: string;
   vendor_name: string;
   vendor_id_fk?: number;
+  vendor_profile_photo?: string | null;
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
@@ -318,9 +319,13 @@ export default function ProductDetailScreen() {
                 style={[styles.vendorRow, { borderTopColor: colors.cardBorder }]}
                 onPress={() => product.vendor_id_fk && router.push(`/vendor/${product.vendor_id_fk}`)}
               >
-                <View style={[styles.vendorIconWrap, { backgroundColor: colors.backgroundSecondary }]}>
-                  <MaterialCommunityIcons name="storefront-outline" size={18} color={colors.pink} />
-                </View>
+                {product.vendor_profile_photo ? (
+                  <Image source={{ uri: product.vendor_profile_photo }} style={styles.vendorIconWrap} />
+                ) : (
+                  <View style={[styles.vendorIconWrap, { backgroundColor: colors.backgroundSecondary }]}>
+                    <MaterialCommunityIcons name="storefront-outline" size={18} color={colors.pink} />
+                  </View>
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.vendorLabel, { color: colors.textSecondary }]}>Sold by</Text>
                   <Text style={[styles.vendorName, { color: colors.textPrimary }]}>{product.vendor_name || 'Official Store'}</Text>

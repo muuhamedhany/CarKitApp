@@ -15,6 +15,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Image,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -121,14 +122,21 @@ export default function VendorPublicProfileScreen() {
         {/* Premium Hero Section */}
         <Animated.View entering={FadeInDown.duration(800)} style={styles.heroSection}>
           <View style={[styles.avatarGlow, { shadowColor: colors.pink }]}>
-            <LinearGradient
-              colors={[colors.pink, colors.purple]}
-              style={styles.avatarGradient}
-            >
-              <Text style={styles.avatarText}>
-                {(vendor.name || 'V').charAt(0).toUpperCase()}
-              </Text>
-            </LinearGradient>
+            {vendor.profile_photo_url ? (
+              <Image
+                source={{ uri: vendor.profile_photo_url }}
+                style={[styles.avatarGradient, { borderWidth: 4, borderColor: 'rgba(255,255,255,0.2)' }]}
+              />
+            ) : (
+              <LinearGradient
+                colors={[colors.pink, colors.purple]}
+                style={styles.avatarGradient}
+              >
+                <Text style={styles.avatarText}>
+                  {(vendor.name || 'V').charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+            )}
             <View style={[styles.verifiedBadge, { backgroundColor: colors.success }]}>
               <MaterialCommunityIcons name="check" size={14} color="#FFF" />
             </View>
