@@ -221,7 +221,7 @@ function AlertDialog({
     <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
       <Pressable style={styles.alertOverlay} onPress={() => handlePress({ text: 'dismiss' })}>
         <Animated.View style={[styles.alertDialog, animatedDialogStyle, { backgroundColor: colors.surfaceElevated, borderColor: colors.accentBorder, shadowColor: colors.shadowColor }]}>
-          <Pressable>
+          <Pressable style={styles.alertContent}>
             {/* Icon */}
             <View style={[styles.alertIconContainer, { backgroundColor: config.bgGlow }]}>
               <MaterialCommunityIcons
@@ -418,6 +418,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 24,
     elevation: 20,
+  },
+  alertContent: {
+    alignItems: 'center',
+    width: '100%',
   },
   alertIconContainer: {
     width: 72,
