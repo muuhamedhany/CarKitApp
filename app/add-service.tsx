@@ -36,7 +36,19 @@ type ImageSlot = {
     base64: string | null;
 };
 
-const PRESET_TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+const PRESET_TIME_SLOTS = [
+  '09:00', '10:00', '11:00', '12:00', '13:00', '14:00',
+  '15:00', '16:00', '17:00', '18:00', '19:00', '20:00',
+  '21:00', '22:00', '23:00',
+];
+
+const formatSlotLabel = (time: string): string => {
+  const [h, m] = time.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return time;
+  const period = h < 12 ? 'AM' : 'PM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+};
 
 const LOCATION_OPTIONS: { key: 'both' | 'mobile' | 'in-shop'; label: string }[] = [
     { key: 'both', label: 'Both' },
@@ -360,7 +372,7 @@ export default function AddServiceScreen() {
                                         ]}
                                     >
                                         <Text style={[styles.slotText, { color: isSelected ? colors.textPrimary : colors.textMuted }]}>
-                                            {time}
+                                            {formatSlotLabel(time)}
                                         </Text>
                                     </Pressable>
                                 );
