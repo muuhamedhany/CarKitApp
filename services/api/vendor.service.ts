@@ -99,4 +99,19 @@ export const vendorService = {
             throw error;
         }
     },
+
+    async updateVendorProfile(payload: {
+        name?: string;
+        contact_info?: string;
+        profile_photo_url?: string | null;
+        workshop_address?: string;
+        workshop_latitude?: number | null;
+        workshop_longitude?: number | null;
+        installation_duration_minutes?: number;
+    }) {
+        return apiFetch<ApiResponse<any>>('/vendors/me', {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    },
 };

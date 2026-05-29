@@ -51,6 +51,7 @@ type ServiceDetail = {
   category_name: string;
   provider_name: string;
   provider_id_fk?: number;
+  provider_profile_photo?: string | null;
   image_url: string | null;
   image_url_2: string | null;
   image_url_3: string | null;
@@ -299,9 +300,13 @@ export default function ServiceDetailScreen() {
                 style={[styles.providerRow, { borderTopColor: colors.cardBorder }]}
                 onPress={() => service.provider_id_fk && router.push(`/provider/${service.provider_id_fk}`)}
               >
-                <View style={[styles.providerIconWrap, { backgroundColor: colors.backgroundSecondary }]}>
-                  <MaterialCommunityIcons name="shield-star-outline" size={18} color={colors.pink} />
-                </View>
+                {service.provider_profile_photo ? (
+                  <Image source={{ uri: service.provider_profile_photo }} style={styles.providerIconWrap} />
+                ) : (
+                  <View style={[styles.providerIconWrap, { backgroundColor: colors.backgroundSecondary }]}>
+                    <MaterialCommunityIcons name="shield-star-outline" size={18} color={colors.pink} />
+                  </View>
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.providerLabel, { color: colors.textSecondary }]}>{t('service.providedBy')}</Text>
                   <Text style={[styles.providerName, { color: colors.textPrimary }]}>{service.provider_name || t('service.verifiedPartner')}</Text>

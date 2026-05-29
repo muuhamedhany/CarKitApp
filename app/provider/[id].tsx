@@ -15,6 +15,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  Image,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -120,12 +121,19 @@ export default function ProviderPublicProfileScreen() {
         {/* Premium Hero Section */}
         <Animated.View entering={FadeInDown.duration(800)} style={styles.heroSection}>
           <View style={[styles.avatarGlow, { shadowColor: colors.purple }]}>
-            <LinearGradient
-              colors={[colors.purple, colors.pink]}
-              style={styles.avatarGradient}
-            >
-              <MaterialCommunityIcons name="account-cog" size={48} color="#FFF" />
-            </LinearGradient>
+            {provider.profile_photo_url ? (
+              <Image
+                source={{ uri: provider.profile_photo_url }}
+                style={[styles.avatarGradient, { borderWidth: 4, borderColor: 'rgba(255,255,255,0.2)' }]}
+              />
+            ) : (
+              <LinearGradient
+                colors={[colors.purple, colors.pink]}
+                style={styles.avatarGradient}
+              >
+                <MaterialCommunityIcons name="account-cog" size={48} color="#FFF" />
+              </LinearGradient>
+            )}
             <View style={[styles.verifiedBadge, { backgroundColor: colors.success }]}>
               <MaterialCommunityIcons name="check-decagram" size={14} color="#FFF" />
             </View>

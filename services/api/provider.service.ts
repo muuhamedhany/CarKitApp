@@ -162,4 +162,15 @@ export const providerService = {
             throw error;
         }
     },
+
+    async updateProviderProfile(payload: {
+        name?: string;
+        contact_info?: string;
+        profile_photo_url?: string | null;
+    }) {
+        return apiFetch<ApiResponse<any>>('/service-providers/me', {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    },
 };

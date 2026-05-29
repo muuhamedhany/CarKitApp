@@ -33,6 +33,7 @@ export type Product = {
   category_name?: string;
   vendor_id_fk?: number | null;
   vendor_name?: string;
+  vendor_profile_photo?: string | null;
   workshop_address?: string | null;
   workshop_latitude?: number | null;
   workshop_longitude?: number | null;
@@ -133,6 +134,7 @@ export type Vendor = {
   contact_info?: string | null;
   verification_status?: string;
   user_id_fk?: number;
+  profile_photo_url?: string | null;
 };
 
 export type ServiceProvider = {
@@ -141,6 +143,7 @@ export type ServiceProvider = {
   contact_info?: string | null;
   verification_status?: string;
   user_id_fk?: number;
+  profile_photo_url?: string | null;
 };
 
 export type VendorPublicProfile = Vendor & {
@@ -351,6 +354,7 @@ export type Service = {
   category_name?: string;
   provider_id_fk?: number;
   provider_name?: string;
+  provider_profile_photo?: string | null;
   image_url?: string | null;
   image_url_2?: string | null;
   image_url_3?: string | null;
