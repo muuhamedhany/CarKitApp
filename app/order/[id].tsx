@@ -832,46 +832,65 @@ export default function OrderDetailScreen() {
                         )}
                     </View>
                 ) : (
-                    <View style={styles.actionsContainer}>
-                        <GradientButton
-                            title={t('common.support')}
-                            onPress={() => router.push('/support' as any)}
-                            style={{ flex: 1 }}
-                            icon="chat-question-outline"
-                        />
-                        {canCustomerCancel(order.status) ? (
-                            <OutlinedButton
-                                title={t('order.details.cancelOrder')}
-                                onPress={handleCustomerCancelOrder}
-                                disabled={updatingStatus}
-                                textColor={colors.error}
-                                borderColor={colors.error}
-                                style={{ flex: 1 }}
-                            />
-                        ) : null}
-                        {normalizeStatus(order.status) === 'delivered' && !isReviewed ? (
-                            <GradientButton
-                                title={t('common.rate')}
-                                onPress={() => setReviewModalVisible(true)}
-                                style={{ flex: 1 }}
-                                icon="star-outline"
-                            />
-                        ) : isReviewed ? (
-                            <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
-                                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
-                                <Text style={[styles.reviewedText, { color: colors.success }]}>{t('common.reviewed')}</Text>
+                    <View style={styles.customerActionsContainer}>
+                        {normalizeStatus(order.status) === 'delivered' ? (
+                            <View style={styles.stackedActions}>
+                                {/* Primary Action: Rate or Reviewed badge */}
+                                {!isReviewed ? (
+                                    <GradientButton
+                                        title={t('common.rate')}
+                                        onPress={() => setReviewModalVisible(true)}
+                                        style={{ width: '100%' }}
+                                        icon="star-outline"
+                                    />
+                                ) : (
+                                    <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20', width: '100%' }]}>
+                                        <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
+                                        <Text style={[styles.reviewedText, { color: colors.success }]}>{t('common.reviewed')}</Text>
+                                    </View>
+                                )}
+
+                                {/* Secondary Actions: Support and Return Order (if eligible) */}
+                                <View style={styles.rowActions}>
+                                    <GradientButton
+                                        title={t('common.support')}
+                                        onPress={() => router.push('/support' as any)}
+                                        style={{ flex: 1 }}
+                                        icon="chat-question-outline"
+                                    />
+                                    {isEligibleForReturn ? (
+                                        <OutlinedButton
+                                            title={t('order.details.returnOrder')}
+                                            onPress={handleReturnOrder}
+                                            disabled={updatingStatus}
+                                            textColor={colors.warning}
+                                            borderColor={colors.warning}
+                                            style={{ flex: 1 }}
+                                        />
+                                    ) : null}
+                                </View>
                             </View>
-                        ) : null}
-                        {isEligibleForReturn ? (
-                            <OutlinedButton
-                                title={t('order.details.returnOrder')}
-                                onPress={handleReturnOrder}
-                                disabled={updatingStatus}
-                                textColor={colors.warning}
-                                borderColor={colors.warning}
-                                style={{ flex: 1 }}
-                            />
-                        ) : null}
+                        ) : (
+                            /* Non-delivered orders: standard row layout with Support + Cancel Order (if pending) */
+                            <View style={styles.rowActions}>
+                                <GradientButton
+                                    title={t('common.support')}
+                                    onPress={() => router.push('/support' as any)}
+                                    style={{ flex: 1 }}
+                                    icon="chat-question-outline"
+                                />
+                                {canCustomerCancel(order.status) ? (
+                                    <OutlinedButton
+                                        title={t('order.details.cancelOrder')}
+                                        onPress={handleCustomerCancelOrder}
+                                        disabled={updatingStatus}
+                                        textColor={colors.error}
+                                        borderColor={colors.error}
+                                        style={{ flex: 1 }}
+                                    />
+                                ) : null}
+                            </View>
+                        )}
                     </View>
                 ))}
             </GlassView>
@@ -1014,14 +1033,26 @@ const styles = StyleSheet.create({
         borderTopColor: 'rgba(255,255,255,0.05)',
     },
     actionsContainer: { flexDirection: 'row', gap: Spacing.md, alignItems: 'center' },
+    customerActionsContainer: {
+        width: '100%',
+    },
+    stackedActions: {
+        gap: Spacing.sm,
+        width: '100%',
+    },
+    rowActions: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        alignItems: 'center',
+        width: '100%',
+    },
     reviewedBadge: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        paddingVertical: 12,
-        borderRadius: BorderRadius.lg,
+        minHeight: 56,
+        borderRadius: BorderRadius.full,
     },
     reviewedText: {
         fontFamily: Fonts.bold,

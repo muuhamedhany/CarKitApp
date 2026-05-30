@@ -60,9 +60,12 @@ export default function OutlinedButton({
 const styles = StyleSheet.create({
   button: {
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1.5,
+    minHeight: 56,
   },
   disabled: {
     opacity: 0.6,
