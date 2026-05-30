@@ -1,19 +1,25 @@
 import {
-  MaterialCommunityIcons } from '@expo/vector-icons';
+    MaterialCommunityIcons
+} from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect,
-  useLocalSearchParams,
-  useRouter } from 'expo-router';
-import { useCallback,
-  useMemo,
-  useState } from 'react';
+import {
+    useFocusEffect,
+    useLocalSearchParams,
+    useRouter
+} from 'expo-router';
+import {
+    useCallback,
+    useMemo,
+    useState
+} from 'react';
 import {
     ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  View,
+    Alert,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -21,8 +27,8 @@ import { CenteredHeader, GetDirectionsButton, GlassView, GradientButton, Outline
 import Text from '@/components/common/LocalizedText';
 import { ReviewModal } from '@/components/ReviewModal';
 import { BorderRadius, FontSizes, Fonts, Spacing } from '@/constants/theme';
-import { useToast } from '@/contexts/ToastContext';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { useToast } from '@/contexts/ToastContext';
 import { useTheme } from '@/hooks/useTheme';
 import { bookingService, type Booking } from '@/services/api/booking.service';
 import { reviewService } from '@/services/api/review.service';
@@ -32,15 +38,17 @@ type BookingDetail = Booking;
 const formatDate = (value?: string | null) => {
     if (!value) return '-';
     try {
-        return new Date(value).toLocaleDateString('en-US', {
-            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-        });
+        const date = new Date(value);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
         return value;
     }
 };
 
-const formatMoney = (value: string | number, currency: string) => `${Number(value || 0).toLocaleString('en-EG')} ${currency}`;
+const formatMoney = (value: string | number, currency: string) => {
+    const numberValue = Number(value || 0);
+    return `${numberValue.toLocaleString('en-EG')} ${currency}`;
+};
 
 const formatQueueTime = (value?: string | null) => {
     if (!value) return '-';
@@ -64,13 +72,30 @@ const formatMinutes = (value: number | null | undefined, labels: { minutesShort:
     return remainder ? `${hours}${labels.hoursShort} ${remainder}${labels.minutesCompact}` : `${hours}${labels.hoursShort}`;
 };
 
+const normalizeStatus = (status?: string | null) => String(status || '').toLowerCase();
+
+const getStatusPalette = (status: string, colors: any) => {
+    const value = normalizeStatus(status);
+    if (value === 'completed') return { bg: 'rgba(16,185,129,0.18)', fg: '#10B981' };
+    if (value === 'confirmed') return { bg: 'rgba(99,102,241,0.2)', fg: '#818CF8' };
+    if (value === 'in-progress') return { bg: 'rgba(249,115,22,0.2)', fg: '#F97316' };
+    if (value === 'cancelled') return { bg: 'rgba(239,83,80,0.2)', fg: colors.error };
+    return { bg: colors.pink + '20', fg: colors.pink }; // pending / default
+};
+
+const getStatusLabel = (status: string, t: any) => {
+    const normalized = normalizeStatus(status).replace(/-/g, '_');
+    return t(`status.${normalized}`, {
+        defaultValue: normalized.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    });
+};
+
 const canCancel = (status?: string | null) => {
-    const normalized = String(status || '').toLowerCase();
-    return normalized === 'pending' || normalized === 'confirmed' || normalized === 'in-progress';
+    const normalized = normalizeStatus(status);
+    return normalized === 'pending' || normalized === 'confirmed' || normalized === 'in_progress' || normalized === 'in-progress';
 };
 
 export default function BookingDetailScreen() {
-    const { id } = useLocalSearchParams<{ id?: string }>();
     const router = useRouter();
     const { colors, isDark } = useTheme();
     const { showToast } = useToast();
@@ -79,13 +104,15 @@ export default function BookingDetailScreen() {
     const minutesShort = t('common.minutesShort');
     const hoursShort = t('common.hoursShort');
     const minutesCompact = t('common.minutesCompact');
-    const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [, setUpdating] = useState(false);
-    const [reviewModalVisible, setReviewModalVisible] = useState(false);
-    const [isReviewed, setIsReviewed] = useState(false);
+    const { id } = useLocalSearchParams<{ id?: string }>();
 
     const bookingId = Number(id || 0);
+
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [booking, setBooking] = useState<NonNullable<BookingDetail> | null>(null);
+    const [reviewModalVisible, setReviewModalVisible] = useState(false);
+    const [isReviewed, setIsReviewed] = useState(false);
 
     const loadBooking = useCallback(async () => {
         if (!bookingId) {
@@ -128,22 +155,6 @@ export default function BookingDetailScreen() {
         }, [loadBooking, checkReviewStatus])
     );
 
-    const timelineSteps = useMemo(
-        () => [
-            { key: 'pending', icon: 'calendar-check' },
-            { key: 'confirmed', icon: 'check-circle-outline' },
-            { key: 'in-progress', icon: 'clock-outline' },
-            { key: 'completed', icon: 'flag-checkered' },
-        ],
-        []
-    );
-
-    const currentPosition = useMemo(() => {
-        const normalized = String(booking?.status || '').toLowerCase();
-        const index = timelineSteps.findIndex((step) => step.key === normalized);
-        return index >= 0 ? index : 0;
-    }, [booking?.status, timelineSteps]);
-
     const handleCancel = () => {
         if (!booking) return;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -174,16 +185,34 @@ export default function BookingDetailScreen() {
         ]);
     };
 
+    const statusPalette = useMemo(() => getStatusPalette(booking?.status || 'pending', colors), [booking?.status, colors]);
+    const displayStatus = useMemo(() => getStatusLabel(booking?.status || 'pending', t), [booking?.status, t]);
     const serviceTitle = booking?.service_name || t('booking.details.service');
 
+    const timelineSteps = useMemo(
+        () => [
+            { key: 'pending', labelKey: 'bookingStatus.pending', icon: 'calendar-clock' },
+            { key: 'confirmed', labelKey: 'bookingStatus.confirmed', icon: 'check-circle-outline' },
+            { key: 'in-progress', labelKey: 'bookingStatus.in_progress', icon: 'clock-outline' },
+            { key: 'completed', labelKey: 'bookingStatus.completed', icon: 'flag-checkered' },
+        ],
+        []
+    );
+
+    const currentPosition = useMemo(() => {
+        const normalized = normalizeStatus(booking?.status);
+        const index = timelineSteps.findIndex((step) => step.key === normalized);
+        return index >= 0 ? index : 0;
+    }, [booking?.status, timelineSteps]);
+
     return (
-        <View style={styles.container}>
-            {/* Background */}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
                 colors={[colors.bgGradientStart, colors.bgGradientEnd]}
                 style={StyleSheet.absoluteFill}
             />
 
+            {/* Decorative Orbs */}
             <View style={[styles.orb, { top: -100, left: -100, backgroundColor: colors.pink + '15' }]} />
             <View style={[styles.orb, { bottom: 200, right: -150, backgroundColor: colors.purple + '10' }]} />
 
@@ -193,71 +222,49 @@ export default function BookingDetailScreen() {
                 </View>
             ) : !booking ? (
                 <View style={styles.center}>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('booking.details.notFound')}</Text>
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('booking.details.notFound')}</Text>
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <CenteredHeader title={t('booking.details.title')} titleColor={colors.textPrimary} />
+
+                    {/* Booking Basic Details Header Card */}
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                            <View style={styles.cardHeader}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <View style={styles.headerRow}>
                                 <View>
                                     <Text style={[styles.bookingId, { color: colors.textPrimary }]}>{t('booking.details.bookingNumber', { id: booking.booking_id })}</Text>
                                     <Text style={[styles.bookingDate, { color: colors.textSecondary }]}>{formatDate(booking.booking_date)}</Text>
                                 </View>
-                                <View style={[styles.statusBadge, { backgroundColor: colors.pink + '20' }]}>
-                                    <Text style={[styles.statusText, { color: colors.pink }]}>{t(`status.${String(booking.status || '').toLowerCase().replace(/-/g, '_')}`, { defaultValue: String(booking.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) })}</Text>
+                                <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
+                                    <Text style={[styles.statusText, { color: statusPalette.fg }]}>{displayStatus}</Text>
+                                </View>
+                            </View>
+
+                            <View style={[styles.deliveryInfo, { borderTopColor: colors.cardBorder }]}>
+                                <View style={styles.infoRow}>
+                                    <MaterialCommunityIcons name="calendar-clock-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                        {t('common.date')}: {formatDate(booking.booking_date)}
+                                    </Text>
+                                </View>
+                                <View style={styles.infoRow}>
+                                    <MaterialCommunityIcons name="clock-outline" size={14} color={colors.textMuted} />
+                                    <Text style={[styles.deliveryText, { color: colors.textSecondary }]}>
+                                        {t('common.time')}: {booking.start_time || '-'}
+                                    </Text>
                                 </View>
                             </View>
                         </GlassView>
                     </Animated.View>
 
-                    <Animated.View entering={FadeInDown.delay(200).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('booking.details.tracking')}</Text>
-                            <View style={styles.timelineContainer}>
-                                {timelineSteps.map((step, index) => {
-                                    const reached = currentPosition >= index;
-                                    const active = currentPosition === index;
-                                    return (
-                                        <View key={step.key} style={styles.timelineRow}>
-                                            <View style={styles.timelineRailCol}>
-                                                <View style={[
-                                                    styles.timelineDot,
-                                                    {
-                                                        backgroundColor: reached ? colors.pink : colors.cardBorder,
-                                                        borderColor: reached ? colors.pink : colors.cardBorder
-                                                    }
-                                                ]}>
-                                                    <MaterialCommunityIcons
-                                                        name={step.icon as any}
-                                                        size={12}
-                                                        color={reached ? colors.white : colors.textMuted}
-                                                    />
-                                                </View>
-                                                {index < timelineSteps.length - 1 ? (
-                                                    <View style={[styles.timelineLine, { backgroundColor: reached ? colors.pink : colors.cardBorder, opacity: reached ? 1 : 0.3 }]} />
-                                                ) : null}
-                                            </View>
-                                            <View style={styles.timelineLabelCol}>
-                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{t(`bookingStatus.${step.key.replace(/-/g, '_')}`)}</Text>
-                                                <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
-                                                    {reached ? (index === 0 ? formatDate(booking.booking_date) : t('filter.completed')) : t('filter.pending')}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    );
-                                })}
-                            </View>
-                        </GlassView>
-                    </Animated.View>
-
+                    {/* Service Queue Details Card */}
                     {booking.queue ? (
-                        <Animated.View entering={FadeInDown.delay(250).springify()}>
-                            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <Animated.View entering={FadeInDown.delay(150).springify()}>
+                            <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                                 <View style={styles.sectionHeader}>
                                     <MaterialCommunityIcons name="account-clock-outline" size={20} color={colors.pink} />
-                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.serviceQueue')}</Text>
+                                    <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.serviceQueue') || 'Service Queue'}</Text>
                                 </View>
                                 <View style={styles.queueGrid}>
                                     <View style={styles.queueStat}>
@@ -273,9 +280,9 @@ export default function BookingDetailScreen() {
                                         <Text style={[styles.queueLabel, { color: colors.textSecondary }]}>{t('booking.details.estWait')}</Text>
                                     </View>
                                 </View>
-                                <View style={[styles.queueNote, { backgroundColor: colors.infoSoft }]}>
+                                <View style={[styles.vendorPickupNote, { backgroundColor: colors.infoSoft }]}>
                                     <MaterialCommunityIcons name="map-marker-check-outline" size={16} color={colors.info} />
-                                    <Text style={[styles.queueNoteText, { color: colors.textSecondary }]}>
+                                    <Text style={[styles.vendorPickupNoteText, { color: colors.textSecondary }]}>
                                         {t('booking.details.showUpFinish', {
                                             showUp: formatQueueTime(booking.queue.show_up_at),
                                             finish: formatQueueTime(booking.queue.estimated_finish_at),
@@ -286,61 +293,111 @@ export default function BookingDetailScreen() {
                         </Animated.View>
                     ) : null}
 
+                    {/* Timeline Tracking Steps Card */}
+                    <Animated.View entering={FadeInDown.delay(200).springify()}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('booking.details.tracking')}</Text>
+                            <View style={styles.timelineContainer}>
+                                {timelineSteps.map((step, index) => {
+                                    const reached = currentPosition >= index;
+                                    const active = currentPosition === index;
+                                    return (
+                                        <View key={step.key} style={styles.timelineRow}>
+                                            <View style={styles.timelineRailCol}>
+                                                <View style={[
+                                                    styles.timelineDot,
+                                                    {
+                                                        backgroundColor: reached ? colors.pink : colors.cardBorder,
+                                                        borderColor: reached ? colors.pink : colors.cardBorder,
+                                                    },
+                                                ]}>
+                                                    <MaterialCommunityIcons
+                                                        name={step.icon as any}
+                                                        size={12}
+                                                        color={reached ? colors.white : colors.textMuted}
+                                                    />
+                                                </View>
+                                                {index < timelineSteps.length - 1 ? (
+                                                    <View style={[
+                                                        styles.timelineLine,
+                                                        { backgroundColor: reached ? colors.pink : colors.cardBorder, opacity: reached ? 1 : 0.3 }
+                                                    ]} />
+                                                ) : null}
+                                            </View>
+                                            <View style={styles.timelineLabelCol}>
+                                                <Text style={[styles.timelineLabel, { color: active ? colors.textPrimary : reached ? colors.textSecondary : colors.textMuted }]}>{t(`bookingStatus.${step.key.replace(/-/g, '_')}`)}</Text>
+                                                <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
+                                                    {reached ? (index === 0 ? formatDate(booking.booking_date) : active ? t('common.currentStep') : t('filter.completed')) : t('filter.pending')}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        </GlassView>
+                    </Animated.View>
+
+                    {/* Service Provider Profile & Communications Grid Card */}
                     <Animated.View entering={FadeInDown.delay(300).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                            <View style={styles.sectionHeader}>
-                                <MaterialCommunityIcons name="car-cog" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.service')}</Text>
-                            </View>
-                            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{serviceTitle}</Text>
-                            {booking.service_description ? (
-                                <Text style={[styles.cardSub, { color: colors.textSecondary }]}>{booking.service_description}</Text>
-                            ) : null}
-                            {booking.service_duration ? (
-                                <View style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="timer-outline" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.service_duration} {minutesShort}</Text>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                                {t('booking.details.provider')}
+                            </Text>
+                            <View style={styles.vendorCustomerRow}>
+                                <View style={styles.vendorCustomerText}>
+                                    <Text style={[styles.customerName, { color: colors.textPrimary }]}>
+                                        {booking.provider_name || t('booking.details.providerUnavailable')}
+                                    </Text>
+                                    <Text style={[styles.customerHint, { color: colors.textSecondary }]}>
+                                        {t('booking.details.provider')}
+                                    </Text>
                                 </View>
-                            ) : null}
+                                {booking.provider_phone ? (
+                                    <View style={styles.iconGroup}>
+                                        <Pressable style={[styles.iconBubble, { backgroundColor: colors.pink + '15' }]} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+                                            <MaterialCommunityIcons name="phone-outline" size={20} color={colors.pink} />
+                                        </Pressable>
+                                        <Pressable style={[styles.iconBubble, { backgroundColor: colors.purple + '15' }]} onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
+                                            <MaterialCommunityIcons name="message-text-outline" size={20} color={colors.purple} />
+                                        </Pressable>
+                                    </View>
+                                ) : null}
+                            </View>
+                            <View style={styles.vendorOpsGrid}>
+                                <View style={[styles.vendorOpsTile, { backgroundColor: colors.pink + '10' }]}>
+                                    <MaterialCommunityIcons name="calendar-check-outline" size={16} color={colors.pink} />
+                                    <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>{t('common.date')}</Text>
+                                    <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{formatDate(booking.booking_date)}</Text>
+                                </View>
+                                <View style={[styles.vendorOpsTile, { backgroundColor: colors.purple + '10' }]}>
+                                    <MaterialCommunityIcons name="clock-outline" size={16} color={colors.purple} />
+                                    <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>{t('common.time')}</Text>
+                                    <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{booking.start_time || '-'}</Text>
+                                </View>
+                                {booking.service_duration ? (
+                                    <View style={[styles.vendorOpsTile, { backgroundColor: colors.pink + '10' }]}>
+                                        <MaterialCommunityIcons name="timer-outline" size={16} color={colors.pink} />
+                                        <Text style={[styles.vendorOpsLabel, { color: colors.textMuted }]}>{t('booking.details.duration', { defaultValue: 'Duration' })}</Text>
+                                        <Text style={[styles.vendorOpsValue, { color: colors.textPrimary }]}>{booking.service_duration} {minutesShort}</Text>
+                                    </View>
+                                ) : null}
+                            </View>
                         </GlassView>
                     </Animated.View>
 
+                    {/* Location and Schedule Address Card */}
                     <Animated.View entering={FadeInDown.delay(400).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                            <View style={styles.sectionHeader}>
-                                <MaterialCommunityIcons name="account-tie" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.provider')}</Text>
-                            </View>
-                            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{booking.provider_name || t('booking.details.providerUnavailable')}</Text>
-                            {booking.provider_phone ? (
-                                <View style={styles.metaRow}>
-                                    <MaterialCommunityIcons name="phone-outline" size={14} color={colors.textMuted} />
-                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>{booking.provider_phone}</Text>
-                                </View>
-                            ) : null}
-                        </GlassView>
-                    </Animated.View>
-
-                    <Animated.View entering={FadeInDown.delay(500).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
                             <View style={styles.sectionHeader}>
                                 <MaterialCommunityIcons name="map-marker-radius" size={20} color={colors.pink} />
-                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.locationSchedule')}</Text>
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                                    {t('booking.details.locationSchedule') || 'Location & Schedule'}
+                                </Text>
                             </View>
-                            <View style={styles.scheduleRow}>
-                                <View style={styles.scheduleItem}>
-                                    <Text style={styles.scheduleLabel}>{t('common.date')}</Text>
-                                    <Text style={[styles.scheduleValue, { color: colors.textPrimary }]}>{formatDate(booking.booking_date)}</Text>
-                                </View>
-                                <View style={styles.scheduleDivider} />
-                                <View style={styles.scheduleItem}>
-                                    <Text style={styles.scheduleLabel}>{t('common.time')}</Text>
-                                    <Text style={[styles.scheduleValue, { color: colors.textPrimary }]}>{booking.start_time}</Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.addressContainer}>
-                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>{booking.address_title || t('booking.details.serviceAddress')}</Text>
+                            <View style={{ gap: Spacing.xs, marginTop: Spacing.sm }}>
+                                <Text style={[styles.addressTitle, { color: colors.textPrimary }]}>
+                                    {booking.address_title || t('booking.details.serviceAddress')}
+                                </Text>
                                 <Text style={[styles.addressText, { color: colors.textSecondary }]}>
                                     {booking.street || booking.location || t('booking.details.noStreetAddress')}{booking.city ? `, ${booking.city}` : ''}
                                 </Text>
@@ -351,73 +408,123 @@ export default function BookingDetailScreen() {
                                         {booking.apartment_floor ? t('booking.details.aptFloor', { value: booking.apartment_floor }) : ''}
                                     </Text>
                                 )}
-                            </View>
-
-                            {booking.notes && (
-                                <View style={[styles.notesContainer, { borderTopColor: colors.cardBorder }]}>
-                                    <Text style={[styles.notesLabel, { color: colors.textMuted }]}>{t('booking.details.notes')}</Text>
-                                    <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
-                                </View>
-                            )}
-
-                            {booking.latitude && booking.longitude ? (
-                                <View style={{ marginTop: Spacing.md }}>
-                                    <GetDirectionsButton
-                                        latitude={booking.latitude}
-                                        longitude={booking.longitude}
-                                        label={booking.street || booking.location || undefined}
-                                    />
-                                </View>
-                            ) : null}
-                        </GlassView>
-                    </Animated.View>
-
-                    <Animated.View entering={FadeInDown.delay(600).springify()}>
-                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.priceCard}>
-                            <View>
-                                <Text style={styles.totalLabel}>{t('booking.details.totalAmount')}</Text>
-                                <Text style={[styles.priceValue, { color: colors.pink }]}>{formatMoney(booking.booking_price, currencySuffix)}</Text>
-                            </View>
-                            <View style={styles.paymentBadge}>
-                                <MaterialCommunityIcons name="credit-card-check" size={16} color={colors.white} />
-                                <Text style={styles.paymentText}>{t('common.paid')}</Text>
+                                {booking.notes && (
+                                    <View style={[styles.notesContainer, { borderTopColor: colors.cardBorder }]}>
+                                        <Text style={[styles.notesLabel, { color: colors.textMuted }]}>{t('booking.details.notes') || 'Notes'}</Text>
+                                        <Text style={[styles.notesText, { color: colors.textSecondary }]}>{booking.notes}</Text>
+                                    </View>
+                                )}
+                                {booking.latitude && booking.longitude ? (
+                                    <View style={{ marginTop: Spacing.md }}>
+                                        <GetDirectionsButton
+                                            latitude={Number(booking.latitude)}
+                                            longitude={Number(booking.longitude)}
+                                            label={booking.street || booking.location || undefined}
+                                        />
+                                    </View>
+                                ) : null}
                             </View>
                         </GlassView>
                     </Animated.View>
 
-                    <View style={styles.actionsRow}>
-                        <GradientButton
-                            title={t('common.support')}
-                            onPress={() => router.push('/support' as any)}
-                            style={{ flex: 1 }}
-                            icon="chat-processing-outline"
-                        />
-                        {canCancel(booking.status) ? (
-                            <OutlinedButton
-                                title={t('common.cancel')}
-                                onPress={handleCancel}
-                                style={{ flex: 1 }}
-                                textColor={colors.error}
-                                borderColor={colors.error}
-                            />
-                        ) : null}
-                        {booking.status?.toLowerCase() === 'completed' && !isReviewed ? (
-                            <GradientButton
-                                title={t('common.rate')}
-                                onPress={() => setReviewModalVisible(true)}
-                                style={{ flex: 1 }}
-                                icon="star-outline"
-                            />
-                        ) : isReviewed ? (
-                            <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20' }]}>
-                                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
-                                <Text style={[styles.reviewedText, { color: colors.success }]}>{t('booking.details.reviewed')}</Text>
+                    {/* Service Details Card (Formatted like Order Items with Summary totals box) */}
+                    <Animated.View entering={FadeInDown.delay(500).springify()}>
+                        <GlassView intensity={isDark ? 30 : 50} tint={isDark ? 'dark' : 'light'} style={styles.card} {...{} as any}>
+                            <View style={styles.sectionHeader}>
+                                <MaterialCommunityIcons name="car-cog" size={20} color={colors.pink} />
+                                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>{t('booking.details.service')}</Text>
                             </View>
-                        ) : null}
-                    </View>
+
+                            <View style={{ marginTop: Spacing.md }}>
+                                <View style={[styles.itemRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.itemName, { color: colors.textPrimary }]}>{serviceTitle}</Text>
+                                        <View style={styles.qtyContainer}>
+                                            <Text style={[styles.itemQty, { color: colors.textSecondary }]}>{booking.service_duration ? `${booking.service_duration} ${minutesShort}` : ''}</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={[styles.itemPrice, { color: colors.pink }]}>{formatMoney(booking.booking_price, currencySuffix)}</Text>
+                                </View>
+                                {booking.service_description ? (
+                                    <Text style={[styles.cardSub, { color: colors.textSecondary, marginTop: Spacing.xs }]}>{booking.service_description}</Text>
+                                ) : null}
+                            </View>
+
+                            <View style={[styles.summaryBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)', marginTop: Spacing.md }]}>
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('booking.details.subtotal', { defaultValue: 'Subtotal' })}</Text>
+                                    <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{formatMoney(booking.booking_price, currencySuffix)}</Text>
+                                </View>
+                                <View style={[styles.summaryDivider, { backgroundColor: colors.cardBorder }]} />
+                                <View style={styles.summaryRow}>
+                                    <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>{t('booking.details.totalAmount')}</Text>
+                                    <Text style={[styles.totalValue, { color: colors.pink }]}>{formatMoney(booking.booking_price, currencySuffix)}</Text>
+                                </View>
+                            </View>
+                        </GlassView>
+                    </Animated.View>
+
+                    <View style={styles.spacer} />
                 </ScrollView>
             )}
 
+            {/* Sticky Frosted Glass Absolute Footer Button Container */}
+            <GlassView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.footerContainer} {...{} as any}>
+                {booking && (
+                    <View style={styles.customerActionsContainer}>
+                        {booking.status?.toLowerCase() === 'completed' ? (
+                            <View style={styles.stackedActions}>
+                                {/* Primary Action: Rate or Reviewed badge */}
+                                {!isReviewed ? (
+                                    <GradientButton
+                                        title={t('common.rate')}
+                                        onPress={() => setReviewModalVisible(true)}
+                                        style={{ width: '100%' }}
+                                        icon="star-outline"
+                                    />
+                                ) : (
+                                    <View style={[styles.reviewedBadge, { backgroundColor: colors.success + '20', width: '100%' }]}>
+                                        <MaterialCommunityIcons name="check-decagram" size={16} color={colors.success} />
+                                        <Text style={[styles.reviewedText, { color: colors.success }]}>{t('booking.details.reviewed') || 'Reviewed'}</Text>
+                                    </View>
+                                )}
+
+                                {/* Secondary Action: Support */}
+                                <View style={styles.rowActions}>
+                                    <GradientButton
+                                        title={t('common.support')}
+                                        onPress={() => router.push('/support' as any)}
+                                        style={{ flex: 1 }}
+                                        icon="chat-question-outline"
+                                    />
+                                </View>
+                            </View>
+                        ) : (
+                            /* Non-completed bookings: standard row layout with Support + Cancel Booking (if pending/confirmed/in-progress) */
+                            <View style={styles.rowActions}>
+                                <GradientButton
+                                    title={t('common.support')}
+                                    onPress={() => router.push('/support' as any)}
+                                    style={{ flex: 1 }}
+                                    icon="chat-question-outline"
+                                />
+                                {canCancel(booking.status) ? (
+                                    <OutlinedButton
+                                        title={t('common.cancel')}
+                                        onPress={handleCancel}
+                                        disabled={updating}
+                                        textColor={colors.error}
+                                        borderColor={colors.error}
+                                        style={{ flex: 1 }}
+                                    />
+                                ) : null}
+                            </View>
+                        )}
+                    </View>
+                )}
+            </GlassView>
+
+            {/* Review Modal */}
             {booking && (
                 <ReviewModal
                     visible={reviewModalVisible}
@@ -447,7 +554,8 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     emptyText: { fontFamily: Fonts.medium, fontSize: FontSizes.md },
-    content: { paddingHorizontal: Spacing.md, paddingBottom: 120, paddingTop: Spacing.sm },
+    content: { padding: Spacing.md, paddingBottom: 180 },
+    spacer: { height: 40 },
 
     orb: {
         position: 'absolute',
@@ -465,14 +573,18 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         overflow: 'hidden',
     },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    bookingId: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    bookingId: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, letterSpacing: 0.5 },
     bookingDate: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 4, opacity: 0.7 },
-    statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
-    statusText: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
+    statusBadge: { maxWidth: 190, paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full },
+    statusText: { fontFamily: Fonts.bold, fontSize: 10, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 },
 
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md },
-    sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5 },
+    deliveryInfo: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1, gap: 6 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    deliveryText: { flex: 1, fontFamily: Fonts.medium, fontSize: 11 },
+
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
+    sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, letterSpacing: 0.5, marginBottom: Spacing.md },
 
     timelineContainer: { marginTop: Spacing.xs },
     timelineRow: { flexDirection: 'row', gap: Spacing.md },
@@ -491,37 +603,18 @@ const styles = StyleSheet.create({
     timelineLabel: { fontFamily: Fonts.semiBold, fontSize: FontSizes.sm },
     timelineDate: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 2, opacity: 0.6 },
 
-    cardValue: { fontFamily: Fonts.bold, fontSize: FontSizes.lg, marginBottom: 6 },
-    cardSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 8, lineHeight: 20 },
-
-    scheduleRow: {
-        flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
-        marginBottom: Spacing.md,
-        alignItems: 'center',
-    },
-    scheduleItem: { flex: 1, alignItems: 'center' },
-    scheduleDivider: { width: 1, height: '60%', backgroundColor: 'rgba(255,255,255,0.1)' },
-    scheduleLabel: { fontFamily: Fonts.medium, fontSize: 10, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: 4 },
-    scheduleValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-
-    addressContainer: { gap: 4 },
-    addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
-    addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
-    addressSubtext: { fontFamily: Fonts.medium, fontSize: 11, opacity: 0.6 },
-
-    notesContainer: {
-        marginTop: Spacing.md,
-        paddingTop: Spacing.md,
-        borderTopWidth: 1,
-    },
-    notesLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-    notesText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 20, opacity: 0.8 },
-
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-    metaText: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, opacity: 0.8 },
+    vendorCustomerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.md },
+    vendorCustomerText: { flex: 1 },
+    customerName: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    customerHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginTop: 2, opacity: 0.7 },
+    iconGroup: { flexDirection: 'row', gap: Spacing.sm },
+    iconBubble: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    vendorOpsGrid: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+    vendorOpsTile: { flex: 1, borderRadius: BorderRadius.lg, padding: Spacing.md, gap: 4 },
+    vendorOpsLabel: { fontFamily: Fonts.bold, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5 },
+    vendorOpsValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    vendorPickupNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md, marginTop: Spacing.md },
+    vendorPickupNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
     queueGrid: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.md },
     queueStat: {
         flex: 1,
@@ -532,42 +625,62 @@ const styles = StyleSheet.create({
     },
     queueValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
     queueLabel: { fontFamily: Fonts.medium, fontSize: 10, marginTop: 4, textTransform: 'uppercase' },
-    queueNote: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: Spacing.sm, borderRadius: BorderRadius.md },
-    queueNoteText: { flex: 1, fontFamily: Fonts.medium, fontSize: FontSizes.xs },
 
-    priceCard: {
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        padding: Spacing.lg,
-        marginBottom: Spacing.xl,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        overflow: 'hidden',
-    },
-    totalLabel: { fontFamily: Fonts.medium, fontSize: 10, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1 },
-    priceValue: { fontFamily: Fonts.bold, fontSize: FontSizes.xxl, marginTop: 2 },
-    paymentBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#10B981',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: BorderRadius.full
-    },
-    paymentText: { fontFamily: Fonts.bold, fontSize: 10, color: '#FFF', textTransform: 'uppercase' },
+    cardSub: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, marginBottom: 8, lineHeight: 20 },
 
-    actionsRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md, paddingHorizontal: Spacing.md, alignItems: 'center' },
+    addressTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    addressText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, opacity: 0.8 },
+    addressSubtext: { fontFamily: Fonts.medium, fontSize: 11, opacity: 0.6 },
+
+    notesContainer: { marginTop: Spacing.md, paddingTop: Spacing.md, borderTopWidth: 1 },
+    notesLabel: { fontFamily: Fonts.bold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+    notesText: { fontFamily: Fonts.regular, fontSize: FontSizes.sm, lineHeight: 20, opacity: 0.8 },
+
+    itemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+    itemName: { fontFamily: Fonts.bold, fontSize: FontSizes.sm, marginBottom: 4 },
+    qtyContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    itemQty: { fontFamily: Fonts.medium, fontSize: FontSizes.xs },
+    itemPrice: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+
+    summaryBox: { borderRadius: BorderRadius.lg, padding: Spacing.md, marginTop: Spacing.sm },
+    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    summaryLabel: { fontFamily: Fonts.medium, fontSize: FontSizes.sm, opacity: 0.8 },
+    summaryValue: { fontFamily: Fonts.bold, fontSize: FontSizes.sm },
+    summaryDivider: { height: 1, marginVertical: Spacing.sm, opacity: 0.1 },
+    totalLabel: { fontFamily: Fonts.bold, fontSize: FontSizes.md },
+    totalValue: { fontFamily: Fonts.extraBold, fontSize: FontSizes.lg },
+
+    footerContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: Spacing.md,
+        paddingTop: Spacing.md,
+        paddingBottom: Spacing.xl,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
+    },
+    customerActionsContainer: {
+        width: '100%',
+    },
+    stackedActions: {
+        gap: Spacing.sm,
+        width: '100%',
+    },
+    rowActions: {
+        flexDirection: 'row',
+        gap: Spacing.md,
+        alignItems: 'center',
+        width: '100%',
+    },
     reviewedBadge: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        paddingVertical: 12,
-        borderRadius: BorderRadius.lg,
+        minHeight: 56,
+        borderRadius: BorderRadius.full,
     },
     reviewedText: {
         fontFamily: Fonts.bold,

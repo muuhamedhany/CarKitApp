@@ -83,6 +83,7 @@ function InnerLayout() {
         <Stack.Screen name="add-vehicle" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="vehicle-detail" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="edit-product/[id]" options={{ headerShown: false, title: '' }} />
+        <Stack.Screen name="edit-employee/[id]" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="wishlist" options={{ headerShown: false, title: '' }} />
         <Stack.Screen name="image-viewer" options={{ headerShown: false, title: '', presentation: 'fullScreenModal' }} />
         <Stack.Screen name="vendor-analytics" options={{ headerShown: false, title: '' }} />

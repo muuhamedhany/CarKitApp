@@ -132,6 +132,7 @@ const ar: TranslationDictionary = {
   'Edit service': 'تعديل الخدمة',
   'Edit Service': 'تعديل الخدمة',
   'Edit Store Profile': 'تعديل ملف المتجر',
+  'Edit Employee': 'تعديل موظف',
   'Edit Vehicle': 'تعديل السيارة',
   'EGP': 'ج.م',
   'Email Address': 'البريد الإلكتروني',
@@ -142,6 +143,12 @@ const ar: TranslationDictionary = {
   'Emergency Team': 'فريق الطوارئ',
   'Employee': 'الموظف',
   'Employee Added': 'تمت إضافة الموظف',
+  'Employee updated successfully.': 'تم تحديث الموظف بنجاح.',
+  'Could not update employee.': 'تعذر تحديث الموظف.',
+  'Employee deleted successfully.': 'تم حذف الموظف بنجاح.',
+  'Could not delete employee.': 'تعذر حذف الموظف.',
+  'Delete Employee?': 'حذف الموظف؟',
+  'Are you sure you want to delete this employee?': 'هل أنت متأكد أنك تريد حذف هذا الموظف؟',
   'Employees & assignments': 'الموظفون والتكليفات',
   'Enabled': 'مفعل',
   'Enter a duration between 5 and 1440 minutes.': 'أدخل مدة بين 5 و1440 دقيقة.',
@@ -465,6 +472,8 @@ const ar: TranslationDictionary = {
   'This will permanently remove the product from your inventory.': 'سيؤدي ذلك إلى حذف المنتج نهائياً من مخزونك.',
   'This will permanently remove this service. Bookings already made will not be affected.': 'سيؤدي ذلك إلى حذف هذه الخدمة نهائياً. لن تتأثر الحجوزات التي تم إنشاؤها بالفعل.',
   'Total Orders': 'إجمالي الطلبات',
+  'This product is referenced in customer orders and cannot be deleted.': 'هذا المنتج مرتبط بطلبات العملاء ولا يمكن حذفه.',
+  'This service is referenced in customer bookings and cannot be deleted.': 'هذه الخدمة مرتبطة بحجوزات العملاء ولا يمكن حذفها.',
 };
 
 export const literalFallbacks: Record<LocaleCode, TranslationDictionary> = {

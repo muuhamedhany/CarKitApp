@@ -1,14 +1,15 @@
 import {
   useEffect,
   useState } from 'react';
-import { Platform,
+import { ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CenteredHeader, GradientButton } from '@/components';
 import FormInput from '@/components/common/FormInput';
@@ -41,22 +42,54 @@ const getServiceConfig = (name: string) => {
   return { icon: 'car-wrench' as const, color: '#CD42A8' };
 };
 
-export default function AddEmployeeScreen() {
+export default function EditEmployeeScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [services, setServices] = useState<EmergencyServiceOption[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [form, setForm] = useState({ full_name: '', phone: '', password: '' });
 
   useEffect(() => {
-    emergencyService
-      .getServices()
-      .then((res) => setServices(res.data || []))
-      .catch(() => showToast('error', 'Emergency Services', 'Could not load emergency services.'));
-  }, [showToast]);
+    const init = async () => {
+      try {
+        const [servicesRes, employeesRes] = await Promise.all([
+          emergencyService.getServices(),
+          emergencyService.getEmployees(),
+        ]);
+        
+        if (servicesRes.data) {
+          setServices(servicesRes.data);
+        }
+        
+        if (employeesRes.data) {
+          const emp = employeesRes.data.find(e => e.employee_id === Number(id));
+          if (emp) {
+            setForm({
+              full_name: emp.full_name,
+              phone: emp.phone,
+              password: '',
+            });
+            setSelected(emp.service_ids || []);
+          } else {
+            showToast('error', 'Error', 'Employee not found.');
+            router.back();
+          }
+        }
+      } catch (err: any) {
+        showToast('error', 'Error', err.message || 'Could not load details.');
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [id]);
 
   const toggle = (id: number) => {
     setSelected((current) => {
@@ -78,10 +111,6 @@ export default function AddEmployeeScreen() {
       showToast('warning', 'Missing Fields', 'Please enter employee phone number.');
       return;
     }
-    if (!form.password.trim()) {
-      showToast('warning', 'Missing Fields', 'Please enter password.');
-      return;
-    }
     if (selected.length === 0) {
       showToast('warning', 'Emergency Services', 'Assign at least one emergency service.');
       return;
@@ -89,22 +118,39 @@ export default function AddEmployeeScreen() {
 
     setSubmitting(true);
     try {
-      await emergencyService.createEmployee({ ...form, service_ids: selected });
-      showToast('success', 'Employee Added', 'Emergency employee can now log in.');
+      const payload: any = {
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
+        service_ids: selected,
+      };
+      if (form.password.trim()) {
+        payload.password = form.password;
+      }
+
+      await emergencyService.updateEmployee(Number(id), payload);
+      showToast('success', 'Employee Saved', 'Employee updated successfully.');
       router.back();
     } catch {
-      showToast('error', 'Employee', 'Could not create employee.');
+      showToast('error', 'Employee', 'Could not update employee.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.pink} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={[colors.bgGradientStart, colors.bgGradientEnd]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={styles.content}>
         <CenteredHeader
-          title="Add Employee"
+          title="Edit Employee"
           titleColor={colors.textPrimary}
           rowStyle={{ paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + 20 }}
         />
@@ -127,9 +173,9 @@ export default function AddEmployeeScreen() {
           autoComplete="tel"
         />
         <FormInput
-          label="Password"
+          label="Password (optional)"
           icon="lock-outline"
-          placeholder="Create a password"
+          placeholder="Leave blank to keep existing password"
           value={form.password}
           secureTextEntry
           onChangeText={(v: string) => setForm({ ...form, password: v })}
@@ -173,7 +219,7 @@ export default function AddEmployeeScreen() {
           })}
         </View>
         <GradientButton
-          title="Create Employee"
+          title="Save Changes"
           onPress={submit}
           loading={submitting}
           style={{ marginTop: Spacing.lg }}
@@ -185,6 +231,7 @@ export default function AddEmployeeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
   sectionTitle: { fontFamily: Fonts.bold, fontSize: FontSizes.md, marginBottom: Spacing.sm },
   assignmentHint: { fontFamily: Fonts.medium, fontSize: FontSizes.xs, marginBottom: Spacing.sm },

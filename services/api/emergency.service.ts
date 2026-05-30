@@ -75,4 +75,17 @@ export const emergencyService = {
       body: JSON.stringify(payload),
     });
   },
+
+  updateEmployee(employeeId: number, payload: { full_name: string; phone: string; password?: string; service_ids: number[] }) {
+    return apiFetch<ApiResponse<EmergencyEmployee>>(`/providers/me/employees/${employeeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteEmployee(employeeId: number) {
+    return apiFetch<ApiResponse<EmergencyEmployee>>(`/providers/me/employees/${employeeId}`, {
+      method: 'DELETE',
+    });
+  },
 };

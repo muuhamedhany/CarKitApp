@@ -9,7 +9,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect,
-  useRef } from 'react';
+  useMemo,
+  useRef,
+  useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -97,6 +99,19 @@ export function AdSlideshow({ ads, onAdPress }: AdSlideshowProps) {
 function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number; colors: any; isDark: boolean; onPress: () => void }) {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (ad.banner_image_url) {
+      Image.getSize(ad.banner_image_url, (w, h) => {
+        if (w && h) {
+          setAspectRatio(w / h);
+        }
+      }, (err) => {
+        console.warn('Failed to get ad image size:', err);
+      });
+    }
+  }, [ad.banner_image_url]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }]
@@ -110,6 +125,33 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
     scale.value = withSpring(1);
   };
 
+  const cardStyle = useMemo<any>(() => {
+    if (!aspectRatio) {
+      return { width: '100%', height: '100%', borderRadius: BorderRadius.xxl, overflow: 'hidden' as const };
+    }
+    const containerWidth = width - Spacing.lg * 2;
+    const containerHeight = 200; // height of slideContainer
+    const containerRatio = containerWidth / containerHeight;
+
+    let imgWidth = containerWidth;
+    let imgHeight = containerHeight;
+
+    if (aspectRatio > containerRatio) {
+      imgWidth = containerWidth;
+      imgHeight = containerWidth / aspectRatio;
+    } else {
+      imgHeight = containerHeight;
+      imgWidth = containerHeight * aspectRatio;
+    }
+
+    return {
+      width: imgWidth,
+      height: imgHeight,
+      borderRadius: BorderRadius.xxl,
+      overflow: 'hidden' as const,
+    };
+  }, [aspectRatio, width]);
+
   return (
     <Animated.View style={[adStyles.slideContainer, { width }, animatedStyle]}>
       <Pressable
@@ -122,27 +164,35 @@ function AdSlide({ ad, width, colors, isDark, onPress }: { ad: Ad; width: number
         style={adStyles.slide}
       >
         {ad.banner_image_url ? (
-          <Image source={{ uri: ad.banner_image_url }} style={adStyles.slideImage} resizeMode="cover" />
+          <View style={cardStyle}>
+            <Image source={{ uri: ad.banner_image_url }} style={adStyles.slideImage} resizeMode="contain" />
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.15)']}
+              style={adStyles.slideOverlay}
+            />
+            <View style={adStyles.adBadgeWrapper}>
+              <Text style={adStyles.adBadgeText}>{t('search.sponsoredAd')}</Text>
+            </View>
+          </View>
         ) : (
-          <LinearGradient
-            colors={[colors.purple, colors.pink]}
-            style={adStyles.slideImage}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <MaterialCommunityIcons name="bullhorn" size={42} color="#fff" style={{ opacity: 0.9 }} />
-          </LinearGradient>
+          <View style={cardStyle}>
+            <LinearGradient
+              colors={[colors.purple, colors.pink]}
+              style={adStyles.slideImage}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <MaterialCommunityIcons name="bullhorn" size={42} color="#fff" style={{ opacity: 0.9 }} />
+            </LinearGradient>
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.15)']}
+              style={adStyles.slideOverlay}
+            />
+            <View style={adStyles.adBadgeWrapper}>
+              <Text style={adStyles.adBadgeText}>{t('search.sponsoredAd')}</Text>
+            </View>
+          </View>
         )}
-
-        <LinearGradient
-          colors={['transparent', 'rgba(0, 0, 0, 0.15)']}
-          style={adStyles.slideOverlay}
-        />
-
-        <View style={adStyles.adBadgeWrapper}>
-          <Text style={adStyles.adBadgeText}>{t('search.sponsoredAd')}</Text>
-        </View>
-
       </Pressable>
     </Animated.View>
   );
@@ -184,8 +234,8 @@ const adStyles = StyleSheet.create({
   },
   slide: {
     flex: 1,
-    borderRadius: BorderRadius.xxl,
-    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   slideImage: {
     width: '100%',
