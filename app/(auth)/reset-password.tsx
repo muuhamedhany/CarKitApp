@@ -87,7 +87,8 @@ export default function ResetPasswordScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >            <CenteredHeader title={t('auth.reset.title')} titleColor={colors.pink} />
+      >
+        <CenteredHeader title={t('auth.reset.title')} titleColor={colors.pink} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}

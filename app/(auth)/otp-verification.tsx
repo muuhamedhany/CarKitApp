@@ -152,7 +152,8 @@ export default function OTPVerificationScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
-      >            <CenteredHeader title={t('auth.otp.title')} titleColor={colors.pink} />
+      >
+        <CenteredHeader title={t('auth.otp.title')} titleColor={colors.pink} />
 
         <ScrollView
           contentContainerStyle={styles.scrollContent}
