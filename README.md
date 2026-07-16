@@ -80,9 +80,5 @@ CarKitApp/
 
 - Lint: `npm run lint`
 - Type check: `npx tsc --noEmit`
-
-## Troubleshooting
-
-- If Metro cache causes issues: `npx expo start --clear`
 - If dependencies are corrupted: remove `node_modules` and reinstall
 - Ensure your simulator/device can access your local dev server
