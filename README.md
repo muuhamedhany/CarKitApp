@@ -1,5 +1,6 @@
 <img width="1692" height="930" alt="projects_CarKitIPhone" src="https://github.com/user-attachments/assets/3c5e9287-0a41-46c7-ab92-b7b91284d7d3" />
-# CarKit App
+
+#CarKit App
 
 CarKit is an Expo + React Native mobile app for automotive commerce and utility workflows, including product shopping, service booking, vehicle management, and vendor/provider operations.
 
